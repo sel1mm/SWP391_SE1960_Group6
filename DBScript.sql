@@ -333,3 +333,24 @@ createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (contractEquipmentId) REFERENCES ContractEquipment(contractEquipmentId)
 );
 
+-- 1. Thêm role Admin (nếu chưa có)
+INSERT INTO Role (roleId, roleName)
+VALUES (1, 'Admin')
+ON DUPLICATE KEY UPDATE roleName='Admin';
+
+-- 2. Thêm tài khoản admin
+INSERT INTO Account (username, passwordHash, fullName, email, phone, status, createdAt)
+VALUES (
+    'admin', 
+    '$2a$12$1F4wq9bMZcFJEMo6bZJrL.Ow91z2HjUvcmkjkDrrbHh5c5e12OZcG', -- hash của "admin123"
+    'System Administrator', 
+    'admin@test.com', 
+    '0123456789', 
+    'Active', 
+    NOW()
+);
+
+-- 3. Gán role Admin cho account vừa tạo
+INSERT INTO AccountRole (accountId, roleId)
+VALUES (LAST_INSERT_ID(), 1);
+
