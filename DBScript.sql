@@ -342,9 +342,9 @@ ON DUPLICATE KEY UPDATE roleName='Admin';
 INSERT INTO Account (username, passwordHash, fullName, email, phone, status, createdAt)
 VALUES (
     'admin', 
-    '$2a$12$1F4wq9bMZcFJEMo6bZJrL.Ow91z2HjUvcmkjkDrrbHh5c5e12OZcG', -- hash của "admin123"
+    '$2a$12$rmfB.fZeS1UQVq/JiejzE.QYVzwp5HyJOnPJ3JaLRmsnYzF80IUuq', -- hash của "123456"
     'System Administrator', 
-    'admin@test.com', 
+    'leanhvuvlhg@gmail.com', 
     '0123456789', 
     'Active', 
     NOW()
@@ -353,4 +353,5 @@ VALUES (
 -- 3. Gán role Admin cho account vừa tạo
 INSERT INTO AccountRole (accountId, roleId)
 VALUES (LAST_INSERT_ID(), 1);
+
 

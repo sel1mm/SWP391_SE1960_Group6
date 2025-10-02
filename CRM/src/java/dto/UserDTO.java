@@ -1,31 +1,36 @@
-package model;
+package dto;
 
 import java.time.LocalDateTime;
 
-public class Account {
-    private int accountId;
-    private String username;
-    private String passwordHash;
-    private String fullName;
-    private String email;
-    private String phone;
-    private String status = "Active";
-    private LocalDateTime createdAt = LocalDateTime.now();
+public class UserDTO {
+    private int accountId;       // accountId từ Account
+    private String username;     // username
+    private String fullName;     // fullName
+    private String email;        // email
+    private String phone;        // phone
+    private String status;       // Active / Inactive
+    private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public Account() {
+    private int roleId;          // roleId từ Role
+    private String roleName;     // roleName (Admin, Technician, Customer, CSS...)
+
+    public UserDTO() {
     }
 
-    public Account(int accountId, String username, String passwordHash, String fullName, String email, String phone, String status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public UserDTO(int accountId, String username, String fullName, String email, String phone,
+                   String status, LocalDateTime createdAt, LocalDateTime updatedAt,
+                   int roleId, String roleName) {
         this.accountId = accountId;
         this.username = username;
-        this.passwordHash = passwordHash;
         this.fullName = fullName;
         this.email = email;
         this.phone = phone;
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.roleId = roleId;
+        this.roleName = roleName;
     }
 
     public int getAccountId() {
@@ -42,14 +47,6 @@ public class Account {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
     }
 
     public String getFullName() {
@@ -100,4 +97,19 @@ public class Account {
         this.updatedAt = updatedAt;
     }
 
+    public int getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(int roleId) {
+        this.roleId = roleId;
+    }
+
+    public String getRoleName() {
+        return roleName;
+    }
+
+    public void setRoleName(String roleName) {
+        this.roleName = roleName;
+    }
 }
