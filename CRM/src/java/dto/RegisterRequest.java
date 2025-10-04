@@ -2,11 +2,11 @@ package dto;
 
 public class RegisterRequest {
     private String username;
-    private String password; // user nhập plain password, service sẽ hash thành passwordHash
+    private String password; 
     private String fullName;
     private String email;
     private String phone;
-    private int roleId; // lưu vào bảng AccountRole sau khi tạo account
+    private int roleId; 
 
     public RegisterRequest() {
     }
@@ -20,11 +20,12 @@ public class RegisterRequest {
         this.roleId = roleId;
     }
 
-    public RegisterRequest(String username, String password, String email, String phone) {
+    public RegisterRequest(String username, String password, String fullName, String email, String phone) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.phone = phone;
+        this.fullName = fullName;
     }
 
     public String getUsername() {

@@ -37,4 +37,55 @@ public class AccountService {
         }
         return false;
     }
+
+    public Response<Boolean> register(RegisterRequest request) {
+        // 1. Kiểm tra trùng username, email, phone
+        if (accountDAO.checkExistUserName(request.getUsername())) {
+            return new Response<>(false, false, "Tên đăng nhập đã tồn tại");
+        }
+        if (accountDAO.checkExistEmail(request.getEmail())) {
+            return new Response<>(false, false, "Email đã được sử dụng");
+        }
+        if (accountDAO.checkExistPhone(request.getPhone())) {
+            return new Response<>(false, false, "Số điện thoại đã tồn tại");
+        }
+
+        String hashedPassword = passwordHasher.hashPassword(request.getPassword());
+
+        boolean account = accountDAO.register(
+                request.getUsername(),
+                hashedPassword,
+                request.getEmail(),
+                request.getPhone(),
+                request.getFullName(),
+                "Active"
+        );
+
+        if (account) {
+            int roleId = 2;
+            boolean roleAdded = accountRoleDAO.addAccountRole(request.getUsername(), roleId);
+
+            if (roleAdded) {
+                return new Response<>(true, true, "Đăng ký thành công! Quay lại trang đăng nhập để bắt đầu!");
+            } else {
+                return new Response<>(false, false, "Đăng ký thất bại! Vui lòng thử lại sau!");
+            }
+        }
+
+        return new Response<>(false, false, "Đăng ký thất bại! Vui lòng thử lại sau!");
+    }
+
+     public Response<Boolean> checkRegisterValid(RegisterRequest req) {
+        if (accountDAO.checkExistUserName(req.getUsername())) {
+            return new Response<>(false, false, "Tên đăng nhập đã tồn tại");
+        }
+        if (accountDAO.checkExistEmail(req.getEmail())) {
+            return new Response<>(false, false, "Email đã được sử dụng");
+        }
+        if (accountDAO.checkExistPhone(req.getPhone())) {
+            return new Response<>(false, false, "Số điện thoại đã được sử dụng");
+        }
+        return new Response<>(true, true, "Thông tin hợp lệ");
+    }
+
 }

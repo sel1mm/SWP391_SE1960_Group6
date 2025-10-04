@@ -467,7 +467,7 @@
                     <a href="index.jsp">Trang chủ</a>
                     <a href="#features">Tính năng</a>
                     <a href="#contact">Liên hệ</a>
-                    <a href="#" class="btn-login">Đăng nhập</a>
+                    <a href="login" class="btn-login">Đăng nhập</a>
                 </div>
             </div>
         </nav>
