@@ -3,17 +3,16 @@ package dto;
 import java.time.LocalDateTime;
 
 public class UserDTO {
-    private int accountId;       // accountId từ Account
-    private String username;     // username
-    private String fullName;     // fullName
-    private String email;        // email
-    private String phone;        // phone
-    private String status;       // Active / Inactive
+    private int accountId;      
+    private String username;     
+    private String fullName;     
+    private String email;        
+    private String phone;        
+    private String status;       
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    private int roleId;          // roleId từ Role
-    private String roleName;     // roleName (Admin, Technician, Customer, CSS...)
+    private int roleId;          
+    private String roleName;    
 
     public UserDTO() {
     }

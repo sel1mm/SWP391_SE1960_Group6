@@ -30,18 +30,14 @@ public class RegisterController extends HttpServlet {
 
         RegisterRequest requestRegister = new RegisterRequest(username, password, fullname, email, phoneNumber);
 
-        // Gọi AccountService để check trùng username/email/phone trước
         service.AccountService accountService = new service.AccountService();
         Response<Boolean> checkResponse = accountService.checkRegisterValid(requestRegister);
 
         if (!checkResponse.isSuccess() || !checkResponse.getData()) {
-            // Nếu không hợp lệ thì quay về register.jsp và hiển thị lỗi
             request.setAttribute("error", checkResponse.getMessage());
             request.getRequestDispatcher("register.jsp").forward(request, response);
             return;
         }
-
-        // Nếu hợp lệ thì mới sinh OTP
         String otp = utils.RandomNumber.getRandomNumber();
 
         HttpSession session = request.getSession();
@@ -51,7 +47,6 @@ public class RegisterController extends HttpServlet {
         session.setAttribute("email", email);
         session.setAttribute("otpPurpose", "register");
 
-        // Gửi mail OTP
         String subject = "Verify your request on CRMS";
         String message = "<p>Chào bạn,</p>"
                 + "<p>Bạn đã đăng ký tài khoản trên website CRMS.</p>"
