@@ -98,10 +98,9 @@
                 margin-top: 10px;
             }
 
-            .btn-submit:hover {
-                background: linear-gradient(45deg, #2980b9, #21618c);
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(52,152,219,0.3);
+            .btn-submit:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
             }
 
             .btn-resend {
@@ -154,6 +153,13 @@
             .brand-logo i {
                 margin-right: 8px;
             }
+
+            #otpError {
+                color: red;
+                font-size: 0.9rem;
+                margin-top: 5px;
+                display: none;
+            }
         </style>
     </head>
     <body>
@@ -163,7 +169,7 @@
 
         <div class="login-container">
             <div class="login-header">
-                <h2 class="login-title"><i class="fas fa-key"></i>Xác minh OTP</h2>
+                <h2 class="login-title"><i class="fas fa-key"></i> Xác minh OTP</h2>
                 <p class="login-subtitle">Nhập mã OTP đã được gửi đến email của bạn.</p>
             </div>
 
@@ -176,16 +182,17 @@
             <form method="post" action="verifyOtp">
                 <div class="form-group">
                     <label for="otp" class="form-label-modern">
-                        <i class="fas fa-key"></i> Mã OTP
+                        <i></i> Mã OTP
                     </label>
                     <div class="position-relative">
-                        <i class="fas fa-key input-icon"></i>
+                        <i></i>
                         <input type="text" class="form-control form-control-modern" id="otp" name="otp"
                                placeholder="Nhập mã OTP gồm 6 chữ số" maxlength="6" required>
+                        <div id="otpError">Mã OTP phải gồm 6 chữ số.</div>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-submit">
+                <button type="submit" class="btn btn-submit" id="submitBtn" disabled>
                     <i class="fas fa-check-circle"></i> Xác nhận OTP
                 </button>
             </form>
@@ -198,6 +205,21 @@
         </div>
 
         <script>
+            const otpInput = document.getElementById('otp');
+            const submitBtn = document.getElementById('submitBtn');
+            const otpError = document.getElementById('otpError');
+            const otpPattern = /^[0-9]{6}$/;
+
+            otpInput.addEventListener('input', function () {
+                if (otpPattern.test(otpInput.value.trim())) {
+                    submitBtn.disabled = false;
+                    otpError.style.display = 'none';
+                } else {
+                    submitBtn.disabled = true;
+                    otpError.style.display = otpInput.value.length > 0 ? 'block' : 'none';
+                }
+            });
+
             let countdown = 60;
             const countdownSpan = document.getElementById('countdown');
             const resendBtn = document.getElementById('resendBtn');
@@ -216,7 +238,6 @@
             }
 
             window.onload = startCountdown;
-
             document.getElementById('resendForm').addEventListener('submit', function (e) {
                 startCountdown();
             });
