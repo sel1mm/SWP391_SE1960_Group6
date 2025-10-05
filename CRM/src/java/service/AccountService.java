@@ -39,7 +39,6 @@ public class AccountService {
     }
 
     public Response<Boolean> register(RegisterRequest request) {
-        // 1. Kiểm tra trùng username, email, phone
         if (accountDAO.checkExistUserName(request.getUsername())) {
             return new Response<>(false, false, "Tên đăng nhập đã tồn tại");
         }

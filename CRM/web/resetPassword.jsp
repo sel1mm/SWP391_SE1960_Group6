@@ -1,8 +1,8 @@
-<%@ page contentType="text/html;charset=UTF-8" %> 
+<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html>
     <head>
-        <title>CRMS - Xác minh OTP</title>
+        <title>CRMS - Đặt lại mật khẩu</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <style>
@@ -23,7 +23,6 @@
                 width: 100%;
                 max-width: 450px;
                 backdrop-filter: blur(10px);
-                position: relative;
             }
 
             .login-header {
@@ -85,6 +84,11 @@
                 font-size: 0.95rem;
             }
 
+            .required-star {
+                color: red;
+                margin-left: 4px;
+            }
+
             .btn-submit {
                 background: linear-gradient(45deg, #3498db, #2980b9);
                 border: none;
@@ -102,29 +106,6 @@
                 background: linear-gradient(45deg, #2980b9, #21618c);
                 transform: translateY(-2px);
                 box-shadow: 0 8px 25px rgba(52,152,219,0.3);
-            }
-
-            .btn-resend {
-                background: #ecf0f1;
-                border: none;
-                border-radius: 15px;
-                padding: 12px;
-                color: #2c3e50;
-                font-weight: 600;
-                font-size: 1rem;
-                width: 100%;
-                margin-top: 15px;
-                transition: all 0.3s ease;
-            }
-
-            .btn-resend:hover:not(:disabled) {
-                background: #d0d7de;
-                transform: translateY(-2px);
-            }
-
-            .btn-resend:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
             }
 
             .alert-modern {
@@ -163,8 +144,8 @@
 
         <div class="login-container">
             <div class="login-header">
-                <h2 class="login-title"><i class="fas fa-key"></i>Xác minh OTP</h2>
-                <p class="login-subtitle">Nhập mã OTP đã được gửi đến email của bạn.</p>
+                <h2 class="login-title"><i class="fas fa-lock"></i>Đặt lại mật khẩu</h2>
+                <p class="login-subtitle">Nhập mật khẩu mới cho tài khoản của bạn.</p>
             </div>
 
             <c:if test="${not empty error}">
@@ -173,53 +154,35 @@
                 </div>
             </c:if>
 
-            <form method="post" action="verifyOtp">
+            <form method="post" action="resetPassword">
                 <div class="form-group">
-                    <label for="otp" class="form-label-modern">
-                        <i class="fas fa-key"></i> Mã OTP
+                    <label for="newPassword" class="form-label-modern">
+                        <i class="fas fa-key"></i> Mật khẩu mới <span class="required-star">*</span>
                     </label>
                     <div class="position-relative">
                         <i class="fas fa-key input-icon"></i>
-                        <input type="text" class="form-control form-control-modern" id="otp" name="otp"
-                               placeholder="Nhập mã OTP gồm 6 chữ số" maxlength="6" required>
+                        <input type="password" class="form-control form-control-modern" id="newPassword" name="newPassword"
+                               placeholder="Nhập mật khẩu mới" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label-modern">
+                        <i class="fas fa-key"></i> Xác nhận mật khẩu <span class="required-star">*</span>
+                    </label>
+                    <div class="position-relative">
+                        <i class="fas fa-key input-icon"></i>
+                        <input type="password" class="form-control form-control-modern" id="confirmPassword" name="confirmPassword"
+                               placeholder="Nhập lại mật khẩu" required>
                     </div>
                 </div>
 
                 <button type="submit" class="btn btn-submit">
-                    <i class="fas fa-check-circle"></i> Xác nhận OTP
-                </button>
-            </form>
-
-            <form method="post" action="resendOtp" id="resendForm">
-                <button type="submit" class="btn btn-resend" id="resendBtn" disabled>
-                    <i class="fas fa-paper-plane"></i> Gửi lại OTP (<span id="countdown">60</span>s)
+                    <i class="fas fa-check-circle"></i> Cập nhật mật khẩu
                 </button>
             </form>
         </div>
 
-        <script>
-            let countdown = 60;
-            const countdownSpan = document.getElementById('countdown');
-            const resendBtn = document.getElementById('resendBtn');
-
-            function startCountdown() {
-                resendBtn.disabled = true;
-                const timer = setInterval(() => {
-                    countdown--;
-                    countdownSpan.textContent = countdown;
-                    if (countdown <= 0) {
-                        clearInterval(timer);
-                        resendBtn.disabled = false;
-                        resendBtn.textContent = "Gửi lại OTP";
-                    }
-                }, 1000);
-            }
-
-            window.onload = startCountdown;
-
-            document.getElementById('resendForm').addEventListener('submit', function (e) {
-                startCountdown();
-            });
-        </script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     </body>
 </html>
