@@ -1,5 +1,6 @@
 package model;
-import java.time.LocalDate;
+
+import java.util.Date;
 
 public class ServiceRequest {
     private int requestId;
@@ -7,23 +8,45 @@ public class ServiceRequest {
     private int equipmentId;
     private int createdBy;
     private String description;
-    private String priorityLevel = "Normal";
-    private LocalDate requestDate;
+    private String priorityLevel;
+    private Date requestDate;
     private String status;
-
+    private String requestType;
+    
+    // Constructor mặc định
     public ServiceRequest() {
     }
-
-    public ServiceRequest(int requestId, int contractId, int equipmentId, int createdBy, String description, LocalDate requestDate, String status) {
+    
+    // Constructor đầy đủ
+    public ServiceRequest(int requestId, int contractId, int equipmentId, 
+                         int createdBy, String description, String priorityLevel, 
+                         Date requestDate, String status, String requestType) {
         this.requestId = requestId;
         this.contractId = contractId;
         this.equipmentId = equipmentId;
         this.createdBy = createdBy;
         this.description = description;
+        this.priorityLevel = priorityLevel;
         this.requestDate = requestDate;
         this.status = status;
+        this.requestType = requestType;
+    }
+    
+    // Constructor cho việc tạo mới (không có requestId)
+    public ServiceRequest(int contractId, int equipmentId, int createdBy, 
+                         String description, String priorityLevel, 
+                         Date requestDate, String status, String requestType) {
+        this.contractId = contractId;
+        this.equipmentId = equipmentId;
+        this.createdBy = createdBy;
+        this.description = description;
+        this.priorityLevel = priorityLevel;
+        this.requestDate = requestDate;
+        this.status = status;
+        this.requestType = requestType;
     }
 
+    // Getters and Setters
     public int getRequestId() {
         return requestId;
     }
@@ -72,11 +95,11 @@ public class ServiceRequest {
         this.priorityLevel = priorityLevel;
     }
 
-    public LocalDate getRequestDate() {
+    public Date getRequestDate() {
         return requestDate;
     }
 
-    public void setRequestDate(LocalDate requestDate) {
+    public void setRequestDate(Date requestDate) {
         this.requestDate = requestDate;
     }
 
@@ -87,6 +110,27 @@ public class ServiceRequest {
     public void setStatus(String status) {
         this.status = status;
     }
-    
-    
+
+    public String getRequestType() {
+        return requestType;
+    }
+
+    public void setRequestType(String requestType) {
+        this.requestType = requestType;
+    }
+
+    @Override
+    public String toString() {
+        return "ServiceRequest{" +
+                "requestId=" + requestId +
+                ", contractId=" + contractId +
+                ", equipmentId=" + equipmentId +
+                ", createdBy=" + createdBy +
+                ", description='" + description + '\'' +
+                ", priorityLevel='" + priorityLevel + '\'' +
+                ", requestDate=" + requestDate +
+                ", status='" + status + '\'' +
+                ", requestType='" + requestType + '\'' +
+                '}';
+    }
 }
