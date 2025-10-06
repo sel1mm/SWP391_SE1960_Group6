@@ -77,7 +77,7 @@ public class LoginController extends HttpServlet {
             if (accountRoleService.isAdmin(accountResponse.getData().getAccountId())) {
                 response.sendRedirect(MessageConstant.ADMIN_URL);
             } else {
-                response.sendRedirect("home");
+                response.sendRedirect("home.jsp");
             }
         } else {
             request.setAttribute("error", MessageConstant.LOGIN_FAILED);
