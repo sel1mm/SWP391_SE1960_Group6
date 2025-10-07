@@ -26,6 +26,9 @@ public class ManagerServiceRequestServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        
         // Lấy thông tin customer từ session
         HttpSession session = request.getSession();
         Integer customerId = (Integer) session.getAttribute("accountId");
@@ -58,6 +61,8 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         
         if ("CreateServiceRequest".equals(action)) {
             handleCreateRequest(request, response);
+        } else if ("UpdateServiceRequest".equals(action)) {
+            handleUpdateRequest(request, response);
         }
     }
     
@@ -264,6 +269,105 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
         } else {
             session.setAttribute("error", "Có lỗi xảy ra khi tạo yêu cầu. Vui lòng thử lại!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+        }
+    }
+    
+    /**
+     * Xử lý cập nhật service request - VALIDATION TẤT CẢ Ở BACKEND
+     */
+    private void handleUpdateRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        HttpSession session = request.getSession();
+        Integer customerId = (Integer) session.getAttribute("accountId");
+        
+        // Kiểm tra đăng nhập
+        if (customerId == null) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+        
+        // Lấy dữ liệu từ form
+        String requestIdStr = request.getParameter("requestId");
+        String description = request.getParameter("description");
+        String priorityLevel = request.getParameter("priorityLevel");
+        
+        // ========== BACKEND VALIDATION ==========
+        
+        // 1. Validate required fields
+        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+            session.setAttribute("error", "Mã yêu cầu không hợp lệ!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
+        
+        if (description == null || description.trim().isEmpty()) {
+            session.setAttribute("error", "Vui lòng nhập mô tả vấn đề!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
+        
+        if (priorityLevel == null || priorityLevel.trim().isEmpty()) {
+            session.setAttribute("error", "Vui lòng chọn mức độ ưu tiên!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
+        
+        // 2. Validate số nguyên
+        int requestId;
+        try {
+            requestId = Integer.parseInt(requestIdStr.trim());
+        } catch (NumberFormatException e) {
+            session.setAttribute("error", "Mã yêu cầu phải là số!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
+        
+        // 3. Validate số dương
+        if (requestId <= 0) {
+            session.setAttribute("error", "Mã yêu cầu phải lớn hơn 0!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
+        
+        // 4. Validate độ dài description
+        if (description.trim().length() < 10) {
+            session.setAttribute("error", "Mô tả vấn đề phải có ít nhất 10 ký tự!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
+        
+        if (description.trim().length() > 255) {
+            session.setAttribute("error", "Mô tả vấn đề không được vượt quá 255 ký tự!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
+        
+        // 5. Validate priorityLevel hợp lệ
+        if (!priorityLevel.equals("Normal") && !priorityLevel.equals("High") && !priorityLevel.equals("Urgent")) {
+            session.setAttribute("error", "Mức độ ưu tiên không hợp lệ!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
+        
+        // 6. Validate request có thuộc về customer và đang Pending không
+        if (!serviceRequestDAO.canUpdateRequest(requestId, customerId)) {
+            session.setAttribute("error", "Bạn không có quyền cập nhật yêu cầu này hoặc yêu cầu đã được xử lý!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
+        
+        // ========== TẤT CẢ VALIDATION ĐÃ PASS ==========
+        
+        // Update vào database
+        boolean success = serviceRequestDAO.updateServiceRequest(requestId, description.trim(), priorityLevel);
+        
+        if (success) {
+            session.setAttribute("success", "Cập nhật yêu cầu #" + requestId + " thành công!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+        } else {
+            session.setAttribute("error", "Có lỗi xảy ra khi cập nhật yêu cầu. Vui lòng thử lại!");
             response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
         }
     }

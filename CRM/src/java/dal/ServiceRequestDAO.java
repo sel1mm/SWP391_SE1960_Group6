@@ -66,6 +66,52 @@ public class ServiceRequestDAO extends MyDAO {
         }
     }
     
+    // ============ UPDATE METHOD ============
+    
+    /**
+     * Cập nhật service request (chỉ cho phép update description và priorityLevel)
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean updateServiceRequest(int requestId, String description, String priorityLevel) {
+        xSql = "UPDATE ServiceRequest SET description = ?, priorityLevel = ? " +
+               "WHERE requestId = ? AND status = 'Pending'";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setString(1, description);
+            ps.setString(2, priorityLevel);
+            ps.setInt(3, requestId);
+            
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * Kiểm tra request có thuộc về customer và đang Pending không
+     */
+    public boolean canUpdateRequest(int requestId, int customerId) {
+        xSql = "SELECT sr.requestId FROM ServiceRequest sr " +
+               "INNER JOIN Contract c ON sr.contractId = c.contractId " +
+               "WHERE sr.requestId = ? AND c.customerId = ? AND sr.status = 'Pending'";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setInt(1, requestId);
+            ps.setInt(2, customerId);
+            rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+    
     // ============ CREATE METHOD ============
     
     /**
