@@ -1,4 +1,5 @@
 package model;
+
 import java.time.LocalDate;
 
 public class Contract {
@@ -8,11 +9,12 @@ public class Contract {
     private String contractType;
     private String status;
     private String details;
-
+    
     public Contract() {
     }
-
-    public Contract(int contractId, int customerId, LocalDate contractDate, String contractType, String status, String details) {
+    
+    public Contract(int contractId, int customerId, LocalDate contractDate, 
+                   String contractType, String status, String details) {
         this.contractId = contractId;
         this.customerId = customerId;
         this.contractDate = contractDate;
@@ -68,6 +70,4 @@ public class Contract {
     public void setDetails(String details) {
         this.details = details;
     }
-    
-    
 }
