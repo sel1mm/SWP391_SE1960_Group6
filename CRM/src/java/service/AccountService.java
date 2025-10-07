@@ -9,6 +9,7 @@ import dto.UserDTO;
 import java.util.ArrayList;
 import java.util.List;
 import model.Account;
+import model.GoogleAccount;
 import utils.passwordHasher;
 
 public class AccountService {
@@ -74,7 +75,7 @@ public class AccountService {
         return new Response<>(false, false, "Đăng ký thất bại! Vui lòng thử lại sau!");
     }
 
-     public Response<Boolean> checkRegisterValid(RegisterRequest req) {
+    public Response<Boolean> checkRegisterValid(RegisterRequest req) {
         if (accountDAO.checkExistUserName(req.getUsername())) {
             return new Response<>(false, false, "Tên đăng nhập đã tồn tại");
         }
@@ -85,6 +86,37 @@ public class AccountService {
             return new Response<>(false, false, "Số điện thoại đã được sử dụng");
         }
         return new Response<>(true, true, "Thông tin hợp lệ");
+    }
+
+    public Account getAccountByEmail(String email) {
+        return accountDAO.getAccountByEmail(email);
+    }
+
+    public Account createGoogleAccount(String email, String name) {
+        String username = email.split("@")[0];
+        String defaultPassword = passwordHasher.hashPassword("GOOGLE_LOGIN");
+
+        boolean created = accountDAO.register(
+                username,
+                defaultPassword, 
+                email,
+                null,
+                name,
+                "Active"
+        );
+
+        if (created) {
+            accountRoleDAO.addAccountRole(username, 2);
+            Account acc = accountDAO.getAccountByEmail(email);
+
+            if (acc == null) {
+                System.out.println("❌ [DEBUG] Không thể lấy account sau khi tạo!");
+            }
+            return acc;
+        } else {
+            System.out.println("❌ [DEBUG] Tạo tài khoản Google thất bại!");
+            return null; 
+        }
     }
 
 }

@@ -139,6 +139,55 @@
                 color: white;
             }
 
+            .btn-google {
+                background: #db4437;
+                border: none;
+                border-radius: 15px;
+                padding: 12px;
+                color: white;
+                font-weight: 600;
+                width: 100%;
+                transition: all 0.3s ease;
+            }
+
+            .btn-google:hover {
+                background: #c23321;
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(219, 68, 55, 0.3);
+                color: white;
+            }
+
+            .divider {
+                text-align: center;
+                margin: 20px 0;
+                position: relative;
+            }
+
+            .divider::before,
+            .divider::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                width: 40%;
+                height: 1px;
+                background: #ccc;
+            }
+
+            .divider::before {
+                left: 0;
+            }
+
+            .divider::after {
+                right: 0;
+            }
+
+            .divider span {
+                background: #fff;
+                padding: 0 10px;
+                font-weight: 600;
+                color: #7f8c8d;
+            }
+
             .alert-modern {
                 border-radius: 15px;
                 border: none;
@@ -231,6 +280,13 @@
 
                 <a href="register" class="btn btn-register">
                     <i class="fas fa-user-plus"></i> Tạo tài khoản mới
+                </a>
+
+                <div class="divider"><span>Hoặc</span></div>
+
+                <a href="https://accounts.google.com/o/oauth2/auth?scope=email%20profile%20openid&redirect_uri=http://localhost:8080/CRM/login-google&response_type=code&client_id=314156413691-aghmg62mq9rdhki4ue9vhc92l50ipvvn.apps.googleusercontent.com&approval_prompt=force"
+                   class="btn btn-google w-100">
+                    <i class="fab fa-google me-2"></i> Đăng nhập bằng Google
                 </a>
             </form>
         </div>
