@@ -223,12 +223,12 @@
 
                 <div class="form-group">
                     <label for="password" class="form-label-modern">Mật khẩu <span class="required-star">*</span></label>
-                    <input type="password" id="password" name="password" class="form-control form-control-modern" required>
+                    <input type="password" id="password" name="password" class="form-control form-control-modern" placeholder="Nhập mật khẩu" required>
                 </div>
 
                 <div class="form-group">
                     <label for="confirm-password" class="form-label-modern">Nhập lại mật khẩu <span class="required-star">*</span></label>
-                    <input type="password" id="confirm-password" name="confirm-password" class="form-control form-control-modern" required>
+                    <input type="password" id="confirm-password" name="confirm-password" class="form-control form-control-modern" placeholder="Xác nhận lại mật khẩu" required>
                     <div id="passwordError" class="error-message">Mật khẩu không khớp</div>
                 </div>
 
@@ -244,6 +244,7 @@
         </div>
 
         <script>
+            const form = document.getElementById('registerForm');
             const fullNameInput = document.getElementById('fullName');
             const emailInput = document.getElementById('email');
             const usernameInput = document.getElementById('username');
@@ -257,77 +258,83 @@
             const usernameError = document.getElementById('usernameError');
             const passwordError = document.getElementById('passwordError');
             const submitBtn = document.getElementById('submitBtn');
-            const form = document.getElementById('registerForm');
 
             const fullNamePattern = /^[A-Za-zÀ-ỹ\s]{2,50}$/;
             const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
             const usernamePattern = /^[a-zA-Z0-9]+$/;
             const phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
 
-            fullNameInput.addEventListener('input', validateFullName);
-            emailInput.addEventListener('input', validateEmail);
-            usernameInput.addEventListener('input', validateUsername);
-            confirmPasswordInput.addEventListener('input', validatePasswordMatch);
-            phoneInput.addEventListener('input', validatePhoneNumber);
+            fullNameInput.addEventListener('blur', validateFullName);
+            emailInput.addEventListener('blur', validateEmail);
+            usernameInput.addEventListener('blur', validateUsername);
+            confirmPasswordInput.addEventListener('blur', validatePasswordMatch);
+            phoneInput.addEventListener('blur', validatePhoneNumber);
+            passwordInput.addEventListener('blur', validatePasswordMatch);
+
+            fullNameInput.addEventListener('input', hideError(fullNameError));
+            emailInput.addEventListener('input', hideError(emailError));
+            usernameInput.addEventListener('input', hideError(usernameError));
+            phoneInput.addEventListener('input', hideError(phoneError));
+            passwordInput.addEventListener('input', hideError(passwordError));
+            confirmPasswordInput.addEventListener('input', hideError(passwordError));
+
+            function hideError(errorElement) {
+                return function () {
+                    errorElement.style.display = 'none';
+                };
+            }
 
             function validateFullName() {
                 if (!fullNamePattern.test(fullNameInput.value.trim())) {
                     fullNameError.style.display = 'block';
                     return false;
-                } else {
-                    fullNameError.style.display = 'none';
-                    return true;
                 }
+                return true;
             }
 
             function validatePhoneNumber() {
-                if (!phonePattern.test(phoneInput.value)) {
+                if (!phonePattern.test(phoneInput.value.trim())) {
                     phoneError.style.display = 'block';
                     return false;
-                } else {
-                    phoneError.style.display = 'none';
-                    return true;
                 }
+                return true;
             }
 
             function validateEmail() {
-                if (!emailPattern.test(emailInput.value)) {
+                if (!emailPattern.test(emailInput.value.trim())) {
                     emailError.style.display = 'block';
                     return false;
-                } else {
-                    emailError.style.display = 'none';
-                    return true;
                 }
+                return true;
             }
 
             function validateUsername() {
-                if (!usernamePattern.test(usernameInput.value)) {
+                if (!usernamePattern.test(usernameInput.value.trim())) {
                     usernameError.style.display = 'block';
                     return false;
-                } else {
-                    usernameError.style.display = 'none';
-                    return true;
                 }
+                return true;
             }
 
             function validatePasswordMatch() {
                 if (passwordInput.value !== confirmPasswordInput.value) {
                     passwordError.style.display = 'block';
                     return false;
-                } else {
-                    passwordError.style.display = 'none';
-                    return true;
                 }
+                return true;
             }
 
-            function validateForm() {
-                return validateEmail() && validateUsername() && validatePasswordMatch()
-                        && validatePhoneNumber() && validateFullName();
-            }
-
-            form.addEventListener('input', function () {
-                submitBtn.disabled = !validateForm();
+            form.addEventListener('submit', function (e) {
+                const isValid = validateFullName() &&
+                        validatePhoneNumber() &&
+                        validateEmail() &&
+                        validateUsername() &&
+                        validatePasswordMatch();
+                if (!isValid) {
+                    e.preventDefault(); 
+                }
             });
         </script>
+
     </body>
 </html>

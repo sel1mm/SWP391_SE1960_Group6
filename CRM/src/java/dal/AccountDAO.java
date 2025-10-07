@@ -11,7 +11,7 @@ public class AccountDAO extends MyDAO {
         try {
             ps = con.prepareStatement(sql);
             ps.setString(1, username);
-            ps.setString(2, passwordHash); // password đã hash từ service
+            ps.setString(2, passwordHash);
             rs = ps.executeQuery();
             if (rs.next()) {
                 LocalDateTime createdAt = null;
@@ -156,10 +156,46 @@ public class AccountDAO extends MyDAO {
             ps.setString(3, email);
             ps.setString(4, phone);
             ps.setString(5, fullName);
-            ps.setString(6,status);
+            ps.setString(6, status);
             ps.executeUpdate();
             ps.close();
             return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public Account getAccountByEmail(String email) {
+        String sql = "SELECT * FROM Account WHERE email = ?";
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setString(1, email);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status")
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean updatePasswordByEmail(String email, String hashedPassword) {
+        String sql = "UPDATE Account SET passwordHash = ?, updatedAt = NOW() WHERE email = ?";
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setString(1, hashedPassword);
+            ps.setString(2, email);
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -3,6 +3,7 @@ package model;
 import java.time.LocalDateTime;
 
 public class Account {
+
     private int accountId;
     private String username;
     private String passwordHash;
@@ -26,6 +27,16 @@ public class Account {
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public Account(int accountId, String username, String passwordHash, String fullName, String email, String phone, String status) {
+        this.accountId = accountId;
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.fullName = fullName;
+        this.email = email;
+        this.phone = phone;
+        this.status = status;
     }
 
     public int getAccountId() {
