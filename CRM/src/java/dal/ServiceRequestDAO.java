@@ -66,6 +66,52 @@ public class ServiceRequestDAO extends MyDAO {
         }
     }
     
+    // ============ UPDATE METHOD ============
+    
+    /**
+     * Cập nhật service request (chỉ cho phép update description và priorityLevel)
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean updateServiceRequest(int requestId, String description, String priorityLevel) {
+        xSql = "UPDATE ServiceRequest SET description = ?, priorityLevel = ? " +
+               "WHERE requestId = ? AND status = 'Pending'";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setString(1, description);
+            ps.setString(2, priorityLevel);
+            ps.setInt(3, requestId);
+            
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * Kiểm tra request có thuộc về customer và đang Pending không
+     */
+    public boolean canUpdateRequest(int requestId, int customerId) {
+        xSql = "SELECT sr.requestId FROM ServiceRequest sr " +
+               "INNER JOIN Contract c ON sr.contractId = c.contractId " +
+               "WHERE sr.requestId = ? AND c.customerId = ? AND sr.status = 'Pending'";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setInt(1, requestId);
+            ps.setInt(2, customerId);
+            rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+    
     // ============ CREATE METHOD ============
     
     /**
@@ -105,6 +151,34 @@ public class ServiceRequestDAO extends MyDAO {
     }
     
     // ============ READ METHODS ============
+    
+    /**
+     * Lấy service request detail với đầy đủ thông tin (JOIN)
+     */
+    public model.ServiceRequestDetailDTO getRequestDetailById(int requestId) {
+        xSql = "SELECT sr.*, " +
+               "c.contractType, c.status as contractStatus, c.contractDate, " +
+               "e.serialNumber, e.model as equipmentModel, e.description as equipmentDescription, " +
+               "a.fullName as customerName " +
+               "FROM ServiceRequest sr " +
+               "INNER JOIN Contract c ON sr.contractId = c.contractId " +
+               "INNER JOIN Equipment e ON sr.equipmentId = e.equipmentId " +
+               "INNER JOIN Account a ON c.customerId = a.accountId " +
+               "WHERE sr.requestId = ?";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setInt(1, requestId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToDetailDTO(rs);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return null;
+    }
     
     /**
      * Lấy tất cả service requests của một customer
@@ -270,6 +344,44 @@ public class ServiceRequestDAO extends MyDAO {
         sr.setStatus(rs.getString("status"));
         sr.setRequestType(rs.getString("requestType"));
         return sr;
+    }
+    
+    /**
+     * Map ResultSet thành ServiceRequestDetailDTO
+     * FIX: Convert java.sql.Date to LocalDate for Contract and Equipment
+     */
+    private model.ServiceRequestDetailDTO mapResultSetToDetailDTO(ResultSet rs) throws SQLException {
+        model.ServiceRequestDetailDTO dto = new model.ServiceRequestDetailDTO();
+        // ServiceRequest info
+        dto.setRequestId(rs.getInt("requestId"));
+        dto.setContractId(rs.getInt("contractId"));
+        dto.setEquipmentId(rs.getInt("equipmentId"));
+        dto.setCreatedBy(rs.getInt("createdBy"));
+        dto.setDescription(rs.getString("description"));
+        dto.setPriorityLevel(rs.getString("priorityLevel"));
+        dto.setRequestDate(rs.getDate("requestDate"));
+        dto.setStatus(rs.getString("status"));
+        dto.setRequestType(rs.getString("requestType"));
+        
+        // Contract info
+        dto.setContractType(rs.getString("contractType"));
+        dto.setContractStatus(rs.getString("contractStatus"));
+        
+        // Fix: Convert contractDate to LocalDate
+        java.sql.Date contractDate = rs.getDate("contractDate");
+        if (contractDate != null) {
+            dto.setContractDate(contractDate.toLocalDate());
+        }
+        
+        // Equipment info
+        dto.setSerialNumber(rs.getString("serialNumber"));
+        dto.setEquipmentModel(rs.getString("equipmentModel"));
+        dto.setEquipmentDescription(rs.getString("equipmentDescription"));
+        
+        // Customer info
+        dto.setCustomerName(rs.getString("customerName"));
+        
+        return dto;
     }
     
     /**

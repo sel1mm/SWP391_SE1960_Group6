@@ -307,9 +307,17 @@
                                 </td>
                                 <td>
                                     <button class="btn btn-sm btn-info btn-action" 
-                                            onclick="viewRequest('${request.requestId}', '${request.contractId}', '${request.equipmentId}', '${request.description}', '<fmt:formatDate value="${request.requestDate}" pattern="dd/MM/yyyy"/>', '${request.status}')">
+                                            onclick="viewRequest('${request.requestId}', '${request.contractId}', '${request.equipmentId}', '${request.description}', '<fmt:formatDate value="${request.requestDate}" pattern="dd/MM/yyyy"/>', '${request.status}', '${request.priorityLevel}')">
                                         <i class="fas fa-eye"></i> Chi Tiết
                                     </button>
+                                    
+                                    <!-- Chỉ hiển thị nút Edit nếu status = Pending -->
+                                    <c:if test="${request.status == 'Pending'}">
+                                        <button class="btn btn-sm btn-warning btn-action" 
+                                                onclick="editRequest('${request.requestId}', '${request.description}', '${request.priorityLevel}')">
+                                            <i class="fas fa-edit"></i> Sửa
+                                        </button>
+                                    </c:if>
                                 </td>
                             </tr>
                         </c:forEach>
