@@ -253,6 +253,45 @@ public class UserController extends HttpServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
         }
     }
+    
+     private void bannedUser(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String idParam = request.getParameter("id");
+        if (idParam == null || idParam.trim().isEmpty()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID is required");
+            return;
+        }
+
+        try {
+            int userId = Integer.parseInt(idParam);
+       
+            String status = request.getParameter("InActive");
+
+            Account account = new Account();
+            account.setAccountId(userId);
+            account.setStatus(status);
+
+            Response<Account> result = accountService.updateAccount(account);
+            
+            if (result.isSuccess()) {
+                response.sendRedirect(request.getContextPath() + "/user/list?message=" + 
+                    java.net.URLEncoder.encode("User updated successfully", "UTF-8"));
+            } else {
+                request.setAttribute("error", result.getMessage());
+                request.setAttribute("user", account);
+                
+                // Get roles for form
+                Response<List<model.Role>> rolesResult = roleService.getAllRoles();
+                if (rolesResult.isSuccess()) {
+                    request.setAttribute("roles", rolesResult.getData());
+                }
+                
+                request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+            }
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
+        }
+    }
 
     private void updatePassword(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

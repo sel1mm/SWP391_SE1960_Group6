@@ -255,7 +255,7 @@ public class AccountDAO extends MyDAO {
             ps.setInt(3, accountId);
             
             int affectedRows = ps.executeUpdate();
-            
+            // controller => service => dao 
             if (affectedRows > 0) {
                 return new Response<>(null, true, "Password updated successfully");
             }
@@ -270,28 +270,40 @@ public class AccountDAO extends MyDAO {
         }
         return new Response<>(null, false, "Failed to update password");
     }
+    
+    
+   public Response<Boolean> deleteAccount(int accountId) {
+    String sql = """
+        UPDATE Account
+        SET status = 
+            CASE 
+                WHEN status = 'Active' THEN 'InActive'
+                ELSE 'Active'
+            END
+        WHERE accountId = ?
+    """;
 
-    public Response<Boolean> deleteAccount(int accountId) {
-        String sql = "DELETE FROM Account WHERE accountId = ?";
-        try {
-            ps = con.prepareStatement(sql);
-            ps.setInt(1, accountId);
-            int affectedRows = ps.executeUpdate();
-            
-            if (affectedRows > 0) {
-                return new Response<>(true, true, "Account deleted successfully");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (ps != null) ps.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setInt(1, accountId);
+        int affectedRows = ps.executeUpdate();
+
+        if (affectedRows > 0) {
+            return new Response<>(true, true, "Account status toggled successfully");
         }
-        return new Response<>(false, false, "Failed to delete account");
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
+
+    return new Response<>(false, false, "Failed to toggle account status");
+}
+
 
     public Response<Boolean> isUsernameExists(String username) {
         String sql = "SELECT COUNT(*) as count FROM Account WHERE username = ?";

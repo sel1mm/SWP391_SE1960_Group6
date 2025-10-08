@@ -117,7 +117,7 @@
                                             <div class="mb-3">
                                                 <label class="form-label">Created At</label>
                                                 <input type="text" class="form-control" 
-                                                       value="<fmt:formatDate value='${user.createdAt}' pattern='dd/MM/yyyy HH:mm'/>" 
+                                                       value="                          <fmt:formatDate value="${user.createdAtAsDate}" pattern="dd/MM/yyyy HH:mm"/>" 
                                                        readonly>
                                             </div>
                                         </div>
