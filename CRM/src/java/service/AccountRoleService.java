@@ -20,8 +20,26 @@ public class AccountRoleService {
    
     public boolean isCustomer(int accountId) {
         Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
-        return accountRole.isSuccess() 
-                && accountRole.getData() != null 
+        return accountRole.isSuccess()
+                && accountRole.getData() != null
+                && accountRole.getData().getRoleId() == 4;
+    }
+
+    public boolean isTechnicalManager(int accountId) {
+        Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
+        return accountRole.isSuccess()
+                && accountRole.getData() != null
                 && accountRole.getData().getRoleId() == 2;
+    }
+
+    public String getUserRole(int accountId) {
+        if (isAdmin(accountId)) {
+            return "admin";
+        } else if (isTechnicalManager(accountId)) {
+            return "Technical Manager";
+        } else if (isCustomer(accountId)) {
+            return "customer";
+        }
+        return "unknown";
     }
 }

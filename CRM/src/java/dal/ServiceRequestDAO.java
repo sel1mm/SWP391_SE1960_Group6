@@ -289,7 +289,7 @@ public class ServiceRequestDAO extends MyDAO {
     }
     
     /**
-     * Đếm số requests theo status
+     * Đếm số requests theo status (cho customer cụ thể)
      */
     public int getRequestCountByStatus(int customerId, String status) {
         xSql = "SELECT COUNT(*) FROM ServiceRequest sr " +
@@ -299,6 +299,26 @@ public class ServiceRequestDAO extends MyDAO {
             ps = con.prepareStatement(xSql);
             ps.setInt(1, customerId);
             ps.setString(2, status);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return 0;
+    }
+
+    /**
+     * Đếm số requests theo status (toàn bộ hệ thống - cho Technical Manager)
+     */
+    public int getRequestCountByStatus(String status) {
+        xSql = "SELECT COUNT(*) FROM ServiceRequest WHERE status = ?";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setString(1, status);
             rs = ps.executeQuery();
             if (rs.next()) {
                 return rs.getInt(1);
@@ -395,4 +415,199 @@ public class ServiceRequestDAO extends MyDAO {
             e.printStackTrace();
         }
     }
+
+    // ============ TECHNICAL MANAGER METHODS ============
+
+    /**
+     * Get all pending requests for Technical Manager approval
+     */
+    public List<ServiceRequest> getPendingRequestsForApproval() {
+        List<ServiceRequest> list = new ArrayList<>();
+        xSql = "SELECT sr.* FROM ServiceRequest sr WHERE sr.status = 'Pending' ORDER BY sr.priorityLevel DESC, sr.requestDate ASC";
+        try {
+            ps = con.prepareStatement(xSql);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapResultSetToServiceRequest(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return list;
+    }
+
+    /**
+     * Search pending requests for Technical Manager
+     */
+    public List<ServiceRequest> searchPendingRequests(String keyword) {
+        List<ServiceRequest> list = new ArrayList<>();
+        xSql = "SELECT sr.* FROM ServiceRequest sr " +
+                "INNER JOIN Account a ON sr.createdBy = a.accountId " +
+                "WHERE sr.status = 'Pending' " +
+                "AND (sr.description LIKE ? OR a.fullName LIKE ? OR sr.requestId LIKE ?) " +
+                "ORDER BY sr.priorityLevel DESC, sr.requestDate ASC";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setString(1, "%" + keyword + "%");
+            ps.setString(2, "%" + keyword + "%");
+            ps.setString(3, "%" + keyword + "%");
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapResultSetToServiceRequest(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return list;
+    }
+
+    /**
+     * Filter pending requests by priority and urgency
+     */
+    public List<ServiceRequest> filterPendingRequests(String priority, String urgency) {
+        List<ServiceRequest> list = new ArrayList<>();
+
+        StringBuilder sqlBuilder = new StringBuilder(
+            "SELECT sr.* FROM ServiceRequest sr WHERE sr.status = 'Pending'"
+        );
+
+        List<String> conditions = new ArrayList<>();
+
+        if (priority != null && !priority.trim().isEmpty()) {
+            conditions.add("sr.priorityLevel = '" + priority + "'");
+        }
+
+        if (urgency != null && !urgency.trim().isEmpty()) {
+            if ("Urgent".equals(urgency)) {
+                conditions.add("DATEDIFF(CURRENT_DATE, sr.requestDate) >= 7");
+            } else if ("High".equals(urgency)) {
+                conditions.add("DATEDIFF(CURRENT_DATE, sr.requestDate) >= 3");
+            } else if ("Normal".equals(urgency)) {
+                conditions.add("DATEDIFF(CURRENT_DATE, sr.requestDate) < 3");
+            }
+        }
+
+        if (!conditions.isEmpty()) {
+            sqlBuilder.append(" AND ").append(String.join(" AND ", conditions));
+        }
+
+        sqlBuilder.append(" ORDER BY sr.priorityLevel DESC, sr.requestDate ASC");
+
+        xSql = sqlBuilder.toString();
+        try {
+            ps = con.prepareStatement(xSql);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapResultSetToServiceRequest(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return list;
+    }
+
+    /**
+     * Update service request status (for Technical Manager)
+     */
+    public boolean updateServiceRequestStatus(int requestId, String newStatus, String managerNotes) {
+        xSql = "UPDATE ServiceRequest SET status = ?, managerNotes = ?, lastReviewedAt = NOW() WHERE requestId = ? AND status = 'Pending'";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setString(1, newStatus);
+            ps.setString(2, managerNotes);
+            ps.setInt(3, requestId);
+
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+
+    /**
+     * Get request count by priority
+     */
+    public int getRequestCountByPriority(String priority) {
+        xSql = "SELECT COUNT(*) FROM ServiceRequest WHERE priorityLevel = ? AND status = 'Pending'";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setString(1, priority);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return 0;
+    }
+
+    /**
+     * Get requests created today
+     */
+    public int getRequestsCreatedToday() {
+        xSql = "SELECT COUNT(*) FROM ServiceRequest WHERE DATE(requestDate) = CURDATE()";
+        try {
+            ps = con.prepareStatement(xSql);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return 0;
+    }
+
+    /**
+     * Get pending requests with enhanced information for Technical Manager dashboard
+     */
+    public List<ServiceRequest> getPendingRequestsWithDetails() {
+        List<ServiceRequest> list = new ArrayList<>();
+        xSql = "SELECT sr.*, " +
+                "a.fullName as customerName, a.email as customerEmail, a.phone as customerPhone, " +
+                "e.serialNumber, e.model as equipmentModel, e.description as equipmentDescription, " +
+                "c.contractType, c.contractDate, " +
+                "DATEDIFF(CURRENT_DATE, sr.requestDate) as daysPending " +
+                "FROM ServiceRequest sr " +
+                "INNER JOIN Account a ON sr.createdBy = a.accountId " +
+                "INNER JOIN Equipment e ON sr.equipmentId = e.equipmentId " +
+                "INNER JOIN Contract c ON sr.contractId = c.contractId " +
+                "WHERE sr.status = 'Pending' " +
+                "ORDER BY " +
+                "CASE sr.priorityLevel " +
+                "    WHEN 'Urgent' THEN 1 " +
+                "    WHEN 'High' THEN 2 " +
+                "    WHEN 'Normal' THEN 3 " +
+                "END, sr.requestDate ASC";
+        try {
+            ps = con.prepareStatement(xSql);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                ServiceRequest sr = mapResultSetToServiceRequest(rs);
+                // Note: In a real implementation, you might want to create a DTO
+                // that includes the additional fields like customerName, equipmentModel, etc.
+                list.add(sr);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return list;
+    }
+
 }
