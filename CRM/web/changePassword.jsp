@@ -69,49 +69,100 @@
 
   <div class="divider-horizontal"></div> 
 
-  <form id="changePasswordForm">
+  <form id="changePasswordForm" action="changePassword" method="Post" target="_blank">
     <div id="currentPasswordContainer">
       <input type="password" name="currentPassword" placeholder="Enter your current password" class="form-control mb-2" required>
       <button type="submit" class="save-btn button">Submit</button>
     </div>
 
-    <div id="newPasswordContainer" style="display:none;">
-      <input type="password" name="newPassword" placeholder="Enter new password" class="form-control mb-2">
-      <input type="password" name="renewPassword" placeholder="Re-enter new password" class="form-control mb-2">
-      <button id="saveNewPassword" type="button" class="save-btn button2" >Save New Password</button>
-    </div>
+  <div id="newPasswordContainer" style="display:none;">
+  <input type="password" id="newPassword" name="newPassword" 
+         placeholder="Enter new password" 
+         class="form-control mb-2"
+         oninput="checkPasswordInput('newPassword', 'passwordError')" />
+
+  <p id="passwordError" style="color:red; margin-bottom:10px;"></p>
+
+  <input type="password" id="renewPassword" name="renewPassword" 
+         placeholder="Re-enter new password" 
+         class="form-control mb-2">
+
+  <button id="saveNewPassword" type="button" class="save-btn button2">Save New Password</button>
+</div>
   </form>
 
   <div id="resultContainer" style="margin-top:10px;" class ="button2"></div>
 </div>
 
+
+<script src="js/passwordValidation.js"></script>
 <script>
-document.getElementById("changePasswordForm").addEventListener("submit", function(e) {
-  e.preventDefault();
-  const currentPassword = document.querySelector('input[name="currentPassword"]').value;
+document.addEventListener("DOMContentLoaded", function() {
+    // Xử lý check current password
+    const changePasswordForm = document.getElementById("changePasswordForm");
+    const currentPasswordContainer = document.getElementById("currentPasswordContainer");
+    const newPasswordContainer = document.getElementById("newPasswordContainer");
+    const resultContainer = document.getElementById("resultContainer");
+    const saveNewPasswordBtn = document.getElementById("saveNewPassword");
 
-  if (currentPassword === "123456") {
-    document.getElementById("currentPasswordContainer").style.display = "none";
-    document.getElementById("newPasswordContainer").style.display = "block";
-    document.getElementById("resultContainer").innerHTML = "<span style='color:green'>Current password correct!</span>";
-  } else {
-    document.getElementById("resultContainer").innerHTML = "<span style='color:red'>Current password incorrect!</span>";
-  }
+    changePasswordForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const currentPassword = document.querySelector('input[name="currentPassword"]').value;
+
+        fetch('changePassword', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'currentPassword=' + encodeURIComponent(currentPassword)
+        })
+        .then(response => response.text())
+        .then(data => {
+            if (data === "ok") {
+                currentPasswordContainer.style.display = "none";
+                newPasswordContainer.style.display = "block";
+                resultContainer.innerHTML = "<span style='color:green'>Current password correct!</span>";
+            } else {
+                resultContainer.innerHTML = "<span style='color:red'>" + data + "</span>";
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            resultContainer.innerHTML = "<span style='color:red'>Error occurred!</span>";
+        });
+    });
+
+    // Xử lý lưu password mới
+saveNewPasswordBtn.addEventListener("click", function() {
+    const newPass = document.querySelector('input[name="newPassword"]').value;
+    const renewPass = document.querySelector('input[name="renewPassword"]').value;
+
+    const errorMessage = validatePassword(newPass);
+    if (errorMessage) {
+        resultContainer.innerHTML = "<span style='color:red'>" + errorMessage + "</span>";
+        return;
+    }
+
+    if (newPass !== renewPass) {
+        resultContainer.innerHTML = "<span style='color:red'>New passwords do not match!</span>";
+        return;
+    }
+
+    fetch('changePassword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'newPassword=' + encodeURIComponent(newPass) + '&renewPassword=' + encodeURIComponent(renewPass)
+    })
+    .then(response => response.text())
+    .then(data => {
+        resultContainer.innerHTML = "<span style='color:green'>" + data + "</span>";
+        newPasswordContainer.style.display = "none";
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        resultContainer.innerHTML = "<span style='color:red'>Error occurred!</span>";
+    });
 });
-
-document.getElementById("saveNewPassword").addEventListener("click", function() {
-  const newPass = document.querySelector('input[name="newPassword"]').value;
-  const renewPass = document.querySelector('input[name="renewPassword"]').value;
-
-  if (newPass !== renewPass) {
-    alert("New passwords do not match!");
-    return;
-  }
-
-  document.getElementById("resultContainer").innerHTML = "<span style='color:green'>Password changed successfully!</span>";
-  document.getElementById("newPasswordContainer").style.display = "none";
 });
 </script>
-
 </body>
 </html>

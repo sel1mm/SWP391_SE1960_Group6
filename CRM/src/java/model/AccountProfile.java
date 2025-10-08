@@ -87,6 +87,11 @@ public class AccountProfile {
     public void setExtraData(String extraData) {
         this.extraData = extraData;
     }
+
+    @Override
+    public String toString() {
+        return "AccountProfile{" + "profileId=" + profileId + ", acoountId=" + acoountId + ", address=" + address + ", dateOfBirth=" + dateOfBirth + ", avatarUrl=" + avatarUrl + ", nationalId=" + nationalId + ", verified=" + verified + ", extraData=" + extraData + '}';
+    }
     
     
 }

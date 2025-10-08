@@ -139,6 +139,10 @@ Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Html.html to edit thi
 td{
     padding-bottom: 10px ;
 }
+.message{
+    padding-left: 48px ;
+    
+}
     </style>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -149,7 +153,7 @@ td{
     />
   </head>
   <body>
-    <form action="manageProfile" method="POST">
+    <form action="changeInformation" method="POST">
       <div class="my-container">
         <div class="header-left">
           <h3>My Profile</h3>
@@ -165,13 +169,13 @@ td{
               <tr>
                 <td class="ps-5  py-2">Email:</td>
                 <td class="ps-2">
-                 <input type = "text" placeholder="Enter your new email" class="form-control">
+                    <input type = "text" placeholder="Enter your new email" id="email" class="form-control" name="email" >
                 </td>
               </tr>
               <tr>
                 <td class="ps-5  py-2">Address:</td>
                 <td class="ps-2">
-                  <input type = "text" placeholder="Enter your address" class="form-control">
+                    <input type = "text" placeholder="Enter your address" class="form-control" name="address">
 
                 </td>
               </tr>
@@ -181,7 +185,7 @@ td{
                 <td class="ps-5  py-2">NationalID:</td>
 
                 <td class="ps-2">
-                <input type = "text" placeholder="Enter your new nationalID" class="form-control">
+                    <input type = "text" placeholder="Enter your new nationalID" id="nationalID" class="form-control" name="nationalId">
                 </td>
               </tr>
 
@@ -189,14 +193,18 @@ td{
                 <td class="ps-5  py-2">DateOfBirth:</td>
 
                 <td class="ps-2">
-                    <input type = "text" placeholder="Enter your new DoB" class="form-control">
+                    <input type = "text" placeholder="Enter your new DoB" class="form-control" name="dob">
                 </td>
               </tr>
 
               <tr>
-                
-               
-                 <td class="ps-2 py-2 button2 " colspan="2">
+                 <tr>
+                     <td colspan="2" class="message">
+                      <p id="message" style="margin-top:10px; font-weight:bold;"></p>
+                  </td>
+              </tr>
+              <tr>
+                 <td class="ps-2 py-2 button2 "  colspan="2">
                   <input
                     type="submit"
                     value="Submit change"
@@ -205,6 +213,7 @@ td{
                 </td>
               
               </tr>
+             
             </table>
           </div>
 
@@ -218,12 +227,23 @@ td{
                     type="submit"
                     value="Change avatar"
                     class="save-btn"
+                    id="submitBtn"
                   />
                 </td>
+                
             </div>
           </div>
         </div>
       </div>
     </form>
+      <script src="js/profileValidation.js"></script>
+<script>
+  // Bắt sự kiện submit form
+  document.querySelector("form").addEventListener("submit", function (e) {
+      if (!validateProfileForm()) {
+          e.preventDefault(); // chặn submit nếu có lỗi
+      }
+  });
+</script>
   </body>
 </html>
