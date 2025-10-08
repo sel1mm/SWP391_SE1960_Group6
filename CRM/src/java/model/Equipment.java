@@ -1,4 +1,5 @@
 package model;
+
 import java.time.LocalDate;
 
 public class Equipment {
@@ -9,11 +10,13 @@ public class Equipment {
     private LocalDate installDate;
     private int lastUpdatedBy;
     private LocalDate lastUpdatedDate;
-
+    
     public Equipment() {
     }
-
-    public Equipment(int equipmentId, String serialNumber, String model, String description, LocalDate installDate, int lastUpdatedBy, LocalDate lastUpdatedDate) {
+    
+    public Equipment(int equipmentId, String serialNumber, String model, 
+                    String description, LocalDate installDate, 
+                    int lastUpdatedBy, LocalDate lastUpdatedDate) {
         this.equipmentId = equipmentId;
         this.serialNumber = serialNumber;
         this.model = model;
@@ -78,6 +81,4 @@ public class Equipment {
     public void setLastUpdatedDate(LocalDate lastUpdatedDate) {
         this.lastUpdatedDate = lastUpdatedDate;
     }
-    
-    
 }
