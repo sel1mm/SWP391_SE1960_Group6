@@ -62,7 +62,6 @@ Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Html.html to edit thi
     border: 2px solid #ccc;
     background-color: #eee; /* nền mặc định */
     margin-left:130px ;
-    
 }
 .avatar-dropzone {
     margin-top: 20px;
@@ -195,13 +194,15 @@ Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Html.html to edit thi
 
               <tr>
                 <td class="ps-5  py-2">
-                  <input type="submit" value="Change Password" class="save-btn" />
+                    <input type="button" value="Change Password" class="save-btn" name="action" onclick="window.open('changePassword.jsp', '_blank')" />
                 </td>
                 <td class="ps-2 py-2">
                   <input
-                    type="submit"
+                    type="button"
                     value="Change Information"
                     class="save-btn"
+                    name ="action"
+                    onclick="window.open('changeInformation.jsp', '_blank')"
                   />
                 </td>
               </tr>
