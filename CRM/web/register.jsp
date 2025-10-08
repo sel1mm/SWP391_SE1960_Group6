@@ -14,6 +14,7 @@
                 align-items: center;
                 justify-content: center;
                 padding: 20px;
+                overflow: hidden;
             }
 
             .register-container {
@@ -24,6 +25,9 @@
                 width: 100%;
                 max-width: 450px;
                 backdrop-filter: blur(10px);
+                max-height: 90vh; 
+                overflow-y: auto;
+                scrollbar-width: thin;
             }
 
             .register-header {
@@ -49,7 +53,7 @@
             }
 
             .form-group {
-                margin-bottom: 20px;
+                margin-bottom: 15px;
             }
 
             .form-control-modern {
@@ -232,7 +236,15 @@
                     <div id="passwordError" class="error-message">Mật khẩu không khớp</div>
                 </div>
 
-                <button type="submit" class="btn btn-register" id="submitBtn">
+                <div class="form-group form-check mt-3 mb-4">
+                    <input type="checkbox" class="form-check-input" id="termsCheckbox" required>
+                    <label class="form-check-label" for="termsCheckbox">
+                        Việc đăng ký tài khoản đồng nghĩa với việc bạn đã đọc và đồng ý với 
+                        <a href="#" target="_blank">Điều khoản & Dịch vụ</a> của chúng tôi.
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-register" id="submitBtn" disabled>
                     <i class="fas fa-user-plus"></i> Tạo tài khoản
                 </button>
 
@@ -331,8 +343,13 @@
                         validateUsername() &&
                         validatePasswordMatch();
                 if (!isValid) {
-                    e.preventDefault(); 
+                    e.preventDefault();
                 }
+            });
+
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            termsCheckbox.addEventListener('change', function () {
+                submitBtn.disabled = !this.checked;
             });
         </script>
 
