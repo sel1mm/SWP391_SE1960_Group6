@@ -1,7 +1,11 @@
 /CRM/nbproject/private/
 /CRM/build/
+<<<<<<< Updated upstream
 /.idea/
 /.kilocode/
 /SWP391_SE1960_Group6.iml
 /document/
 /out/
+=======
+/CRM/dist/
+>>>>>>> Stashed changes

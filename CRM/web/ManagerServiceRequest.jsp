@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yêu Cầu Dịch Vụ - Customer</title>
+    <title>Manager Service Request</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -57,18 +57,13 @@
             margin: 0 2px;
         }
         
-        /* CSS cho Toast - Trượt từ phải sang trái */
         #toastContainer {
             position: fixed;
-            top: 20px;
-            right: -400px;
-            z-index: 9999;
-            width: 350px;
-            transition: right 0.5s ease-in-out;
-        }
-        
-        #toastContainer.show {
+            top: 80px;
             right: 20px;
+            z-index: 99999;
+            width: 350px;
+            max-width: 90vw;
         }
         
         .toast-notification {
@@ -79,6 +74,34 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            margin-bottom: 10px;
+            animation: slideInRight 0.4s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .toast-notification.hiding {
+            animation: slideOutRight 0.4s ease-out forwards;
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
         }
         
         .toast-notification.success {
@@ -89,8 +112,8 @@
             border-left: 4px solid #dc3545;
         }
         
-        .toast-notification.warning {
-            border-left: 4px solid #ffc107;
+        .toast-notification.info {
+            border-left: 4px solid #0dcaf0;
         }
         
         .toast-icon {
@@ -106,8 +129,8 @@
             color: #dc3545;
         }
         
-        .toast-icon.warning {
-            color: #ffc107;
+        .toast-icon.info {
+            color: #0dcaf0;
         }
         
         .toast-content {
@@ -117,25 +140,22 @@
         .toast-close {
             background: none;
             border: none;
-            font-size: 20px;
             cursor: pointer;
-            color: #6c757d;
+            color: #999;
             padding: 0;
-            width: 20px;
-            height: 20px;
+            font-size: 18px;
+            transition: color 0.2s;
         }
         
         .toast-close:hover {
-            color: #000;
+            color: #333;
         }
     </style>
 </head>
 <body>
-    <!-- Toast Container -->
     <div id="toastContainer"></div>
 
     <div class="container main-container">
-        <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="fas fa-clipboard-list"></i> Yêu Cầu Dịch Vụ Của Tôi</h2>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
@@ -143,35 +163,50 @@
             </button>
         </div>
 
-        <!-- Alert Messages từ session - trigger toast -->
         <%
             String errorMsg = (String) session.getAttribute("error");
             String successMsg = (String) session.getAttribute("success");
+            String infoMsg = (String) session.getAttribute("info");
             
-            if (errorMsg != null) {
-                session.removeAttribute("error");
-        %>
-            <script>
-                window.addEventListener('load', function() {
-                    showToast('<%= errorMsg %>', 'error');
-                });
-            </script>
-        <%
-            }
-            
-            if (successMsg != null) {
-                session.removeAttribute("success");
-        %>
-            <script>
-                window.addEventListener('load', function() {
-                    showToast('<%= successMsg %>', 'success');
-                });
-            </script>
-        <%
+            // Debug log
+            if (errorMsg != null || successMsg != null || infoMsg != null) {
+                System.out.println("=== TOAST DEBUG ===");
+                System.out.println("Error: " + errorMsg);
+                System.out.println("Success: " + successMsg);
+                System.out.println("Info: " + infoMsg);
             }
         %>
+        
+        <% if (errorMsg != null || successMsg != null || infoMsg != null) { %>
+        <script>
+            window.onload = function() {
+                <% if (errorMsg != null) { 
+                    session.removeAttribute("error");
+                %>
+                    setTimeout(function() {
+                        showToast('<%= errorMsg.replace("'", "\\'").replace("\"", "\\\"") %>', 'error');
+                    }, 100);
+                <% } %>
+                
+                <% if (successMsg != null) { 
+                    session.removeAttribute("success");
+                %>
+                    setTimeout(function() {
+                        showToast('<%= successMsg.replace("'", "\\'").replace("\"", "\\\"") %>', 'success');
+                    }, 100);
+                <% } %>
+                
+                <% if (infoMsg != null) { 
+                    session.removeAttribute("info");
+                %>
+                    setTimeout(function() {
+                        showToast('<%= infoMsg.replace("'", "\\'").replace("\"", "\\\"") %>', 'info');
+                    }, 100);
+                <% } %>
+            };
+        </script>
+        <% } %>
 
-        <!-- Statistics Cards -->
         <div class="row">
             <div class="col-md-3">
                 <div class="stats-card bg-primary text-white">
@@ -199,7 +234,7 @@
                 <div class="stats-card bg-info text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6>Đang Xử Lý</h6>
+                            <h6>Đã Duyệt</h6>
                             <h2>${inProgressCount}</h2>
                         </div>
                         <i class="fas fa-spinner"></i>
@@ -207,19 +242,18 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stats-card bg-success text-white">
+                <div class="stats-card bg-danger text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6>Hoàn Thành</h6>
-                            <h2>${completedCount}</h2>
+                            <h6>Đã Hủy</h6>
+                            <h2>${cancelledCount}</h2>
                         </div>
-                        <i class="fas fa-check-circle"></i>
+                        <i class="fas fa-times-circle"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Search & Filter Bar -->
         <div class="search-filter-bar">
             <form action="${pageContext.request.contextPath}/managerServiceRequest" method="get" class="row g-3">
                 <div class="col-md-6">
@@ -235,8 +269,9 @@
                     <select class="form-select" name="status" id="filterStatus">
                         <option value="">-- Tất Cả Trạng Thái --</option>
                         <option value="Pending" ${filterStatus == 'Pending' ? 'selected' : ''}>Chờ Xử Lý</option>
-                        <option value="In Progress" ${filterStatus == 'In Progress' ? 'selected' : ''}>Đang Xử Lý</option>
+                        <option value="Approved" ${filterStatus == 'Approved' ? 'selected' : ''}>Đã Duyệt</option>
                         <option value="Completed" ${filterStatus == 'Completed' ? 'selected' : ''}>Hoàn Thành</option>
+                        <option value="Rejected" ${filterStatus == 'Rejected' ? 'selected' : ''}>Bị từ chối</option>
                         <option value="Cancelled" ${filterStatus == 'Cancelled' ? 'selected' : ''}>Đã Hủy</option>
                     </select>
                 </div>
@@ -255,7 +290,6 @@
             </c:if>
         </div>
 
-        <!-- Table -->
         <div class="table-container">
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -271,51 +305,55 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <c:forEach var="request" items="${requests}">
+                        <c:forEach var="req" items="${requests}">
                             <tr>
-                                <td><strong>#${request.requestId}</strong></td>
-                                <td>${request.contractId}</td>
-                                <td>${request.equipmentId}</td>
+                                <td><strong>#${req.requestId}</strong></td>
+                                <td>${req.contractId}</td>
+                                <td>${req.equipmentId}</td>
                                 <td>
                                     <c:choose>
-                                        <c:when test="${request.description.length() > 60}">
-                                            ${request.description.substring(0, 60)}...
+                                        <c:when test="${req.description.length() > 60}">
+                                            ${req.description.substring(0, 60)}...
                                         </c:when>
                                         <c:otherwise>
-                                            ${request.description}
+                                            ${req.description}
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
                                 <td>
-                                    <fmt:formatDate value="${request.requestDate}" pattern="dd/MM/yyyy"/>
+                                    <fmt:formatDate value="${req.requestDate}" pattern="dd/MM/yyyy"/>
                                 </td>
                                 <td>
                                     <c:choose>
-                                        <c:when test="${request.status == 'Pending'}">
-                                            <span class="badge badge-pending">Chờ Xử Lý</span>
-                                        </c:when>
-                                        <c:when test="${request.status == 'In Progress'}">
-                                            <span class="badge badge-inprogress">Đang Xử Lý</span>
-                                        </c:when>
-                                        <c:when test="${request.status == 'Completed'}">
-                                            <span class="badge badge-completed">Hoàn Thành</span>
-                                        </c:when>
-                                        <c:when test="${request.status == 'Cancelled'}">
-                                            <span class="badge badge-cancelled">Đã Hủy</span>
-                                        </c:when>
+                                        <c:when test="${req.status == 'Pending'}"><span class="badge badge-pending">Chờ Xử Lý</span></c:when>
+                                        <c:when test="${req.status == 'Approved'}"><span class="badge badge-inprogress">Đã Duyệt</span></c:when>
+                                        <c:when test="${req.status == 'Completed'}"><span class="badge badge-completed">Hoàn Thành</span></c:when>
+                                        <c:when test="${req.status == 'Rejected'}"><span class="badge badge-cancelled">Bị từ chối</span></c:when>
+                                        <c:when test="${req.status == 'Cancelled'}"><span class="badge badge-cancelled">Đã Hủy</span></c:when>
                                     </c:choose>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-info btn-action" 
-                                            onclick="viewRequest('${request.requestId}', '${request.contractId}', '${request.equipmentId}', '${request.description}', '<fmt:formatDate value="${request.requestDate}" pattern="dd/MM/yyyy"/>', '${request.status}', '${request.priorityLevel}')">
+                                    <button class="btn btn-sm btn-info btn-action btn-view"
+                                            data-id="${req.requestId}"
+                                            data-contract-id="${req.contractId}"
+                                            data-equipment-id="${req.equipmentId}"
+                                            data-description="${req.description}"
+                                            data-request-date="<fmt:formatDate value="${req.requestDate}" pattern="dd/MM/yyyy"/>"
+                                            data-status="${req.status}"
+                                            data-priority="${req.priorityLevel}">
                                         <i class="fas fa-eye"></i> Chi Tiết
                                     </button>
                                     
-                                    <!-- Chỉ hiển thị nút Edit nếu status = Pending -->
-                                    <c:if test="${request.status == 'Pending'}">
-                                        <button class="btn btn-sm btn-warning btn-action" 
-                                                onclick="editRequest('${request.requestId}', '${request.description}', '${request.priorityLevel}')">
+                                    <c:if test="${req.status == 'Pending'}">
+                                        <button class="btn btn-sm btn-warning btn-action btn-edit"
+                                                data-id="${req.requestId}"
+                                                data-description="${req.description}"
+                                                data-priority="${req.priorityLevel}">
                                             <i class="fas fa-edit"></i> Sửa
+                                        </button>
+                                        <button class="btn btn-sm btn-danger btn-action btn-cancel"
+                                                data-id="${req.requestId}">
+                                            <i class="fas fa-times-circle"></i> Hủy
                                         </button>
                                     </c:if>
                                 </td>
@@ -338,55 +376,60 @@
         </div>
     </div>
 
-    <!-- Create Modal -->
     <div class="modal fade" id="createModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="${pageContext.request.contextPath}/managerServiceRequest?action=CreateServiceRequest" method="post">
+                <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post">
+                    <input type="hidden" name="action" value="CreateServiceRequest">
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title"><i class="fas fa-plus"></i> Tạo Yêu Cầu Dịch Vụ Mới</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> Vui lòng điền đầy đủ thông tin. Chúng tôi sẽ liên hệ bạn trong thời gian sớm nhất.
-                        </div>
-                        
                         <div class="mb-3">
                             <label class="form-label">Mã Hợp Đồng <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="contractId" 
-                                   placeholder="Nhập mã hợp đồng của bạn">
-                            <small class="form-text text-muted">Mã hợp đồng được cung cấp khi ký hợp đồng</small>
+                            <input type="number" class="form-control" name="contractId" placeholder="Nhập mã hợp đồng của bạn" required>
                         </div>
-                        
                         <div class="mb-3">
                             <label class="form-label">Mã Thiết Bị <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="equipmentId" 
-                                   placeholder="Nhập mã thiết bị cần bảo trì">
-                            <small class="form-text text-muted">Mã thiết bị có trên tem dán thiết bị</small>
+                            <input type="number" class="form-control" name="equipmentId" placeholder="Nhập mã thiết bị cần bảo trì" required>
                         </div>
-                        
                         <div class="mb-3">
                             <label class="form-label">Mô Tả Vấn Đề <span class="text-danger">*</span></label>
-                            <textarea class="form-control" name="description" rows="5" 
-                                      placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải với thiết bị..."></textarea>
-                            <small class="form-text text-muted">Mô tả chi tiết giúp chúng tôi hỗ trợ bạn tốt hơn</small>
+                            <textarea class="form-control" name="description" rows="5" placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải..." required></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times"></i> Hủy
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> Gửi Yêu Cầu
-                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Gửi Yêu Cầu</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- View Detail Modal -->
+    <div class="modal fade" id="cancelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post">
+                    <input type="hidden" name="action" value="CancelServiceRequest">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Xác Nhận Hủy</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Bạn có chắc chắn muốn hủy yêu cầu <strong id="cancelRequestIdDisplay"></strong> không?</p>
+                        <input type="hidden" name="requestId" id="cancelRequestId">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Không</button>
+                        <button type="submit" class="btn btn-danger">Có, Hủy Yêu Cầu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="viewModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -396,128 +439,193 @@
                 </div>
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <strong><i class="fas fa-hashtag"></i> Mã Yêu Cầu:</strong>
-                            <p class="ms-4" id="viewRequestId"></p>
-                        </div>
-                        <div class="col-md-6">
-                            <strong><i class="fas fa-calendar"></i> Ngày Tạo:</strong>
-                            <p class="ms-4" id="viewRequestDate"></p>
-                        </div>
+                        <div class="col-md-6"><strong>Mã Yêu Cầu:</strong> <p class="fw-normal" id="viewRequestId"></p></div>
+                        <div class="col-md-6"><strong>Ngày Tạo:</strong> <p class="fw-normal" id="viewRequestDate"></p></div>
                     </div>
-                    
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <strong><i class="fas fa-file-contract"></i> Mã Hợp Đồng:</strong>
-                            <p class="ms-4" id="viewContractId"></p>
-                        </div>
-                        <div class="col-md-6">
-                            <strong><i class="fas fa-cog"></i> Mã Thiết Bị:</strong>
-                            <p class="ms-4" id="viewEquipmentId"></p>
-                        </div>
+                        <div class="col-md-6"><strong>Mã Hợp Đồng:</strong> <p class="fw-normal" id="viewContractId"></p></div>
+                        <div class="col-md-6"><strong>Mã Thiết Bị:</strong> <p class="fw-normal" id="viewEquipmentId"></p></div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <strong><i class="fas fa-info-circle"></i> Trạng Thái:</strong>
-                        <p class="ms-4">
-                            <span class="badge" id="viewStatus"></span>
-                        </p>
+                    <div class="row mb-3">
+                        <div class="col-md-6"><strong>Trạng Thái:</strong> <span class="badge" id="viewStatus"></span></div>
+                        <div class="col-md-6"><strong>Mức Độ Ưu Tiên:</strong> <span class="badge" id="viewPriority"></span></div>
                     </div>
-                    
                     <div class="mb-3">
-                        <strong><i class="fas fa-align-left"></i> Mô Tả Vấn Đề:</strong>
-                        <div class="border rounded p-3 bg-light ms-4" id="viewDescription" style="white-space: pre-wrap;"></div>
+                        <strong>Mô Tả Vấn Đề:</strong>
+                        <div class="border rounded p-3 bg-light" id="viewDescription" style="white-space: pre-wrap;"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times"></i> Đóng
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post">
+                    <input type="hidden" name="action" value="UpdateServiceRequest">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title"><i class="fas fa-edit"></i> Chỉnh Sửa Yêu Cầu</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="requestId" id="editRequestId">
+                        <div class="mb-3">
+                            <label class="form-label">Mức Độ Ưu Tiên</label>
+                            <select class="form-select" name="priorityLevel" id="editPriorityLevel" required>
+                                <option value="Normal">Bình Thường</option>
+                                <option value="High">Cao</option>
+                                <option value="Urgent">Khẩn Cấp</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mô Tả Vấn Đề</label>
+                            <textarea class="form-control" name="description" id="editDescription" rows="5" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-warning">Lưu Thay Đổi</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Biến lưu timeout
         let currentToastTimeout = null;
-        
-        // Hàm hiển thị toast
+
         function showToast(message, type) {
             const container = document.getElementById('toastContainer');
-            container.innerHTML = '';
-            
             if (currentToastTimeout) {
                 clearTimeout(currentToastTimeout);
             }
             
-            const toast = document.createElement('div');
-            toast.className = 'toast-notification ' + type;
+            let iconClass = 'fa-check-circle';
+            if (type === 'error') iconClass = 'fa-exclamation-circle';
+            if (type === 'info') iconClass = 'fa-info-circle';
             
-            let iconClass = type === 'success' ? 'fa-check-circle' : (type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle');
+            // Tạo element thay vì dùng innerHTML
+            const toastDiv = document.createElement('div');
+            toastDiv.className = 'toast-notification ' + type;
             
-            toast.innerHTML = '<div class="toast-icon ' + type + '"><i class="fas ' + iconClass + '"></i></div>' +
-                            '<div class="toast-content">' + message + '</div>' +
-                            '<button class="toast-close" onclick="hideToast()"><i class="fas fa-times"></i></button>';
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'toast-icon ' + type;
+            iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
             
-            container.appendChild(toast);
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'toast-content';
+            contentDiv.textContent = message;
             
-            setTimeout(function() {
-                container.classList.add('show');
-            }, 10);
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'toast-close';
+            closeBtn.type = 'button';
+            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            closeBtn.onclick = hideToast;
             
-            currentToastTimeout = setTimeout(function() {
-                hideToast();
-            }, 5000);
+            toastDiv.appendChild(iconDiv);
+            toastDiv.appendChild(contentDiv);
+            toastDiv.appendChild(closeBtn);
+            
+            container.innerHTML = '';
+            container.appendChild(toastDiv);
+            
+            currentToastTimeout = setTimeout(hideToast, 5000);
         }
-        
-        // Hàm ẩn toast
+
         function hideToast() {
             const container = document.getElementById('toastContainer');
-            container.classList.remove('show');
-            setTimeout(function() {
-                container.innerHTML = '';
-            }, 500);
+            const toast = container.querySelector('.toast-notification');
+            if (toast) {
+                toast.classList.add('hiding');
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, 400);
+            }
             if (currentToastTimeout) {
                 clearTimeout(currentToastTimeout);
                 currentToastTimeout = null;
             }
         }
 
-        // Hàm xem chi tiết
-        function viewRequest(id, contractId, equipmentId, description, requestDate, status) {
+        function viewRequest(id, contractId, equipmentId, description, requestDate, status, priorityLevel) {
             document.getElementById('viewRequestId').textContent = '#' + id;
             document.getElementById('viewContractId').textContent = contractId;
             document.getElementById('viewEquipmentId').textContent = equipmentId;
             document.getElementById('viewDescription').textContent = description;
             document.getElementById('viewRequestDate').textContent = requestDate;
-            
+
             const statusBadge = document.getElementById('viewStatus');
-            statusBadge.className = 'badge ';
-            
-            switch(status) {
-                case 'Pending':
-                    statusBadge.className += 'badge-pending';
-                    statusBadge.textContent = 'Chờ Xử Lý';
-                    break;
-                case 'In Progress':
-                    statusBadge.className += 'badge-inprogress';
-                    statusBadge.textContent = 'Đang Xử Lý';
-                    break;
-                case 'Completed':
-                    statusBadge.className += 'badge-completed';
-                    statusBadge.textContent = 'Hoàn Thành';
-                    break;
-                case 'Cancelled':
-                    statusBadge.className += 'badge-cancelled';
-                    statusBadge.textContent = 'Đã Hủy';
-                    break;
-            }
-            
-            var viewModal = new bootstrap.Modal(document.getElementById('viewModal'));
-            viewModal.show();
+            const statusMap = {
+                'Pending': { className: 'badge-pending', text: 'Chờ Xử Lý' },
+                'Approved': { className: 'badge-inprogress', text: 'Đã Duyệt' },
+                'Completed': { className: 'badge-completed', text: 'Hoàn Thành' },
+                'Rejected': { className: 'badge-cancelled', text: 'Bị từ chối' },
+                'Cancelled': { className: 'badge-cancelled', text: 'Đã Hủy' }
+            };
+            const statusInfo = statusMap[status] || { className: 'bg-secondary', text: status };
+            statusBadge.className = 'badge ' + statusInfo.className;
+            statusBadge.textContent = statusInfo.text;
+
+            const priorityBadge = document.getElementById('viewPriority');
+            const priorityMap = {
+                'Normal': { className: 'bg-secondary', text: 'Bình Thường' },
+                'High': { className: 'bg-warning text-dark', text: 'Cao' },
+                'Urgent': { className: 'bg-danger', text: 'Khẩn Cấp' }
+            };
+            const priorityInfo = priorityMap[priorityLevel] || { className: 'bg-dark', text: priorityLevel };
+            priorityBadge.className = 'badge ' + priorityInfo.className;
+            priorityBadge.textContent = priorityInfo.text;
+
+            new bootstrap.Modal(document.getElementById('viewModal')).show();
         }
+
+        function editRequest(id, description, priorityLevel) {
+            document.getElementById('editRequestId').value = id;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editPriorityLevel').value = priorityLevel;
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+
+        function confirmCancel(id) {
+            document.getElementById('cancelRequestId').value = id;
+            document.getElementById('cancelRequestIdDisplay').textContent = '#' + id;
+            new bootstrap.Modal(document.getElementById('cancelModal')).show();
+        }
+        
+        window.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.btn-view').forEach(button => {
+                button.addEventListener('click', function () {
+                    const data = this.dataset;
+                    viewRequest(
+                        data.id, 
+                        data.contractId, 
+                        data.equipmentId, 
+                        data.description, 
+                        data.requestDate, 
+                        data.status, 
+                        data.priority
+                    );
+                });
+            });
+
+            document.querySelectorAll('.btn-edit').forEach(button => {
+                button.addEventListener('click', function () {
+                    const data = this.dataset;
+                    editRequest(data.id, data.description, data.priority);
+                });
+            });
+
+            document.querySelectorAll('.btn-cancel').forEach(button => {
+                button.addEventListener('click', function () {
+                    confirmCancel(this.dataset.id);
+                });
+            });
+        });
     </script>
 </body>
 </html>
