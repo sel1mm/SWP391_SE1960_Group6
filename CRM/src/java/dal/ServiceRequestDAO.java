@@ -66,6 +66,51 @@ public class ServiceRequestDAO extends MyDAO {
         }
     }
     
+    // ============ DELETE METHOD ============
+    
+    /**
+     * Hủy service request (chuyển status sang Cancelled)
+     * Chỉ cho phép cancel khi status = Pending
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean cancelServiceRequest(int requestId) {
+        xSql = "UPDATE ServiceRequest SET status = 'Cancelled' " +
+               "WHERE requestId = ? AND status = 'Pending'";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setInt(1, requestId);
+            
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * Kiểm tra request có thể cancel không (thuộc customer và Pending)
+     */
+    public boolean canCancelRequest(int requestId, int customerId) {
+        xSql = "SELECT sr.requestId FROM ServiceRequest sr " +
+               "INNER JOIN Contract c ON sr.contractId = c.contractId " +
+               "WHERE sr.requestId = ? AND c.customerId = ? AND sr.status = 'Pending'";
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setInt(1, requestId);
+            ps.setInt(2, customerId);
+            rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+    
     // ============ UPDATE METHOD ============
     
     /**
