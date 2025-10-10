@@ -2,6 +2,7 @@ package service;
 
 import dal.AccountRoleDAO;
 import dto.Response;
+import java.util.List;
 import model.AccountRole;
 
 public class AccountRoleService {
@@ -41,5 +42,25 @@ public class AccountRoleService {
             return "customer";
         }
         return "unknown";
+    }
+  
+    public Response<List<AccountRole>> getRolesByAccountId(int accountId) {
+        return accountRoleDAO.getRolesByAccountId(accountId);
+    }
+    
+    public Response<AccountRole> assignRoleToAccount(int accountId, int roleId) {
+        return accountRoleDAO.assignRoleToAccount(accountId, roleId);
+    }
+    
+    public Response<Boolean> removeRoleFromAccount(int accountId, int roleId) {
+        return accountRoleDAO.removeRoleFromAccount(accountId, roleId);
+    }
+    
+    public Response<Boolean> hasRole(int accountId, int roleId) {
+        return accountRoleDAO.hasRole(accountId, roleId);
+    }
+    
+    public Response<Boolean> removeAllRolesFromAccount(int accountId) {
+        return accountRoleDAO.removeAllRolesFromAccount(accountId);
     }
 }
