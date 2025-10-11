@@ -200,7 +200,7 @@ public class ServiceRequestDAO extends MyDAO {
     /**
      * Lấy service request detail với đầy đủ thông tin (JOIN)
      */
-    public model.ServiceRequestDetailDTO getRequestDetailById(int requestId) {
+    public dto.ServiceRequestDetailDTO getRequestDetailById(int requestId) {
         xSql = "SELECT sr.*, " +
                "c.contractType, c.status as contractStatus, c.contractDate, " +
                "e.serialNumber, e.model as equipmentModel, e.description as equipmentDescription, " +
@@ -415,8 +415,8 @@ public class ServiceRequestDAO extends MyDAO {
      * Map ResultSet thành ServiceRequestDetailDTO
      * FIX: Convert java.sql.Date to LocalDate for Contract and Equipment
      */
-    private model.ServiceRequestDetailDTO mapResultSetToDetailDTO(ResultSet rs) throws SQLException {
-        model.ServiceRequestDetailDTO dto = new model.ServiceRequestDetailDTO();
+    private dto.ServiceRequestDetailDTO mapResultSetToDetailDTO(ResultSet rs) throws SQLException {
+        dto.ServiceRequestDetailDTO dto = new dto.ServiceRequestDetailDTO();
         // ServiceRequest info
         dto.setRequestId(rs.getInt("requestId"));
         dto.setContractId(rs.getInt("contractId"));
