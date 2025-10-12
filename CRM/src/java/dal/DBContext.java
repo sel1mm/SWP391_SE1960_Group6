@@ -13,27 +13,13 @@ public class DBContext {
     public DBContext() {
         try {
             String username = "root";
-            String password = "sa123456";
-            String url = "jdbc:mysql://localhost:3306/crm_system?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
+
+            String password = "sa12345";
+            String url = "jdbc:mysql://localhost:3306/swp?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection(url, username, password);
         } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    public static void main(String[] args) throws ClassNotFoundException {
-         String username = "root";
-            String password = "sa123456";
-            String url = "jdbc:mysql://localhost:3306/crm_system?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
-            Class.forName("com.mysql.cj.jdbc.Driver");
-
-        try {
-            Connection conn = DriverManager.getConnection(url, username, password);
-            if (conn != null) {
-                System.out.println("✅ Kết nối thành công!");
-            }
-        } catch (Exception e) {
-            System.out.println("❌ Kết nối thất bại: " + e.getMessage());
         }
     }
 

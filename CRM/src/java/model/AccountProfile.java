@@ -1,26 +1,40 @@
 package model;
+
 import java.time.LocalDate;
 
 public class AccountProfile {
     private int profileId;
-    private int acoountId;
+    private int accountId;            
     private String address;
     private LocalDate dateOfBirth;
     private String avatarUrl;
     private String nationalId;
-    private boolean verified = false;
+    private boolean verified;           
     private String extraData;
 
     public AccountProfile() {
     }
 
-    public AccountProfile(int profileId, int acoountId, String address, LocalDate dateOfBirth, String avatarUrl, String nationalId, String extraData) {
+    public AccountProfile(int profileId, int accountId, String address, LocalDate dateOfBirth,
+                          String avatarUrl, String nationalId, boolean verified, String extraData) {
         this.profileId = profileId;
-        this.acoountId = acoountId;
+        this.accountId = accountId;
         this.address = address;
         this.dateOfBirth = dateOfBirth;
         this.avatarUrl = avatarUrl;
         this.nationalId = nationalId;
+        this.verified = verified;
+        this.extraData = extraData;
+    }
+
+    public AccountProfile(int accountId, String address, LocalDate dateOfBirth,
+                          String avatarUrl, String nationalId, boolean verified, String extraData) {
+        this.accountId = accountId;
+        this.address = address;
+        this.dateOfBirth = dateOfBirth;
+        this.avatarUrl = avatarUrl;
+        this.nationalId = nationalId;
+        this.verified = verified;
         this.extraData = extraData;
     }
 
@@ -32,12 +46,12 @@ public class AccountProfile {
         this.profileId = profileId;
     }
 
-    public int getAcoountId() {
-        return acoountId;
+    public int getAccountId() {
+        return accountId;
     }
 
-    public void setAcoountId(int acoountId) {
-        this.acoountId = acoountId;
+    public void setAccountId(int accountId) {
+        this.accountId = accountId;
     }
 
     public String getAddress() {
@@ -87,6 +101,18 @@ public class AccountProfile {
     public void setExtraData(String extraData) {
         this.extraData = extraData;
     }
-    
-    
+
+    @Override
+    public String toString() {
+        return "AccountProfile{" +
+                "profileId=" + profileId +
+                ", accountId=" + accountId +
+                ", address='" + address + '\'' +
+                ", dateOfBirth=" + dateOfBirth +
+                ", avatarUrl='" + avatarUrl + '\'' +
+                ", nationalId='" + nationalId + '\'' +
+                ", verified=" + verified +
+                ", extraData='" + extraData + '\'' +
+                '}';
+    }
 }
