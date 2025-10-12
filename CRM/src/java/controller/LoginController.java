@@ -76,6 +76,8 @@ public class LoginController extends HttpServlet {
                 response.sendRedirect(MessageConstant.ADMIN_URL);
             } else if ("Technical Manager".equals(userRole)) {
                 response.sendRedirect("technicalManagerApproval");
+            } else if ("Customer Support Staff".equals(userRole)) {
+                response.sendRedirect("dashboard.jsp");
             } else {
                 response.sendRedirect("home.jsp");
             }
