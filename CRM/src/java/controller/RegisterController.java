@@ -22,14 +22,6 @@ public class RegisterController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        String termsAccepted = request.getParameter("termsCheckbox");
-        if (termsAccepted == null) {
-            request.setAttribute("error", "Bạn phải đồng ý với Điều khoản & Dịch vụ trước khi đăng ký.");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
-            return;
-        }
-        
         String fullname = request.getParameter("fullName");
         String username = request.getParameter("username");
         String password = request.getParameter("password");
