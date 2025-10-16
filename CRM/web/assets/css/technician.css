@@ -1,0 +1,37 @@
+/* Technician specific styles: feature cards, animations, responsive tweaks */
+.tech-features-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+@media (max-width: 1200px) { .tech-features-grid { grid-template-columns: repeat(8, 1fr); } }
+@media (max-width: 768px)  { .tech-features-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 576px)  { .tech-features-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.tech-card {
+  grid-column: span 3;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: .5rem;
+  padding: 16px;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  text-decoration: none;
+  color: inherit;
+}
+.tech-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); border-color: rgba(13,110,253,.3); }
+.tech-card .icon {
+  width: 40px; height: 40px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(13,110,253,.1); color: #0d6efd; margin-bottom: 8px; font-size: 20px;
+}
+.tech-card h5 { margin: 6px 0 4px; font-weight: 600; }
+.tech-card p { margin: 0; color: #6c757d; }
+
+.tech-section-title { font-weight: 700; }
+.nav-compact .nav-link { transition: background-color .15s ease, color .15s ease, padding-left .15s ease; }
+.nav-compact .nav-link:hover { background: rgba(13,110,253,.06); padding-left: 18px; }
+.nav-compact .nav-link.active { background: rgba(13,110,253,.12); color: #0d6efd !important; }
+
+.page-fade-enter { opacity: .0; transform: translateY(4px); }
+.page-fade-enter-active { opacity: 1; transform: none; transition: all .2s ease; }
+
+
