@@ -1,0 +1,21 @@
+{
+    "java.project.sourcePaths": [
+        "CRM\\src\\java"
+    ],
+    "java.project.referencedLibraries": [
+        "CRM\\Libs\\commons-logging-1.2.jar",
+        "CRM\\Libs\\fluent-hc-4.5.5.jar",
+        "CRM\\Libs\\gson-2.8.2.jar",
+        "CRM\\Libs\\httpclient-4.5.5.jar",
+        "CRM\\Libs\\httpcore-4.4.9.jar",
+        "CRM\\Libs\\jakarta.servlet.jsp.jstl-2.0.0.jar",
+        "CRM\\Libs\\jakarta.servlet.jsp.jstl-api-2.0.0.jar",
+        "CRM\\Libs\\javax.activation-1.2.0.jar",
+        "CRM\\Libs\\javax.mail.jar",
+        "CRM\\Libs\\jaxb-api-2.1.jar",
+        "CRM\\Libs\\jBCrypt-0.4.jar",
+        "CRM\\Libs\\jBCrypt-0.4-javadoc.jar",
+        "CRM\\Libs\\jBCrypt-0.4-sources.jar",
+        "CRM\\Libs\\mysql-connector-j-9.4.0.jar"
+    ]
+}

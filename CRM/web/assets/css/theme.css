@@ -1,0 +1,51 @@
+/* Technician Module Theme Overrides */
+:root {
+  --bs-body-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  --crm-primary: #0d6efd;
+  --crm-accent: #6f42c1;
+  --crm-bg: #f8f9fa;
+}
+
+body {
+  background-color: var(--crm-bg);
+}
+
+.crm-card-shadow {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.crm-sidebar {
+  min-height: 100vh;
+  background: #fff;
+  border-right: 1px solid rgba(0,0,0,.05);
+}
+
+.crm-sidebar .nav-link.active {
+  background-color: rgba(13,110,253,.1);
+  color: var(--crm-primary) !important;
+}
+
+.crm-page-title {
+  font-weight: 600;
+}
+
+.badge-status-pending { background-color: #ffc107; }
+.badge-status-inprogress { background-color: #0dcaf0; }
+.badge-status-completed { background-color: #198754; }
+.badge-status-onhold { background-color: #6c757d; }
+
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.crm-toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1080;
+}
+
+
