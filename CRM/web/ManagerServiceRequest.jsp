@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -158,23 +159,20 @@
     <div class="container main-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="fas fa-clipboard-list"></i> Yêu Cầu Dịch Vụ Của Tôi</h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
-                <i class="fas fa-plus"></i> Tạo Yêu Cầu Mới
-            </button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-secondary" onclick="refreshPage()">
+                    <i class="fas fa-sync"></i> Làm Mới
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                    <i class="fas fa-plus"></i> Tạo Yêu Cầu Mới
+                </button>
+            </div>
         </div>
 
         <%
             String errorMsg = (String) session.getAttribute("error");
             String successMsg = (String) session.getAttribute("success");
             String infoMsg = (String) session.getAttribute("info");
-            
-            // Debug log
-            if (errorMsg != null || successMsg != null || infoMsg != null) {
-                System.out.println("=== TOAST DEBUG ===");
-                System.out.println("Error: " + errorMsg);
-                System.out.println("Success: " + successMsg);
-                System.out.println("Info: " + infoMsg);
-            }
         %>
         
         <% if (errorMsg != null || successMsg != null || infoMsg != null) { %>
@@ -207,6 +205,7 @@
         </script>
         <% } %>
 
+        <!-- THỐNG KÊ -->
         <div class="row">
             <div class="col-md-3">
                 <div class="stats-card bg-primary text-white">
@@ -254,6 +253,7 @@
             </div>
         </div>
 
+        <!-- SEARCH & FILTER BAR -->
         <div class="search-filter-bar">
             <form action="${pageContext.request.contextPath}/managerServiceRequest" method="get" class="row g-3">
                 <div class="col-md-6">
@@ -290,6 +290,7 @@
             </c:if>
         </div>
 
+        <!-- BẢNG DANH SÁCH -->
         <div class="table-container">
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -337,7 +338,7 @@
                                             data-id="${req.requestId}"
                                             data-contract-id="${req.contractId}"
                                             data-equipment-id="${req.equipmentId}"
-                                            data-description="${req.description}"
+                                            data-description="${fn:escapeXml(req.description)}"
                                             data-request-date="<fmt:formatDate value="${req.requestDate}" pattern="dd/MM/yyyy"/>"
                                             data-status="${req.status}"
                                             data-priority="${req.priorityLevel}">
@@ -347,7 +348,7 @@
                                     <c:if test="${req.status == 'Pending'}">
                                         <button class="btn btn-sm btn-warning btn-action btn-edit"
                                                 data-id="${req.requestId}"
-                                                data-description="${req.description}"
+                                                data-description="${fn:escapeXml(req.description)}"
                                                 data-priority="${req.priorityLevel}">
                                             <i class="fas fa-edit"></i> Sửa
                                         </button>
@@ -373,9 +374,63 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- PHÂN TRANG -->
+            <c:if test="${totalPages > 1}">
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
+                            <c:if test="${currentPage > 1}">
+                                <a class="page-link" href="?page=${currentPage - 1}${filterStatus != null ? '&status='.concat(filterStatus) : ''}${keyword != null ? '&keyword='.concat(keyword) : ''}&action=${filterMode ? 'filter' : (searchMode ? 'search' : '')}">
+                                    <i class="fas fa-chevron-left"></i> Trước
+                                </a>
+                            </c:if>
+                            <c:if test="${currentPage <= 1}">
+                                <span class="page-link">
+                                    <i class="fas fa-chevron-left"></i> Trước
+                                </span>
+                            </c:if>
+                        </li>
+                        
+                        <c:forEach var="i" begin="1" end="${totalPages}">
+                            <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                <c:if test="${i != currentPage}">
+                                    <a class="page-link" href="?page=${i}${filterStatus != null ? '&status='.concat(filterStatus) : ''}${keyword != null ? '&keyword='.concat(keyword) : ''}&action=${filterMode ? 'filter' : (searchMode ? 'search' : '')}">
+                                        ${i}
+                                    </a>
+                                </c:if>
+                                <c:if test="${i == currentPage}">
+                                    <span class="page-link">${i}</span>
+                                </c:if>
+                            </li>
+                        </c:forEach>
+                        
+                        <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                            <c:if test="${currentPage < totalPages}">
+                                <a class="page-link" href="?page=${currentPage + 1}${filterStatus != null ? '&status='.concat(filterStatus) : ''}${keyword != null ? '&keyword='.concat(keyword) : ''}&action=${filterMode ? 'filter' : (searchMode ? 'search' : '')}">
+                                    Tiếp <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </c:if>
+                            <c:if test="${currentPage >= totalPages}">
+                                <span class="page-link">
+                                    Tiếp <i class="fas fa-chevron-right"></i>
+                                </span>
+                            </c:if>
+                        </li>
+                    </ul>
+                </nav>
+                
+                <div class="text-center text-muted mb-3">
+                    <small>
+                        Trang <strong>${currentPage}</strong> của <strong>${totalPages}</strong> 
+                        | Hiển thị <strong>${fn:length(requests)}</strong> yêu cầu
+                    </small>
+                </div>
+            </c:if>
         </div>
     </div>
 
+    <!-- ========== MODAL TẠO YÊU CẦU MỚI - CÓ PRIORITY ========== -->
     <div class="modal fade" id="createModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -389,25 +444,41 @@
                         <div class="mb-3">
                             <label class="form-label">Mã Hợp Đồng <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" name="contractId" placeholder="Nhập mã hợp đồng của bạn" required>
+                            <small class="form-text text-muted">Nhập mã hợp đồng đã ký với công ty</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Mã Thiết Bị <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" name="equipmentId" placeholder="Nhập mã thiết bị cần bảo trì" required>
+                            <small class="form-text text-muted">Nhập mã thiết bị cần yêu cầu dịch vụ</small>
                         </div>
+                        
+                        <!-- ⭐ MỨC ĐỘ ƯU TIÊN - PHẦN MỚI THÊM -->
+                        <div class="mb-3">
+                            <label class="form-label">Mức Độ Ưu Tiên <span class="text-danger">*</span></label>
+                            <select class="form-select" name="priorityLevel" required>
+                                <option value="Normal" selected> Bình Thường </option>
+                                <option value="High"> Cao</option>
+                                <option value="Urgent"> Khẩn Cấp </option>
+                            </select>
+                            <small class="form-text text-muted">Chọn mức độ ưu tiên phù hợp với tình trạng thiết bị</small>
+                        </div>
+                        
                         <div class="mb-3">
                             <label class="form-label">Mô Tả Vấn Đề <span class="text-danger">*</span></label>
                             <textarea class="form-control" name="description" rows="5" placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải..." required></textarea>
+                            <small class="form-text text-muted">Tối thiểu 10 ký tự. Mô tả càng chi tiết càng giúp xử lý nhanh hơn.</small>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Gửi Yêu Cầu</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Gửi Yêu Cầu</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- MODAL HỦY -->
     <div class="modal fade" id="cancelModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -430,6 +501,7 @@
         </div>
     </div>
 
+    <!-- MODAL XEM CHI TIẾT -->
     <div class="modal fade" id="viewModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -462,6 +534,7 @@
         </div>
     </div>
 
+    <!-- MODAL SỬA -->
     <div class="modal fade" id="editModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -509,7 +582,6 @@
             if (type === 'error') iconClass = 'fa-exclamation-circle';
             if (type === 'info') iconClass = 'fa-info-circle';
             
-            // Tạo element thay vì dùng innerHTML
             const toastDiv = document.createElement('div');
             toastDiv.className = 'toast-notification ' + type;
             
@@ -550,6 +622,10 @@
                 clearTimeout(currentToastTimeout);
                 currentToastTimeout = null;
             }
+        }
+
+        function refreshPage() {
+            window.location.href = "${pageContext.request.contextPath}/managerServiceRequest";
         }
 
         function viewRequest(id, contractId, equipmentId, description, requestDate, status, priorityLevel) {

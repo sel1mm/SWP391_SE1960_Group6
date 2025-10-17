@@ -183,7 +183,7 @@ public class ServiceRequestDAO extends MyDAO {
             if (affectedRows > 0) {
                 rs = ps.getGeneratedKeys();
                 if (rs.next()) {
-                    return rs.getInt(1); // Trả về requestId vừa tạo
+                    return rs.getInt(1);
                 }
             }
             return -1;
@@ -226,14 +226,14 @@ public class ServiceRequestDAO extends MyDAO {
     }
     
     /**
-     * Lấy tất cả service requests của một customer
+     * Lấy tất cả service requests của một customer (Sắp xếp mới nhất trước)
      */
     public List<ServiceRequest> getRequestsByCustomerId(int customerId) {
         List<ServiceRequest> list = new ArrayList<>();
         xSql = "SELECT sr.* FROM ServiceRequest sr " +
                "INNER JOIN Contract c ON sr.contractId = c.contractId " +
                "WHERE c.customerId = ? " +
-               "ORDER BY sr.requestDate DESC";
+               "ORDER BY sr.requestId DESC";
         try {
             ps = con.prepareStatement(xSql);
             ps.setInt(1, customerId);
@@ -270,15 +270,15 @@ public class ServiceRequestDAO extends MyDAO {
     }
     
     /**
-     * Tìm kiếm theo keyword (description hoặc requestId)
+     * Tìm kiếm theo keyword (description hoặc requestId) - Sắp xếp cũ nhất trước
      */
     public List<ServiceRequest> searchRequests(int customerId, String keyword) {
         List<ServiceRequest> list = new ArrayList<>();
         xSql = "SELECT sr.* FROM ServiceRequest sr " +
                "INNER JOIN Contract c ON sr.contractId = c.contractId " +
                "WHERE c.customerId = ? " +
-               "AND (sr.description LIKE ? OR sr.requestId LIKE ?) " +
-               "ORDER BY sr.requestDate DESC";
+               "AND (sr.description LIKE ? OR CAST(sr.requestId AS CHAR) LIKE ?) " +
+               "ORDER BY sr.requestDate ASC, sr.requestId ASC";
         try {
             ps = con.prepareStatement(xSql);
             ps.setInt(1, customerId);
@@ -297,14 +297,14 @@ public class ServiceRequestDAO extends MyDAO {
     }
     
     /**
-     * Lọc theo status
+     * Lọc theo status - Sắp xếp cũ nhất trước
      */
     public List<ServiceRequest> filterRequestsByStatus(int customerId, String status) {
         List<ServiceRequest> list = new ArrayList<>();
         xSql = "SELECT sr.* FROM ServiceRequest sr " +
                "INNER JOIN Contract c ON sr.contractId = c.contractId " +
                "WHERE c.customerId = ? AND sr.status = ? " +
-               "ORDER BY sr.requestDate DESC";
+               "ORDER BY sr.requestDate ASC, sr.requestId ASC";
         try {
             ps = con.prepareStatement(xSql);
             ps.setInt(1, customerId);
@@ -413,7 +413,6 @@ public class ServiceRequestDAO extends MyDAO {
     
     /**
      * Map ResultSet thành ServiceRequestDetailDTO
-     * FIX: Convert java.sql.Date to LocalDate for Contract and Equipment
      */
     private dto.ServiceRequestDetailDTO mapResultSetToDetailDTO(ResultSet rs) throws SQLException {
         dto.ServiceRequestDetailDTO dto = new dto.ServiceRequestDetailDTO();
@@ -491,7 +490,7 @@ public class ServiceRequestDAO extends MyDAO {
         xSql = "SELECT sr.* FROM ServiceRequest sr " +
                 "INNER JOIN Account a ON sr.createdBy = a.accountId " +
                 "WHERE sr.status = 'Pending' " +
-                "AND (sr.description LIKE ? OR a.fullName LIKE ? OR sr.requestId LIKE ?) " +
+                "AND (sr.description LIKE ? OR a.fullName LIKE ? OR CAST(sr.requestId AS CHAR) LIKE ?) " +
                 "ORDER BY sr.priorityLevel DESC, sr.requestDate ASC";
         try {
             ps = con.prepareStatement(xSql);
@@ -523,7 +522,7 @@ public class ServiceRequestDAO extends MyDAO {
         List<String> conditions = new ArrayList<>();
 
         if (priority != null && !priority.trim().isEmpty()) {
-            conditions.add("sr.priorityLevel = '" + priority + "'");
+            conditions.add("sr.priorityLevel = ?");
         }
 
         if (urgency != null && !urgency.trim().isEmpty()) {
@@ -545,6 +544,12 @@ public class ServiceRequestDAO extends MyDAO {
         xSql = sqlBuilder.toString();
         try {
             ps = con.prepareStatement(xSql);
+            
+            // Set parameter cho priority nếu có
+            if (priority != null && !priority.trim().isEmpty()) {
+                ps.setString(1, priority);
+            }
+            
             rs = ps.executeQuery();
             while (rs.next()) {
                 list.add(mapResultSetToServiceRequest(rs));
@@ -643,8 +648,6 @@ public class ServiceRequestDAO extends MyDAO {
             rs = ps.executeQuery();
             while (rs.next()) {
                 ServiceRequest sr = mapResultSetToServiceRequest(rs);
-                // Note: In a real implementation, you might want to create a DTO
-                // that includes the additional fields like customerName, equipmentModel, etc.
                 list.add(sr);
             }
         } catch (Exception e) {
@@ -654,5 +657,4 @@ public class ServiceRequestDAO extends MyDAO {
         }
         return list;
     }
-
 }
