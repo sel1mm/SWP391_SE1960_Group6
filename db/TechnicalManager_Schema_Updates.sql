@@ -11,6 +11,47 @@
 -- UC-08: Review Maintenance Report
 -- ====================================================================
 
+-- Technician module tables (idempotent)
+CREATE TABLE IF NOT EXISTS tasks (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  status VARCHAR(50) NOT NULL,
+  priority VARCHAR(50),
+  due_date DATE,
+  assigned_date DATE,
+  assigned_technician_id BIGINT,
+  equipment_needed TEXT
+);
+
+CREATE TABLE IF NOT EXISTS contracts (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  equipment_name VARCHAR(255) NOT NULL,
+  quantity INT NOT NULL,
+  unit_price DECIMAL(15,2) NULL,
+  description TEXT,
+  date DATE,
+  technician_id BIGINT,
+  task_id BIGINT
+);
+
+CREATE TABLE IF NOT EXISTS repair_reports (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  task_id BIGINT NOT NULL,
+  summary VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  file_path VARCHAR(500),
+  created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS task_activity (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  task_id BIGINT NOT NULL,
+  technician_id BIGINT,
+  activity TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ====================================================================
 -- 1. TECHNICIAN SKILLS AND SPECIALIZATIONS
 -- ====================================================================
