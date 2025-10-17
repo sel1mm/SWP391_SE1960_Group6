@@ -79,7 +79,7 @@ public class LoginController extends HttpServlet {
             } else if ("Customer Support Staff".equals(userRole)) {
                 response.sendRedirect("dashboard.jsp");
             } else {
-                response.sendRedirect("home.jsp");
+                response.sendRedirect("managerServiceRequest");
             }
         } else {
             request.setAttribute("error", MessageConstant.LOGIN_FAILED);
