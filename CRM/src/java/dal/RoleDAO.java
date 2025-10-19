@@ -9,7 +9,7 @@ import java.util.List;
 
 public class RoleDAO extends MyDAO {
 
-    public Response<List<Role>> getAllRoles() {
+    public Response<List<Role>>getAllRoles() {
         String sql = "SELECT * FROM Role ORDER BY roleId";
         List<Role> roles = new ArrayList<>();
         try {

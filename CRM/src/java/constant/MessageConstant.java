@@ -9,4 +9,5 @@ public class MessageConstant {
     public static final String ADMIN_URL = "admin.jsp";
     public static final String MESSAGE_SUCCESS = "Successfully!.";
     public static final String MESSAGE_FAILED = "Failed!.";
+    public static final String STOREKEEPER_URL = "storekeeper";
 }

@@ -827,5 +827,71 @@ public class AccountDAO extends MyDAO {
         }
         return false;
     }
+public boolean verifyPassword(String username, String passwordHash) {
+    String sql = "SELECT accountId FROM Account WHERE username = ? AND passwordHash = ?";
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setString(1, username);
+        ps.setString(2, passwordHash);
+        rs = ps.executeQuery();
+        
+        return rs.next(); // Trả về true nếu tìm thấy
+        
+    } catch (SQLException e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+    return false;
+}
+public boolean updatePassword(String username, String newPasswordHash) {
+    String sql = "UPDATE Account SET passwordHash = ?, updatedAt = NOW() WHERE username = ?";
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setString(1, newPasswordHash);
+        ps.setString(2, username);
+        
+        int rowsAffected = ps.executeUpdate();
+        return rowsAffected > 0;
+        
+    } catch (SQLException e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+    return false;
+}
+public boolean updateAccountInformation(String username, String email, String phone, String fullName) {
+    String sql = "UPDATE Account SET email = ?, phone = ?, fullName = ?, updatedAt = NOW() WHERE username = ?";
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setString(1, email);
+        ps.setString(2, phone);
+        ps.setString(3, fullName);
+        ps.setString(4, username);
+        
+        int rowsAffected = ps.executeUpdate();
+        return rowsAffected > 0;
+        
+    } catch (SQLException e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+    return false;
+}
 
 }
