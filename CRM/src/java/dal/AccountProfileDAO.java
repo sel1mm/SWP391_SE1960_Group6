@@ -1,5 +1,6 @@
 package dal;
 
+
 import java.sql.*;
 import java.time.LocalDate;
 import model.AccountProfile;
@@ -114,10 +115,12 @@ public class AccountProfileDAO extends MyDAO {
                 if (rs.getDate("dateOfBirth") != null) {
                     profile.setDateOfBirth(rs.getDate("dateOfBirth").toLocalDate());
                 }
+
                 profile.setAvatarUrl(rs.getString("avatarUrl"));
                 profile.setNationalId(rs.getString("nationalId"));
                 profile.setVerified(rs.getBoolean("verified"));
                 profile.setExtraData(rs.getString("extraData"));
+
                 
                 System.out.println("✅ Profile loaded - ProfileID: " + profile.getProfileId() 
                     + ", AccountID: " + profile.getAccountId());
@@ -171,4 +174,5 @@ public class AccountProfileDAO extends MyDAO {
             return false;
         }
     }
+
 }

@@ -96,7 +96,7 @@ public class ChangeInformationServlet extends HttpServlet {
 
             // Get current account and profile data
             System.out.println("\n--- Fetching Account Data ---");
-            Response<Account> accountResponse = accountDAO.getAccountById(acc.getAccountId());
+            Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
             System.out.println("Account Response: " + (accountResponse != null ? "Success" : "NULL"));
             if (accountResponse != null && accountResponse.getData() != null) {
                 Account account = accountResponse.getData();
@@ -272,7 +272,7 @@ public class ChangeInformationServlet extends HttpServlet {
             System.out.println("========== UPDATE ACCOUNT TABLE ==========");
             System.out.println("=".repeat(50));
             
-            Response<Account> accountResponse = accountDAO.getAccountById(acc.getAccountId());
+            Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
             System.out.println("1. Get account by ID: " + acc.getAccountId());
             System.out.println("   - Response: " + (accountResponse != null ? "Success" : "NULL"));
             System.out.println("   - Account data: " + (accountResponse != null && accountResponse.getData() != null ? "Found" : "NULL"));

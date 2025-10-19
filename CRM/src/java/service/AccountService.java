@@ -151,7 +151,7 @@ public class AccountService {
     }
 
     public Response<Account> getAccountById(int accountId) {
-        return accountDAO.getAccountById(accountId);
+        return accountDAO.getAccountById2(accountId);
     }
 
     public Response<Account> createAccount(Account account) {
@@ -212,7 +212,7 @@ public class AccountService {
         }
 
         // Check if account exists
-        Response<Account> existingAccount = accountDAO.getAccountById(account.getAccountId());
+        Response<Account> existingAccount = accountDAO.getAccountById2(account.getAccountId());
         if (!existingAccount.isSuccess() || existingAccount.getData() == null) {
             return new Response<>(null, false, "Account not found");
         }
@@ -269,7 +269,7 @@ public class AccountService {
                 return new Response<>(null, false, "Email is required");
             }
 
-            Response<Account> existingAccountRes = accountDAO.getAccountById(account.getAccountId());
+            Response<Account> existingAccountRes = accountDAO.getAccountById2(account.getAccountId());
             if (!existingAccountRes.isSuccess() || existingAccountRes.getData() == null) {
                 return new Response<>(null, false, "Account not found");
             }
@@ -349,7 +349,7 @@ public class AccountService {
 
     public Response<Boolean> deleteAccount(int accountId) {
         // Check if account exists
-        Response<Account> existingAccount = accountDAO.getAccountById(accountId);
+        Response<Account> existingAccount = accountDAO.getAccountById2(accountId);
         if (!existingAccount.isSuccess() || existingAccount.getData() == null) {
             return new Response<>(false, false, "Account not found");
         }

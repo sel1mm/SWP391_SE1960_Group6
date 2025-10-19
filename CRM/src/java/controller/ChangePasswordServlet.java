@@ -1,3 +1,4 @@
+
 package controller;
 
 import dal.AccountDAO;
@@ -61,10 +62,12 @@ public class ChangePasswordServlet extends HttpServlet {
     
     /**
      * Handles the HTTP GET method - Display change password form
+
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         
         response.setContentType("text/html;charset=UTF-8");
         
@@ -85,7 +88,7 @@ public class ChangePasswordServlet extends HttpServlet {
             }
             
             // Get current account data
-            Response<Account> accountResponse = accountDAO.getAccountById(acc.getAccountId());
+            Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
             
             if (accountResponse == null || !accountResponse.isSuccess() || accountResponse.getData() == null) {
                 LOGGER.warning("Account not found for ID: " + acc.getAccountId());
@@ -109,10 +112,12 @@ public class ChangePasswordServlet extends HttpServlet {
     
     /**
      * Handles the HTTP POST method - Process password change or verification
+
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         
         // IMPORTANT: Set encoding BEFORE reading any parameters
         request.setCharacterEncoding("UTF-8");
@@ -184,7 +189,7 @@ public class ChangePasswordServlet extends HttpServlet {
             }
             
             // Get account from database
-            Response<Account> accountResponse = accountDAO.getAccountById(acc.getAccountId());
+            Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
             if (accountResponse == null || !accountResponse.isSuccess() || accountResponse.getData() == null) {
                 LOGGER.warning("Account not found for ID: " + acc.getAccountId());
                 out.print("{\"success\":false,\"message\":\"Account not found.\"}");
@@ -271,7 +276,7 @@ public class ChangePasswordServlet extends HttpServlet {
             }
             
             // Get current account
-            Response<Account> accountResponse = accountDAO.getAccountById(acc.getAccountId());
+            Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
             if (accountResponse == null || !accountResponse.isSuccess() || accountResponse.getData() == null) {
                 LOGGER.severe("Account not found during password change: " + acc.getAccountId());
                 request.setAttribute(ATTR_ERROR_MSG, "Account not found. Please login again.");
@@ -481,3 +486,4 @@ public class ChangePasswordServlet extends HttpServlet {
         LOGGER.info("ChangePasswordServlet destroyed");
     }
 }
+

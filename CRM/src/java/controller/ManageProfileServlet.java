@@ -1,3 +1,4 @@
+
 package controller;
 
 import dal.AccountDAO;
@@ -10,10 +11,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
 import model.Account;
 import model.AccountProfile;
 
 /**
+<<<<<<< HEAD
  * Servlet for managing user profile
  * @author Admin
  */
@@ -51,7 +54,7 @@ public class ManageProfileServlet extends HttpServlet {
             }
 
             // Get account and profile data
-            Response<Account> accountResponse = accountDAO.getAccountById(acc.getAccountId());
+            Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
             AccountProfile accountProfile = profileDAO.getProfileByAccountId(acc.getAccountId());
             
             // Debug logging
@@ -133,7 +136,7 @@ public class ManageProfileServlet extends HttpServlet {
             System.out.println("================================");
             
             // Get data for display
-            Response<Account> accountResponse = accountDAO.getAccountById(acc.getAccountId());
+            Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
             AccountProfile accountProfile = profileDAO.getProfileByAccountId(acc.getAccountId());
             
             // ✅ THÊM - Load avatar vào session
@@ -186,3 +189,4 @@ public class ManageProfileServlet extends HttpServlet {
         return "Servlet for managing user profile information with avatar support";
     }
 }
+

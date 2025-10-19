@@ -78,6 +78,7 @@
             overflow: hidden;
         }
 
+
         .header::before {
             content: '';
             position: absolute;
@@ -445,8 +446,10 @@
                     Change Information
                 </h1>
                 <p>Update your personal information and profile details</p>
+
             </div>
         </div>
+
 
         <form action="changeInformation" method="POST" id="changeInfoForm" enctype="multipart/form-data">
             <div class="content">
@@ -822,3 +825,4 @@
     </script>
 </body>
 </html>
+

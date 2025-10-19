@@ -47,12 +47,14 @@
             }
         }
 
+
         /* Header Section */
         .profile-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 40px;
             color: white;
         }
+
 
         .header-content {
             display: flex;
@@ -487,6 +489,7 @@
                             </div>
                         </div>
 
+
                         <div class="info-item">
                             <div class="info-icon">
                                 <i class="fas fa-calendar"></i>
@@ -507,6 +510,7 @@
                         </div>
                     </div>
                 </div>
+
 
                 <!-- Right Side - Avatar & Actions -->
                 <div class="avatar-section">

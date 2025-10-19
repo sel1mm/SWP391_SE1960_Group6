@@ -464,8 +464,50 @@ public class AccountDAO extends MyDAO {
         }
         return false;
     }
+   public Account getAccountById(int accountId) {
+    String sql = "SELECT * FROM Account WHERE accountId = ?";
+    try {
+        ps = connection.prepareStatement(sql);
+        ps.setInt(1, accountId);
+        rs = ps.executeQuery();
 
-    public Response<Account> getAccountById(int accountId) {
+        if (rs.next()) {
+            Account account = new Account();
+
+            account.setAccountId(rs.getInt("accountId"));
+            account.setUsername(rs.getString("username"));
+            account.setPasswordHash(rs.getString("passwordHash"));
+            account.setFullName(rs.getString("fullName"));
+            account.setEmail(rs.getString("email"));
+            account.setPhone(rs.getString("phone"));
+            account.setStatus(rs.getString("status"));
+
+            // Xử lý createdAt
+            java.sql.Timestamp createdTs = rs.getTimestamp("createdAt");
+            if (createdTs != null) {
+                account.setCreatedAt(createdTs.toLocalDateTime());
+            }
+
+            // Xử lý updatedAt
+            java.sql.Timestamp updatedTs = rs.getTimestamp("updatedAt");
+            if (updatedTs != null) {
+                account.setUpdatedAt(updatedTs.toLocalDateTime());
+            }
+
+            return account;
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    } finally {
+        try { 
+            if (rs != null) rs.close(); 
+            if (ps != null) ps.close(); 
+        } catch (Exception ignored) {}
+    }
+    return null;
+}
+
+    public Response<Account> getAccountById2(int accountId) {
         String sql = "SELECT * FROM Account WHERE accountId = ?";
         try {
             ps = con.prepareStatement(sql);

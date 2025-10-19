@@ -369,6 +369,7 @@
 
             <div id="messageBox" class="message-box"></div>
 
+
             <form id="changePasswordForm" action="changePassword" method="POST">
                 <!-- Keep hidden field OUTSIDE of sections so it's always sent -->
                 <input type="hidden" name="hiddenCurrentPassword" id="hiddenCurrentPassword">
@@ -466,6 +467,7 @@
             const input = document.getElementById(inputId);
             const icon = input.nextElementSibling;
 
+
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.remove('fa-eye');
@@ -476,6 +478,7 @@
                 icon.classList.add('fa-eye');
             }
         }
+
 
         function moveToStep2(event) {
             if (event) event.preventDefault();
@@ -724,5 +727,6 @@
             </c:if>
         });
     </script>
+
 </body>
 </html>
