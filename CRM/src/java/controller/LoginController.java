@@ -69,7 +69,7 @@ public class LoginController extends HttpServlet {
                     }
                 }
             }
-
+           
 //            request.getRequestDispatcher("welcome.html").forward(request, response); // Dùng câu này khi gửi kèm dữ liệu
              // Điều hướng theo vai trò
             if ("admin".equals(userRole)) {
@@ -78,6 +78,8 @@ public class LoginController extends HttpServlet {
                 response.sendRedirect("technicalManagerApproval");
             } else if ("Customer Support Staff".equals(userRole)) {
                 response.sendRedirect("dashboard.jsp");
+            } else if("Storekeeper".equals(userRole)){
+                response.sendRedirect(MessageConstant.STOREKEEPER_URL);
             } else {
                 response.sendRedirect("managerServiceRequest");
             }

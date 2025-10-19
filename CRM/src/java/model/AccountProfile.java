@@ -104,6 +104,7 @@ public class AccountProfile {
 
     @Override
     public String toString() {
+
         return "AccountProfile{" +
                 "profileId=" + profileId +
                 ", accountId=" + accountId +
@@ -115,4 +116,5 @@ public class AccountProfile {
                 ", extraData='" + extraData + '\'' +
                 '}';
     }
+
 }
