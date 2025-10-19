@@ -40,6 +40,10 @@
         <servlet-name>CustomerManagementController</servlet-name>
         <servlet-class>controller.CustomerManagementController</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>AssignWorkServlet</servlet-name>
+        <servlet-class>controller.AssignWorkServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>LoginController</servlet-name>
         <url-pattern>/login</url-pattern>
@@ -79,5 +83,9 @@
     <servlet-mapping>
         <servlet-name>CustomerManagementController</servlet-name>
         <url-pattern>/customerManagement</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AssignWorkServlet</servlet-name>
+        <url-pattern>/assignWork</url-pattern>
     </servlet-mapping>
 </web-app>

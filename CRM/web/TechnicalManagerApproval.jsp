@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -13,10 +14,123 @@
         body {
             background-color: #f8f9fa;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
         }
 
-        .main-container {
-            padding: 30px 0;
+        /* Sidebar Styles */
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h4 {
+            color: white;
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+
+        .sidebar-header .subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            margin-bottom: 5px;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+            padding: 15px 25px;
+            border-radius: 0;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white !important;
+            border-left-color: #ffc107;
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background-color: rgba(255,255,255,0.15);
+            color: white !important;
+            border-left-color: #ffc107;
+            font-weight: 600;
+        }
+
+        .nav-link i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+
+        .content-wrapper {
+            padding: 30px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .mobile-toggle {
+                display: block !important;
+            }
+        }
+
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .stats-card {
@@ -66,7 +180,7 @@
         }
 
         .badge-pending {
-            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            background: #ffc107;
             color: #000;
             font-size: 12px;
             padding: 6px 12px;
@@ -74,7 +188,7 @@
         }
 
         .badge-urgent {
-            background: linear-gradient(135deg, #dc3545, #c82333);
+            background: #dc3545;
             color: white;
             font-size: 12px;
             padding: 6px 12px;
@@ -83,7 +197,7 @@
         }
 
         .badge-high {
-            background: linear-gradient(135deg, #fd7e14, #e55a2b);
+            background: #fd7e14;
             color: white;
             font-size: 12px;
             padding: 6px 12px;
@@ -91,7 +205,7 @@
         }
 
         .badge-normal {
-            background: linear-gradient(135deg, #20c997, #17a2b8);
+            background: #20c997;
             color: white;
             font-size: 12px;
             padding: 6px 12px;
@@ -202,9 +316,10 @@
 
         /* Modal enhancements */
         .modal-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: white;
+            color: #667eea;
             border-radius: 15px 15px 0 0;
+            border-bottom: 2px solid #667eea;
         }
 
         .modal-content {
@@ -303,28 +418,296 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Modern Card Enhancements */
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.95);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: white;
+            color: #667eea;
+            border: none;
+            border-bottom: 2px solid #667eea;
+            padding: 24px 30px;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(102, 126, 234, 0.05);
+            pointer-events: none;
+        }
+
+        /* Modern Table Styling */
+        .table {
+            margin-bottom: 0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table th {
+            background: white;
+            border-top: none;
+            border-bottom: 2px solid #667eea;
+            font-weight: 700;
+            color: #667eea;
+            padding: 20px 16px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            border-bottom: 3px solid rgba(255,255,255,0.2);
+        }
+
+        .table th::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .table td {
+            padding: 18px 16px;
+            vertical-align: middle;
+            border-color: #e9ecef;
+            font-size: 0.9rem;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.08);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+        }
+
+        /* Modern Button Styling */
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 12px 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.2);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-success {
+            background: #28a745;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.6);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.6);
+        }
+
+        /* Fix Bootstrap nav-tabs styling conflicts */
+        .nav-tabs {
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+
+        .nav-tabs .nav-link {
+            color: #495057 !important;
+            background-color: transparent !important;
+            border: 1px solid transparent;
+            border-top-left-radius: 0.375rem;
+            border-top-right-radius: 0.375rem;
+            padding: 12px 20px;
+            margin-bottom: -1px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: #667eea !important;
+            background-color: #f8f9fa !important;
+            border-color: #e9ecef #e9ecef #dee2e6;
+            transform: none;
+            border-left: 1px solid #e9ecef !important;
+        }
+
+        .nav-tabs .nav-link.active,
+        .nav-tabs .nav-item.show .nav-link {
+            color: #667eea !important;
+            background-color: #fff !important;
+            border-color: #dee2e6 #dee2e6 #fff;
+            font-weight: 600;
+            transform: none;
+            border-left: 1px solid #dee2e6 !important;
+        }
+
+        .nav-tabs .nav-link i {
+            margin-right: 8px;
+            width: auto;
+        }
+
+        .nav-tabs .badge {
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
     <!-- Toast Container -->
     <div id="toastContainer"></div>
 
-    <div class="container main-container">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2><i class="fas fa-clipboard-check text-primary"></i> Duyệt Yêu Cầu Dịch Vụ</h2>
-                <p class="text-muted mb-0">Xem xét và xử lý các yêu cầu dịch vụ từ khách hàng</p>
-            </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-primary" onclick="refreshPage()">
-                    <i class="fas fa-sync-alt"></i> Làm Mới
-                </button>
-                <button class="btn btn-outline-info" onclick="exportToExcel()">
-                    <i class="fas fa-download"></i> Xuất Excel
-                </button>
-            </div>
+    <!-- Mobile Toggle Button -->
+    <button class="mobile-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h4><i class="fas fa-tools me-2"></i>CRM System</h4>
+            <div class="subtitle">Technical Manager</div>
         </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="dashboard.jsp">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="technicalManagerApproval">
+                    <i class="fas fa-clipboard-check me-2"></i>Duyệt Yêu Cầu
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="assignWork">
+                    <i class="fas fa-user-plus me-2"></i>Phân Công Công Việc
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="scheduleMaintenance">
+                    <i class="fas fa-calendar-alt me-2"></i>Lập Lịch Bảo Trì
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="reviewMaintenanceReport">
+                    <i class="fas fa-file-alt me-2"></i>Xem Báo Cáo Bảo Trì
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="manageProfile.jsp">
+                    <i class="fas fa-cog me-2"></i>Cài Đặt
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="logout">
+                    <i class="fas fa-sign-out-alt me-2"></i>Đăng Xuất
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="content-wrapper">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-clipboard-check text-primary"></i> Duyệt Yêu Cầu Dịch Vụ</h2>
+                    <p class="text-muted mb-0">
+                        <c:choose>
+                            <c:when test="${viewMode == 'history'}">
+                                Xem lịch sử tất cả các yêu cầu dịch vụ
+                            </c:when>
+                            <c:otherwise>
+                                Xem xét và xử lý các yêu cầu được giao cho bạn
+                            </c:otherwise>
+                        </c:choose>
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="refreshPage()">
+                        <i class="fas fa-sync-alt"></i> Làm Mới
+                    </button>
+                    <button class="btn btn-outline-info" onclick="exportToExcel()">
+                        <i class="fas fa-download"></i> Xuất Excel
+                    </button>
+                </div>
+            </div>
+
+            <!-- View Mode Navigation -->
+            <div class="mb-4">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link ${viewMode != 'history' ? 'active' : ''}" 
+                           href="${pageContext.request.contextPath}/technicalManagerApproval">
+                            <i class="fas fa-tasks"></i> Yêu Cầu Được Giao
+                            <c:if test="${awaitingApprovalCount > 0}">
+                                <span class="badge bg-warning text-dark ms-2">${awaitingApprovalCount}</span>
+                            </c:if>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link ${viewMode == 'history' ? 'active' : ''}" 
+                           href="${pageContext.request.contextPath}/technicalManagerApproval?action=history">
+                            <i class="fas fa-history"></i> Lịch Sử Tất Cả
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
         <!-- Alert Messages từ session -->
         <%
@@ -356,47 +739,93 @@
 
         <!-- Statistics Cards -->
         <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="stats-card bg-primary text-white">
-                    <div class="text-center">
-                        <i class="fas fa-clock"></i>
-                        <h4 class="mt-2">${pendingCount}</h4>
-                        <p>Chờ Duyệt</p>
+            <c:choose>
+                <c:when test="${viewMode == 'history'}">
+                    <!-- History View Statistics -->
+                    <div class="col-md-3">
+                        <div class="stats-card bg-info text-white">
+                            <div class="text-center">
+                                <i class="fas fa-list"></i>
+                                <h4 class="mt-2">${totalCount}</h4>
+                                <p>Tổng Yêu Cầu</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card bg-warning text-dark">
-                    <div class="text-center">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h4 class="mt-2">${urgentCount}</h4>
-                        <p>Cần Khẩn Cấp</p>
+                    <div class="col-md-3">
+                        <div class="stats-card bg-success text-white">
+                            <div class="text-center">
+                                <i class="fas fa-check-circle"></i>
+                                <h4 class="mt-2">${approvedCount}</h4>
+                                <p>Đã Duyệt</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card bg-info text-white">
-                    <div class="text-center">
-                        <i class="fas fa-calendar-day"></i>
-                        <h4 class="mt-2">${todayCount}</h4>
-                        <p>Hôm Nay</p>
+                    <div class="col-md-3">
+                        <div class="stats-card bg-danger text-white">
+                            <div class="text-center">
+                                <i class="fas fa-times-circle"></i>
+                                <h4 class="mt-2">${rejectedCount}</h4>
+                                <p>Đã Từ Chối</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card bg-success text-white">
-                    <div class="text-center">
-                        <i class="fas fa-check-circle"></i>
-                        <h4 class="mt-2">${approvedToday}</h4>
-                        <p>Đã Duyệt Hôm Nay</p>
+                    <div class="col-md-3">
+                        <div class="stats-card bg-warning text-dark">
+                            <div class="text-center">
+                                <i class="fas fa-clock"></i>
+                                <h4 class="mt-2">${awaitingApprovalCount}</h4>
+                                <p>Chờ Duyệt</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </c:when>
+                <c:otherwise>
+                    <!-- Assigned Requests View Statistics -->
+                    <div class="col-md-3">
+                        <div class="stats-card bg-primary text-white">
+                            <div class="text-center">
+                                <i class="fas fa-clock"></i>
+                                <h4 class="mt-2">${awaitingApprovalCount}</h4>
+                                <p>Chờ Duyệt</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card bg-warning text-dark">
+                            <div class="text-center">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h4 class="mt-2">${urgentCount}</h4>
+                                <p>Cần Khẩn Cấp</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card bg-info text-white">
+                            <div class="text-center">
+                                <i class="fas fa-calendar-day"></i>
+                                <h4 class="mt-2">${todayCount}</h4>
+                                <p>Hôm Nay</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card bg-success text-white">
+                            <div class="text-center">
+                                <i class="fas fa-check-circle"></i>
+                                <h4 class="mt-2">${approvedToday}</h4>
+                                <p>Đã Duyệt Hôm Nay</p>
+                            </div>
+                        </div>
+                    </div>
+                </c:otherwise>
+            </c:choose>
         </div>
 
         <!-- Search & Filter Bar -->
         <div class="search-filter-bar">
             <form action="${pageContext.request.contextPath}/technicalManagerApproval" method="get" class="row g-3">
+                <input type="hidden" name="viewMode" value="${viewMode}">
+                <input type="hidden" name="technicianId" value="${technicianId}">
                 <div class="col-md-4">
                     <div class="input-group">
                         <input type="text" class="form-control" name="keyword"
@@ -430,7 +859,7 @@
             </form>
             <c:if test="${searchMode || filterMode}">
                 <div class="mt-3">
-                    <a href="${pageContext.request.contextPath}/technicalManagerApproval" class="btn btn-sm btn-secondary">
+                    <a href="${pageContext.request.contextPath}/technicalManagerApproval?viewMode=${viewMode}&technicianId=${technicianId}" class="btn btn-sm btn-secondary">
                         <i class="fas fa-times"></i> Xóa Bộ Lọc
                     </a>
                 </div>
@@ -440,7 +869,17 @@
         <!-- Requests Table -->
         <div class="table-container">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5><i class="fas fa-list"></i> Danh Sách Yêu Cầu Chờ Duyệt</h5>
+                <h5>
+                    <i class="fas fa-list"></i> 
+                    <c:choose>
+                        <c:when test="${viewMode == 'history'}">
+                            Lịch Sử Tất Cả Yêu Cầu
+                        </c:when>
+                        <c:otherwise>
+                            Danh Sách Yêu Cầu Được Giao
+                        </c:otherwise>
+                    </c:choose>
+                </h5>
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-muted">Tổng cộng: <strong>${requests.size()}</strong> yêu cầu</span>
                 </div>
@@ -455,8 +894,11 @@
                             <th>Thiết Bị</th>
                             <th>Mô Tả</th>
                             <th>Ưu Tiên</th>
+                            <th>Trạng Thái</th>
                             <th>Ngày Tạo</th>
-                            <th>Số Ngày Chờ</th>
+                            <c:if test="${viewMode != 'history'}">
+                                <th>Số Ngày Chờ</th>
+                            </c:if>
                             <th>Thao Tác</th>
                         </tr>
                     </thead>
@@ -472,8 +914,8 @@
                                     <small class="text-muted">${request.customerEmail}</small>
                                 </td>
                                 <td>
-                                    <div><strong>${request.equipmentModel}</strong></div>
-                                    <small class="text-muted">SN: ${request.equipmentSerialNumber}</small>
+                                    <div><strong>${request.equipmentName}</strong></div>
+                                    <small class="text-muted">SN: ${request.serialNumber}</small>
                                 </td>
                                 <td>
                                     <c:choose>
@@ -505,44 +947,124 @@
                                     </c:choose>
                                 </td>
                                 <td>
+                                    <c:choose>
+                                        <c:when test="${request.status == 'Awaiting Approval'}">
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-clock"></i> Chờ Duyệt
+                                            </span>
+                                        </c:when>
+                                        <c:when test="${request.status == 'Approved'}">
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Đã Duyệt
+                                            </span>
+                                        </c:when>
+                                        <c:when test="${request.status == 'Rejected'}">
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times"></i> Từ Chối
+                                            </span>
+                                        </c:when>
+                                        <c:when test="${request.status == 'Pending'}">
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-hourglass-half"></i> Chờ Xử Lý
+                                            </span>
+                                        </c:when>
+                                        <c:when test="${request.status == 'Completed'}">
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-check-circle"></i> Hoàn Thành
+                                            </span>
+                                        </c:when>
+                                        <c:when test="${request.status == 'Cancelled'}">
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-ban"></i> Đã Hủy
+                                            </span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge bg-light text-dark">${request.status}</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td>
                                     <fmt:formatDate value="${request.requestDate}" pattern="dd/MM/yyyy"/>
                                     <br>
                                     <small class="text-muted">
                                         <fmt:formatDate value="${request.requestDate}" pattern="HH:mm"/>
                                     </small>
                                 </td>
+                                <c:if test="${viewMode != 'history'}">
+                                    <td>
+                                        <span class="badge ${request.daysPending >= 7 ? 'bg-danger' : request.daysPending >= 3 ? 'bg-warning' : 'bg-info'}">
+                                            ${request.daysPending} ngày
+                                        </span>
+                                    </td>
+                                </c:if>
                                 <td>
-                                    <span class="badge ${request.daysPending >= 7 ? 'bg-danger' : request.daysPending >= 3 ? 'bg-warning' : 'bg-info'}">
-                                        ${request.daysPending} ngày
-                                    </span>
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-success btn-action"
-                                            onclick="approveRequest(${request.requestId}, '${request.customerName}', '${request.equipmentModel}')">
-                                        <i class="fas fa-check"></i> Duyệt
-                                    </button>
-                                    <button class="btn btn-sm btn-danger btn-action"
-                                            onclick="rejectRequest(${request.requestId}, '${request.customerName}', '${request.equipmentModel}')">
-                                        <i class="fas fa-times"></i> Từ Chối
-                                    </button>
-                                    <button class="btn btn-sm btn-info btn-action"
-                                            onclick="viewRequestDetails(${request.requestId})">
-                                        <i class="fas fa-eye"></i> Chi Tiết
-                                    </button>
+                                    <div class="d-flex gap-1">
+                                        <c:choose>
+                                            <c:when test="${viewMode == 'history'}">
+                                                <button class="btn btn-sm btn-info request-action-btn"
+                                                        data-action="view"
+                                                        data-request-id="<c:out value='${request.requestId}' escapeXml='true'/>"
+                                                        title="Chi Tiết">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </c:when>
+                                            <c:when test="${request.status == 'Awaiting Approval'}">
+                                                <button class="btn btn-sm btn-success request-action-btn"
+                                                        data-action="approve"
+                                                        data-request-id="<c:out value='${request.requestId}' escapeXml='true'/>"
+                                                        data-customer-name="<c:out value='${request.customerName}' escapeXml='true'/>"
+                                                        data-equipment-name="<c:out value='${request.equipmentName}' escapeXml='true'/>"
+                                                        title="Duyệt">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger request-action-btn"
+                                                        data-action="reject"
+                                                        data-request-id="<c:out value='${request.requestId}' escapeXml='true'/>"
+                                                        data-customer-name="<c:out value='${request.customerName}' escapeXml='true'/>"
+                                                        data-equipment-name="<c:out value='${request.equipmentName}' escapeXml='true'/>"
+                                                        title="Từ Chối">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-info request-action-btn"
+                                                        data-action="view"
+                                                        data-request-id="<c:out value='${request.requestId}' escapeXml='true'/>"
+                                                        title="Chi Tiết">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <button class="btn btn-sm btn-info request-action-btn"
+                                                        data-action="view"
+                                                        data-request-id="<c:out value='${request.requestId}' escapeXml='true'/>"
+                                                        title="Chi Tiết">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
                                 </td>
                             </tr>
                         </c:forEach>
                         <c:if test="${empty requests}">
                             <tr>
-                                <td colspan="8" class="text-center py-5">
+                                <td colspan="${viewMode == 'history' ? '8' : '9'}" class="text-center py-5">
                                     <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
-                                    <h5 class="text-muted">Không có yêu cầu nào chờ duyệt</h5>
-                                    <p class="text-muted">Tất cả yêu cầu đã được xử lý hoặc chưa có yêu cầu mới</p>
+                                    <c:choose>
+                                        <c:when test="${viewMode == 'history'}">
+                                            <h5 class="text-muted">Không có lịch sử yêu cầu</h5>
+                                            <p class="text-muted">Chưa có yêu cầu nào được xử lý</p>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <h5 class="text-muted">Không có yêu cầu nào được giao</h5>
+                                            <p class="text-muted">Chưa có yêu cầu nào được giao cho kỹ thuật viên này</p>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </td>
                             </tr>
                         </c:if>
                     </tbody>
                 </table>
+</div>
             </div>
         </div>
     </div>
@@ -654,6 +1176,20 @@
                             <input type="text" class="form-control" name="recommendedSkills"
                                    placeholder="Ví dụ: Electrical, HVAC, Mechanical">
                             <small class="form-text text-muted">Các kỹ năng cần thiết để thực hiện yêu cầu này</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Chọn Kỹ Thuật Viên <span class="text-danger">*</span></label>
+                            <select class="form-select" name="assignedTechnicianId" id="assignedTechnicianId" required>
+                                <option value="">-- Chọn kỹ thuật viên --</option>
+                                <c:forEach var="technician" items="${technicians}">
+                                    <option value="${technician.accountId}">
+                                        ${technician.fullName} (${technician.username})
+                                        <c:if test="${not empty technician.phone}"> - ${technician.phone}</c:if>
+                                    </option>
+                                </c:forEach>
+                            </select>
+                            <small class="form-text text-muted">Chọn kỹ thuật viên sẽ được phân công thực hiện yêu cầu này</small>
                         </div>
 
                         <div class="mb-3">
@@ -781,8 +1317,47 @@
             }
         }
 
+        // Loading functions
+        function showLoading() {
+            // Create loading overlay if it doesn't exist
+            let loadingOverlay = document.getElementById('loadingOverlay');
+            if (!loadingOverlay) {
+                loadingOverlay = document.createElement('div');
+                loadingOverlay.id = 'loadingOverlay';
+                loadingOverlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 9999;
+                `;
+                loadingOverlay.innerHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div style="margin-top: 10px; color: #667eea;">Đang tải...</div>
+                    </div>
+                `;
+                document.body.appendChild(loadingOverlay);
+            }
+            loadingOverlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
         // Approve request function
-        function approveRequest(requestId, customerName, equipmentModel) {
+        function approveRequest(requestId, customerName, equipmentName) {
             document.getElementById('approveRequestId').value = requestId;
             document.getElementById('approveCustomerName').textContent = customerName;
             var approveModal = new bootstrap.Modal(document.getElementById('approveModal'));
@@ -790,7 +1365,7 @@
         }
 
         // Reject request function
-        function rejectRequest(requestId, customerName, equipmentModel) {
+        function rejectRequest(requestId, customerName, equipmentName) {
             document.getElementById('rejectRequestId').value = requestId;
             document.getElementById('rejectCustomerName').textContent = customerName;
             var rejectModal = new bootstrap.Modal(document.getElementById('rejectModal'));
@@ -799,9 +1374,81 @@
 
         // View request details function
         function viewRequestDetails(requestId) {
-            // In a real implementation, you would make an AJAX call to get request details
-            // For now, we'll show a placeholder
-            alert('Chi tiết yêu cầu #' + requestId + ' sẽ được hiển thị ở đây');
+            // Show loading state
+            showLoading();
+            
+            // Make AJAX call to get request details
+            fetch('technicalManagerApproval', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=getRequestDetails&requestId=' + requestId
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                
+                if (data.error) {
+                    showToast('Lỗi: ' + data.error, 'error');
+                    return;
+                }
+                
+                // Populate modal with data
+                document.getElementById('viewRequestId').textContent = data.requestId;
+                document.getElementById('viewRequestDate').textContent = formatDate(data.requestDate);
+                document.getElementById('viewStatus').innerHTML = getStatusBadge(data.status);
+                document.getElementById('viewPriority').innerHTML = getPriorityBadge(data.priorityLevel);
+                
+                document.getElementById('viewCustomerName').textContent = data.customerName || 'N/A';
+                document.getElementById('viewCustomerEmail').textContent = data.customerEmail || 'N/A';
+                document.getElementById('viewCustomerPhone').textContent = data.customerPhone || 'N/A';
+                
+                document.getElementById('viewEquipmentId').textContent = data.equipmentId || 'N/A';
+                document.getElementById('viewEquipmentModel').textContent = data.equipmentName || 'N/A';
+                document.getElementById('viewEquipmentSerial').textContent = data.serialNumber || 'N/A';
+                document.getElementById('viewContractType').textContent = data.contractType || 'N/A';
+                
+                document.getElementById('viewDescription').textContent = data.description || 'Không có mô tả';
+                
+                // Show modal
+                var viewModal = new bootstrap.Modal(document.getElementById('viewModal'));
+                viewModal.show();
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Error:', error);
+                showToast('Lỗi khi tải chi tiết yêu cầu', 'error');
+            });
+        }
+        
+        // Helper function to format date
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN');
+        }
+        
+        // Helper function to get status badge
+        function getStatusBadge(status) {
+            const statusMap = {
+                'Pending': '<span class="badge bg-warning">Chờ duyệt</span>',
+                'Approved': '<span class="badge bg-success">Đã duyệt</span>',
+                'Rejected': '<span class="badge bg-danger">Từ chối</span>',
+                'Completed': '<span class="badge bg-info">Hoàn thành</span>'
+            };
+            return statusMap[status] || '<span class="badge bg-secondary">' + status + '</span>';
+        }
+        
+        // Helper function to get priority badge
+        function getPriorityBadge(priority) {
+            const priorityMap = {
+                'Urgent': '<span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> Khẩn cấp</span>',
+                'High': '<span class="badge bg-warning"><i class="fas fa-arrow-up"></i> Cao</span>',
+                'Normal': '<span class="badge bg-info"><i class="fas fa-minus"></i> Bình thường</span>',
+                'Low': '<span class="badge bg-secondary"><i class="fas fa-arrow-down"></i> Thấp</span>'
+            };
+            return priorityMap[priority] || '<span class="badge bg-secondary">' + priority + '</span>';
         }
 
         // Refresh page function
@@ -818,6 +1465,45 @@
         setInterval(function() {
             // You can implement auto-refresh logic here if needed
         }, 30000);
+
+        // Toggle sidebar function
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.querySelector('.mobile-toggle');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(event.target) && 
+                !toggleBtn.contains(event.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Event delegation for request action buttons
+        document.addEventListener('click', function(event) {
+            if (event.target.closest('.request-action-btn')) {
+                const button = event.target.closest('.request-action-btn');
+                const action = button.getAttribute('data-action');
+                const requestId = button.getAttribute('data-request-id');
+                
+                if (action === 'view') {
+                    viewRequestDetails(requestId);
+                } else if (action === 'approve') {
+                    const customerName = button.getAttribute('data-customer-name');
+                    const equipmentName = button.getAttribute('data-equipment-name');
+                    approveRequest(requestId, customerName, equipmentName);
+                } else if (action === 'reject') {
+                    const customerName = button.getAttribute('data-customer-name');
+                    const equipmentName = button.getAttribute('data-equipment-name');
+                    rejectRequest(requestId, customerName, equipmentName);
+                }
+            }
+        });
     </script>
 </body>
 </html>

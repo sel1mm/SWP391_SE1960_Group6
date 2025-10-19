@@ -827,5 +827,56 @@ public class AccountDAO extends MyDAO {
         }
         return false;
     }
+ public List<Account> getAccountsByRole(String roleName) {
+        List<Account> accounts = new ArrayList<>();
+        xSql = "SELECT a.* FROM Account a " +
+               "INNER JOIN AccountRole ar ON a.accountId = ar.accountId " +
+               "INNER JOIN Role r ON ar.roleId = r.roleId " +
+               "WHERE r.roleName = ? AND a.status = 'Active'";
+        
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setString(1, roleName);
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                LocalDateTime createdAt = null;
+                LocalDateTime updatedAt = null;
 
+                if (rs.getTimestamp("createdAt") != null) {
+                    createdAt = rs.getTimestamp("createdAt").toLocalDateTime();
+                }
+                if (rs.getTimestamp("updatedAt") != null) {
+                    updatedAt = rs.getTimestamp("updatedAt").toLocalDateTime();
+                }
+
+                Account account = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
+                );
+                accounts.add(account);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        
+        return accounts;
+    }
+     private void closeResources() {
+        try {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
