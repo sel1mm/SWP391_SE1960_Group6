@@ -72,7 +72,7 @@ public class LoginController extends HttpServlet {
            
 //            request.getRequestDispatcher("welcome.html").forward(request, response); // Dùng câu này khi gửi kèm dữ liệu
              // Điều hướng theo vai trò
-            if ("Admin".equals(userRole)) {
+            if ("admin".equals(userRole)) {
                 response.sendRedirect(MessageConstant.ADMIN_URL);
             } else if ("Technical Manager".equals(userRole)) {
                 response.sendRedirect("technicalManagerApproval");
