@@ -4,8 +4,8 @@ import java.time.LocalDate;
 public class MaintenanceSchedule {
     private int scheduleId;
     private int requestId;
-    private int contracId;
-    private int equipmentId;
+    private Integer contractId;  // Changed to Integer to allow null values
+    private Integer equipmentId; // Changed to Integer to allow null values
     private int assignedTo;
     private LocalDate scheduledDate;
     private String scheduleType;
@@ -16,10 +16,10 @@ public class MaintenanceSchedule {
     public MaintenanceSchedule() {
     }
 
-    public MaintenanceSchedule(int scheduleId, int requestId, int contracId, int equipmentId, int assignedTo, LocalDate scheduledDate, String scheduleType, String recurrenceRule, String status, int priorityId) {
+    public MaintenanceSchedule(int scheduleId, int requestId, Integer contractId, Integer equipmentId, int assignedTo, LocalDate scheduledDate, String scheduleType, String recurrenceRule, String status, int priorityId) {
         this.scheduleId = scheduleId;
         this.requestId = requestId;
-        this.contracId = contracId;
+        this.contractId = contractId;
         this.equipmentId = equipmentId;
         this.assignedTo = assignedTo;
         this.scheduledDate = scheduledDate;
@@ -45,19 +45,19 @@ public class MaintenanceSchedule {
         this.requestId = requestId;
     }
 
-    public int getContracId() {
-        return contracId;
+    public Integer getContractId() {
+        return contractId;
     }
 
-    public void setContracId(int contracId) {
-        this.contracId = contracId;
+    public void setContractId(Integer contractId) {
+        this.contractId = contractId;
     }
 
-    public int getEquipmentId() {
+    public Integer getEquipmentId() {
         return equipmentId;
     }
 
-    public void setEquipmentId(int equipmentId) {
+    public void setEquipmentId(Integer equipmentId) {
         this.equipmentId = equipmentId;
     }
 

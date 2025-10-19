@@ -869,71 +869,58 @@ public class AccountDAO extends MyDAO {
         }
         return false;
     }
-public boolean verifyPassword(String username, String passwordHash) {
-    String sql = "SELECT accountId FROM Account WHERE username = ? AND passwordHash = ?";
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setString(1, username);
-        ps.setString(2, passwordHash);
-        rs = ps.executeQuery();
+
+ public List<Account> getAccountsByRole(String roleName) {
+        List<Account> accounts = new ArrayList<>();
+        xSql = "SELECT a.* FROM Account a " +
+               "INNER JOIN AccountRole ar ON a.accountId = ar.accountId " +
+               "INNER JOIN Role r ON ar.roleId = r.roleId " +
+               "WHERE r.roleName = ? AND a.status = 'Active'";
         
-        return rs.next(); // Trả về true nếu tìm thấy
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setString(1, roleName);
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                LocalDateTime createdAt = null;
+                LocalDateTime updatedAt = null;
+
+
+                if (rs.getTimestamp("createdAt") != null) {
+                    createdAt = rs.getTimestamp("createdAt").toLocalDateTime();
+                }
+                if (rs.getTimestamp("updatedAt") != null) {
+                    updatedAt = rs.getTimestamp("updatedAt").toLocalDateTime();
+                }
+
+                Account account = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
+                );
+                accounts.add(account);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
         
-    } catch (SQLException e) {
-        e.printStackTrace();
-    } finally {
+        return accounts;
+    }
+     private void closeResources() {
         try {
             if (rs != null) rs.close();
             if (ps != null) ps.close();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
-    return false;
-}
-public boolean updatePassword(String username, String newPasswordHash) {
-    String sql = "UPDATE Account SET passwordHash = ?, updatedAt = NOW() WHERE username = ?";
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setString(1, newPasswordHash);
-        ps.setString(2, username);
-        
-        int rowsAffected = ps.executeUpdate();
-        return rowsAffected > 0;
-        
-    } catch (SQLException e) {
-        e.printStackTrace();
-    } finally {
-        try {
-            if (ps != null) ps.close();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-    return false;
-}
-public boolean updateAccountInformation(String username, String email, String phone, String fullName) {
-    String sql = "UPDATE Account SET email = ?, phone = ?, fullName = ?, updatedAt = NOW() WHERE username = ?";
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setString(1, email);
-        ps.setString(2, phone);
-        ps.setString(3, fullName);
-        ps.setString(4, username);
-        
-        int rowsAffected = ps.executeUpdate();
-        return rowsAffected > 0;
-        
-    } catch (SQLException e) {
-        e.printStackTrace();
-    } finally {
-        try {
-            if (ps != null) ps.close();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-    return false;
-}
-
 }
