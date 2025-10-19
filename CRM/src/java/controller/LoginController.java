@@ -81,7 +81,7 @@ public class LoginController extends HttpServlet {
             } else if("Storekeeper".equals(userRole)){
                 response.sendRedirect(MessageConstant.STOREKEEPER_URL);
             } else {
-                response.sendRedirect("home.jsp");
+                response.sendRedirect("managerServiceRequest");
             }
         } else {
             request.setAttribute("error", MessageConstant.LOGIN_FAILED);

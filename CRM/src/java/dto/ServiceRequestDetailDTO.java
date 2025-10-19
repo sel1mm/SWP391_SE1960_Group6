@@ -1,5 +1,6 @@
-package model;
+package dto;
 
+import model.*;
 import java.time.LocalDate;
 import java.util.Date;
 
