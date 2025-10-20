@@ -338,6 +338,31 @@ INSERT INTO Role (roleId, roleName)
 VALUES (1, 'Admin')
 ON DUPLICATE KEY UPDATE roleName='Admin';
 
+-- 2. Thêm role Customer
+INSERT INTO Role (roleId, roleName)
+VALUES (2, 'Customer')
+ON DUPLICATE KEY UPDATE roleName='Customer';
+
+-- 3. Thêm role Customer Support Staff
+INSERT INTO Role (roleId, roleName)
+VALUES (3, 'Customer Support Staff')
+ON DUPLICATE KEY UPDATE roleName='Customer Support Staff';
+
+-- 4. Thêm role Technical Manager
+INSERT INTO Role (roleId, roleName)
+VALUES (4, 'Technical Manager')
+ON DUPLICATE KEY UPDATE roleName='Technical Manager';
+
+-- 5. Thêm role Storekeeper
+INSERT INTO Role (roleId, roleName)
+VALUES (5, 'Storekeeper')
+ON DUPLICATE KEY UPDATE roleName='Storekeeper';
+
+-- 6. Thêm role Technician
+INSERT INTO Role (roleId, roleName)
+VALUES (6, 'Technician')
+ON DUPLICATE KEY UPDATE roleName='Technician';
+
 -- 2. Thêm tài khoản admin
 INSERT INTO Account (username, passwordHash, fullName, email, phone, status, createdAt)
 VALUES (
@@ -353,6 +378,22 @@ VALUES (
 -- 3. Gán role Admin cho account vừa tạo
 INSERT INTO AccountRole (accountId, roleId)
 VALUES (LAST_INSERT_ID(), 1);
+
+-- 4. Thêm tài khoản technician test
+INSERT INTO Account (username, passwordHash, fullName, email, phone, status, createdAt)
+VALUES (
+    'technician', 
+    '$2a$12$rmfB.fZeS1UQVq/JiejzE.QYVzwp5HyJOnPJ3JaLRmsnYzF80IUuq', -- hash của "123456"
+    'Test Technician', 
+    'technician@test.com', 
+    '0987654321', 
+    'Active', 
+    NOW()
+);
+
+-- 5. Gán role Technician cho account vừa tạo
+INSERT INTO AccountRole (accountId, roleId)
+VALUES (LAST_INSERT_ID(), 6);
 
 
 

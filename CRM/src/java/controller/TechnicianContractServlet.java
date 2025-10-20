@@ -3,7 +3,6 @@ package controller;
 import dal.TechContractDao;
 import model.TechContract;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,11 +14,13 @@ import java.time.LocalDate;
 /**
  * Create equipment contracts for tasks.
  */
-@WebServlet(name = "TechnicianContractServlet", urlPatterns = {"/technician/contracts"})
 public class TechnicianContractServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.getRequestDispatcher("/technician/contract-form.jsp").forward(req, resp);
+        req.setAttribute("pageTitle", "Create Contract");
+        req.setAttribute("contentView", "/WEB-INF/technician/technician-contract-form.jsp");
+        req.setAttribute("activePage", "contracts");
+        req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
     }
 
     @Override

@@ -80,6 +80,10 @@ public class LoginController extends HttpServlet {
                 response.sendRedirect("dashboard.jsp");
             } else if("Storekeeper".equals(userRole)){
                 response.sendRedirect(MessageConstant.STOREKEEPER_URL);
+
+            } else if("Technician".equals(userRole)){
+                response.sendRedirect("technician/dashboard");
+
             } else {
                 response.sendRedirect("managerServiceRequest");
             }

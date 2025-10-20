@@ -14,7 +14,8 @@ public class DBContext {
         try {
             String username = "root";
 
-            String password = "1choigamenhuhack";
+            String password = "sa12345";
+
             String url = "jdbc:mysql://localhost:3306/swp?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
 
 

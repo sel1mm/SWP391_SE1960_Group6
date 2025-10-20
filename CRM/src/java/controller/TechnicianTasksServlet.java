@@ -3,7 +3,6 @@ package controller;
 import dal.TaskDao;
 import model.TechTask;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,7 +14,6 @@ import java.util.List;
 /**
  * Render assigned technician tasks list
  */
-@WebServlet(name = "TechnicianTasksServlet", urlPatterns = {"/technician/tasks"})
 public class TechnicianTasksServlet extends HttpServlet {
 
     @Override
