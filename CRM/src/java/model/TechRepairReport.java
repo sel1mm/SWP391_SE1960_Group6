@@ -1,30 +1,52 @@
 package model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * RepairReport model for technician reports.
+ * RepairReport model aligned with business flow - quotation and diagnosis for customers.
  */
 public class TechRepairReport {
-    private Long id;
-    private Long taskId;
-    private String summary;
-    private String description;
-    private String filePath;
-    private LocalDate createdDate;
+    private Long reportId;
+    private Long requestId;
+    private Long technicianId;
+    private String details;
+    private String diagnosis;
+    private BigDecimal estimatedCost;
+    private String quotationStatus;
+    private LocalDate repairDate;
+    private Long invoiceDetailId;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public Long getTaskId() { return taskId; }
-    public void setTaskId(Long taskId) { this.taskId = taskId; }
-    public String getSummary() { return summary; }
-    public void setSummary(String summary) { this.summary = summary; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public String getFilePath() { return filePath; }
-    public void setFilePath(String filePath) { this.filePath = filePath; }
-    public LocalDate getCreatedDate() { return createdDate; }
-    public void setCreatedDate(LocalDate createdDate) { this.createdDate = createdDate; }
+    // Constructors
+    public TechRepairReport() {
+        this.quotationStatus = "Pending"; // Default status
+    }
+
+    // Getters and Setters
+    public Long getReportId() { return reportId; }
+    public void setReportId(Long reportId) { this.reportId = reportId; }
+
+    public Long getRequestId() { return requestId; }
+    public void setRequestId(Long requestId) { this.requestId = requestId; }
+
+    public Long getTechnicianId() { return technicianId; }
+    public void setTechnicianId(Long technicianId) { this.technicianId = technicianId; }
+
+    public String getDetails() { return details; }
+    public void setDetails(String details) { this.details = details; }
+
+    public String getDiagnosis() { return diagnosis; }
+    public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
+
+    public BigDecimal getEstimatedCost() { return estimatedCost; }
+    public void setEstimatedCost(BigDecimal estimatedCost) { this.estimatedCost = estimatedCost; }
+
+    public String getQuotationStatus() { return quotationStatus; }
+    public void setQuotationStatus(String quotationStatus) { this.quotationStatus = quotationStatus; }
+
+    public LocalDate getRepairDate() { return repairDate; }
+    public void setRepairDate(LocalDate repairDate) { this.repairDate = repairDate; }
+
+    public Long getInvoiceDetailId() { return invoiceDetailId; }
+    public void setInvoiceDetailId(Long invoiceDetailId) { this.invoiceDetailId = invoiceDetailId; }
 }
-
-
