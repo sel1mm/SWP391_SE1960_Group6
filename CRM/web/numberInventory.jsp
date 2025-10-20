@@ -24,7 +24,7 @@
                 padding: 0;
                 box-sizing: border-box;
             }
-           
+
             body {
                 font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
                 background: #f8f9fc;
@@ -305,40 +305,52 @@
                 color: white;
             }
             /* Giới hạn độ rộng các cột - THÊM VÀO PHẦN <style> */
-.inventory-table thead tr th:nth-child(1) { width: 8%; }   /* Part ID */
-.inventory-table thead tr th:nth-child(2) { width: 10%; }  /* Inventory ID */
-.inventory-table thead tr th:nth-child(3) { width: 25%; }  /* Part Name */
-.inventory-table thead tr th:nth-child(4) { width: 10%; }  /* Quantity */
-.inventory-table thead tr th:nth-child(5) { width: 15%; }  /* Last Updated By */
-.inventory-table thead tr th:nth-child(6) { width: 15%; }  /* Last Update Time */
+            .inventory-table thead tr th:nth-child(1) {
+                width: 8%;
+            }   /* Part ID */
+            .inventory-table thead tr th:nth-child(2) {
+                width: 10%;
+            }  /* Inventory ID */
+            .inventory-table thead tr th:nth-child(3) {
+                width: 25%;
+            }  /* Part Name */
+            .inventory-table thead tr th:nth-child(4) {
+                width: 10%;
+            }  /* Quantity */
+            .inventory-table thead tr th:nth-child(5) {
+                width: 15%;
+            }  /* Last Updated By */
+            .inventory-table thead tr th:nth-child(6) {
+                width: 15%;
+            }  /* Last Update Time */
 
-/* Giới hạn text quá dài trong Part Name */
-.inventory-table tbody td:nth-child(3) {
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+            /* Giới hạn text quá dài trong Part Name */
+            .inventory-table tbody td:nth-child(3) {
+                max-width: 300px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
 
-/* Hover để xem full text */
-.inventory-table tbody td:nth-child(3):hover {
-    white-space: normal;
-    overflow: visible;
-    word-wrap: break-word;
-    background-color: #fff3cd;
-}
+            /* Hover để xem full text */
+            .inventory-table tbody td:nth-child(3):hover {
+                white-space: normal;
+                overflow: visible;
+                word-wrap: break-word;
+                background-color: #fff3cd;
+            }
 
-/* Đảm bảo table có table-layout fixed */
-.inventory-table {
-    table-layout: fixed;  /* QUAN TRỌNG */
-    width: 95%;
-    margin: 12px auto 0;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
+            /* Đảm bảo table có table-layout fixed */
+            .inventory-table {
+                table-layout: fixed;  /* QUAN TRỌNG */
+                width: 95%;
+                margin: 12px auto 0;
+                border-collapse: collapse;
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            }
             @keyframes fadeIn {
                 from {
                     opacity: 0;
@@ -349,6 +361,17 @@
                     transform: translateY(0);
                 }
             }
+
+            .sidebar {
+                max-width: 250px;
+                height: 610px;
+                margin-top: 77px;
+                position: fixed;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
         </style>
     </head>
 
@@ -382,6 +405,17 @@
                     <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
                     <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
                     <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiết bị </span></a>
+                    <!-- Nút Đăng xuất -->
+                    <a href="logout" style="
+                       margin-top: auto;
+                       background: rgba(255, 255, 255, 0.15);
+                       border-top: 1px solid rgba(255,255,255,0.2);
+                       text-align: center;
+                       font-weight: 500;
+                       ">
+                        <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                    </a>
+
                 </div>
 
                 <!-- Content -->
@@ -419,7 +453,7 @@
                                 <th>Quantity</th>
                                 <th>Last Updated By</th>
                                 <th>Last Update Time</th>
-                               
+
                             </tr>
                         </thead>
                         <tbody id="inventoryTableBody">
@@ -436,7 +470,7 @@
                             </c:forEach>
                         </tbody>
                     </table>
-               
+
                     <!-- Pagination -->
                     <div class="pagination">
                         <a href="#">« First</a>
@@ -450,140 +484,140 @@
                 </div>
             </div>
         </form>
-<script src="js/validatePartForm.js"></script>
+        <script src="js/validatePartForm.js"></script>
         <script>
-            let currentPage = 1;
-            const rowsPerPage = 10;
+                                        let currentPage = 1;
+                                        const rowsPerPage = 10;
 
-            function renderInventoryTable() {
-                const tableBody = document.getElementById("inventoryTableBody");
-                if (!tableBody)
-                    return;
+                                        function renderInventoryTable() {
+                                            const tableBody = document.getElementById("inventoryTableBody");
+                                            if (!tableBody)
+                                                return;
 
-                const rows = Array.from(tableBody.rows);
-                const totalPages = Math.ceil(rows.length / rowsPerPage);
+                                            const rows = Array.from(tableBody.rows);
+                                            const totalPages = Math.ceil(rows.length / rowsPerPage);
 
-                if (rows.length === 0) {
-                    const pagination = document.querySelector(".pagination");
-                    if (pagination)
-                        pagination.innerHTML = "";
-                    return;
-                }
+                                            if (rows.length === 0) {
+                                                const pagination = document.querySelector(".pagination");
+                                                if (pagination)
+                                                    pagination.innerHTML = "";
+                                                return;
+                                            }
 
-                if (currentPage > totalPages)
-                    currentPage = totalPages;
-                if (currentPage < 1)
-                    currentPage = 1;
+                                            if (currentPage > totalPages)
+                                                currentPage = totalPages;
+                                            if (currentPage < 1)
+                                                currentPage = 1;
 
-                rows.forEach(row => row.style.display = "none");
+                                            rows.forEach(row => row.style.display = "none");
 
-                const start = (currentPage - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-                rows.slice(start, end).forEach(row => row.style.display = "");
+                                            const start = (currentPage - 1) * rowsPerPage;
+                                            const end = start + rowsPerPage;
+                                            rows.slice(start, end).forEach(row => row.style.display = "");
 
-                renderPagination(totalPages);
-            }
+                                            renderPagination(totalPages);
+                                        }
 
-            function renderPagination(totalPages) {
-                const pagination = document.querySelector(".pagination");
-                if (!pagination)
-                    return;
-                pagination.innerHTML = "";
+                                        function renderPagination(totalPages) {
+                                            const pagination = document.querySelector(".pagination");
+                                            if (!pagination)
+                                                return;
+                                            pagination.innerHTML = "";
 
-                function createPageButton(text, onClick, isActive = false) {
-                    const btn = document.createElement("a");
-                    btn.href = "#";
-                    btn.textContent = text;
-                    if (isActive)
-                        btn.classList.add("active");
-                    btn.onclick = e => {
-                        e.preventDefault();
-                        onClick();
-                    };
-                    return btn;
-                }
+                                            function createPageButton(text, onClick, isActive = false) {
+                                                const btn = document.createElement("a");
+                                                btn.href = "#";
+                                                btn.textContent = text;
+                                                if (isActive)
+                                                    btn.classList.add("active");
+                                                btn.onclick = e => {
+                                                    e.preventDefault();
+                                                    onClick();
+                                                };
+                                                return btn;
+                                            }
 
-                pagination.appendChild(createPageButton("« First", () => {
-                    currentPage = 1;
-                    renderInventoryTable();
-                    scrollToTopOfTable();
-                }));
-                pagination.appendChild(createPageButton("‹ Prev", () => {
-                    if (currentPage > 1) {
-                        currentPage--;
-                        renderInventoryTable();
-                        scrollToTopOfTable();
-                    }
-                }));
+                                            pagination.appendChild(createPageButton("« First", () => {
+                                                currentPage = 1;
+                                                renderInventoryTable();
+                                                scrollToTopOfTable();
+                                            }));
+                                            pagination.appendChild(createPageButton("‹ Prev", () => {
+                                                if (currentPage > 1) {
+                                                    currentPage--;
+                                                    renderInventoryTable();
+                                                    scrollToTopOfTable();
+                                                }
+                                            }));
 
-                let start = Math.max(currentPage - 2, 1);
-                let end = start + 4;
-                if (end > totalPages) {
-                    end = totalPages;
-                    start = Math.max(end - 4, 1);
-                }
+                                            let start = Math.max(currentPage - 2, 1);
+                                            let end = start + 4;
+                                            if (end > totalPages) {
+                                                end = totalPages;
+                                                start = Math.max(end - 4, 1);
+                                            }
 
-                for (let i = start; i <= end; i++) {
-                    pagination.appendChild(createPageButton(i, () => {
-                        currentPage = i;
-                        renderInventoryTable();
-                        scrollToTopOfTable();
-                    }, i === currentPage));
-                }
+                                            for (let i = start; i <= end; i++) {
+                                                pagination.appendChild(createPageButton(i, () => {
+                                                    currentPage = i;
+                                                    renderInventoryTable();
+                                                    scrollToTopOfTable();
+                                                }, i === currentPage));
+                                            }
 
-                pagination.appendChild(createPageButton("Next ›", () => {
-                    if (currentPage < totalPages) {
-                        currentPage++;
-                        renderInventoryTable();
-                        scrollToTopOfTable();
-                    }
-                }));
-                pagination.appendChild(createPageButton("Last »", () => {
-                    currentPage = totalPages;
-                    renderInventoryTable();
-                    scrollToTopOfTable();
-                }));
-            }
+                                            pagination.appendChild(createPageButton("Next ›", () => {
+                                                if (currentPage < totalPages) {
+                                                    currentPage++;
+                                                    renderInventoryTable();
+                                                    scrollToTopOfTable();
+                                                }
+                                            }));
+                                            pagination.appendChild(createPageButton("Last »", () => {
+                                                currentPage = totalPages;
+                                                renderInventoryTable();
+                                                scrollToTopOfTable();
+                                            }));
+                                        }
 
-            function scrollToTopOfTable() {
-                const table = document.querySelector(".inventory-table");
-                if (table)
-                    table.scrollIntoView({behavior: "smooth", block: "start"});
-            }
+                                        function scrollToTopOfTable() {
+                                            const table = document.querySelector(".inventory-table");
+                                            if (table)
+                                                table.scrollIntoView({behavior: "smooth", block: "start"});
+                                        }
 
-            // Hàm fetch chi tiết từ Servlet
-         
-
-            // Tạo hàng chi tiết, kể cả khi rỗng
+                                        // Hàm fetch chi tiết từ Servlet
 
 
-            // Sự kiện click Details
-            document.addEventListener("DOMContentLoaded", () => {
-                renderInventoryTable();
+                                        // Tạo hàng chi tiết, kể cả khi rỗng
 
-                document.querySelectorAll(".btn-detail").forEach(btn => {
-                    btn.addEventListener("click", function () {
-                        const row = this.closest("tr");
-                        const existingDetailRow = row.nextElementSibling;
 
-                        // Nếu đã mở -> đóng
-                        if (existingDetailRow && existingDetailRow.classList.contains("detail-row")) {
-                            existingDetailRow.remove();
-                            return;
-                        }
+                                        // Sự kiện click Details
+                                        document.addEventListener("DOMContentLoaded", () => {
+                                            renderInventoryTable();
 
-                        // Đóng tất cả hàng chi tiết khác
-                        document.querySelectorAll(".detail-row").forEach(r => r.remove());
+                                            document.querySelectorAll(".btn-detail").forEach(btn => {
+                                                btn.addEventListener("click", function () {
+                                                    const row = this.closest("tr");
+                                                    const existingDetailRow = row.nextElementSibling;
 
-                        const partId = this.getAttribute("data-part-id");
+                                                    // Nếu đã mở -> đóng
+                                                    if (existingDetailRow && existingDetailRow.classList.contains("detail-row")) {
+                                                        existingDetailRow.remove();
+                                                        return;
+                                                    }
 
-                        fetchPartDetails(partId, (details) => {
-                            const detailRow = createDetailRow(details);
-                            row.insertAdjacentElement("afterend", detailRow);
-                        });
-                    });
-                });
-            });
+                                                    // Đóng tất cả hàng chi tiết khác
+                                                    document.querySelectorAll(".detail-row").forEach(r => r.remove());
+
+                                                    const partId = this.getAttribute("data-part-id");
+
+                                                    fetchPartDetails(partId, (details) => {
+                                                        const detailRow = createDetailRow(details);
+                                                        row.insertAdjacentElement("afterend", detailRow);
+                                                    });
+                                                });
+                                            });
+                                        });
 
         </script>
     </body>
