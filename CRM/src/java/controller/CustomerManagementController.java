@@ -18,6 +18,15 @@ import utils.passwordHasher;
 
 public class CustomerManagementController extends HttpServlet {
 
+    // Regex constants
+    private static final String USERNAME_REGEX = "^[A-Za-z0-9]+$";
+    private static final String FULLNAME_REGEX = "^[A-Za-zÀ-ỹ\\s]{2,50}$";
+    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+    private static final String PHONE_REGEX = "^(03|05|07|08|09)[0-9]{8}$";
+    private static final String PASSWORD_REGEX = "^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$";
+    private static final String URL_REGEX = "^(https?://.*\\.(?:png|jpg|jpeg|gif|webp|svg))$";
+    private static final String NATIONALID_REGEX = "^[0-9]{9,12}$";
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -78,12 +87,62 @@ public class CustomerManagementController extends HttpServlet {
                     String newPhone = request.getParameter("phone");
                     String newFullName = request.getParameter("fullName");
 
+                    if (newUsername == null || !newUsername.matches(USERNAME_REGEX)
+                            || newFullName == null || !newFullName.matches(FULLNAME_REGEX)
+                            || newEmail == null || !newEmail.matches(EMAIL_REGEX)
+                            || newPhone == null || !newPhone.matches(PHONE_REGEX)
+                            || newPassword == null || !newPassword.matches(PASSWORD_REGEX)) {
+
+                        request.getSession().setAttribute("message", "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại các trường bắt buộc!");
+                        response.sendRedirect("customerManagement");
+                        return;
+                    }
+
                     String address = request.getParameter("address");
                     String dateOfBirthStr = request.getParameter("dateOfBirth");
                     String avatarUrl = request.getParameter("avatarUrl");
                     String nationalId = request.getParameter("nationalId");
                     String verifiedStr = request.getParameter("verified");
                     String extraData = request.getParameter("extraData");
+
+                    LocalDate dateOfBirth = null;
+                    if (dateOfBirthStr != null && !dateOfBirthStr.trim().isEmpty()) {
+                        try {
+                            dateOfBirth = LocalDate.parse(dateOfBirthStr);
+                            if (dateOfBirth.isAfter(LocalDate.now())) {
+                                request.getSession().setAttribute("message", "Ngày sinh không được ở tương lai!");
+                                response.sendRedirect("customerManagement");
+                                return;
+                            }
+                            if (LocalDate.now().getYear() - dateOfBirth.getYear() < 10) {
+                                request.getSession().setAttribute("message", "Tuổi phải từ 10 trở lên!");
+                                response.sendRedirect("customerManagement");
+                                return;
+                            }
+                        } catch (Exception e) {
+                            request.getSession().setAttribute("message", "Ngày sinh không hợp lệ!");
+                            response.sendRedirect("customerManagement");
+                            return;
+                        }
+                    }
+
+                    if (avatarUrl != null && !avatarUrl.trim().isEmpty() && !avatarUrl.matches(URL_REGEX)) {
+                        request.getSession().setAttribute("message", "URL ảnh đại diện không hợp lệ!");
+                        response.sendRedirect("customerManagement");
+                        return;
+                    }
+
+                    if (nationalId != null && !nationalId.trim().isEmpty() && !nationalId.matches(NATIONALID_REGEX)) {
+                        request.getSession().setAttribute("message", "CCCD/CMND không hợp lệ!");
+                        response.sendRedirect("customerManagement");
+                        return;
+                    }
+
+                    if (verifiedStr == null || (!verifiedStr.equals("0") && !verifiedStr.equals("1"))) {
+                        request.getSession().setAttribute("message", "Trạng thái xác thực không hợp lệ!");
+                        response.sendRedirect("customerManagement");
+                        return;
+                    }
 
                     if (newUsername != null && newPassword != null && newEmail != null && newPhone != null) {
 
@@ -101,7 +160,6 @@ public class CustomerManagementController extends HttpServlet {
                             if (createdAccountRes.isSuccess() && createdAccountRes.getData() != null) {
                                 int newAccountId = createdAccountRes.getData().getAccountId();
 
-                                LocalDate dateOfBirth = null;
                                 if (dateOfBirthStr != null && !dateOfBirthStr.trim().isEmpty()) {
                                     dateOfBirth = LocalDate.parse(dateOfBirthStr);
                                 }
@@ -116,14 +174,23 @@ public class CustomerManagementController extends HttpServlet {
                                 profile.setVerified(verified);
                                 profile.setExtraData(extraData);
 
-                                AccountProfileDAO profileDAO = new AccountProfileDAO();
-                                boolean inserted = profileDAO.insertProfile(profile);
+                                // Kiểm tra xem có thông tin profile nào được nhập không
+                                boolean hasProfileData
+                                        = (address != null && !address.trim().isEmpty())
+                                        || (dateOfBirth != null)
+                                        || (avatarUrl != null && !avatarUrl.trim().isEmpty())
+                                        || (nationalId != null && !nationalId.trim().isEmpty())
+                                        || (extraData != null && !extraData.trim().isEmpty());
 
-                                if (inserted) {
-                                    request.getSession().setAttribute("message", "Thêm người dùng thành công!");
-                                } else {
-                                    request.getSession().setAttribute("message", "Thêm tài khoản thành công nhưng không thể lưu hồ sơ!");
+                                if (hasProfileData) {
+                                    AccountProfileDAO profileDAO = new AccountProfileDAO();
+                                    boolean inserted = profileDAO.insertProfile(profile);
+                                    if (!inserted) {
+                                        System.err.println("⚠️ Không thể lưu hồ sơ người dùng (AccountProfile), nhưng tài khoản vẫn được thêm.");
+                                    }
                                 }
+
+                                request.getSession().setAttribute("message", "Thêm người dùng thành công!");
 
                             } else {
                                 request.getSession().setAttribute("message", "Không thể lấy thông tin tài khoản vừa tạo!");
@@ -161,17 +228,79 @@ public class CustomerManagementController extends HttpServlet {
                     String verifiedStr = request.getParameter("verified");
                     String extraData = request.getParameter("extraData");
 
-                    boolean verified = "true".equalsIgnoreCase(verifiedStr) || "on".equalsIgnoreCase(verifiedStr);
-                    LocalDate dateOfBirth = null;
-                    if (dateOfBirthStr != null && !dateOfBirthStr.isEmpty()) {
-                        dateOfBirth = LocalDate.parse(dateOfBirthStr);
+                    // Validate định dạng cơ bản
+                    if (fullName == null || !fullName.matches(FULLNAME_REGEX)
+                            || email == null || !email.matches(EMAIL_REGEX)
+                            || phone == null || !phone.matches(PHONE_REGEX)
+                            || (password != null && !password.trim().isEmpty() && !password.matches(PASSWORD_REGEX))) {
+
+                        request.getSession().setAttribute("message", "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại các trường bắt buộc!");
+                        response.sendRedirect("customerManagement");
+                        return;
                     }
 
+                    // Validate ngày sinh
+                    LocalDate dateOfBirth = null;
+                    if (dateOfBirthStr != null && !dateOfBirthStr.trim().isEmpty()) {
+                        try {
+                            dateOfBirth = LocalDate.parse(dateOfBirthStr);
+                            if (dateOfBirth.isAfter(LocalDate.now())) {
+                                request.getSession().setAttribute("message", "Ngày sinh không được ở tương lai!");
+                                response.sendRedirect("customerManagement");
+                                return;
+                            }
+                            if (LocalDate.now().getYear() - dateOfBirth.getYear() < 10) {
+                                request.getSession().setAttribute("message", "Tuổi phải từ 10 trở lên!");
+                                response.sendRedirect("customerManagement");
+                                return;
+                            }
+                        } catch (Exception e) {
+                            request.getSession().setAttribute("message", "Ngày sinh không hợp lệ!");
+                            response.sendRedirect("customerManagement");
+                            return;
+                        }
+                    }
+
+                    // Validate URL ảnh đại diện
+                    if (avatarUrl != null && !avatarUrl.trim().isEmpty() && !avatarUrl.matches(URL_REGEX)) {
+                        request.getSession().setAttribute("message", "URL ảnh đại diện không hợp lệ!");
+                        response.sendRedirect("customerManagement");
+                        return;
+                    }
+
+                    // Validate CCCD/CMND
+                    if (nationalId != null && !nationalId.trim().isEmpty() && !nationalId.matches(NATIONALID_REGEX)) {
+                        request.getSession().setAttribute("message", "CCCD/CMND không hợp lệ!");
+                        response.sendRedirect("customerManagement");
+                        return;
+                    }
+
+                    // Validate trạng thái xác thực
+                    if (verifiedStr == null || (!verifiedStr.equals("0") && !verifiedStr.equals("1"))) {
+                        request.getSession().setAttribute("message", "Trạng thái xác thực không hợp lệ!");
+                        response.sendRedirect("customerManagement");
+                        return;
+                    }
+
+                    // Validate trạng thái tài khoản
+                    if (status == null || (!status.equals("Active") && !status.equals("Inactive"))) {
+                        request.getSession().setAttribute("message", "Trạng thái tài khoản không hợp lệ!");
+                        response.sendRedirect("customerManagement");
+                        return;
+                    }
+
+                    // Xử lý password (chỉ hash nếu nhập mới)
                     String hashedPassword = null;
                     if (password != null && !password.trim().isEmpty()) {
                         hashedPassword = passwordHasher.hashPassword(password.trim());
                     }
 
+                    // Chuyển đổi verified
+                    boolean verified = "true".equalsIgnoreCase(verifiedStr)
+                            || "1".equals(verifiedStr)
+                            || "on".equalsIgnoreCase(verifiedStr);
+
+                    // Tạo đối tượng Account & Profile
                     Account account = new Account();
                     account.setAccountId(editId);
                     account.setUsername(username);
@@ -189,17 +318,19 @@ public class CustomerManagementController extends HttpServlet {
                     profile.setNationalId(nationalId);
                     profile.setVerified(verified);
                     profile.setExtraData(extraData);
+
+                    // Cập nhật vào DB
                     Response<Account> updateRes = accountService.updateCustomerAccount(account, profile);
 
                     if (updateRes.isSuccess()) {
-                        request.setAttribute("message", "Cập nhật người dùng thành công!");
+                        request.getSession().setAttribute("message", "Cập nhật người dùng thành công!");
                     } else {
-                        request.setAttribute("error", updateRes.getMessage());
+                        request.getSession().setAttribute("message", updateRes.getMessage());
                     }
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    request.setAttribute("error", "Lỗi hệ thống khi cập nhật người dùng: " + e.getMessage());
+                    request.getSession().setAttribute("message", "Lỗi hệ thống khi cập nhật người dùng: " + e.getMessage());
                 }
                 break;
 

@@ -28,6 +28,18 @@ public class RegisterController extends HttpServlet {
         String email = request.getParameter("email");
         String phoneNumber = request.getParameter("phoneNumber");
 
+        if (username == null || username.trim().isEmpty()) {
+            request.setAttribute("error", "Tên đăng nhập không được để trống hoặc chỉ toàn khoảng trắng!");
+            request.getRequestDispatcher("register.jsp").forward(request, response);
+            return;
+        }
+
+        if (password == null || password.trim().isEmpty()) {
+            request.setAttribute("error", "Mật khẩu không được để trống hoặc chỉ toàn khoảng trắng!");
+            request.getRequestDispatcher("register.jsp").forward(request, response);
+            return;
+        }
+
         RegisterRequest requestRegister = new RegisterRequest(username, password, fullname, email, phoneNumber);
 
         service.AccountService accountService = new service.AccountService();

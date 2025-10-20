@@ -333,21 +333,21 @@
 
                         <div class="mb-3">
                             <label>Tên đăng nhập <span class="text-danger">*</span></label>
-                            <input type="text" name="username" id="addUsername" class="form-control" required
+                            <input type="text" name="username" id="addUsername" class="form-control" required maxlength="20"
                                    pattern="[A-Za-z0-9]+" title="Chỉ gồm chữ và số, không có ký tự đặc biệt.">
                             <div id="addUsernameError" class="error-message">Tên đăng nhập không hợp lệ</div>
                         </div>
 
                         <div class="mb-3">
                             <label>Họ và tên <span class="text-danger">*</span></label>
-                            <input type="text" name="fullName" id="addFullName" class="form-control" required
+                            <input type="text" name="fullName" id="addFullName" class="form-control" required maxlength="50"
                                    pattern="^[A-Za-zÀ-ỹ\s]{2,50}$" title="Chỉ gồm chữ cái và khoảng trắng.">
                             <div id="addFullNameError" class="error-message">Họ tên không hợp lệ</div>
                         </div>
 
                         <div class="mb-3">
                             <label>Email <span class="text-danger">*</span></label>
-                            <input type="email" name="email" id="addEmail" class="form-control" required
+                            <input type="email" name="email" id="addEmail" class="form-control" required maxlength="100"
                                    pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                                    title="Email không hợp lệ. Ví dụ: example@gmail.com">
                             <div id="addEmailError" class="error-message">Email không hợp lệ</div>
@@ -355,7 +355,7 @@
 
                         <div class="mb-3">
                             <label>Số điện thoại <span class="text-danger">*</span></label>
-                            <input type="tel" name="phone" id="addPhone" class="form-control" required
+                            <input type="tel" name="phone" id="addPhone" class="form-control" required maxlength="10"
                                    pattern="(03|05|07|08|09)[0-9]{8}"
                                    title="Phải bắt đầu bằng 03, 05, 07, 08, 09 và có 10 chữ số.">
                             <div id="addPhoneError" class="error-message">Số điện thoại không hợp lệ</div>
@@ -363,8 +363,11 @@
 
                         <div class="mb-3">
                             <label>Mật khẩu <span class="text-danger">*</span></label>
-                            <input type="password" name="password" id="addPassword" class="form-control" required minlength="6"
-                                   title="Mật khẩu tối thiểu 6 ký tự.">
+                            <input type="password" name="password" id="addPassword" class="form-control" required
+                                minlength="6" maxlength="30"
+                                pattern="^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$"
+                                title="Mật khẩu không được có khoảng trắng.">
+
                             <div id="addPasswordError" class="error-message">Mật khẩu tối thiểu 6 ký tự</div>
                         </div>
                     </div>
@@ -375,39 +378,52 @@
 
                         <div class="mb-3">
                             <label>Địa chỉ</label>
-                            <input type="text" name="address" id="addAddress" class="form-control">
+                            <input type="text" name="address" id="addAddress" class="form-control" maxlength="100">
                         </div>
 
                         <div class="mb-3">
                             <label>Ngày sinh</label>
-                            <input type="date" name="dateOfBirth" id="addDateOfBirth" class="form-control">
+                            <input type="date" name="dateOfBirth" id="addDateOfBirth" class="form-control"
+                                max="9999-12-31"
+                                title="Ngày sinh không được ở tương lai.">
+
                             <div id="addDobError" class="error-message">Ngày sinh không hợp lệ</div>
                         </div>
 
                         <div class="mb-3">
                             <label>Ảnh đại diện (URL)</label>
-                            <input type="url" name="avatarUrl" id="addAvatarUrl" class="form-control">
+                            <input type="url" name="avatarUrl" id="addAvatarUrl" class="form-control"
+                                maxlength="200"
+                                pattern="^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))$"
+                                title="URL ảnh phải bắt đầu bằng http hoặc https và kết thúc bằng đuôi ảnh (.jpg, .png, .gif, v.v.)">
+
                             <div id="addAvatarError" class="error-message">URL ảnh đại diện không hợp lệ</div>
                         </div>
 
                         <div class="mb-3">
                             <label>CCCD/CMND</label>
-                            <input type="text" name="nationalId" id="addNationalId" class="form-control" pattern="[0-9]{9,12}"
-                                   title="CMND/CCCD chỉ gồm số, 9–12 chữ số.">
+                            <input type="text" name="nationalId" id="addNationalId" class="form-control"
+                                minlength="9" maxlength="12"
+                                pattern="^[0-9]{9,12}$"
+                                title="CCCD/CMND chỉ gồm số, dài từ 9–12 ký tự.">
+
                             <div id="addNationalIdError" class="error-message">CMND/CCCD không hợp lệ</div>
                         </div>
 
                         <div class="mb-3">
                             <label>Xác thực tài khoản <span class="text-danger">*</span></label>
-                            <select name="verified" id="addVerified" class="form-select" required>
-                                <option value="0">Chưa xác thực</option>
-                                <option value="1">Đã xác thực</option>
-                            </select>
+                                <select name="verified" id="addVerified" class="form-select" required
+                                        title="Vui lòng chọn trạng thái xác thực.">
+                                    <option value="">-- Chọn trạng thái --</option>
+                                    <option value="0">Chưa xác thực</option>
+                                    <option value="1">Đã xác thực</option>
+                                </select>
+
                         </div>
 
                         <div class="mb-3">
                             <label>Ghi chú thêm</label>
-                            <textarea name="extraData" id="addExtraData" class="form-control" rows="2"></textarea>
+                            <textarea name="extraData" id="addExtraData" class="form-control" rows="2" maxlength="100"></textarea>
                         </div>
                     </div>
                 </div>
@@ -439,6 +455,8 @@
                 <div class="modal-body">
                     <!-- STEP 1 -->
                     <div id="step1">
+                        <h6 class="fw-bold mb-3">Thông tin tài khoản</h6>
+
                         <div class="mb-3">
                             <label>Tên đăng nhập</label>
                             <input type="text" id="editUsername" name="username" class="form-control" readonly>
@@ -446,22 +464,23 @@
 
                         <div class="mb-3">
                             <label>Họ và tên <span class="text-danger">*</span></label>
-                            <input type="text" id="editFullName" name="fullName" class="form-control" required
-                                   pattern="^[A-Za-zÀ-ỹ\s]{2,50}$" title="Chỉ gồm chữ cái và khoảng trắng.">
+                            <input type="text" id="editFullName" name="fullName" class="form-control" required maxlength="50"
+                                   pattern="^[A-Za-zÀ-ỹ\s]{2,50}$"
+                                   title="Chỉ gồm chữ cái và khoảng trắng (2–50 ký tự).">
                             <div id="editFullNameError" class="error-message">Họ tên không hợp lệ</div>
                         </div>
 
                         <div class="mb-3">
                             <label>Email <span class="text-danger">*</span></label>
-                            <input type="email" id="editEmail" name="email" class="form-control" required
+                            <input type="email" id="editEmail" name="email" class="form-control" required maxlength="100"
                                    pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                                   title="Email không hợp lệ.">
+                                   title="Email không hợp lệ. Ví dụ: example@gmail.com">
                             <div id="editEmailError" class="error-message">Email không hợp lệ</div>
                         </div>
 
                         <div class="mb-3">
                             <label>Số điện thoại <span class="text-danger">*</span></label>
-                            <input type="tel" id="editPhone" name="phone" class="form-control" required
+                            <input type="tel" id="editPhone" name="phone" class="form-control" required maxlength="10"
                                    pattern="(03|05|07|08|09)[0-9]{8}"
                                    title="Phải bắt đầu bằng 03, 05, 07, 08, 09 và có 10 chữ số.">
                             <div id="editPhoneError" class="error-message">Số điện thoại không hợp lệ</div>
@@ -469,7 +488,8 @@
 
                         <div class="mb-3">
                             <label>Trạng thái <span class="text-danger">*</span></label>
-                            <select id="editStatus" name="status" class="form-select" required>
+                            <select id="editStatus" name="status" class="form-select" required
+                                    title="Vui lòng chọn trạng thái hoạt động.">
                                 <option value="Active">Active</option>
                                 <option value="Inactive">Inactive</option>
                             </select>
@@ -477,41 +497,55 @@
 
                         <div class="mb-3">
                             <label>Mật khẩu mới</label>
-                            <input type="password" id="editPassword" name="password" class="form-control" minlength="6">
-                            <div id="editPasswordError" class="error-message">Mật khẩu tối thiểu 6 ký tự</div>
+                            <input type="password" id="editPassword" name="password" class="form-control"
+                                   minlength="6" maxlength="30"
+                                   pattern="^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$"
+                                   title="Mật khẩu 6–30 ký tự, không chứa khoảng trắng.">
+                            <div id="editPasswordError" class="error-message">Mật khẩu không hợp lệ</div>
                             <small class="text-muted">Để trống nếu không muốn thay đổi</small>
                         </div>
                     </div>
 
                     <!-- STEP 2 -->
                     <div id="step2" class="d-none">
+                        <h6 class="fw-bold mb-3">Thông tin hồ sơ</h6>
+
                         <div class="mb-3">
                             <label>Địa chỉ</label>
-                            <input type="text" id="editAddress" name="address" class="form-control">
+                            <input type="text" id="editAddress" name="address" class="form-control" maxlength="100">
                         </div>
 
                         <div class="mb-3">
                             <label>Ngày sinh</label>
-                            <input type="date" id="editDateOfBirth" name="dateOfBirth" class="form-control">
+                            <input type="date" id="editDateOfBirth" name="dateOfBirth" class="form-control"
+                                   max="9999-12-31"
+                                   title="Ngày sinh không được ở tương lai.">
                             <div id="editDobError" class="error-message">Ngày sinh không hợp lệ</div>
                         </div>
 
                         <div class="mb-3">
                             <label>Ảnh đại diện (URL)</label>
-                            <input type="url" id="editAvatarUrl" name="avatarUrl" class="form-control">
+                            <input type="url" id="editAvatarUrl" name="avatarUrl" class="form-control"
+                                   maxlength="200"
+                                   pattern="^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))$"
+                                   title="URL ảnh phải bắt đầu bằng http hoặc https và kết thúc bằng đuôi ảnh (.jpg, .png, .gif, v.v.)">
                             <div id="editAvatarError" class="error-message">URL ảnh đại diện không hợp lệ</div>
                         </div>
 
                         <div class="mb-3">
                             <label>CCCD/CMND</label>
                             <input type="text" id="editNationalId" name="nationalId" class="form-control"
-                                   pattern="[0-9]{9,12}" title="CMND/CCCD chỉ gồm số, 9–12 chữ số.">
+                                   minlength="9" maxlength="12"
+                                   pattern="^[0-9]{9,12}$"
+                                   title="CCCD/CMND chỉ gồm số, dài từ 9–12 ký tự.">
                             <div id="editNationalIdError" class="error-message">CCCD/CMND không hợp lệ</div>
                         </div>
 
                         <div class="mb-3">
                             <label>Xác thực tài khoản <span class="text-danger">*</span></label>
-                            <select id="editVerified" name="verified" class="form-select" required>
+                            <select id="editVerified" name="verified" class="form-select" required
+                                    title="Vui lòng chọn trạng thái xác thực.">
+                                <option value="">-- Chọn trạng thái --</option>
                                 <option value="0">Chưa xác thực</option>
                                 <option value="1">Đã xác thực</option>
                             </select>
@@ -519,7 +553,7 @@
 
                         <div class="mb-3">
                             <label>Ghi chú thêm</label>
-                            <textarea id="editExtraData" name="extraData" class="form-control" rows="2"></textarea>
+                            <textarea id="editExtraData" name="extraData" class="form-control" rows="2" maxlength="100"></textarea>
                         </div>
                     </div>
                 </div>
@@ -533,6 +567,7 @@
         </form>
     </div>
 </div>
+
                 </div>
             </div>
         </div>
@@ -541,7 +576,8 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
 document.addEventListener("DOMContentLoaded", function () {
-    //  VALIDATE FORM THÊM NGƯỜI DÙNG 
+
+    // ========== VALIDATE FORM THÊM NGƯỜI DÙNG ==========
     const addForm = document.getElementById("addUserForm");
     const addStep1 = document.getElementById("addStep1");
     const addStep2 = document.getElementById("addStep2");
@@ -549,19 +585,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const addPrevBtn = document.getElementById("addPrevStep");
     const addSubmitBtn = document.getElementById("addSubmitBtn");
 
-    const addFields = {
-        username: {pattern: /^[A-Za-z0-9]+$/, error: "addUsernameError"},
-        fullName: {pattern: /^[A-Za-zÀ-ỹ\s]{2,50}$/, error: "addFullNameError"},
-        email: {pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, error: "addEmailError"},
-        phone: {pattern: /^(03|05|07|08|09)[0-9]{8}$/, error: "addPhoneError"},
-        password: {pattern: /^.{6,}$/, error: "addPasswordError"},
-        nationalId: {pattern: /^[0-9]{9,12}$/, error: "addNationalIdError", optional: true},
-        avatarUrl: {pattern: /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))$/, error: "addAvatarError", optional: true},
-        dateOfBirth: {validate: (v) => !v || new Date(v) < new Date(), error: "addDobError"}
-    };
-
     if (addForm) {
-        // Nút "Tiếp" 
+
         addNextBtn.addEventListener("click", function () {
             if (validateAddStep1()) {
                 addStep1.classList.add("d-none");
@@ -579,7 +604,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // Nút "← Quay lại" 
         addPrevBtn.addEventListener("click", function () {
             addStep2.classList.add("d-none");
             addStep1.classList.remove("d-none");
@@ -588,7 +612,6 @@ document.addEventListener("DOMContentLoaded", function () {
             addSubmitBtn.classList.add("d-none");
         });
 
-        // Submit
         addForm.addEventListener("submit", function (e) {
             let valid = validateAddStep1() && validateAddStep2();
             if (!valid) {
@@ -609,8 +632,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // Ẩn lỗi khi người dùng sửa input
-        document.querySelectorAll("#addUserForm input, #addUserForm textarea").forEach(input => {
+        // Ẩn lỗi khi người dùng nhập lại
+        document.querySelectorAll("#addUserForm input, #addUserForm textarea, #addUserForm select").forEach(input => {
             input.addEventListener("input", function () {
                 const error = this.parentElement.querySelector(".error-message");
                 if (error) error.style.display = "none";
@@ -618,7 +641,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // VALIDATE STEP 1 
+    // STEP 1 - ACCOUNT INFO
     function validateAddStep1() {
         let valid = true;
         const username = document.getElementById("addUsername");
@@ -631,8 +654,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const fullNamePattern = /^[A-Za-zÀ-ỹ\s]{2,50}$/;
         const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         const phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
+        const passwordPattern = /^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$/;
 
-        if (!usernamePattern.test(username.value.trim())) {
+        if (!usernamePattern.test(username.value.trim()) || username.value.trim().length === 0) {
             document.getElementById("addUsernameError").style.display = "block";
             valid = false;
         } else document.getElementById("addUsernameError").style.display = "none";
@@ -652,7 +676,7 @@ document.addEventListener("DOMContentLoaded", function () {
             valid = false;
         } else document.getElementById("addPhoneError").style.display = "none";
 
-        if (password.value.trim().length < 6) {
+        if (!passwordPattern.test(password.value.trim())) {
             document.getElementById("addPasswordError").style.display = "block";
             valid = false;
         } else document.getElementById("addPasswordError").style.display = "none";
@@ -660,35 +684,62 @@ document.addEventListener("DOMContentLoaded", function () {
         return valid;
     }
 
-    // VALIDATE STEP 2 
+    // STEP 2 - PROFILE INFO
     function validateAddStep2() {
         let valid = true;
-        const dateOfBirth = document.getElementById("addDateOfBirth").value;
+        const dateOfBirth = document.getElementById("addDateOfBirth").value.trim();
         const avatarUrl = document.getElementById("addAvatarUrl").value.trim();
         const nationalId = document.getElementById("addNationalId").value.trim();
+        const verified = document.getElementById("addVerified").value;
 
-        const urlPattern = /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))$/;
+        const urlPattern = /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))$/i;
         const nationalIdPattern = /^[0-9]{9,12}$/;
 
-        if (dateOfBirth && new Date(dateOfBirth) > new Date()) {
-            document.getElementById("addDobError").style.display = "block";
-            valid = false;
-        } else document.getElementById("addDobError").style.display = "none";
+        // Ngày sinh
+        if (dateOfBirth) {
+            const dob = new Date(dateOfBirth);
+            const now = new Date();
+            const age = now.getFullYear() - dob.getFullYear();
+            if (dob > now) {
+                document.getElementById("addDobError").textContent = "Ngày sinh không được ở tương lai.";
+                document.getElementById("addDobError").style.display = "block";
+                valid = false;
+            } else if (age < 10) {
+                document.getElementById("addDobError").textContent = "Tuổi phải từ 10 trở lên.";
+                document.getElementById("addDobError").style.display = "block";
+                valid = false;
+            } else {
+                document.getElementById("addDobError").style.display = "none";
+            }
+        }
 
-        if (avatarUrl && !urlPattern.test(avatarUrl)) {
+        // Avatar URL
+        if (avatarUrl && (!urlPattern.test(avatarUrl) || avatarUrl.length > 200)) {
             document.getElementById("addAvatarError").style.display = "block";
             valid = false;
         } else document.getElementById("addAvatarError").style.display = "none";
 
+        // CCCD
         if (nationalId && !nationalIdPattern.test(nationalId)) {
             document.getElementById("addNationalIdError").style.display = "block";
             valid = false;
         } else document.getElementById("addNationalIdError").style.display = "none";
 
+        // Verified
+        if (verified === "") {
+            Swal.fire({
+                icon: 'error',
+                title: 'Chưa chọn trạng thái xác thực!',
+                text: 'Vui lòng chọn "Đã xác thực" hoặc "Chưa xác thực".',
+                confirmButtonColor: '#000'
+            });
+            valid = false;
+        }
+
         return valid;
     }
 
-    // VALIDATE FORM SỬA NGƯỜI DÙNG
+    // ========== VALIDATE FORM SỬA NGƯỜI DÙNG ==========
     const step1 = document.getElementById("step1");
     const step2 = document.getElementById("step2");
     const nextBtn = document.getElementById("nextStep");
@@ -742,7 +793,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // VALIDATE STEP 1
+        // STEP 1 - EDIT
         function validateStep1() {
             let valid = true;
             const fullName = document.getElementById("editFullName");
@@ -753,6 +804,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const fullNamePattern = /^[A-Za-zÀ-ỹ\s]{2,50}$/;
             const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
             const phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
+            const passwordPattern = /^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$/;
 
             if (!fullNamePattern.test(fullName.value.trim())) {
                 document.getElementById("editFullNameError").style.display = "block";
@@ -769,7 +821,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 valid = false;
             } else document.getElementById("editPhoneError").style.display = "none";
 
-            if (password.value.trim() !== "" && password.value.trim().length < 6) {
+            if (password.value.trim() !== "" && !passwordPattern.test(password.value.trim())) {
                 document.getElementById("editPasswordError").style.display = "block";
                 valid = false;
             } else document.getElementById("editPasswordError").style.display = "none";
@@ -777,22 +829,35 @@ document.addEventListener("DOMContentLoaded", function () {
             return valid;
         }
 
-        // VALIDATE STEP 2
+        // STEP 2 - EDIT
         function validateStep2() {
             let valid = true;
-            const dateOfBirth = document.getElementById("editDateOfBirth").value;
+            const dateOfBirth = document.getElementById("editDateOfBirth").value.trim();
             const avatarUrl = document.getElementById("editAvatarUrl").value.trim();
             const nationalId = document.getElementById("editNationalId").value.trim();
+            const verified = document.getElementById("editVerified").value;
 
-            const urlPattern = /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))$/;
+            const urlPattern = /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))$/i;
             const nationalIdPattern = /^[0-9]{9,12}$/;
 
-            if (dateOfBirth && new Date(dateOfBirth) > new Date()) {
-                document.getElementById("editDobError").style.display = "block";
-                valid = false;
-            } else document.getElementById("editDobError").style.display = "none";
+            if (dateOfBirth) {
+                const dob = new Date(dateOfBirth);
+                const now = new Date();
+                const age = now.getFullYear() - dob.getFullYear();
+                if (dob > now) {
+                    document.getElementById("editDobError").textContent = "Ngày sinh không được ở tương lai.";
+                    document.getElementById("editDobError").style.display = "block";
+                    valid = false;
+                } else if (age < 10) {
+                    document.getElementById("editDobError").textContent = "Tuổi phải từ 10 trở lên.";
+                    document.getElementById("editDobError").style.display = "block";
+                    valid = false;
+                } else {
+                    document.getElementById("editDobError").style.display = "none";
+                }
+            }
 
-            if (avatarUrl && !urlPattern.test(avatarUrl)) {
+            if (avatarUrl && (!urlPattern.test(avatarUrl) || avatarUrl.length > 200)) {
                 document.getElementById("editAvatarError").style.display = "block";
                 valid = false;
             } else document.getElementById("editAvatarError").style.display = "none";
@@ -802,11 +867,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 valid = false;
             } else document.getElementById("editNationalIdError").style.display = "none";
 
+            if (verified === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Chưa chọn trạng thái xác thực!',
+                    text: 'Vui lòng chọn "Đã xác thực" hoặc "Chưa xác thực".',
+                    confirmButtonColor: '#000'
+                });
+                valid = false;
+            }
+
             return valid;
         }
 
         // Ẩn lỗi khi người dùng gõ lại
-        document.querySelectorAll("#editUserForm input, #editUserForm textarea").forEach(input => {
+        document.querySelectorAll("#editUserForm input, #editUserForm textarea, #editUserForm select").forEach(input => {
             input.addEventListener("input", function () {
                 const error = this.parentElement.querySelector(".error-message");
                 if (error) error.style.display = "none";

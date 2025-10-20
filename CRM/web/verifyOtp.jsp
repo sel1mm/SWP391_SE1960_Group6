@@ -186,8 +186,17 @@
                     </label>
                     <div class="position-relative">
                         <i></i>
-                        <input type="text" class="form-control form-control-modern" id="otp" name="otp"
-                               placeholder="Nhập mã OTP gồm 6 chữ số" maxlength="6" required>
+                        <input type="text"
+                               class="form-control form-control-modern"
+                               id="otp"
+                               name="otp"
+                               placeholder="Nhập mã OTP gồm 6 chữ số"
+                               pattern="^[0-9]{6}$"
+                               inputmode="numeric"
+                               maxlength="6"
+                               minlength="6"
+                               required
+                               title="OTP phải gồm đúng 6 chữ số (0-9), không chứa khoảng trắng hay ký tự khác.">
                         <div id="otpError">Mã OTP phải gồm 6 chữ số.</div>
                     </div>
                 </div>
@@ -210,8 +219,10 @@
             const otpError = document.getElementById('otpError');
             const otpPattern = /^[0-9]{6}$/;
 
-            otpInput.addEventListener('input', function () {
-                if (otpPattern.test(otpInput.value.trim())) {
+            otpInput.addEventListener('input', function (e) {
+                otpInput.value = otpInput.value.replace(/[^0-9]/g, '');
+
+                if (otpPattern.test(otpInput.value)) {
                     submitBtn.disabled = false;
                     otpError.style.display = 'none';
                 } else {
