@@ -247,8 +247,16 @@
                     </label>
                     <div class="position-relative">
                         <i class="fas fa-user input-icon"></i>
-                        <input type="text" class="form-control form-control-modern" id="username" name="username"
-                               placeholder="Nhập tên đăng nhập" value="<%=usernameCookieSaved%>" required>
+                        <input type="text"
+                               class="form-control form-control-modern"
+                               id="username"
+                               name="username"
+                               placeholder="Nhập tên đăng nhập"
+                               value="<%=usernameCookieSaved%>"
+                               required
+                               maxlength="20"
+                               pattern="[A-Za-z0-9]+"
+                               title="Tên đăng nhập chỉ chứa chữ cái (A–Z, a–z) và số (0–9), độ dài tối đa 20 ký tự.">
                     </div>
                 </div>
 
@@ -258,8 +266,17 @@
                     </label>
                     <div class="position-relative">
                         <i class="fas fa-lock input-icon"></i>
-                        <input type="password" class="form-control form-control-modern" id="password" name="password"
-                               placeholder="Nhập mật khẩu" value="<%=passwordCookieSaved%>" required>
+                        <input type="password"
+                               class="form-control form-control-modern"
+                               id="password"
+                               name="password"
+                               placeholder="Nhập mật khẩu"
+                               value="<%=passwordCookieSaved%>"
+                               required
+                               minlength="6"
+                               maxlength="30"
+                               pattern="^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$"
+                               title="Mật khẩu không được có khoảng trắng.">
                     </div>
                 </div>
 

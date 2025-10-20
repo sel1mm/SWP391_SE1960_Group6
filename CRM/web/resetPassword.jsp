@@ -162,7 +162,11 @@
                     <div class="position-relative">
                         <i class="fas fa-key input-icon"></i>
                         <input type="password" class="form-control form-control-modern" id="newPassword" name="newPassword"
-                               placeholder="Nhập mật khẩu mới" required>
+                               placeholder="Nhập mật khẩu mới"
+                               required minlength="6" maxlength="30"
+                               pattern="^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$"
+                               title="Mật khẩu không được chứa khoảng trắng.">
+
                     </div>
                 </div>
 
@@ -173,7 +177,9 @@
                     <div class="position-relative">
                         <i class="fas fa-key input-icon"></i>
                         <input type="password" class="form-control form-control-modern" id="confirmPassword" name="confirmPassword"
-                               placeholder="Nhập lại mật khẩu" required>
+                               placeholder="Nhập lại mật khẩu"
+                               required minlength="6" maxlength="30">
+
                     </div>
                 </div>
 
