@@ -57,7 +57,7 @@
               <tr>
                 <td>${st.index + 1}</td>
                 <td>${t.id}</td>
-                <td><a href="${pageContext.request.contextPath}/technician/task?id=${t.id}">${fn:escapeXml(t.title)}</a></td>
+                <td><a href="${pageContext.request.contextPath}/technician/task-detail?id=${t.id}">${fn:escapeXml(t.title)}</a></td>
                 <td class="d-none d-md-table-cell"><div class="text-truncate-2" style="max-width:420px;">${fn:escapeXml(t.description)}</div></td>
                 <td>
                   <c:set var="_s" value="${t.status}"/>

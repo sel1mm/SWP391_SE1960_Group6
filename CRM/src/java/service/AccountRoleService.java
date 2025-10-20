@@ -45,6 +45,13 @@ public class AccountRoleService {
                 && accountRole.getData() != null
                 && accountRole.getData().getRoleId() == 5;
     }
+    
+    public boolean isTechnician(int accountId) {
+        Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
+        return accountRole.isSuccess()
+                && accountRole.getData() != null
+                && accountRole.getData().getRoleId() == 6;
+    }
 
     public String getUserRole(int accountId) {
         if (isAdmin(accountId)) {
@@ -57,6 +64,8 @@ public class AccountRoleService {
             return "customer";
         } else if(isStorekeeper(accountId)){
             return "Storekeeper";
+        } else if(isTechnician(accountId)){
+            return "Technician";
         }
         return "unknown";
     }
