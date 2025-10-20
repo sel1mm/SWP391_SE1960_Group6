@@ -1,67 +1,203 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app version="6.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
+<web-app version="6.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
+    
+    <!-- Authentication Servlets -->
     <servlet>
         <servlet-name>LoginController</servlet-name>
         <servlet-class>controller.LoginController</servlet-class>
     </servlet>
+    
     <servlet>
         <servlet-name>RegisterController</servlet-name>
         <servlet-class>controller.RegisterController</servlet-class>
     </servlet>
-    <servlet>
-        <servlet-name>VerifyOtpServlet</servlet-name>
-        <servlet-class>controller.VerifyOtpServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>ForgotPasswordServlet</servlet-name>
-        <servlet-class>controller.ForgotPasswordServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>ResetPasswordServlet</servlet-name>
-        <servlet-class>controller.ResetPasswordServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>ResendOtpServlet</servlet-name>
-        <servlet-class>controller.ResendOtpServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>LogoutController</servlet-name>
-        <servlet-class>controller.LogoutController</servlet-class>
-    </servlet>
+    
     <servlet>
         <servlet-name>GoogleLoginServlet</servlet-name>
         <servlet-class>controller.GoogleLoginServlet</servlet-class>
     </servlet>
+    
+    <servlet>
+        <servlet-name>LogoutController</servlet-name>
+        <servlet-class>controller.LogoutController</servlet-class>
+    </servlet>
+    
+    <!-- OTP & Password Servlets -->
+    <servlet>
+        <servlet-name>VerifyOtpServlet</servlet-name>
+        <servlet-class>controller.VerifyOtpServlet</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>ResendOtpServlet</servlet-name>
+        <servlet-class>controller.ResendOtpServlet</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>ForgotPasswordServlet</servlet-name>
+        <servlet-class>controller.ForgotPasswordServlet</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>ResetPasswordServlet</servlet-name>
+        <servlet-class>controller.ResetPasswordServlet</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>ChangePasswordServlet</servlet-name>
+        <servlet-class>controller.ChangePasswordServlet</servlet-class>
+    </servlet>
+    
+    <!-- Profile Management Servlets -->
+    <servlet>
+        <servlet-name>ManageProfileServlet</servlet-name>
+        <servlet-class>controller.ManageProfileServlet</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>ChangeInformationServlet</servlet-name>
+        <servlet-class>controller.ChangeInformationServlet</servlet-class>
+    </servlet>
+    
+    <!-- Management Servlets -->
+    <servlet>
+        <servlet-name>CustomerManagementController</servlet-name>
+        <servlet-class>controller.CustomerManagementController</servlet-class>
+    </servlet>
+
+    
+    <servlet>
+        <servlet-name>TechnicalManagerApprovalServlet</servlet-name>
+        <servlet-class>controller.TechnicalManagerApprovalServlet</servlet-class>
+    </servlet>
+    
+    <!-- Inventory & Parts Servlets -->
+    <servlet>
+        <servlet-name>StorekeeperServlet</servlet-name>
+        <servlet-class>controller.StorekeeperServlet</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>ListNumberPartServlet</servlet-name>
+        <servlet-class>controller.ListNumberPartServlet</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>ListNumberInventoryServlet</servlet-name>
+        <servlet-class>controller.ListNumberInventoryServlet</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>PartDetailServlet</servlet-name>
+        <servlet-class>controller.PartDetailServlet</servlet-class>
+    </servlet>
+    
+    <!-- Servlet Mappings -->
+    
+    <!-- Authentication Mappings -->
+
+    <servlet>
+        <servlet-name>AssignWorkServlet</servlet-name>
+        <servlet-class>controller.AssignWorkServlet</servlet-class>
+    </servlet>
+
     <servlet-mapping>
         <servlet-name>LoginController</servlet-name>
         <url-pattern>/login</url-pattern>
     </servlet-mapping>
+    
     <servlet-mapping>
         <servlet-name>RegisterController</servlet-name>
         <url-pattern>/register</url-pattern>
     </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>VerifyOtpServlet</servlet-name>
-        <url-pattern>/verifyOtp</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>ForgotPasswordServlet</servlet-name>
-        <url-pattern>/forgotPassword</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>ResetPasswordServlet</servlet-name>
-        <url-pattern>/resetPassword</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>ResendOtpServlet</servlet-name>
-        <url-pattern>/resendOtp</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>LogoutController</servlet-name>
-        <url-pattern>/logout</url-pattern>
-    </servlet-mapping>
+    
     <servlet-mapping>
         <servlet-name>GoogleLoginServlet</servlet-name>
         <url-pattern>/login-google</url-pattern>
     </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>LogoutController</servlet-name>
+        <url-pattern>/logout</url-pattern>
+    </servlet-mapping>
+    
+    <!-- OTP & Password Mappings -->
+    <servlet-mapping>
+        <servlet-name>VerifyOtpServlet</servlet-name>
+        <url-pattern>/verifyOtp</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>ResendOtpServlet</servlet-name>
+        <url-pattern>/resendOtp</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>ForgotPasswordServlet</servlet-name>
+        <url-pattern>/forgotPassword</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>ResetPasswordServlet</servlet-name>
+        <url-pattern>/resetPassword</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>ChangePasswordServlet</servlet-name>
+        <url-pattern>/changePassword</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Profile Management Mappings -->
+    <servlet-mapping>
+        <servlet-name>ManageProfileServlet</servlet-name>
+        <url-pattern>/manageProfile</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>ChangeInformationServlet</servlet-name>
+        <url-pattern>/changeInformation</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Management Mappings -->
+    <servlet-mapping>
+        <servlet-name>CustomerManagementController</servlet-name>
+        <url-pattern>/customerManagement</url-pattern>
+    </servlet-mapping>
+
+    
+    <servlet-mapping>
+        <servlet-name>TechnicalManagerApprovalServlet</servlet-name>
+        <url-pattern>/technicalManagerApproval</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Inventory & Parts Mappings -->
+    <servlet-mapping>
+        <servlet-name>StorekeeperServlet</servlet-name>
+        <url-pattern>/storekeeper</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>ListNumberPartServlet</servlet-name>
+        <url-pattern>/numberPart</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>ListNumberInventoryServlet</servlet-name>
+        <url-pattern>/numberInventory</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>PartDetailServlet</servlet-name>
+        <url-pattern>/partDetail</url-pattern>
+    </servlet-mapping>
+    
+
+
+    <servlet-mapping>
+        <servlet-name>AssignWorkServlet</servlet-name>
+        <url-pattern>/assignWork</url-pattern>
+    </servlet-mapping>
 </web-app>
+

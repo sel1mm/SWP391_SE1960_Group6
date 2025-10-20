@@ -11,5 +11,6 @@ public class passwordHasher {
     // Giải mã password và so sánh với password mà user đã nhập vào
     public static boolean checkPassword(String password, String hashedPassword){
         return BCrypt.checkpw(password, hashedPassword);
-    }
+
+    } 
 }

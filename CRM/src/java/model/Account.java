@@ -14,10 +14,14 @@ public class Account {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt;
 
+    private AccountProfile profile; 
+
     public Account() {
     }
 
-    public Account(int accountId, String username, String passwordHash, String fullName, String email, String phone, String status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Account(int accountId, String username, String passwordHash,
+                   String fullName, String email, String phone,
+                   String status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.accountId = accountId;
         this.username = username;
         this.passwordHash = passwordHash;
@@ -29,7 +33,8 @@ public class Account {
         this.updatedAt = updatedAt;
     }
 
-    public Account(int accountId, String username, String passwordHash, String fullName, String email, String phone, String status) {
+    public Account(int accountId, String username, String passwordHash,
+                   String fullName, String email, String phone, String status) {
         this.accountId = accountId;
         this.username = username;
         this.passwordHash = passwordHash;
@@ -111,4 +116,11 @@ public class Account {
         this.updatedAt = updatedAt;
     }
 
+    public AccountProfile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(AccountProfile profile) {
+        this.profile = profile;
+    }
 }

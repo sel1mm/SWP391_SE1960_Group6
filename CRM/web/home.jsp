@@ -374,52 +374,10 @@
                 color: #667eea;
             }
             
-            /* Footer */
-            .footer {
-                background: #2d3748;
-                color: white;
-                padding: 60px 20px 30px;
-            }
-            
-            .footer-content {
-                max-width: 1200px;
-                margin: 0 auto;
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 40px;
-                margin-bottom: 40px;
-            }
-            
-            .footer-section h3 {
-                font-size: 18px;
-                margin-bottom: 20px;
-                font-weight: 600;
-            }
-            
-            .footer-section ul {
-                list-style: none;
-            }
-            
-            .footer-section ul li {
-                margin-bottom: 12px;
-            }
-            
-            .footer-section a {
-                color: #cbd5e0;
-                text-decoration: none;
-                transition: all 0.3s;
-            }
-            
-            .footer-section a:hover {
-                color: white;
+            /* Footer hover effects */
+            footer a:hover {
+                color: white !important;
                 padding-left: 5px;
-            }
-            
-            .footer-bottom {
-                text-align: center;
-                padding-top: 30px;
-                border-top: 1px solid #4a5568;
-                color: #cbd5e0;
             }
             
             /* Responsive */
@@ -452,8 +410,9 @@
                     grid-template-columns: 1fr;
                 }
                 
-                .footer-content {
-                    grid-template-columns: 1fr;
+                footer > div > div:first-child,
+                footer > div > div:nth-child(3) {
+                    grid-template-columns: 1fr !important;
                 }
             }
         </style>
@@ -533,37 +492,113 @@
         </section>
         
         <!-- Footer -->
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Sản phẩm</h3>
-                    <ul>
-                        <li><a href="#">Quản lý khách hàng</a></li>
-                        <li><a href="#">Quản lý hợp đồng</a></li>
-                        <li><a href="#">Quản lý thiết bị</a></li>
-                        <li><a href="#">Báo cáo & Phân tích</a></li>
-                    </ul>
+        <footer style="background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); color: #e2e8f0; padding: 80px 20px 40px; margin-top: 100px; border-top: 1px solid #4a5568;">
+            <div style="max-width: 1200px; margin: 0 auto;">
+                <!-- Main Footer Content -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 50px; margin-bottom: 60px;">
+                    <!-- About Section -->
+                    <div>
+                        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 25px; color: white; display: flex; align-items: center; gap: 10px;">
+                            <span style="width: 4px; height: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></span>
+                            CRM System
+                        </h3>
+                        <p style="font-size: 14px; line-height: 1.8; color: #cbd5e0; margin-bottom: 20px;">
+                            Giải pháp quản lý khách hàng toàn diện, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ.
+                        </p>
+                        <p style="font-size: 13px; color: #a0aec0;">
+                            <strong>Version:</strong> 1.0.0<br>
+                            <strong>Phiên bản:</strong> Enterprise Edition
+                        </p>
+                    </div>
+
+                    <!-- Products & Features -->
+                    <div>
+                        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 25px; color: white;">Tính năng chính</h4>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Quản lý khách hàng</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Quản lý hợp đồng</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Quản lý thiết bị</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Báo cáo & Phân tích</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Quản lý yêu cầu dịch vụ</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Support & Help -->
+                    <div>
+                        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 25px; color: white;">Hỗ trợ & Trợ giúp</h4>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Trung tâm trợ giúp</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Hướng dẫn sử dụng</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Liên hệ hỗ trợ</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Câu hỏi thường gặp</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Yêu cầu tính năng</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Company Info -->
+                    <div>
+                        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 25px; color: white;">Thông tin công ty</h4>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Về chúng tôi</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Điều khoản sử dụng</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Chính sách bảo mật</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Bảo mật dữ liệu</a></li>
+                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Liên hệ</a></li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="footer-section">
-                    <h3>Hỗ trợ</h3>
-                    <ul>
-                        <li><a href="#">Trung tâm trợ giúp</a></li>
-                        <li><a href="#">Hướng dẫn sử dụng</a></li>
-                        <li><a href="#">Liên hệ</a></li>
-                        <li><a href="#">Câu hỏi thường gặp</a></li>
-                    </ul>
+
+                <!-- Divider -->
+                <div style="height: 1px; background: linear-gradient(to right, transparent, #4a5568, transparent); margin-bottom: 40px;"></div>
+
+                <!-- Bottom Info -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; align-items: start; margin-bottom: 30px;">
+                    <!-- Contact Info -->
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 15px; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Liên hệ</h4>
+                        <div style="font-size: 13px; line-height: 2; color: #cbd5e0;">
+                            <p style="margin: 0;">📧 Email: <strong>support@crmsystem.com</strong></p>
+                            <p style="margin: 0;">📞 Hotline: <strong>(+84) 123 456 7890</strong></p>
+                            <p style="margin: 0;">🏢 Địa chỉ: <strong>Ho Chi Minh City, Vietnam</strong></p>
+                            <p style="margin: 0;">⏰ Hỗ trợ: <strong>24/7</strong></p>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 15px; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Thống kê</h4>
+                        <div style="font-size: 13px; line-height: 2; color: #cbd5e0;">
+                            <p style="margin: 0;">👥 Người dùng: <strong>5,000+</strong></p>
+                            <p style="margin: 0;">🏢 Công ty: <strong>1,200+</strong></p>
+                            <p style="margin: 0;">📊 Dữ liệu: <strong>500K+</strong></p>
+                            <p style="margin: 0;">⭐ Đánh giá: <strong>4.9/5.0</strong></p>
+                        </div>
+                    </div>
+
+                    <!-- Certification -->
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 15px; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Chứng chỉ</h4>
+                        <div style="font-size: 12px; line-height: 1.8; color: #cbd5e0;">
+                            <p style="margin: 0; display: inline-block; background: rgba(102,126,234,0.1); padding: 4px 8px; border-radius: 4px; margin-right: 6px; margin-bottom: 6px;">🔒 ISO 27001</p><br>
+                            <p style="margin: 0; display: inline-block; background: rgba(102,126,234,0.1); padding: 4px 8px; border-radius: 4px; margin-right: 6px; margin-bottom: 6px;">✓ GDPR</p><br>
+                            <p style="margin: 0; display: inline-block; background: rgba(102,126,234,0.1); padding: 4px 8px; border-radius: 4px;">🛡️ SOC 2</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="footer-section">
-                    <h3>Về chúng tôi</h3>
-                    <ul>
-                        <li><a href="#">Giới thiệu</a></li>
-                        <li><a href="#">Điều khoản sử dụng</a></li>
-                        <li><a href="#">Chính sách bảo mật</a></li>
-                    </ul>
+
+                <!-- Footer Bottom -->
+                <div style="border-top: 1px solid #4a5568; padding-top: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                    <p style="font-size: 13px; color: #a0aec0; margin: 0;">
+                        &copy; 2025 CRM System. All rights reserved. | Phát triển bởi <strong>Group 6</strong>
+                    </p>
+                    <div style="display: flex; gap: 20px; font-size: 13px;">
+                        <a href="#" style="color: #cbd5e0; text-decoration: none; transition: color 0.3s;">Chính sách bảo mật</a>
+                        <span style="color: #4a5568;">|</span>
+                        <a href="#" style="color: #cbd5e0; text-decoration: none; transition: color 0.3s;">Điều khoản dịch vụ</a>
+                        <span style="color: #4a5568;">|</span>
+                        <a href="#" style="color: #cbd5e0; text-decoration: none; transition: color 0.3s;">Cài đặt Cookie</a>
+                    </div>
                 </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 CRM System - Group 6. All rights reserved.</p>
             </div>
         </footer>
     </body>

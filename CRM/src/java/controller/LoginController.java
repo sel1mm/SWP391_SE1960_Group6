@@ -1,3 +1,4 @@
+
 package controller;
 
 import constant.MessageConstant;
@@ -36,11 +37,8 @@ public class LoginController extends HttpServlet {
             session.setAttribute("session_login", accountResponse.getData());
             session.setAttribute("session_login_id", accountResponse.getData().getAccountId());
             // Gán role vào session
-            if (accountRoleService.isAdmin(accountResponse.getData().getAccountId())) {
-                session.setAttribute("session_role", "admin");   
-            } else {
-                session.setAttribute("session_role", "customer");
-            }
+            String userRole = accountRoleService.getUserRole(accountResponse.getData().getAccountId());
+            session.setAttribute("session_role", userRole);
 
             // User đang muốn lưu username và password vào cookie của trình duyệt để lần sau không cần nhập username và password lại
             if (remember != null) {
@@ -71,24 +69,23 @@ public class LoginController extends HttpServlet {
                     }
                 }
             }
-
+           
 //            request.getRequestDispatcher("welcome.html").forward(request, response); // Dùng câu này khi gửi kèm dữ liệu
              // Điều hướng theo vai trò
-            if (accountRoleService.isAdmin(accountResponse.getData().getAccountId())) {
+            if ("admin".equals(userRole)) {
                 response.sendRedirect(MessageConstant.ADMIN_URL);
-<<<<<<< Updated upstream
-=======
             } else if ("Technical Manager".equals(userRole)) {
                 response.sendRedirect("technicalManagerApproval");
             } else if ("Customer Support Staff".equals(userRole)) {
                 response.sendRedirect("dashboard.jsp");
             } else if("Storekeeper".equals(userRole)){
                 response.sendRedirect(MessageConstant.STOREKEEPER_URL);
+
             } else if("Technician".equals(userRole)){
                 response.sendRedirect("technician/dashboard");
->>>>>>> Stashed changes
+
             } else {
-                response.sendRedirect("home.jsp");
+                response.sendRedirect("managerServiceRequest");
             }
         } else {
             request.setAttribute("error", MessageConstant.LOGIN_FAILED);

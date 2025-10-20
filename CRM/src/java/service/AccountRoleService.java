@@ -2,6 +2,7 @@ package service;
 
 import dal.AccountRoleDAO;
 import dto.Response;
+import java.util.List;
 import model.AccountRole;
 
 public class AccountRoleService {
@@ -20,12 +21,10 @@ public class AccountRoleService {
    
     public boolean isCustomer(int accountId) {
         Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
-        return accountRole.isSuccess() 
-                && accountRole.getData() != null 
+        return accountRole.isSuccess()
+                && accountRole.getData() != null
                 && accountRole.getData().getRoleId() == 2;
     }
-<<<<<<< Updated upstream
-=======
 
     public boolean isTechnicalManager(int accountId) {
         Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
@@ -46,13 +45,6 @@ public class AccountRoleService {
                 && accountRole.getData() != null
                 && accountRole.getData().getRoleId() == 5;
     }
-    
-    public boolean isTechnician(int accountId) {
-        Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
-        return accountRole.isSuccess()
-                && accountRole.getData() != null
-                && accountRole.getData().getRoleId() == 6;
-    }
 
     public String getUserRole(int accountId) {
         if (isAdmin(accountId)) {
@@ -65,8 +57,6 @@ public class AccountRoleService {
             return "customer";
         } else if(isStorekeeper(accountId)){
             return "Storekeeper";
-        } else if(isTechnician(accountId)){
-            return "Technician";
         }
         return "unknown";
     }
@@ -90,5 +80,4 @@ public class AccountRoleService {
     public Response<Boolean> removeAllRolesFromAccount(int accountId) {
         return accountRoleDAO.removeAllRolesFromAccount(accountId);
     }
->>>>>>> Stashed changes
 }
