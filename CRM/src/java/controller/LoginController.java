@@ -76,6 +76,17 @@ public class LoginController extends HttpServlet {
              // Điều hướng theo vai trò
             if (accountRoleService.isAdmin(accountResponse.getData().getAccountId())) {
                 response.sendRedirect(MessageConstant.ADMIN_URL);
+<<<<<<< Updated upstream
+=======
+            } else if ("Technical Manager".equals(userRole)) {
+                response.sendRedirect("technicalManagerApproval");
+            } else if ("Customer Support Staff".equals(userRole)) {
+                response.sendRedirect("dashboard.jsp");
+            } else if("Storekeeper".equals(userRole)){
+                response.sendRedirect(MessageConstant.STOREKEEPER_URL);
+            } else if("Technician".equals(userRole)){
+                response.sendRedirect("technician/dashboard");
+>>>>>>> Stashed changes
             } else {
                 response.sendRedirect("home.jsp");
             }

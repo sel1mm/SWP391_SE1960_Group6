@@ -12,6 +12,7 @@ import model.TechTask;
  */
 public class TaskDao extends MyDAO {
     private final boolean mockMode;
+    private static List<TechTask> cachedMockTasks = null;
 
     public TaskDao() { this(false); }
     public TaskDao(boolean mockMode) { this.mockMode = mockMode; }
@@ -96,20 +97,29 @@ public class TaskDao extends MyDAO {
     }
 
     private List<TechTask> mockTasks() {
+        // Use cached data to prevent repeated generation
+        if (cachedMockTasks != null) {
+            return new ArrayList<>(cachedMockTasks);
+        }
+        
         List<TechTask> list = new ArrayList<>();
-        for (int i = 1; i <= 8; i++) {
+        // Reduced to 5 items for better performance
+        for (int i = 1; i <= 5; i++) {
             TechTask t = new TechTask();
             t.setId(1000L + i);
-            t.setTitle("Mock Task " + i);
-            t.setDescription("This is a mock task description for UI testing. Item " + i);
+            t.setTitle("Task " + i);
+            t.setDescription("Mock task " + i);
             t.setStatus(i % 3 == 0 ? "Completed" : (i % 2 == 0 ? "In Progress" : "Pending"));
             t.setPriority(i % 3 == 0 ? "High" : (i % 2 == 0 ? "Medium" : "Low"));
             t.setDueDate(LocalDate.now().plusDays(i));
             t.setAssignedDate(LocalDate.now().minusDays(2));
             t.setAssignedTechnicianId(1L);
-            t.setEquipmentNeeded("Screwdriver, Multimeter");
+            t.setEquipmentNeeded("Tools");
             list.add(t);
         }
+        
+        // Cache the data
+        cachedMockTasks = new ArrayList<>(list);
         return list;
     }
 }

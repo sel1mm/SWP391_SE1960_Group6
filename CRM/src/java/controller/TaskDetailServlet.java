@@ -3,7 +3,6 @@ package controller;
 import dal.TaskDao;
 import model.TechTask;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,7 +12,6 @@ import java.sql.SQLException;
 /**
  * Render task detail page.
  */
-@WebServlet(name = "TaskDetailServlet", urlPatterns = {"/technician/task"})
 public class TaskDetailServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

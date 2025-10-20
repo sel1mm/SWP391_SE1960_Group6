@@ -1,7 +1,6 @@
 package controller;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,7 +10,6 @@ import java.io.IOException;
 /**
  * Renders Technician Dashboard with shared technician layout
  */
-@WebServlet(name = "TechnicianDashboardServlet", urlPatterns = {"/technician/dashboard", "/technician/storekeeper", "/technician/approved-request", "/technician/work-history", "/technician/contract-history"})
 public class TechnicianDashboardServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -29,7 +27,6 @@ public class TechnicianDashboardServlet extends HttpServlet {
         String active = "dashboard";
         if (uri.endsWith("/storekeeper")) { view = "/WEB-INF/technician/technician-dashboard.jsp"; active = "storekeeper"; }
         else if (uri.endsWith("/approved-request")) { view = "/WEB-INF/technician/technician-dashboard.jsp"; active = "approved"; }
-        else if (uri.endsWith("/work-history")) { view = "/WEB-INF/technician/technician-dashboard.jsp"; active = "work"; }
         else if (uri.endsWith("/contract-history")) { view = "/WEB-INF/technician/technician-dashboard.jsp"; active = "contract"; }
 
         req.setAttribute("pageTitle", "Technician");

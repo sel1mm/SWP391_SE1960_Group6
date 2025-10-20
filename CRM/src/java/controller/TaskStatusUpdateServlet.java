@@ -2,7 +2,6 @@ package controller;
 
 import dal.TaskDao;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,7 +15,6 @@ import java.util.Set;
 /**
  * Handle task status updates via form POST.
  */
-@WebServlet(name = "TaskStatusUpdateServlet", urlPatterns = {"/technician/tasks/status"})
 public class TaskStatusUpdateServlet extends HttpServlet {
     private static final Set<String> ALLOWED = new HashSet<>(Arrays.asList("Pending","In Progress","Completed","On Hold"));
 

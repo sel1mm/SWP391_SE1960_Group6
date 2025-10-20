@@ -4,7 +4,6 @@ import dal.ReportDao;
 import model.TechRepairReport;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,12 +19,14 @@ import java.sql.SQLException;
 /**
  * Handle repair report creation with optional file upload.
  */
-@WebServlet(name = "TechnicianReportServlet", urlPatterns = {"/technician/reports"})
 @MultipartConfig
 public class TechnicianReportServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.getRequestDispatcher("/technician/report-form.jsp").forward(req, resp);
+        req.setAttribute("pageTitle", "Submit Report");
+        req.setAttribute("contentView", "/WEB-INF/technician/technician-report-form.jsp");
+        req.setAttribute("activePage", "reports");
+        req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
     }
 
     @Override

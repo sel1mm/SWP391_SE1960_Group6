@@ -28,7 +28,8 @@
           <li><a href="${contextPath}/technician/storekeeper" class="nav-link text-dark ${activePage == 'storekeeper' ? 'active' : ''}"><i class="bi bi-box-seam me-2"></i>Storekeeper</a></li>
           <li><a href="${contextPath}/technician/approved-request" class="nav-link text-dark ${activePage == 'approved' ? 'active' : ''}"><i class="bi bi-clipboard-check me-2"></i>Approved Request</a></li>
           <li><a href="${contextPath}/technician/work-history" class="nav-link text-dark ${activePage == 'work' ? 'active' : ''}"><i class="bi bi-clock-history me-2"></i>Work History</a></li>
-          <li><a href="${contextPath}/technician/contract-history" class="nav-link text-dark ${activePage == 'contract' ? 'active' : ''}"><i class="bi bi-file-text me-2"></i>Contract History</a></li>
+          <li><a href="${contextPath}/technician/contracts" class="nav-link text-dark ${activePage == 'contracts' ? 'active' : ''}"><i class="bi bi-file-earmark-plus me-2"></i>Contracts</a></li>
+          <li><a href="${contextPath}/technician/reports" class="nav-link text-dark ${activePage == 'reports' ? 'active' : ''}"><i class="bi bi-clipboard-plus me-2"></i>Reports</a></li>
         </ul>
       </div>
     </aside>
