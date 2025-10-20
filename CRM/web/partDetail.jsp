@@ -20,7 +20,7 @@
                 padding: 0;
                 box-sizing: border-box;
             }
-            
+
             body {
                 font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
                 background: #f8f9fc;
@@ -36,7 +36,7 @@
                 top: 0;
                 z-index: 1000;
             }
-            
+
             .nav-container {
                 max-width: 1200px;
                 margin: 0 auto;
@@ -45,19 +45,19 @@
                 align-items: center;
                 padding: 1rem 2rem;
             }
-           
+
             .logo {
                 color: white;
                 font-size: 28px;
                 font-weight: 700;
             }
-            
+
             .nav-links {
                 display: flex;
                 gap: 30px;
                 align-items: center;
             }
-            
+
             .nav-links a {
                 color: white;
                 text-decoration: none;
@@ -67,7 +67,7 @@
                 padding: 8px 16px;
                 border-radius: 6px;
             }
-            
+
             .nav-links a:hover {
                 background: rgba(255,255,255,0.12);
             }
@@ -386,43 +386,70 @@
             }
 
             @media (max-width: 900px) {
-                .content { 
-                    padding: 18px; 
-                    margin-left: 0; 
-                    width: 100%; 
+                .content {
+                    padding: 18px;
+                    margin-left: 0;
+                    width: 100%;
                 }
-                .sidebar { 
-                    display: none; 
+                .sidebar {
+                    display: none;
                 }
             }
-              /* Giới hạn độ rộng các cột - THÊM VÀO PHẦN <style> */
-.inventory-table thead tr th:nth-child(1) { width: 5%; }   /* Part ID */
-.inventory-table thead tr th:nth-child(2) { width: 5%; }  /* Inventory ID */
-.inventory-table thead tr th:nth-child(3) { width: 15%; }  /* Part Name */
-.inventory-table thead tr th:nth-child(4) { width: 10%; }  /* Quantity */
-.inventory-table thead tr th:nth-child(5) { width: 15%; }  /* Last Updated By */
-.inventory-table thead tr th:nth-child(6) { width: 15%; }  /* Last Update Time */
-.inventory-table thead tr th:nth-child(7) { width: 19%; }  /* Last Update Time */
+            /* Giới hạn độ rộng các cột - THÊM VÀO PHẦN <style> */
+            .inventory-table thead tr th:nth-child(1) {
+                width: 5%;
+            }   /* Part ID */
+            .inventory-table thead tr th:nth-child(2) {
+                width: 5%;
+            }  /* Inventory ID */
+            .inventory-table thead tr th:nth-child(3) {
+                width: 15%;
+            }  /* Part Name */
+            .inventory-table thead tr th:nth-child(4) {
+                width: 10%;
+            }  /* Quantity */
+            .inventory-table thead tr th:nth-child(5) {
+                width: 15%;
+            }  /* Last Updated By */
+            .inventory-table thead tr th:nth-child(6) {
+                width: 15%;
+            }  /* Last Update Time */
+            .inventory-table thead tr th:nth-child(7) {
+                width: 19%;
+            }  /* Last Update Time */
 
-.inventory-table thead tr th:nth-child(8) { width: 18%; }  /* Last Update Time */
-/* Giới hạn text quá dài trong Part Name */
-.inventory-table tbody td:nth-child(3) {
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+            .inventory-table thead tr th:nth-child(8) {
+                width: 18%;
+            }  /* Last Update Time */
+            /* Giới hạn text quá dài trong Part Name */
+            .inventory-table tbody td:nth-child(3) {
+                max-width: 300px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
 
-/* Hover để xem full text */
-.inventory-table tbody td:nth-child(3):hover {
-    white-space: normal;
-    overflow: visible;
-    word-wrap: break-word;
-    background-color: #fff3cd;
-}
-.btn-edit {
-  margin-bottom: 8px; /* tạo khoảng cách dọc giữa Edit và Delete */
-}
+            /* Hover để xem full text */
+            .inventory-table tbody td:nth-child(3):hover {
+                white-space: normal;
+                overflow: visible;
+                word-wrap: break-word;
+                background-color: #fff3cd;
+            }
+            .btn-edit {
+                margin-bottom: 8px; /* tạo khoảng cách dọc giữa Edit và Delete */
+            }
+
+            .sidebar {
+                max-width: 250px;
+                height: 610px;
+                margin-top: 77px;
+                position: fixed;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
         </style>
     </head>
 
@@ -442,16 +469,27 @@
         <div class="container">
             <!-- Sidebar -->
             <div class="sidebar">
-             <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
-                    <a href="manageProfile"><i class="fas fa-tachometer-alt" ></i><span>Quản lý người dùng</span></a>
-                    <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
-                    <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
-                    <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
-                    <a href="transactionHistory"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
-                    <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
-                    <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
-                    <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
-                    <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiết bị </span></a>
+                <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
+                <a href="manageProfile"><i class="fas fa-tachometer-alt" ></i><span>Quản lý người dùng</span></a>
+                <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
+                <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
+                <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
+                <a href="transactionHistory"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
+                <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
+                <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
+                <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
+                <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiết bị </span></a>
+                <!-- Nút Đăng xuất -->
+                <a href="logout" style="
+                   margin-top: auto;
+                   background: rgba(255, 255, 255, 0.15);
+                   border-top: 1px solid rgba(255,255,255,0.2);
+                   text-align: center;
+                   font-weight: 500;
+                   ">
+                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                </a>
+
             </div>
 
             <!-- Content -->
@@ -522,12 +560,12 @@
                                 <td>${ls.lastUpdatedDate}</td>
                                 <td>
                                     <button type="button" class="btn-edit" 
-                                            onclick="openPartDetailForm('edit', 
-                                            '${ls.partDetailId}', 
-                                            '${ls.partId}',
-                                            '${ls.serialNumber}', 
-                                            '${ls.status}', 
-                                            '${ls.location}')">
+                                            onclick="openPartDetailForm('edit',
+                                                            '${ls.partDetailId}',
+                                                            '${ls.partId}',
+                                                            '${ls.serialNumber}',
+                                                            '${ls.status}',
+                                                            '${ls.location}')">
                                         <i class="fas fa-edit"></i> Edit
                                     </button>
                                     <button type="button" class="btn-delete" 
@@ -598,7 +636,7 @@
                 const overlay = document.getElementById("partDetailFormOverlay");
                 const title = document.getElementById("partDetailFormTitle");
                 const actionInput = document.getElementById("partDetailAction");
-                
+
                 overlay.style.display = "flex";
                 document.getElementById("partDetailFormMessage").textContent = "";
 
@@ -618,7 +656,7 @@
                     document.getElementById("serialNumber").value = serialNumber;
                     document.getElementById("status").value = status;
                     document.getElementById("location").value = location;
-                }
+            }
             }
 
             // Đóng form
@@ -633,17 +671,17 @@
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = 'partDetail';
-                    
+
                     const actionInput = document.createElement('input');
                     actionInput.type = 'hidden';
                     actionInput.name = 'action';
                     actionInput.value = 'delete';
-                    
+
                     const idInput = document.createElement('input');
                     idInput.type = 'hidden';
                     idInput.name = 'partDetailId';
                     idInput.value = partDetailId;
-                    
+
                     form.appendChild(actionInput);
                     form.appendChild(idInput);
                     document.body.appendChild(form);
@@ -652,7 +690,7 @@
             }
 
             // Đóng popup khi click bên ngoài
-            document.getElementById("partDetailFormOverlay").addEventListener('click', function(e) {
+            document.getElementById("partDetailFormOverlay").addEventListener('click', function (e) {
                 if (e.target === this) {
                     closePartDetailForm();
                 }
@@ -664,14 +702,15 @@
 
             function renderPartDetailTable() {
                 const tableBody = document.querySelector(".inventory-table tbody");
-                if (!tableBody) return;
+                if (!tableBody)
+                    return;
 
                 const keyword = document.querySelector(".search-input").value.toLowerCase();
                 const rows = Array.from(tableBody.rows);
 
                 const filteredRows = rows.filter(row => {
                     return Array.from(row.cells).slice(0, 7)
-                        .some(td => td.innerText.toLowerCase().includes(keyword));
+                            .some(td => td.innerText.toLowerCase().includes(keyword));
                 });
 
                 const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
@@ -680,8 +719,10 @@
                     return;
                 }
 
-                if (currentPage > totalPages) currentPage = totalPages;
-                if (currentPage < 1) currentPage = 1;
+                if (currentPage > totalPages)
+                    currentPage = totalPages;
+                if (currentPage < 1)
+                    currentPage = 1;
 
                 rows.forEach(row => row.style.display = "none");
                 const start = (currentPage - 1) * rowsPerPage;
@@ -693,29 +734,53 @@
 
             function renderPagination(totalPages) {
                 const pagination = document.querySelector(".pagination");
-                if (!pagination) return;
+                if (!pagination)
+                    return;
                 pagination.innerHTML = "";
 
                 function createBtn(text, onClick, active = false) {
                     const btn = document.createElement("a");
                     btn.href = "#";
                     btn.textContent = text;
-                    if (active) btn.classList.add("active");
-                    btn.onclick = e => { e.preventDefault(); onClick(); };
+                    if (active)
+                        btn.classList.add("active");
+                    btn.onclick = e => {
+                        e.preventDefault();
+                        onClick();
+                    };
                     return btn;
                 }
 
-                pagination.appendChild(createBtn("« First", () => { currentPage = 1; renderPartDetailTable(); }));
-                pagination.appendChild(createBtn("‹ Prev", () => { if(currentPage>1){ currentPage--; renderPartDetailTable(); }}));
+                pagination.appendChild(createBtn("« First", () => {
+                    currentPage = 1;
+                    renderPartDetailTable();
+                }));
+                pagination.appendChild(createBtn("‹ Prev", () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderPartDetailTable();
+                    }
+                }));
 
                 let start = Math.max(currentPage - 2, 1);
                 let end = Math.min(start + 4, totalPages);
                 for (let i = start; i <= end; i++) {
-                    pagination.appendChild(createBtn(i, () => { currentPage = i; renderPartDetailTable(); }, i===currentPage));
+                    pagination.appendChild(createBtn(i, () => {
+                        currentPage = i;
+                        renderPartDetailTable();
+                    }, i === currentPage));
                 }
 
-                pagination.appendChild(createBtn("Next ›", () => { if(currentPage<totalPages){ currentPage++; renderPartDetailTable(); }}));
-                pagination.appendChild(createBtn("Last »", () => { currentPage = totalPages; renderPartDetailTable(); }));
+                pagination.appendChild(createBtn("Next ›", () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderPartDetailTable();
+                    }
+                }));
+                pagination.appendChild(createBtn("Last »", () => {
+                    currentPage = totalPages;
+                    renderPartDetailTable();
+                }));
             }
 
             document.querySelector(".search-input").addEventListener("input", () => {

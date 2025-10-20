@@ -291,5 +291,9 @@
         <servlet-name>WorkHistoryServlet</servlet-name>
         <url-pattern>/technician/work-history</url-pattern>
     </servlet-mapping>
+    
+    <welcome-file-list>
+        <welcome-file>home.jsp</welcome-file>
+    </welcome-file-list>
 </web-app>
 
