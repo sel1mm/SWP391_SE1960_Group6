@@ -37,7 +37,7 @@ public class UserController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getPathInfo();
-        
+
         if (action == null) {
             action = "/list";
         }
@@ -67,7 +67,7 @@ public class UserController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getPathInfo();
-        
+
         if (action == null) {
             action = "/create";
         }
@@ -93,30 +93,29 @@ public class UserController extends HttpServlet {
         }
     }
 
-   private void listUsers(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+    private void listUsers(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-    String keyword = request.getParameter("keyword");
-    String status = request.getParameter("status");
+        String keyword = request.getParameter("keyword");
+        String status = request.getParameter("status");
 
-    Response<List<Account>> result;
+        Response<List<Account>> result;
 
-    if ((keyword != null && !keyword.trim().isEmpty()) ||
-        (status != null && !status.trim().isEmpty())) {
-        result = accountService.searchAccounts(keyword, status);
-    } else {
-        result = accountService.getAllAccounts();
+        if ((keyword != null && !keyword.trim().isEmpty())
+                || (status != null && !status.trim().isEmpty())) {
+            result = accountService.searchAccounts(keyword, status);
+        } else {
+            result = accountService.getAllAccounts();
+        }
+
+        if (result.isSuccess()) {
+            request.setAttribute("users", result.getData());
+        } else {
+            request.setAttribute("error", result.getMessage());
+        }
+
+        request.getRequestDispatcher("/WEB-INF/views/user/list.jsp").forward(request, response);
     }
-
-    if (result.isSuccess()) {
-        request.setAttribute("users", result.getData());
-    } else {
-        request.setAttribute("error", result.getMessage());
-    }
-
-    request.getRequestDispatcher("/WEB-INF/views/user/list.jsp").forward(request, response);
-}
-
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -138,22 +137,22 @@ public class UserController extends HttpServlet {
         try {
             int userId = Integer.parseInt(idParam);
             Response<Account> result = accountService.getAccountById(userId);
-            
+
             if (result.isSuccess() && result.getData() != null) {
                 request.setAttribute("user", result.getData());
-                
+
                 // Get available roles
                 Response<List<model.Role>> rolesResult = roleService.getAllRoles();
                 if (rolesResult.isSuccess()) {
                     request.setAttribute("roles", rolesResult.getData());
                 }
-                
+
                 // Get user's current roles
                 Response<List<model.AccountRole>> userRolesResult = accountRoleService.getRolesByAccountId(userId);
                 if (userRolesResult.isSuccess()) {
                     request.setAttribute("userRoles", userRolesResult.getData());
                 }
-                
+
                 request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
             } else {
                 request.setAttribute("error", "User not found");
@@ -164,8 +163,11 @@ public class UserController extends HttpServlet {
         }
     }
 
+    // validate cái này à
+    // muốn validate tên với số đt thế  đung r đại ca ơi với cả edit phần này nx giờ em chạy thử cho đại ca xem là đại ca hiểu
     private void createUser(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         String fullName = request.getParameter("fullName");
@@ -176,39 +178,80 @@ public class UserController extends HttpServlet {
 
         Account account = new Account();
         account.setUsername(username);
-        account.setPasswordHash(passwordHasher.hashPassword(password));
         account.setFullName(fullName);
         account.setEmail(email);
         account.setPhone(phone);
         account.setStatus(status != null ? status : "Active");
 
+        // ================= VALIDATION =================
+        String error = null;
+
+        // 1️⃣ Full name không được chứa số
+        if (fullName == null || fullName.trim().isEmpty()) {
+            error = "Full name is required.";
+        } else if (!fullName.matches("^[^\\d]+$")) {
+            error = "Full name must not contain numbers.";
+        } // 2️⃣ Số điện thoại chỉ được chứa số (và độ dài hợp lý)
+        else if (phone != null && !phone.trim().isEmpty() && !phone.matches("^\\d{9,11}$")) {
+            error = "Phone number must contain only digits (9–11 digits).";
+        } // 3️⃣ Email không trùng
+        else {
+            Response<Boolean> emailExists = accountService.isEmailExists(email);
+            if (emailExists.isSuccess() && emailExists.getData()) {
+                error = "Email already exists.";
+            }
+        }
+
+        // 4️⃣ Số điện thoại không trùng
+        if (error == null && phone != null && !phone.trim().isEmpty()) {
+            Response<Boolean> phoneExists = accountService.isPhoneExists(phone);
+            if (phoneExists.isSuccess() && phoneExists.getData()) {
+                error = "Phone number already exists.";
+            }
+        }
+
+        // Nếu có lỗi → quay lại form
+        if (error != null) {
+            request.setAttribute("error", error);
+            request.setAttribute("user", account);
+
+            Response<List<model.Role>> rolesResult = roleService.getAllRoles();
+            if (rolesResult.isSuccess()) {
+                request.setAttribute("roles", rolesResult.getData());
+            }
+
+            request.getRequestDispatcher("/WEB-INF/views/user/create.jsp").forward(request, response);
+            return;
+        }
+
+        // ================= TẠO ACCOUNT =================
+        account.setPasswordHash(passwordHasher.hashPassword(password));
         Response<Account> result = accountService.createAccount(account);
-        
+
         if (result.isSuccess() && result.getData() != null) {
-            // Assign roles if provided
+            // Assign roles nếu có
             if (roleIds != null && roleIds.length > 0) {
                 for (String roleIdStr : roleIds) {
                     try {
                         int roleId = Integer.parseInt(roleIdStr);
                         accountRoleService.assignRoleToAccount(result.getData().getAccountId(), roleId);
                     } catch (NumberFormatException e) {
-                        // Skip invalid role ID
+                        // Bỏ qua ID không hợp lệ
                     }
                 }
             }
-            
-            response.sendRedirect(request.getContextPath() + "/user/list?message=" + 
-                java.net.URLEncoder.encode("User created successfully", "UTF-8"));
+
+            response.sendRedirect(request.getContextPath() + "/user/list?message="
+                    + java.net.URLEncoder.encode("User created successfully", "UTF-8"));
         } else {
             request.setAttribute("error", result.getMessage());
             request.setAttribute("user", account);
-            
-            // Get roles for form
+
             Response<List<model.Role>> rolesResult = roleService.getAllRoles();
             if (rolesResult.isSuccess()) {
                 request.setAttribute("roles", rolesResult.getData());
             }
-            
+
             request.getRequestDispatcher("/WEB-INF/views/user/create.jsp").forward(request, response);
         }
     }
@@ -229,6 +272,7 @@ public class UserController extends HttpServlet {
             String phone = request.getParameter("phone");
             String status = request.getParameter("status");
 
+            // Giữ lại thông tin nhập
             Account account = new Account();
             account.setAccountId(userId);
             account.setUsername(username);
@@ -237,33 +281,85 @@ public class UserController extends HttpServlet {
             account.setPhone(phone);
             account.setStatus(status);
 
+            // === VALIDATE ===
+            // 1️⃣ Tên không được chứa số
+            if (fullName != null && !fullName.trim().isEmpty() && fullName.matches(".*\\d.*")) {
+                request.setAttribute("error", "Full name cannot contain numbers.");
+                request.setAttribute("user", account);
+                reloadRolesAndReturn(request, response);
+                return;
+            }
+
+            // 2️⃣ Kiểm tra định dạng số điện thoại (chỉ cho phép số)
+            if (phone != null && !phone.trim().isEmpty() && !phone.matches("\\d+")) {
+                request.setAttribute("error", "Phone number must contain only digits.");
+                request.setAttribute("user", account);
+                reloadRolesAndReturn(request, response);
+                return;
+            }
+
+            // 3️⃣ Kiểm tra email trùng (nhưng bỏ qua chính người này)
+            Response<Boolean> emailExists = accountService.isEmailExists(email.trim());
+            Response<Account> existingAccRes = accountService.getAccountById(userId);
+
+            if (emailExists.isSuccess() && emailExists.getData()) {
+                Account existing = existingAccRes.getData();
+                if (existing != null && !email.trim().equalsIgnoreCase(existing.getEmail())) {
+                    request.setAttribute("error", "Email already exists.");
+                    request.setAttribute("user", account);
+                    reloadRolesAndReturn(request, response);
+                    return;
+                }
+            }
+
+            // 4️⃣ Kiểm tra số điện thoại trùng (nếu có nhập)
+            if (phone != null && !phone.trim().isEmpty()) {
+                Response<Boolean> phoneExists = accountService.isPhoneExists(phone.trim());
+                Account existing = existingAccRes.getData();
+                if (phoneExists.isSuccess() && phoneExists.getData()) {
+                    if (existing != null && !phone.trim().equalsIgnoreCase(existing.getPhone())) {
+                        request.setAttribute("error", "Phone number already exists.");
+                        request.setAttribute("user", account);
+                        reloadRolesAndReturn(request, response);
+                        return;
+                    }
+                }
+            }
+
+            // === Cập nhật tài khoản ===
             Response<Account> result = accountService.updateAccount(account);
-            
+
             if (result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/user/list?message=" + 
-                    java.net.URLEncoder.encode("User updated successfully", "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/user/list?message="
+                        + java.net.URLEncoder.encode("User updated successfully", "UTF-8"));
             } else {
                 request.setAttribute("error", result.getMessage());
                 request.setAttribute("user", account);
-                
-                // Get roles for form
-                Response<List<model.Role>> rolesResult = roleService.getAllRoles();
-                if (rolesResult.isSuccess()) {
-                    request.setAttribute("roles", rolesResult.getData());
-                }
-                
-                request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+                reloadRolesAndReturn(request, response);
             }
+
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
         }
+    }
+
+    /**
+     * Tải lại danh sách role và quay lại form edit.jsp khi có lỗi
+     */
+    private void reloadRolesAndReturn(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        Response<List<model.Role>> rolesResult = roleService.getAllRoles();
+        if (rolesResult.isSuccess()) {
+            request.setAttribute("roles", rolesResult.getData());
+        }
+        request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
     }
 
     private void updatePassword(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String idParam = request.getParameter("id");
         String newPassword = request.getParameter("newPassword");
-        
+
         if (idParam == null || idParam.trim().isEmpty()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID is required");
             return;
@@ -272,13 +368,13 @@ public class UserController extends HttpServlet {
         try {
             int userId = Integer.parseInt(idParam);
             Response<Account> result = accountService.updatePassword(userId, newPassword);
-            
+
             if (result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/user/edit?id=" + userId + "&message=" + 
-                    java.net.URLEncoder.encode("Password updated successfully", "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/user/edit?id=" + userId + "&message="
+                        + java.net.URLEncoder.encode("Password updated successfully", "UTF-8"));
             } else {
-                response.sendRedirect(request.getContextPath() + "/user/edit?id=" + userId + "&error=" + 
-                    java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/user/edit?id=" + userId + "&error="
+                        + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
             }
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
@@ -296,13 +392,13 @@ public class UserController extends HttpServlet {
         try {
             int userId = Integer.parseInt(idParam);
             Response<Boolean> result = accountService.deleteAccount(userId);
-            
+
             if (result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/user/list?message=" + 
-                    java.net.URLEncoder.encode("User deleted successfully", "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/user/list?message="
+                        + java.net.URLEncoder.encode("User deleted successfully", "UTF-8"));
             } else {
-                response.sendRedirect(request.getContextPath() + "/user/list?error=" + 
-                    java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/user/list?error="
+                        + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
             }
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
@@ -319,7 +415,7 @@ public class UserController extends HttpServlet {
 
         try {
             int userId = Integer.parseInt(idParam);
-            
+
             // Get user info
             Response<Account> userResult = accountService.getAccountById(userId);
             if (!userResult.isSuccess() || userResult.getData() == null) {
@@ -327,21 +423,21 @@ public class UserController extends HttpServlet {
                 request.getRequestDispatcher("/WEB-INF/views/user/list.jsp").forward(request, response);
                 return;
             }
-            
+
             request.setAttribute("user", userResult.getData());
-            
+
             // Get all roles
             Response<List<model.Role>> rolesResult = roleService.getAllRoles();
             if (rolesResult.isSuccess()) {
                 request.setAttribute("roles", rolesResult.getData());
             }
-            
+
             // Get user's current roles
             Response<List<model.AccountRole>> userRolesResult = accountRoleService.getRolesByAccountId(userId);
             if (userRolesResult.isSuccess()) {
                 request.setAttribute("userRoles", userRolesResult.getData());
             }
-            
+
             request.getRequestDispatcher("/WEB-INF/views/user/roles.jsp").forward(request, response);
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
@@ -352,7 +448,7 @@ public class UserController extends HttpServlet {
             throws ServletException, IOException {
         String userIdParam = request.getParameter("userId");
         String roleIdParam = request.getParameter("roleId");
-        
+
         if (userIdParam == null || roleIdParam == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID and Role ID are required");
             return;
@@ -361,15 +457,15 @@ public class UserController extends HttpServlet {
         try {
             int userId = Integer.parseInt(userIdParam);
             int roleId = Integer.parseInt(roleIdParam);
-            
+
             Response<model.AccountRole> result = accountRoleService.assignRoleToAccount(userId, roleId);
-            
+
             if (result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&message=" + 
-                    java.net.URLEncoder.encode("Role assigned successfully", "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&message="
+                        + java.net.URLEncoder.encode("Role assigned successfully", "UTF-8"));
             } else {
-                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&error=" + 
-                    java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&error="
+                        + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
             }
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID or role ID");
@@ -380,7 +476,7 @@ public class UserController extends HttpServlet {
             throws ServletException, IOException {
         String userIdParam = request.getParameter("userId");
         String roleIdParam = request.getParameter("roleId");
-        
+
         if (userIdParam == null || roleIdParam == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID and Role ID are required");
             return;
@@ -389,15 +485,15 @@ public class UserController extends HttpServlet {
         try {
             int userId = Integer.parseInt(userIdParam);
             int roleId = Integer.parseInt(roleIdParam);
-            
+
             Response<Boolean> result = accountRoleService.removeRoleFromAccount(userId, roleId);
-            
+
             if (result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&message=" + 
-                    java.net.URLEncoder.encode("Role removed successfully", "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&message="
+                        + java.net.URLEncoder.encode("Role removed successfully", "UTF-8"));
             } else {
-                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&error=" + 
-                    java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&error="
+                        + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
             }
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID or role ID");
