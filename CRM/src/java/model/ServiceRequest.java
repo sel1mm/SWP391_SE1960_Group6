@@ -8,8 +8,9 @@ import java.util.Date;
  */
 public class ServiceRequest {
     private int requestId;
-    private int contractId;
-    private int equipmentId;
+    private int requestNumber; 
+    private Integer contractId;      // ✅ ĐỔI int → Integer
+    private Integer equipmentId;     // ✅ ĐỔI int → Integer
     private int createdBy;
     private String description;
     private String priorityLevel;
@@ -34,8 +35,8 @@ public class ServiceRequest {
     public ServiceRequest() {
     }
     
-    // Constructor đầy đủ
-    public ServiceRequest(int requestId, int contractId, int equipmentId, 
+    // Constructor đầy đủ - SỬA Integer
+    public ServiceRequest(int requestId, Integer contractId, Integer equipmentId, 
                          int createdBy, String description, String priorityLevel, 
                          Date requestDate, String status, String requestType) {
         this.requestId = requestId;
@@ -49,8 +50,8 @@ public class ServiceRequest {
         this.requestType = requestType;
     }
     
-    // Constructor cho việc tạo mới (không có requestId)
-    public ServiceRequest(int contractId, int equipmentId, int createdBy, 
+    // Constructor cho việc tạo mới - SỬA Integer
+    public ServiceRequest(Integer contractId, Integer equipmentId, int createdBy, 
                          String description, String priorityLevel, 
                          Date requestDate, String status, String requestType) {
         this.contractId = contractId;
@@ -63,7 +64,7 @@ public class ServiceRequest {
         this.requestType = requestType;
     }
     
-    // Getters and Setters
+    // Getters and Setters - SỬA Integer
     public int getRequestId() {
         return requestId;
     }
@@ -72,19 +73,19 @@ public class ServiceRequest {
         this.requestId = requestId;
     }
     
-    public int getContractId() {
+    public Integer getContractId() {     // ✅ ĐỔI int → Integer
         return contractId;
     }
     
-    public void setContractId(int contractId) {
+    public void setContractId(Integer contractId) {     // ✅ ĐỔI int → Integer
         this.contractId = contractId;
     }
     
-    public int getEquipmentId() {
+    public Integer getEquipmentId() {    // ✅ ĐỔI int → Integer
         return equipmentId;
     }
     
-    public void setEquipmentId(int equipmentId) {
+    public void setEquipmentId(Integer equipmentId) {   // ✅ ĐỔI int → Integer
         this.equipmentId = equipmentId;
     }
     
@@ -151,6 +152,19 @@ public class ServiceRequest {
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public ServiceRequest(int requestNumber) {
+        this.requestNumber = requestNumber;
+    }
+
+    public int getRequestNumber() {
+        return requestNumber;
+    }
+
+    public void setRequestNumber(int requestNumber) {
+        this.requestNumber = requestNumber;
+    }
+    
     
     public Integer getAssignedTechnicianId() {
         return assignedTechnicianId;

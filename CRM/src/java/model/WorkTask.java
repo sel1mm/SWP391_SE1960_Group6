@@ -1,10 +1,15 @@
 package model;
+
 import java.time.LocalDate;
 
+/**
+ * WorkTask model representing work assigned to a technician.
+ * Maps to the WorkTask table in the final database schema.
+ */
 public class WorkTask {
     private int taskId;
-    private int requestId;
-    private int scheduleId;
+    private Integer requestId;
+    private Integer scheduleId;
     private int technicianId;
     private String taskType;
     private String taskDetails;
@@ -12,10 +17,12 @@ public class WorkTask {
     private LocalDate endDate;
     private String status;
 
-    public WorkTask() {
-    }
+    // Constructors
+    public WorkTask() {}
 
-    public WorkTask(int taskId, int requestId, int scheduleId, int technicianId, String taskType, String taskDetails, LocalDate startDate, LocalDate endDate, String status) {
+    public WorkTask(int taskId, Integer requestId, Integer scheduleId, int technicianId, 
+                   String taskType, String taskDetails, LocalDate startDate, 
+                   LocalDate endDate, String status) {
         this.taskId = taskId;
         this.requestId = requestId;
         this.scheduleId = scheduleId;
@@ -27,77 +34,46 @@ public class WorkTask {
         this.status = status;
     }
 
-    public int getTaskId() {
-        return taskId;
-    }
+    // Getters and Setters
+    public int getTaskId() { return taskId; }
+    public void setTaskId(int taskId) { this.taskId = taskId; }
 
-    public void setTaskId(int taskId) {
-        this.taskId = taskId;
-    }
+    public Integer getRequestId() { return requestId; }
+    public void setRequestId(Integer requestId) { this.requestId = requestId; }
 
-    public int getRequestId() {
-        return requestId;
-    }
+    public Integer getScheduleId() { return scheduleId; }
+    public void setScheduleId(Integer scheduleId) { this.scheduleId = scheduleId; }
 
-    public void setRequestId(int requestId) {
-        this.requestId = requestId;
-    }
+    public int getTechnicianId() { return technicianId; }
+    public void setTechnicianId(int technicianId) { this.technicianId = technicianId; }
 
-    public int getScheduleId() {
-        return scheduleId;
-    }
+    public String getTaskType() { return taskType; }
+    public void setTaskType(String taskType) { this.taskType = taskType; }
 
-    public void setScheduleId(int scheduleId) {
-        this.scheduleId = scheduleId;
-    }
+    public String getTaskDetails() { return taskDetails; }
+    public void setTaskDetails(String taskDetails) { this.taskDetails = taskDetails; }
 
-    public int getTechnicianId() {
-        return technicianId;
-    }
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    public void setTechnicianId(int technicianId) {
-        this.technicianId = technicianId;
-    }
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
-    public String getTaskType() {
-        return taskType;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setTaskType(String taskType) {
-        this.taskType = taskType;
+    @Override
+    public String toString() {
+        return "WorkTask{" +
+                "taskId=" + taskId +
+                ", requestId=" + requestId +
+                ", scheduleId=" + scheduleId +
+                ", technicianId=" + technicianId +
+                ", taskType='" + taskType + '\'' +
+                ", taskDetails='" + taskDetails + '\'' +
+                ", startDate=" + startDate +
+                ", endDate=" + endDate +
+                ", status='" + status + '\'' +
+                '}';
     }
-
-    public String getTaskDetails() {
-        return taskDetails;
-    }
-
-    public void setTaskDetails(String taskDetails) {
-        this.taskDetails = taskDetails;
-    }
-
-    public LocalDate getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-    
-    
 }

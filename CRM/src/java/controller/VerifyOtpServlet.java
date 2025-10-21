@@ -25,6 +25,13 @@ public class VerifyOtpServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String inputOtp = request.getParameter("otp");
+
+        if (inputOtp == null || !inputOtp.trim().matches("^[0-9]{6}$")) {
+            request.setAttribute("error", "Mã OTP không hợp lệ. Vui lòng nhập đúng 6 chữ số.");
+            request.getRequestDispatcher("verifyOtp.jsp").forward(request, response);
+            return;
+        }
+
         HttpSession session = request.getSession();
         String otp = (String) session.getAttribute("otp");
         Long otpTime = (Long) session.getAttribute("otpTime");

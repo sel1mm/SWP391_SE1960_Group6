@@ -24,12 +24,11 @@
         </div>
         <ul class="nav nav-pills flex-column mb-auto">
           <li class="nav-item"><a href="${contextPath}/technician/dashboard" class="nav-link text-dark ${activePage == 'dashboard' ? 'active' : ''}"><i class="bi bi-grid me-2"></i>Dashboard</a></li>
-          <li><a href="${contextPath}/technician/tasks" class="nav-link text-dark ${activePage == 'tasks' ? 'active' : ''}"><i class="bi bi-list-task me-2"></i>Tasks</a></li>
-          <li><a href="${contextPath}/technician/storekeeper" class="nav-link text-dark ${activePage == 'storekeeper' ? 'active' : ''}"><i class="bi bi-box-seam me-2"></i>Storekeeper</a></li>
-          <li><a href="${contextPath}/technician/approved-request" class="nav-link text-dark ${activePage == 'approved' ? 'active' : ''}"><i class="bi bi-clipboard-check me-2"></i>Approved Request</a></li>
+          <li><a href="${contextPath}/technician/tasks" class="nav-link text-dark ${activePage == 'tasks' ? 'active' : ''}"><i class="bi bi-list-task me-2"></i>My Tasks</a></li>
+          <li><a href="${contextPath}/technician/reports" class="nav-link text-dark ${activePage == 'reports' ? 'active' : ''}"><i class="bi bi-clipboard-plus me-2"></i>Repair Reports</a></li>
+          <li><a href="${contextPath}/technician/contracts" class="nav-link text-dark ${activePage == 'contracts' ? 'active' : ''}"><i class="bi bi-file-earmark-text me-2"></i>Contracts</a></li>
+          <li><a href="${contextPath}/technician/contracts?action=equipment" class="nav-link text-dark ${activePage == 'equipment' ? 'active' : ''}"><i class="bi bi-gear me-2"></i>Equipment</a></li>
           <li><a href="${contextPath}/technician/work-history" class="nav-link text-dark ${activePage == 'work' ? 'active' : ''}"><i class="bi bi-clock-history me-2"></i>Work History</a></li>
-          <li><a href="${contextPath}/technician/contracts" class="nav-link text-dark ${activePage == 'contracts' ? 'active' : ''}"><i class="bi bi-file-earmark-plus me-2"></i>Contracts</a></li>
-          <li><a href="${contextPath}/technician/reports" class="nav-link text-dark ${activePage == 'reports' ? 'active' : ''}"><i class="bi bi-clipboard-plus me-2"></i>Reports</a></li>
         </ul>
       </div>
     </aside>
@@ -64,6 +63,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="${contextPath}/assets/js/technician.js"></script>
+<script src="${contextPath}/assets/js/technician-validation.js"></script>
 </body>
 </html>
 
