@@ -88,7 +88,14 @@
                 <td>${st.index + 1}</td>
                 <td><strong>#${report.reportId}</strong></td>
                 <td>
-                  <a href="#" class="text-decoration-none">#${report.requestId}</a>
+                  <c:choose>
+                    <c:when test="${report.requestId != null}">
+                      <a href="#" class="text-decoration-none">#${report.requestId}</a>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="text-muted">General Report</span>
+                    </c:otherwise>
+                  </c:choose>
                 </td>
                 <td class="d-none d-md-table-cell">
                   <div class="text-truncate" style="max-width:200px;" title="${fn:escapeXml(report.details)}">

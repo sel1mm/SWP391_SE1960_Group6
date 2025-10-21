@@ -192,11 +192,8 @@ window.TechnicianValidation = {
 // Auto-initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     
-    // Initialize repair report form validation
-    const reportForm = document.getElementById('reportForm');
-    if (reportForm) {
-        initializeRepairReportValidation(reportForm);
-    }
+    // Note: Individual forms handle their own validation to avoid conflicts
+    // Only initialize shared utilities here
     
     // Initialize character counters
     initializeCharacterCounters();
@@ -207,44 +204,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /**
  * Initialize repair report form validation
+ * NOTE: This function is kept for reference but not used to avoid conflicts
+ * Individual forms handle their own validation
  */
 function initializeRepairReportValidation(form) {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = {
-            details: document.getElementById('details').value,
-            diagnosis: document.getElementById('diagnosis').value,
-            estimatedCost: document.getElementById('estimatedCost').value,
-            repairDate: document.getElementById('repairDate').value
-        };
-        
-        // Clear previous errors
-        TechnicianValidation.clearAllErrors();
-        
-        // Validate form data
-        const validation = TechnicianValidation.validateRepairReport(formData);
-        
-        if (!validation.isValid) {
-            // Show field errors
-            Object.keys(validation.errors).forEach(fieldName => {
-                const field = document.getElementById(fieldName);
-                const errorId = fieldName + 'Error';
-                if (field) {
-                    TechnicianValidation.showFieldError(field, errorId, validation.errors[fieldName]);
-                }
-            });
-            
-            // Show modal with first error
-            const firstError = Object.values(validation.errors)[0];
-            TechnicianValidation.showValidationModal(firstError);
-            
-            return;
-        }
-        
-        // Submit form if valid
-        form.submit();
-    });
+    // This function is intentionally empty to avoid conflicts
+    // Individual forms handle their own validation
 }
 
 /**
