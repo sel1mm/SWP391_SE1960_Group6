@@ -223,8 +223,43 @@ document.addEventListener('DOMContentLoaded', function() {
         errorMessage.innerHTML = '<ul class="mb-0"><li>' + errors.join('</li><li>') + '</li></ul>';
         errorExample.innerHTML = '<strong>Example:</strong> Select a customer, choose contract type, provide description, set contract date, and select status.';
         
-        const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+        const modalElement = document.getElementById('errorModal');
+        const modal = new bootstrap.Modal(modalElement);
         modal.show();
+        
+        // Ensure OK button properly closes modal
+        const okButton = modalElement.querySelector('[data-bs-dismiss="modal"]');
+        if (okButton) {
+            okButton.addEventListener('click', function() {
+                modal.hide();
+            });
+        }
+        
+        // Fallback: Close modal when clicking outside or pressing Escape
+        modalElement.addEventListener('click', function(e) {
+            if (e.target === modalElement) {
+                modal.hide();
+            }
+        });
     }
+    
+    // Add event listener for modal OK button to allow retry
+    document.getElementById('errorModal').addEventListener('hidden.bs.modal', function() {
+        // Focus on the first invalid field to help user continue editing
+        const firstInvalidField = document.querySelector('.is-invalid');
+        if (firstInvalidField) {
+            firstInvalidField.focus();
+        }
+    });
+    
+    // Additional event listener for Close button click
+    document.getElementById('errorModal').addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-secondary') && e.target.textContent.trim() === 'Close') {
+            const modal = bootstrap.Modal.getInstance(this);
+            if (modal) {
+                modal.hide();
+            }
+        }
+    });
 });
 </script>

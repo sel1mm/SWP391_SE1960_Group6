@@ -55,7 +55,14 @@
               <div class="mb-3">
                 <label class="form-label fw-bold">Request ID</label>
                 <p class="form-control-plaintext">
-                  <a href="#" class="text-decoration-none">#${report.requestId}</a>
+                  <c:choose>
+                    <c:when test="${report.requestId != null}">
+                      <a href="#" class="text-decoration-none">#${report.requestId}</a>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="text-muted">General Report</span>
+                    </c:otherwise>
+                  </c:choose>
                 </p>
               </div>
               <div class="mb-3">

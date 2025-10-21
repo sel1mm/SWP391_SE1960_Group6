@@ -75,7 +75,7 @@
                 <div class="mb-3">
                   <label for="requestIdDisplay" class="form-label fw-bold">Request ID</label>
                   <input type="text" class="form-control" id="requestIdDisplay" 
-                         value="${not empty report ? '#' + report.requestId : (requestId != null ? '#' + requestId : 'General Report')}" readonly>
+                         value="<c:choose><c:when test='${not empty report}'><c:choose><c:when test='${report.requestId != null}'>#${report.requestId}</c:when><c:otherwise>General Report</c:otherwise></c:choose></c:when><c:otherwise><c:choose><c:when test='${requestId != null}'>#${requestId}</c:when><c:otherwise>General Report</c:otherwise></c:choose></c:otherwise></c:choose>" readonly>
                 </div>
               </div>
               <div class="col-md-6">
@@ -128,8 +128,18 @@
                 <div class="mb-3">
                   <label for="repairDate" class="form-label fw-bold">Repair Date <span class="text-danger">*</span></label>
                   <input type="date" class="form-control" id="repairDate" name="repairDate" 
-                         required value="${not empty report ? report.repairDate : ''}">
-                  <div class="form-text">Date when repair was completed</div>
+                         required value="${not empty report ? report.repairDate : ''}"
+                         ${not empty report ? 'disabled' : ''}>
+                  <div class="form-text">
+                    <c:choose>
+                      <c:when test="${not empty report}">
+                        <span class="text-muted">Repair date cannot be changed for existing reports</span>
+                      </c:when>
+                      <c:otherwise>
+                        Date when repair was completed
+                      </c:otherwise>
+                    </c:choose>
+                  </div>
                   <div class="invalid-feedback" id="repairDateError"></div>
                 </div>
               </div>
@@ -249,6 +259,25 @@ document.addEventListener('DOMContentLoaded', function() {
         form.submit();
     });
     
+    // Add event listener for modal OK button to allow retry
+    document.getElementById('validationModal').addEventListener('hidden.bs.modal', function() {
+        // Focus on the first invalid field to help user continue editing
+        const firstInvalidField = document.querySelector('.is-invalid');
+        if (firstInvalidField) {
+            firstInvalidField.focus();
+        }
+    });
+    
+    // Additional event listener for OK button click
+    document.getElementById('validationModal').addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-primary') && e.target.textContent.trim() === 'OK') {
+            const modal = bootstrap.Modal.getInstance(this);
+            if (modal) {
+                modal.hide();
+            }
+        }
+    });
+    
     function clearValidation() {
         document.querySelectorAll('.is-invalid').forEach(field => field.classList.remove('is-invalid'));
         document.querySelectorAll('.invalid-feedback').forEach(feedback => feedback.textContent = '');
@@ -263,7 +292,25 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('validationMessage').innerHTML = 
             '<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle me-2"></i>' + message + '</div>';
         document.getElementById('validationExample').innerHTML = getExampleText(message);
-        new bootstrap.Modal(document.getElementById('validationModal')).show();
+        
+        const modalElement = document.getElementById('validationModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+        // Ensure OK button properly closes modal
+        const okButton = modalElement.querySelector('[data-bs-dismiss="modal"]');
+        if (okButton) {
+            okButton.addEventListener('click', function() {
+                modal.hide();
+            });
+        }
+        
+        // Fallback: Close modal when clicking outside or pressing Escape
+        modalElement.addEventListener('click', function(e) {
+            if (e.target === modalElement) {
+                modal.hide();
+            }
+        });
     }
     
     // Validation functions matching server-side rules
@@ -275,8 +322,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (trimmed.length > 255) {
             return { isValid: false, error: 'Details must be 255 characters or less' };
         }
-        if (!/^[a-zA-Z0-9\s,.-()]*$/.test(trimmed)) {
-            return { isValid: false, error: 'Details can only contain letters, numbers, spaces, and these characters: , . - ( )' };
+        // Allow Unicode characters (including Vietnamese) and common punctuation
+        const validPattern = /^[\p{L}\p{N}\s,.\-()!?;:'"]*$/u;
+        if (!validPattern.test(trimmed)) {
+            // Debug: log the actual characters that are causing issues
+            console.log('Invalid characters detected in:', trimmed);
+            console.log('Character codes:', Array.from(trimmed).map(c => c.charCodeAt(0)));
+            return { isValid: false, error: 'Details can only contain letters, numbers, spaces, and these characters: , . - ( ) ! ? ; : \' "' };
         }
         return { isValid: true };
     }
@@ -289,8 +341,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (trimmed.length > 255) {
             return { isValid: false, error: 'Diagnosis must be 255 characters or less' };
         }
-        if (!/^[a-zA-Z0-9\s,.-()]*$/.test(trimmed)) {
-            return { isValid: false, error: 'Diagnosis can only contain letters, numbers, spaces, and these characters: , . - ( )' };
+        // Allow Unicode characters (including Vietnamese) and common punctuation
+        const validPattern = /^[\p{L}\p{N}\s,.\-()!?;:'"]*$/u;
+        if (!validPattern.test(trimmed)) {
+            // Debug: log the actual characters that are causing issues
+            console.log('Invalid characters detected in diagnosis:', trimmed);
+            console.log('Character codes:', Array.from(trimmed).map(c => c.charCodeAt(0)));
+            return { isValid: false, error: 'Diagnosis can only contain letters, numbers, spaces, and these characters: , . - ( ) ! ? ; : \' "' };
         }
         return { isValid: true };
     }
@@ -316,22 +373,33 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!value || !value.trim()) {
             return { isValid: false, error: 'Repair date is required' };
         }
-        const repairDate = new Date(value);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
         
+        const repairDate = new Date(value);
         if (isNaN(repairDate.getTime())) {
             return { isValid: false, error: 'Invalid date format. Please use YYYY-MM-DD format' };
         }
         
-        if (repairDate < today) {
-            return { isValid: false, error: 'Repair date cannot be in the past' };
-        }
+        // Check if this is an edit operation (update existing report)
+        const isEditMode = document.querySelector('input[name="action"]').value === 'update';
         
-        const maxDate = new Date(today);
-        maxDate.setFullYear(maxDate.getFullYear() + 1);
-        if (repairDate > maxDate) {
-            return { isValid: false, error: 'Repair date cannot be more than 1 year in the future' };
+        if (isEditMode) {
+            // For existing reports, repair date should not be changed
+            // The date field should be disabled, but if somehow it's not, we allow any valid date
+            return { isValid: true };
+        } else {
+            // For new reports, repair date cannot be in the past
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (repairDate < today) {
+                return { isValid: false, error: 'Repair date cannot be in the past' };
+            }
+            
+            const maxDate = new Date(today);
+            maxDate.setFullYear(maxDate.getFullYear() + 1);
+            if (repairDate > maxDate) {
+                return { isValid: false, error: 'Repair date cannot be more than 1 year in the future' };
+            }
         }
         
         return { isValid: true };
