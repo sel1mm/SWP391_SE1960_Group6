@@ -25,7 +25,7 @@
                 width: 100%;
                 max-width: 450px;
                 backdrop-filter: blur(10px);
-                max-height: 90vh; 
+                max-height: 90vh;
                 overflow-y: auto;
                 scrollbar-width: thin;
             }
@@ -193,7 +193,7 @@
                 <div class="form-group">
                     <label for="fullName" class="form-label-modern">Họ và tên <span class="required-star">*</span></label>
                     <input type="text" id="fullName" name="fullName" class="form-control form-control-modern"
-                           placeholder="Nhập họ và tên đầy đủ" required
+                           placeholder="Nhập họ và tên đầy đủ" required maxlength="100"
                            pattern="^[A-Za-zÀ-ỹ\s]{2,50}$"
                            title="Họ và tên chỉ được chứa chữ cái và khoảng trắng, độ dài 2-50 ký tự">
                     <div id="fullNameError" class="error-message">Họ và tên không hợp lệ</div>
@@ -202,7 +202,7 @@
                 <div class="form-group">
                     <label for="email" class="form-label-modern">Email <span class="required-star">*</span></label>
                     <input type="email" id="email" name="email" class="form-control form-control-modern"
-                           required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                           required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" maxlength="100"
                            placeholder="example@domain.com"
                            title="Email không đúng định dạng">
                     <div id="emailError" class="error-message">Email phải có định dạng: example@domain.com</div>
@@ -211,7 +211,7 @@
                 <div class="form-group">
                     <label class="form-label-modern">Số điện thoại <span class="required-star">*</span></label>
                     <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control form-control-modern"
-                           placeholder="Nhập số điện thoại" required
+                           placeholder="Nhập số điện thoại" required maxlength="10"
                            pattern="(03|05|07|08|09)[0-9]{8}"
                            title="Số điện thoại phải bắt đầu bằng 03, 05, 07, 08 hoặc 09 và có đúng 10 chữ số">
                     <div id="phoneError" class="error-message">Số điện thoại không hợp lệ</div>
@@ -220,19 +220,29 @@
                 <div class="form-group">
                     <label for="username" class="form-label-modern">Tên đăng nhập <span class="required-star">*</span></label>
                     <input type="text" id="username" name="username" class="form-control form-control-modern"
-                           required pattern="[a-zA-Z0-9]+" placeholder="Tên đăng nhập"
-                           title="Tên đăng nhập chỉ được chứa chữ cái và số">
-                    <div id="usernameError" class="error-message">Tên đăng nhập chỉ được chứa chữ cái và số</div>
+                           required minlength="1" maxlength="20"
+                           pattern="^[A-Za-z0-9]+$"
+                           placeholder="Tên đăng nhập"
+                           title="Tên đăng nhập chỉ được chứa chữ cái và số (tối đa 20 ký tự)">
+                    <div id="usernameError" class="error-message">Tên đăng nhập chỉ được chứa chữ cái và số (tối đa 20 ký tự)</div>
                 </div>
 
                 <div class="form-group">
                     <label for="password" class="form-label-modern">Mật khẩu <span class="required-star">*</span></label>
-                    <input type="password" id="password" name="password" class="form-control form-control-modern" placeholder="Nhập mật khẩu" required>
+                    <input type="password" id="password" name="password"
+                           class="form-control form-control-modern"
+                           placeholder="Nhập mật khẩu"
+                           required minlength="6" maxlength="30"
+                           pattern="^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$"
+                           title="Mật khẩu không được có khoảng trắng.">
                 </div>
 
                 <div class="form-group">
                     <label for="confirm-password" class="form-label-modern">Nhập lại mật khẩu <span class="required-star">*</span></label>
-                    <input type="password" id="confirm-password" name="confirm-password" class="form-control form-control-modern" placeholder="Xác nhận lại mật khẩu" required>
+                    <input type="password" id="confirm-password" name="confirm-password"
+                           class="form-control form-control-modern"
+                           placeholder="Xác nhận lại mật khẩu"
+                           required minlength="6" maxlength="30">
                     <div id="passwordError" class="error-message">Mật khẩu không khớp</div>
                 </div>
 

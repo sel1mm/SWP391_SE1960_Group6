@@ -8,11 +8,11 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import model.AccountProfile;
 
 public class AccountDAO extends MyDAO {
 
-    
-     public List<Account> searchAccounts(String keyword, String status) {
+    public List<Account> searchAccounts(String keyword, String status) {
         List<Account> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM Account WHERE 1=1");
 
@@ -36,29 +36,29 @@ public class AccountDAO extends MyDAO {
                 ps.setString(index++, status);
             }
 
-             rs = ps.executeQuery();
+            rs = ps.executeQuery();
             while (rs.next()) {
-                 LocalDateTime createdAt = null;
-            LocalDateTime updatedAt = null;
+                LocalDateTime createdAt = null;
+                LocalDateTime updatedAt = null;
 
-            if (rs.getTimestamp("createdAt") != null) {
-                createdAt = rs.getTimestamp("createdAt").toLocalDateTime();
-            }
-            if (rs.getTimestamp("updatedAt") != null) {
-                updatedAt = rs.getTimestamp("updatedAt").toLocalDateTime();
-            }
+                if (rs.getTimestamp("createdAt") != null) {
+                    createdAt = rs.getTimestamp("createdAt").toLocalDateTime();
+                }
+                if (rs.getTimestamp("updatedAt") != null) {
+                    updatedAt = rs.getTimestamp("updatedAt").toLocalDateTime();
+                }
 
-            Account a= new Account(
-                rs.getInt("accountId"),
-                rs.getString("username"),
-                rs.getString("passwordHash"),
-                rs.getString("fullName"),
-                rs.getString("email"),
-                rs.getString("phone"),
-                rs.getString("status"),
-                createdAt,
-                updatedAt
-            );
+                Account a = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
+                );
                 list.add(a);
             }
         } catch (SQLException e) {
@@ -66,7 +66,88 @@ public class AccountDAO extends MyDAO {
         }
         return list;
     }
-    
+
+    public List<Account> searchCustomerAccounts(String keyword, String status) {
+        List<Account> list = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT a.*, 
+               p.address, p.dateOfBirth, p.avatarUrl, p.nationalId, 
+               p.verified, p.extraData
+        FROM Account a
+        INNER JOIN AccountRole ar ON a.accountId = ar.accountId
+        LEFT JOIN AccountProfile p ON a.accountId = p.accountId
+        WHERE ar.roleId = 2
+    """);
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ?)");
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            sql.append(" AND a.status = ?");
+        }
+
+        sql.append(" ORDER BY a.accountId");
+
+        try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
+            int index = 1;
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchPattern = "%" + keyword.trim() + "%";
+                ps.setString(index++, searchPattern);
+                ps.setString(index++, searchPattern);
+                ps.setString(index++, searchPattern);
+            }
+
+            if (status != null && !status.trim().isEmpty()) {
+                ps.setString(index++, status);
+            }
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                LocalDateTime createdAt = rs.getTimestamp("createdAt") != null
+                        ? rs.getTimestamp("createdAt").toLocalDateTime()
+                        : null;
+                LocalDateTime updatedAt = rs.getTimestamp("updatedAt") != null
+                        ? rs.getTimestamp("updatedAt").toLocalDateTime()
+                        : null;
+
+                Account account = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
+                );
+
+                AccountProfile profile = new AccountProfile();
+                profile.setAccountId(rs.getInt("accountId"));
+                profile.setAddress(rs.getString("address"));
+                if (rs.getDate("dateOfBirth") != null) {
+                    profile.setDateOfBirth(rs.getDate("dateOfBirth").toLocalDate());
+                }
+                profile.setAvatarUrl(rs.getString("avatarUrl"));
+                profile.setNationalId(rs.getString("nationalId"));
+                profile.setVerified(rs.getBoolean("verified"));
+                profile.setExtraData(rs.getString("extraData"));
+
+                account.setProfile(profile);
+
+                list.add(account);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
     public Response<List<Account>> getAllAccounts() {
         String sql = "SELECT * FROM Account ORDER BY accountId";
         List<Account> accounts = new ArrayList<>();
@@ -85,15 +166,15 @@ public class AccountDAO extends MyDAO {
                 }
 
                 Account account = new Account(
-                    rs.getInt("accountId"),
-                    rs.getString("username"),
-                    rs.getString("passwordHash"),
-                    rs.getString("fullName"),
-                    rs.getString("email"),
-                    rs.getString("phone"),
-                    rs.getString("status"),
-                    createdAt,
-                    updatedAt
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
                 );
                 accounts.add(account);
             }
@@ -103,13 +184,91 @@ public class AccountDAO extends MyDAO {
             return new Response<>(null, false, MessageConstant.MESSAGE_FAILED);
         } finally {
             try {
-                if (rs != null) rs.close();
-                if (ps != null) ps.close();
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         }
     }
+
+    public Response<List<Account>> getAllCustomerAccounts() {
+        String sql = """
+        SELECT a.*, 
+               p.address, p.dateOfBirth, p.avatarUrl, p.nationalId, 
+               p.verified, p.extraData
+        FROM Account a
+        INNER JOIN AccountRole ar ON a.accountId = ar.accountId
+        LEFT JOIN AccountProfile p ON a.accountId = p.accountId
+        WHERE ar.roleId = 2
+        ORDER BY a.accountId
+    """;
+
+        List<Account> accounts = new ArrayList<>();
+
+        try {
+            ps = con.prepareStatement(sql);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                LocalDateTime createdAt = rs.getTimestamp("createdAt") != null
+                        ? rs.getTimestamp("createdAt").toLocalDateTime()
+                        : null;
+                LocalDateTime updatedAt = rs.getTimestamp("updatedAt") != null
+                        ? rs.getTimestamp("updatedAt").toLocalDateTime()
+                        : null;
+
+                Account account = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
+                );
+
+                AccountProfile profile = new AccountProfile();
+                profile.setAccountId(rs.getInt("accountId"));
+                profile.setAddress(rs.getString("address"));
+                if (rs.getDate("dateOfBirth") != null) {
+                    profile.setDateOfBirth(rs.getDate("dateOfBirth").toLocalDate());
+                }
+                profile.setAvatarUrl(rs.getString("avatarUrl"));
+                profile.setNationalId(rs.getString("nationalId"));
+                profile.setVerified(rs.getBoolean("verified"));
+                profile.setExtraData(rs.getString("extraData"));
+
+                account.setProfile(profile);
+
+                accounts.add(account);
+            }
+
+            return new Response<>(accounts, true, MessageConstant.MESSAGE_SUCCESS);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response<>(null, false, MessageConstant.MESSAGE_FAILED);
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
     public Account checkLogin(String username, String passwordHash) {
         String sql = "SELECT * FROM Account WHERE username = ? AND passwordHash = ?";
         try {
@@ -305,9 +464,50 @@ public class AccountDAO extends MyDAO {
         }
         return false;
     }
-   
+   public Account getAccountById(int accountId) {
+    String sql = "SELECT * FROM Account WHERE accountId = ?";
+    try {
+        ps = connection.prepareStatement(sql);
+        ps.setInt(1, accountId);
+        rs = ps.executeQuery();
 
-    public Response<Account> getAccountById(int accountId) {
+        if (rs.next()) {
+            Account account = new Account();
+
+            account.setAccountId(rs.getInt("accountId"));
+            account.setUsername(rs.getString("username"));
+            account.setPasswordHash(rs.getString("passwordHash"));
+            account.setFullName(rs.getString("fullName"));
+            account.setEmail(rs.getString("email"));
+            account.setPhone(rs.getString("phone"));
+            account.setStatus(rs.getString("status"));
+
+            // Xử lý createdAt
+            java.sql.Timestamp createdTs = rs.getTimestamp("createdAt");
+            if (createdTs != null) {
+                account.setCreatedAt(createdTs.toLocalDateTime());
+            }
+
+            // Xử lý updatedAt
+            java.sql.Timestamp updatedTs = rs.getTimestamp("updatedAt");
+            if (updatedTs != null) {
+                account.setUpdatedAt(updatedTs.toLocalDateTime());
+            }
+
+            return account;
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    } finally {
+        try { 
+            if (rs != null) rs.close(); 
+            if (ps != null) ps.close(); 
+        } catch (Exception ignored) {}
+    }
+    return null;
+}
+
+    public Response<Account> getAccountById2(int accountId) {
         String sql = "SELECT * FROM Account WHERE accountId = ?";
         try {
             ps = con.prepareStatement(sql);
@@ -325,15 +525,15 @@ public class AccountDAO extends MyDAO {
                 }
 
                 Account account = new Account(
-                    rs.getInt("accountId"),
-                    rs.getString("username"),
-                    rs.getString("passwordHash"),
-                    rs.getString("fullName"),
-                    rs.getString("email"),
-                    rs.getString("phone"),
-                    rs.getString("status"),
-                    createdAt,
-                    updatedAt
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
                 );
                 return new Response<>(account, true, MessageConstant.MESSAGE_SUCCESS);
             }
@@ -341,8 +541,12 @@ public class AccountDAO extends MyDAO {
             e.printStackTrace();
         } finally {
             try {
-                if (rs != null) rs.close();
-                if (ps != null) ps.close();
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -361,9 +565,9 @@ public class AccountDAO extends MyDAO {
             ps.setString(5, account.getPhone());
             ps.setString(6, account.getStatus());
             ps.setTimestamp(7, java.sql.Timestamp.valueOf(account.getCreatedAt()));
-            
+
             int affectedRows = ps.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 try (java.sql.ResultSet generatedKeys = ps.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
@@ -376,12 +580,54 @@ public class AccountDAO extends MyDAO {
             e.printStackTrace();
         } finally {
             try {
-                if (ps != null) ps.close();
+                if (ps != null) {
+                    ps.close();
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         }
         return new Response<>(null, false, "Failed to create account");
+    }
+
+    public Response<Account> getAccountByUsername(String username) {
+        String sql = "SELECT * FROM Account WHERE username = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, username);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                LocalDateTime createdAt = null;
+                LocalDateTime updatedAt = null;
+
+                if (rs.getTimestamp("createdAt") != null) {
+                    createdAt = rs.getTimestamp("createdAt").toLocalDateTime();
+                }
+                if (rs.getTimestamp("updatedAt") != null) {
+                    updatedAt = rs.getTimestamp("updatedAt").toLocalDateTime();
+                }
+
+                Account acc = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
+                );
+
+                return new Response<>(acc, true, MessageConstant.MESSAGE_SUCCESS);
+            }
+
+            return new Response<>(null, false, "Account not found");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new Response<>(null, false, "Database error: " + e.getMessage());
+        }
     }
 
     public Response<Account> updateAccount(Account account) {
@@ -395,9 +641,9 @@ public class AccountDAO extends MyDAO {
             ps.setString(5, account.getStatus());
             ps.setTimestamp(6, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
             ps.setInt(7, account.getAccountId());
-            
+
             int affectedRows = ps.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 account.setUpdatedAt(java.time.LocalDateTime.now());
                 return new Response<>(account, true, "Account updated successfully");
@@ -406,7 +652,9 @@ public class AccountDAO extends MyDAO {
             e.printStackTrace();
         } finally {
             try {
-                if (ps != null) ps.close();
+                if (ps != null) {
+                    ps.close();
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -421,9 +669,9 @@ public class AccountDAO extends MyDAO {
             ps.setString(1, newPasswordHash);
             ps.setTimestamp(2, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
             ps.setInt(3, accountId);
-            
+
             int affectedRows = ps.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 return new Response<>(null, true, "Password updated successfully");
             }
@@ -431,7 +679,9 @@ public class AccountDAO extends MyDAO {
             e.printStackTrace();
         } finally {
             try {
-                if (ps != null) ps.close();
+                if (ps != null) {
+                    ps.close();
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -439,10 +689,8 @@ public class AccountDAO extends MyDAO {
         return new Response<>(null, false, "Failed to update password");
     }
 
-
-    
-   public Response<Boolean> deleteAccount(int accountId) {
-    String sql = """
+    public Response<Boolean> deleteAccount(int accountId) {
+        String sql = """
         UPDATE Account
         SET status = 
             CASE 
@@ -452,26 +700,27 @@ public class AccountDAO extends MyDAO {
         WHERE accountId = ?
     """;
 
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setInt(1, accountId);
-        int affectedRows = ps.executeUpdate();
-
-        if (affectedRows > 0) {
-            return new Response<>(true, true, "Account status toggled successfully");
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
-    } finally {
         try {
-            if (ps != null) ps.close();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, accountId);
+            int affectedRows = ps.executeUpdate();
+
+            if (affectedRows > 0) {
+                return new Response<>(true, true, "Account status toggled successfully");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (ps != null) {
+                    ps.close();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
+        return new Response<>(false, false, "Account status toggled failed");
     }
-            return new Response<>(false, false, "Account status toggled failed");
-   }
-    
 
     public Response<Boolean> isUsernameExists(String username) {
         String sql = "SELECT COUNT(*) as count FROM Account WHERE username = ?";
@@ -487,8 +736,12 @@ public class AccountDAO extends MyDAO {
             e.printStackTrace();
         } finally {
             try {
-                if (rs != null) rs.close();
-                if (ps != null) ps.close();
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -510,8 +763,12 @@ public class AccountDAO extends MyDAO {
             e.printStackTrace();
         } finally {
             try {
-                if (rs != null) rs.close();
-                if (ps != null) ps.close();
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -533,8 +790,12 @@ public class AccountDAO extends MyDAO {
             e.printStackTrace();
         } finally {
             try {
-                if (rs != null) rs.close();
-                if (ps != null) ps.close();
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -542,4 +803,124 @@ public class AccountDAO extends MyDAO {
         return new Response<>(false, false, "Failed to check phone");
     }
 
+    public boolean updateAccountDetails(int accountId, String username, String passwordHash,
+            String fullName, String email, String phone, String status) {
+        String sql = """
+            UPDATE Account
+            SET username = ?, passwordHash = ?, fullName = ?, email = ?, phone = ?, status = ?, updatedAt = NOW()
+            WHERE accountId = ?
+        """;
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, passwordHash);
+            ps.setString(3, fullName);
+            ps.setString(4, email);
+            ps.setString(5, phone);
+            ps.setString(6, status);
+            ps.setInt(7, accountId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean isSameAccountByUsername(String username, int accountId) {
+        String sql = "SELECT COUNT(*) AS count FROM Account WHERE username = ? AND accountId = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setInt(2, accountId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("count") > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean isSameAccountByEmail(String email, int accountId) {
+        String sql = "SELECT COUNT(*) AS count FROM Account WHERE email = ? AND accountId = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setInt(2, accountId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("count") > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean isSameAccountByPhone(String phone, int accountId) {
+        String sql = "SELECT COUNT(*) AS count FROM Account WHERE phone = ? AND accountId = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, phone);
+            ps.setInt(2, accountId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("count") > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+ public List<Account> getAccountsByRole(String roleName) {
+        List<Account> accounts = new ArrayList<>();
+        xSql = "SELECT a.* FROM Account a " +
+               "INNER JOIN AccountRole ar ON a.accountId = ar.accountId " +
+               "INNER JOIN Role r ON ar.roleId = r.roleId " +
+               "WHERE r.roleName = ? AND a.status = 'Active'";
+        
+        try {
+            ps = con.prepareStatement(xSql);
+            ps.setString(1, roleName);
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                LocalDateTime createdAt = null;
+                LocalDateTime updatedAt = null;
+
+
+                if (rs.getTimestamp("createdAt") != null) {
+                    createdAt = rs.getTimestamp("createdAt").toLocalDateTime();
+                }
+                if (rs.getTimestamp("updatedAt") != null) {
+                    updatedAt = rs.getTimestamp("updatedAt").toLocalDateTime();
+                }
+
+                Account account = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
+                );
+                accounts.add(account);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        
+        return accounts;
+    }
+     private void closeResources() {
+        try {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -23,14 +23,34 @@ public class AccountRoleService {
         Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
         return accountRole.isSuccess()
                 && accountRole.getData() != null
-                && accountRole.getData().getRoleId() == 4;
+                && accountRole.getData().getRoleId() == 2;
     }
 
     public boolean isTechnicalManager(int accountId) {
         Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
         return accountRole.isSuccess()
                 && accountRole.getData() != null
-                && accountRole.getData().getRoleId() == 2;
+                && accountRole.getData().getRoleId() == 4;
+    }
+    
+    public boolean isCustomerSupportStaff(int accountId) {
+        Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
+        return accountRole.isSuccess()
+                && accountRole.getData() != null
+                && accountRole.getData().getRoleId() == 3;
+    }
+      public boolean isStorekeeper(int accountId) {
+        Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
+        return accountRole.isSuccess()
+                && accountRole.getData() != null
+                && accountRole.getData().getRoleId() == 5;
+    }
+    
+    public boolean isTechnician(int accountId) {
+        Response<AccountRole> accountRole = accountRoleDAO.checkAccountRole(accountId);
+        return accountRole.isSuccess()
+                && accountRole.getData() != null
+                && accountRole.getData().getRoleId() == 6;
     }
 
     public String getUserRole(int accountId) {
@@ -38,8 +58,14 @@ public class AccountRoleService {
             return "admin";
         } else if (isTechnicalManager(accountId)) {
             return "Technical Manager";
+        } else if (isCustomerSupportStaff(accountId)) {
+            return "Customer Support Staff";
         } else if (isCustomer(accountId)) {
             return "customer";
+        } else if(isStorekeeper(accountId)){
+            return "Storekeeper";
+        } else if(isTechnician(accountId)){
+            return "Technician";
         }
         return "unknown";
     }

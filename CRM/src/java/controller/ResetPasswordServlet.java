@@ -11,19 +11,31 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import utils.passwordHasher;
 
-@WebServlet(name="ResetPasswordServlet", urlPatterns={"/resetPassword"})
+@WebServlet(name = "ResetPasswordServlet", urlPatterns = {"/resetPassword"})
 public class ResetPasswordServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-    } 
+            throws ServletException, IOException {
+    }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
+            throws ServletException, IOException {
         String newPass = request.getParameter("newPassword");
         String confirm = request.getParameter("confirmPassword");
+
+        if (newPass == null || !newPass.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
+            request.setAttribute("error", "Mật khẩu không chứa khoảng trắng.");
+            request.getRequestDispatcher("resetPassword.jsp").forward(request, response);
+            return;
+        }
+
+        if (!newPass.equals(confirm)) {
+            request.setAttribute("error", "Mật khẩu xác nhận không khớp.");
+            request.getRequestDispatcher("resetPassword.jsp").forward(request, response);
+            return;
+        }
 
         HttpSession session = request.getSession();
         String email = (String) session.getAttribute("email");

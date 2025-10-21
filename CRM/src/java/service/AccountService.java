@@ -2,6 +2,7 @@ package service;
 
 import constant.MessageConstant;
 import dal.AccountDAO;
+import dal.AccountProfileDAO;
 import dal.AccountRoleDAO;
 import dto.RegisterRequest;
 import dto.Response;
@@ -9,6 +10,7 @@ import dto.UserDTO;
 import java.util.ArrayList;
 import java.util.List;
 import model.Account;
+import model.AccountProfile;
 import model.GoogleAccount;
 import utils.passwordHasher;
 
@@ -16,15 +18,18 @@ public class AccountService {
 
     AccountDAO accountDAO;
     AccountRoleDAO accountRoleDAO;
+    AccountProfileDAO accountProfileDAO;
 
     public AccountService() {
         accountDAO = new AccountDAO();
         accountRoleDAO = new AccountRoleDAO();
+        accountProfileDAO = new AccountProfileDAO();
+
     }
 
     public Response<Account> checkLogin(String username, String password) {
         Account account = accountDAO.getAccountByUserName(username);
-        if (account != null && passwordHasher.checkPassword(password, account.getPasswordHash())) {
+        if (account != null && "Active".equalsIgnoreCase(account.getStatus())  && passwordHasher.checkPassword(password, account.getPasswordHash())) {
             return new Response<>(account, true, MessageConstant.LOGIN_SUCCESS);
         } else {
             return new Response<>(null, false, MessageConstant.LOGIN_FAILED);
@@ -98,7 +103,7 @@ public class AccountService {
 
         boolean created = accountDAO.register(
                 username,
-                defaultPassword, 
+                defaultPassword,
                 email,
                 null,
                 name,
@@ -110,31 +115,43 @@ public class AccountService {
             Account acc = accountDAO.getAccountByEmail(email);
 
             if (acc == null) {
-                System.out.println("❌ [DEBUG] Không thể lấy account sau khi tạo!");
+                System.out.println("Không thể lấy account sau khi tạo!");
             }
             return acc;
         } else {
-            System.out.println("❌ [DEBUG] Tạo tài khoản Google thất bại!");
-            return null; 
+            System.out.println("Tạo tài khoản Google thất bại!");
+            return null;
         }
     }
 
-     public Response<List<Account>> searchAccounts(String keyword, String status) {
+    public Response<List<Account>> searchAccounts(String keyword, String status) {
         try {
             List<Account> list = accountDAO.searchAccounts(keyword, status);
-            return new Response<>( list, true, "Search completed successfully");
+            return new Response<>(list, true, "Search completed successfully");
         } catch (Exception e) {
             return new Response<>(null, false, "Error during search: " + e.getMessage());
         }
     }
-    
+
+    public Response<List<Account>> searchCustomerAccounts(String keyword, String status) {
+        try {
+            List<Account> list = accountDAO.searchCustomerAccounts(keyword, status);
+            return new Response<>(list, true, "Search completed successfully");
+        } catch (Exception e) {
+            return new Response<>(null, false, "Error during search: " + e.getMessage());
+        }
+    }
+
+    public Response<List<Account>> getAllCustomerAccounts() {
+        return accountDAO.getAllCustomerAccounts();
+    }
 
     public Response<List<Account>> getAllAccounts() {
         return accountDAO.getAllAccounts();
     }
 
     public Response<Account> getAccountById(int accountId) {
-        return accountDAO.getAccountById(accountId);
+        return accountDAO.getAccountById2(accountId);
     }
 
     public Response<Account> createAccount(Account account) {
@@ -195,7 +212,7 @@ public class AccountService {
         }
 
         // Check if account exists
-        Response<Account> existingAccount = accountDAO.getAccountById(account.getAccountId());
+        Response<Account> existingAccount = accountDAO.getAccountById2(account.getAccountId());
         if (!existingAccount.isSuccess() || existingAccount.getData() == null) {
             return new Response<>(null, false, "Account not found");
         }
@@ -243,6 +260,84 @@ public class AccountService {
         return accountDAO.updateAccount(account);
     }
 
+    public Response<Account> updateCustomerAccount(Account account, AccountProfile profile) {
+        try {
+            if (account.getUsername() == null || account.getUsername().trim().isEmpty()) {
+                return new Response<>(null, false, "Username is required");
+            }
+            if (account.getEmail() == null || account.getEmail().trim().isEmpty()) {
+                return new Response<>(null, false, "Email is required");
+            }
+
+            Response<Account> existingAccountRes = accountDAO.getAccountById2(account.getAccountId());
+            if (!existingAccountRes.isSuccess() || existingAccountRes.getData() == null) {
+                return new Response<>(null, false, "Account not found");
+            }
+            Account existingAccount = existingAccountRes.getData();
+
+            Response<Boolean> usernameExists = accountDAO.isUsernameExists(account.getUsername().trim());
+            if (usernameExists.isSuccess() && usernameExists.getData()) {
+                if (!accountDAO.isSameAccountByUsername(account.getUsername().trim(), account.getAccountId())) {
+                    return new Response<>(null, false, "Username already exists");
+                }
+            }
+
+            Response<Boolean> emailExists = accountDAO.isEmailExists(account.getEmail().trim());
+            if (emailExists.isSuccess() && emailExists.getData()) {
+                if (!account.getEmail().trim().equals(existingAccount.getEmail())) {
+                    return new Response<>(null, false, "Email already exists");
+                }
+            }
+
+            if (account.getPhone() != null && !account.getPhone().trim().isEmpty()) {
+                Response<Boolean> phoneExists = accountDAO.isPhoneExists(account.getPhone().trim());
+                if (phoneExists.isSuccess() && phoneExists.getData()) {
+                    if (!account.getPhone().trim().equals(existingAccount.getPhone())) {
+                        return new Response<>(null, false, "Phone number already exists");
+                    }
+                }
+            }
+
+ 
+            if (account.getPasswordHash() != null && !account.getPasswordHash().isEmpty()) {
+                String hashed = passwordHasher.hashPassword(account.getPasswordHash());
+                account.setPasswordHash(hashed);
+            } else {
+                account.setPasswordHash(existingAccount.getPasswordHash());
+            }
+
+            boolean accountUpdated = accountDAO.updateAccountDetails(
+                    account.getAccountId(),
+                    account.getUsername(),
+                    account.getPasswordHash(),
+                    account.getFullName(),
+                    account.getEmail(),
+                    account.getPhone(),
+                    account.getStatus()
+            );
+
+            boolean profileUpdated = accountProfileDAO.updateProfileDetails(
+                    account.getAccountId(),
+                    profile.getAddress(),
+                    profile.getDateOfBirth(),
+                    profile.getAvatarUrl(),
+                    profile.getNationalId(),
+                    profile.isVerified(),
+                    profile.getExtraData()
+            );
+
+            if (accountUpdated && profileUpdated) {
+                return new Response<>(account, true, "Cập nhật thông tin khách hàng thành công");
+            } else {
+                return new Response<>(account, false, "Cập nhật thất bại hoặc dữ liệu không thay đổi");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response<>(null, false, "Lỗi hệ thống khi cập nhật thông tin khách hàng: " + e.getMessage());
+        }
+    }
+
     public Response<Account> updatePassword(int accountId, String newPassword) {
         if (newPassword == null || newPassword.trim().isEmpty()) {
             return new Response<>(null, false, "Password is required");
@@ -254,16 +349,35 @@ public class AccountService {
 
     public Response<Boolean> deleteAccount(int accountId) {
         // Check if account exists
-        Response<Account> existingAccount = accountDAO.getAccountById(accountId);
+        Response<Account> existingAccount = accountDAO.getAccountById2(accountId);
         if (!existingAccount.isSuccess() || existingAccount.getData() == null) {
             return new Response<>(false, false, "Account not found");
         }
 
         // Remove all roles first
-      //  accountRoleDAO.removeAllRolesFromAccount(accountId);
-
+        //  accountRoleDAO.removeAllRolesFromAccount(accountId);
         return accountDAO.deleteAccount(accountId);
     }
+    
+    public Response<Account> getAccountByUsername(String username) {
+    try {
+        if (username == null || username.trim().isEmpty()) {
+            return new Response<>(null, false, "Username is required");
+        }
+
+        Response<Account> res = accountDAO.getAccountByUsername(username);
+        if (res.isSuccess() && res.getData() != null) {
+            return new Response<>(res.getData(), true, MessageConstant.MESSAGE_SUCCESS);
+        } else {
+            return new Response<>(null, false, "Không tìm thấy tài khoản với username này");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return new Response<>(null, false, "Lỗi khi lấy thông tin tài khoản: " + e.getMessage());
+    }
+}
+
 
     public Response<Boolean> isUsernameExists(String username) {
         return accountDAO.isUsernameExists(username);
