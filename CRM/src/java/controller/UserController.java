@@ -163,8 +163,7 @@ public class UserController extends HttpServlet {
         }
     }
 
-    // validate cái này à
-    // muốn validate tên với số đt thế  đung r đại ca ơi với cả edit phần này nx giờ em chạy thử cho đại ca xem là đại ca hiểu
+   
     private void createUser(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
