@@ -482,6 +482,7 @@
                                class="form-input" 
                                placeholder="Enter your full name"
                                value="${sessionScope.user.fullName}"
+                               maxlength="20"
                                required>
                         <div class="error-message" id="fullNameError">Please enter your full name</div>
                     </div>
@@ -498,6 +499,7 @@
                                class="form-input" 
                                placeholder="example@email.com"
                                value="${sessionScope.user.email}"
+                               maxlength="20"
                                required>
                         <div class="error-message" id="emailError">Please enter a valid email address</div>
                     </div>
@@ -513,7 +515,9 @@
                                class="form-input" 
                                placeholder="0123456789"
                                value="${sessionScope.user.phone}"
+                              
                                pattern="[0-9]{10,11}">
+                        
                         <div class="error-message" id="phoneError">Phone number must be 10-11 digits</div>
                     </div>
 
@@ -529,6 +533,7 @@
                                class="form-input" 
                                placeholder="123 Main Street, City"
                                value="${sessionScope.user.address}"
+                               maxlength=" 40"
                                required>
                         <div class="error-message" id="addressError">Please enter your address</div>
                     </div>
@@ -578,7 +583,10 @@
                         <div class="avatar-preview" onclick="document.getElementById('avatarUpload').click()">
                             <c:choose>
                                 <c:when test="${not empty sessionScope.user.avatar}">
-                                    <img src="${sessionScope.user.avatar}" alt="Avatar">
+                                    <!-- Avatar URL đã có format: avatar/filename.jpg -->
+                                    <img src="${pageContext.request.contextPath}/${sessionScope.user.avatar}" 
+                                         alt="Avatar"
+                                         onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'fas fa-user\'></i>';">
                                 </c:when>
                                 <c:otherwise>
                                     <i class="fas fa-user"></i>
@@ -825,4 +833,3 @@
     </script>
 </body>
 </html>
-

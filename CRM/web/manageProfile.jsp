@@ -519,7 +519,7 @@
                             <!-- ✅ SỬA - Hiển thị ảnh avatar hoặc chữ cái đầu -->
                             <c:choose>
                                 <c:when test="${not empty accountProfile and not empty accountProfile.avatarUrl}">
-                                    <img src="${accountProfile.avatarUrl}" alt="Avatar">
+                                    <img src="${pageContext.request.contextPath}/avatar/${accountProfile.avatarUrl}" alt="Avatar">
                                 </c:when>
                                 <c:otherwise>
                                     <c:choose>

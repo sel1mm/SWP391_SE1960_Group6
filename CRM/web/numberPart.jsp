@@ -473,7 +473,14 @@
                 flex-direction: column;
                 justify-content: space-between;
             }
+            .success-message, .error-message {
+    transition: all 0.5s ease;
+}
 
+.message-fade-out {
+    opacity: 0;
+    transform: translateY(-20px);
+}
         </style>
     </head>
 
@@ -610,10 +617,10 @@
                             <input type="hidden" name="partId" id="partId">
 
                             <label>Part Name *</label>
-                            <input type="text" name="partName" id="partName" required>
+                            <input type="text" name="partName" id="partName" required maxlength="30">
 
                             <label>Description *</label>
-                            <input type="text" name="description" id="partDescription" required>
+                            <input type="text" name="description" id="partDescription" required maxlength="100">
 
                             <label>Unit Price *</label>
                             <input type="number" name="unitPrice" id="partPrice" step="0.01" required>
@@ -801,6 +808,18 @@
             });
 
             document.addEventListener("DOMContentLoaded", renderTable);
+            document.addEventListener("DOMContentLoaded", function() {
+    const messages = document.querySelectorAll(".success-message, .error-message");
+    
+    messages.forEach(function(msg) {
+        setTimeout(function() {
+            msg.classList.add("message-fade-out");
+            setTimeout(function() {
+                msg.style.display = "none";
+            }, 500);
+        }, 5000); // Hiện trong 5 giây
+    });
+});
         </script>
     </body>
 </html>
