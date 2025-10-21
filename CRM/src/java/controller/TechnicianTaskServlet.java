@@ -1,7 +1,7 @@
 package controller;
 
 import dal.WorkTaskDAO;
-import dal.WorkTaskDAO.TaskRow;
+import model.WorkTask;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,11 +9,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Handles listing and managing WorkTasks for technicians.
+ * Servlet for handling technician task operations.
+ * Updated to work with the new WorkTask table structure.
  */
 public class TechnicianTaskServlet extends HttpServlet {
 
@@ -25,95 +25,144 @@ public class TechnicianTaskServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         Integer sessionId = session != null ? (Integer) session.getAttribute("session_login_id") : null;
         String userRole = session != null ? (String) session.getAttribute("session_role") : null;
-        String dev = req.getParameter("dev");
-
+        
+        String action = req.getParameter("action");
+        String taskIdParam = req.getParameter("taskId");
+        
+        // Check authentication
         if (sessionId == null || !isTechnicianOrAdmin(userRole)) {
-            if ("true".equalsIgnoreCase(dev)) {
-                loadTaskList(req, resp, 1L, dev); // Mock technician ID 1
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            return;
+        }
+        
+        int technicianId = sessionId.intValue();
+        
+        try {
+            WorkTaskDAO taskDAO = new WorkTaskDAO();
+            
+            if ("detail".equals(action) && taskIdParam != null) {
+                // Show task detail
+                int taskId = Integer.parseInt(taskIdParam);
+                WorkTask task = taskDAO.findById(taskId);
+                
+                if (task != null && task.getTechnicianId() == technicianId) {
+                    req.setAttribute("task", task);
+                    req.setAttribute("pageTitle", "Task Detail");
+                    req.setAttribute("contentView", "/WEB-INF/technician/task-detail.jsp");
+                    req.setAttribute("activePage", "tasks");
+                    req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+                } else {
+                    req.setAttribute("error", "Task not found or not assigned to you");
+                    doGetTaskList(req, resp, technicianId);
+                }
             } else {
-                resp.sendRedirect(req.getContextPath() + "/login.jsp");
-                return;
+                // Show task list
+                doGetTaskList(req, resp, technicianId);
             }
-        } else {
-            long technicianId = sessionId.longValue();
-            loadTaskList(req, resp, technicianId, dev);
+            
+        } catch (SQLException e) {
+            throw new ServletException("Database error: " + e.getMessage(), e);
+        } catch (NumberFormatException e) {
+            req.setAttribute("error", "Invalid task ID");
+            doGetTaskList(req, resp, technicianId);
+        }
+    }
+    
+    private void doGetTaskList(HttpServletRequest req, HttpServletResponse resp, int technicianId) 
+            throws ServletException, IOException {
+        try {
+            String searchQuery = sanitize(req.getParameter("q"));
+            String statusFilter = sanitize(req.getParameter("status"));
+            int page = parseInt(req.getParameter("page"), 1);
+            int pageSize = Math.min(parseInt(req.getParameter("pageSize"), 10), 100);
+            
+            WorkTaskDAO taskDAO = new WorkTaskDAO();
+            List<WorkTask> tasks = taskDAO.findByTechnicianId(technicianId, searchQuery, statusFilter, page, pageSize);
+            int totalTasks = taskDAO.getTaskCountForTechnician(technicianId, statusFilter);
+            
+            req.setAttribute("tasks", tasks);
+            req.setAttribute("totalTasks", totalTasks);
+            req.setAttribute("currentPage", page);
+            req.setAttribute("pageSize", pageSize);
+            req.setAttribute("totalPages", (int) Math.ceil((double) totalTasks / pageSize));
+            req.setAttribute("pageTitle", "My Tasks");
+            req.setAttribute("contentView", "/WEB-INF/technician/technician-tasks.jsp");
+            req.setAttribute("activePage", "tasks");
+            req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+            
+        } catch (SQLException e) {
+            throw new ServletException("Database error: " + e.getMessage(), e);
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Handle task acceptance with workload checks
         req.setCharacterEncoding("UTF-8");
         resp.setCharacterEncoding("UTF-8");
 
         HttpSession session = req.getSession(false);
         Integer sessionId = session != null ? (Integer) session.getAttribute("session_login_id") : null;
         String userRole = session != null ? (String) session.getAttribute("session_role") : null;
-
+        
+        // Check authentication
         if (sessionId == null || !isTechnicianOrAdmin(userRole)) {
             resp.sendRedirect(req.getContextPath() + "/login.jsp");
             return;
         }
-
+        
         String action = req.getParameter("action");
-        String taskIdStr = req.getParameter("taskId");
-        String startDateStr = req.getParameter("startDate");
-        String endDateStr = req.getParameter("endDate");
-
-        if ("accept".equals(action) && taskIdStr != null) {
+        String taskIdParam = req.getParameter("taskId");
+        
+        if ("updateStatus".equals(action) && taskIdParam != null) {
             try {
-                long taskId = Long.parseLong(taskIdStr);
-                long technicianId = sessionId.longValue();
+                int taskId = Integer.parseInt(taskIdParam);
+                String newStatus = req.getParameter("status");
                 
-                // Check if task belongs to technician
-                WorkTaskDAO workTaskDao = new WorkTaskDAO();
-                if (!workTaskDao.belongsToTechnician(taskId, technicianId)) {
-                    resp.sendRedirect(req.getContextPath() + "/technician/tasks?error=" + 
-                        java.net.URLEncoder.encode("Task not found or not assigned to you.", "UTF-8"));
+                if (newStatus == null || newStatus.trim().isEmpty()) {
+                    req.setAttribute("error", "Status is required");
+                    doGet(req, resp);
                     return;
                 }
-
-                // Check workload and time conflicts
-                if (startDateStr != null && endDateStr != null) {
-                    LocalDate startDate = LocalDate.parse(startDateStr);
-                    LocalDate endDate = LocalDate.parse(endDateStr);
-                    
-                    if (workTaskDao.hasTimeConflict(technicianId, startDate, endDate)) {
-                        resp.sendRedirect(req.getContextPath() + "/technician/tasks?error=" + 
-                            java.net.URLEncoder.encode("You have overlapping tasks during this period.", "UTF-8"));
-                        return;
+                
+                WorkTaskDAO taskDAO = new WorkTaskDAO();
+                WorkTask task = taskDAO.findById(taskId);
+                
+                if (task != null && task.getTechnicianId() == sessionId.intValue()) {
+                    boolean updated = taskDAO.updateTaskStatus(taskId, newStatus.trim());
+                    if (updated) {
+                        req.setAttribute("success", "Task status updated successfully");
+                    } else {
+                        req.setAttribute("error", "Failed to update task status");
                     }
+                } else {
+                    req.setAttribute("error", "Task not found or not assigned to you");
                 }
-
-                // Success - redirect with success message
-                resp.sendRedirect(req.getContextPath() + "/technician/tasks?success=" + 
-                    java.net.URLEncoder.encode("Task accepted successfully!", "UTF-8"));
-
-            } catch (NumberFormatException e) {
-                resp.sendRedirect(req.getContextPath() + "/technician/tasks?error=" + 
-                    java.net.URLEncoder.encode("Invalid task ID.", "UTF-8"));
+                
+                doGet(req, resp);
+                
             } catch (SQLException e) {
-                resp.sendRedirect(req.getContextPath() + "/technician/tasks?error=" + 
-                    java.net.URLEncoder.encode("Database error: " + e.getMessage(), "UTF-8"));
+                throw new ServletException("Database error: " + e.getMessage(), e);
+            } catch (NumberFormatException e) {
+                req.setAttribute("error", "Invalid task ID");
+                doGet(req, resp);
             }
         } else {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid action or missing parameters");
+            req.setAttribute("error", "Invalid action");
+            doGet(req, resp);
         }
     }
 
-    private void loadTaskList(HttpServletRequest req, HttpServletResponse resp, long technicianId, String dev)
-            throws ServletException, IOException {
-        WorkTaskDAO workTaskDao = new WorkTaskDAO();
+    private String sanitize(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
+    }
 
+    private int parseInt(String s, int def) {
         try {
-            List<TaskRow> tasks = workTaskDao.listAssigned(technicianId, 0, 100);
-            req.setAttribute("tasks", tasks);
-            req.setAttribute("pageTitle", "Assigned Tasks");
-            req.setAttribute("contentView", "/WEB-INF/technician/technician-tasks.jsp");
-            req.setAttribute("activePage", "tasks");
-            req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
-        } catch (SQLException e) {
-            throw new ServletException("Database error while loading tasks", e);
+            return Integer.parseInt(s);
+        } catch (Exception e) {
+            return def;
         }
     }
 

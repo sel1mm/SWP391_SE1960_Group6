@@ -13,28 +13,42 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-2 bg-dark min-vh-100">
-                <div class="p-3">
-                    <h4 class="text-white">CRM System</h4>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="${pageContext.request.contextPath}/home.jsp">
-                                <i class="fas fa-home"></i> Home
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white active" href="${pageContext.request.contextPath}/user/list">
-                                <i class="fas fa-users"></i> Users
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="${pageContext.request.contextPath}/role/list">
-                                <i class="fas fa-user-tag"></i> Roles
-                            </a>
-                        </li>
-                    </ul>
+                <div class="col-md-2 bg-dark min-vh-100 d-flex flex-column justify-content-between">
+                    <!-- Phần trên của sidebar -->
+                    <div class="p-3">
+                        <h4 class="text-white">CRM System</h4>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="${pageContext.request.contextPath}/home.jsp">
+                                    <i class="fas fa-home"></i> Home
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white active" href="${pageContext.request.contextPath}/admin.jsp">
+                                    <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="${pageContext.request.contextPath}/user/list">
+                                    <i class="fas fa-users"></i> Users
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="${pageContext.request.contextPath}/role/list">
+                                    <i class="fas fa-user-tag"></i> Roles
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Nút Logout ở dưới cùng -->
+                    <div class="p-3 border-top border-secondary">
+                        <a href="${pageContext.request.contextPath}/logout"
+                           class="btn btn-outline-light w-100 d-flex align-items-center justify-content-center gap-2">
+                            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                        </a>
+                    </div>
                 </div>
-            </div>
 
             <!-- Main Content -->
             <div class="col-md-10">

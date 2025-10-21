@@ -1,4 +1,3 @@
-
 package controller;
 
 import constant.MessageConstant;
@@ -15,6 +14,7 @@ import service.AccountRoleService;
 import service.AccountService;
 
 public class LoginController extends HttpServlet {
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -27,11 +27,23 @@ public class LoginController extends HttpServlet {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         String remember = request.getParameter("remember");
-        
+
+        if (username == null || !username.matches("^[A-Za-z0-9]{1,20}$")) {
+            request.setAttribute("error", "Tên đăng nhập không hợp lệ (chỉ gồm chữ và số, dài 4–20 ký tự).");
+            request.getRequestDispatcher(MessageConstant.LOGIN_URL).forward(request, response);
+            return;
+        }
+
+        if (password == null || !password.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
+            request.setAttribute("error", "Mật khẩu không hợp lệ. Phải chứa ít nhất 1 ký tự chữ hoặc số, không có khoảng trắng.");
+            request.getRequestDispatcher(MessageConstant.LOGIN_URL).forward(request, response);
+            return;
+        }
+
         AccountService accountService = new AccountService();
         AccountRoleService accountRoleService = new AccountRoleService();
         Response<Account> accountResponse = accountService.checkLogin(username, password);
-        if(accountResponse.isSuccess()){
+        if (accountResponse.isSuccess()) {
             //Tạo 1 phiên đăng nhập
             HttpSession session = request.getSession(); // Tạo mới 1 session
             session.setAttribute("session_login", accountResponse.getData());
@@ -69,19 +81,19 @@ public class LoginController extends HttpServlet {
                     }
                 }
             }
-           
+
 //            request.getRequestDispatcher("welcome.html").forward(request, response); // Dùng câu này khi gửi kèm dữ liệu
-             // Điều hướng theo vai trò
+            // Điều hướng theo vai trò
             if ("admin".equals(userRole)) {
                 response.sendRedirect(MessageConstant.ADMIN_URL);
             } else if ("Technical Manager".equals(userRole)) {
                 response.sendRedirect("technicalManagerApproval");
             } else if ("Customer Support Staff".equals(userRole)) {
                 response.sendRedirect("dashboard.jsp");
-            } else if("Storekeeper".equals(userRole)){
+            } else if ("Storekeeper".equals(userRole)) {
                 response.sendRedirect(MessageConstant.STOREKEEPER_URL);
 
-            } else if("Technician".equals(userRole)){
+            } else if ("Technician".equals(userRole)) {
                 response.sendRedirect("technician/dashboard");
 
             } else {

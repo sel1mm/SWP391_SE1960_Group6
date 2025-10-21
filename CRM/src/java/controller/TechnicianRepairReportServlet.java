@@ -1,8 +1,7 @@
 package controller;
 
 import dal.RepairReportDAO;
-import model.TechRepairReport;
-import utils.ValidationUtils;
+import model.RepairReport;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,10 +11,14 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
+import utils.TechnicianValidator;
 
 /**
- * Handle repair report list view and form submission with strict validation.
+ * Servlet for handling technician repair report operations.
+ * Handles CRUD operations for RepairReport table.
  */
 public class TechnicianRepairReportServlet extends HttpServlet {
 
@@ -27,21 +30,113 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         Integer sessionId = session != null ? (Integer) session.getAttribute("session_login_id") : null;
         String userRole = session != null ? (String) session.getAttribute("session_role") : null;
-        String dev = req.getParameter("dev");
-
+        
         // Check authentication
         if (sessionId == null || !isTechnicianOrAdmin(userRole)) {
-            if ("true".equalsIgnoreCase(dev)) {
-                // Dev mode - show mock data
-                loadReportList(req, resp, 1L, dev);
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            return;
+        }
+        
+        String action = req.getParameter("action");
+        String reportIdParam = req.getParameter("reportId");
+        String requestIdParam = req.getParameter("requestId");
+        
+        try {
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            int technicianId = sessionId.intValue();
+            
+            if ("create".equals(action)) {
+                // Show create form
+                Integer requestId = null;
+                if (requestIdParam != null && !requestIdParam.trim().isEmpty()) {
+                    try {
+                        requestId = Integer.parseInt(requestIdParam);
+                    } catch (NumberFormatException e) {
+                        req.setAttribute("error", "Invalid request ID");
+                        doGetReportList(req, resp, technicianId);
+                        return;
+                    }
+                }
+                req.setAttribute("requestId", requestId);
+                req.setAttribute("pageTitle", "Create Repair Report");
+                req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
+                req.setAttribute("activePage", "reports");
+                req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+                
+            } else if ("edit".equals(action) && reportIdParam != null) {
+                // Show edit form
+                int reportId = Integer.parseInt(reportIdParam);
+                RepairReport report = reportDAO.findById(reportId);
+                
+                if (report != null && report.getTechnicianId() != null && report.getTechnicianId() == technicianId) {
+                    if (reportDAO.canTechnicianEditReport(reportId, technicianId)) {
+                        req.setAttribute("report", report);
+                        req.setAttribute("pageTitle", "Edit Repair Report");
+                        req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
+                        req.setAttribute("activePage", "reports");
+                        req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+                    } else {
+                        req.setAttribute("error", "This report cannot be edited (quotation status is not Pending)");
+                        doGetReportList(req, resp, technicianId);
+                    }
+                } else {
+                    req.setAttribute("error", "Report not found or not assigned to you");
+                    doGetReportList(req, resp, technicianId);
+                }
+                
+            } else if ("detail".equals(action) && reportIdParam != null) {
+                // Show report detail
+                int reportId = Integer.parseInt(reportIdParam);
+                RepairReport report = reportDAO.findById(reportId);
+                
+                if (report != null && report.getTechnicianId() != null && report.getTechnicianId() == technicianId) {
+                    req.setAttribute("report", report);
+                    req.setAttribute("pageTitle", "Repair Report Detail");
+                    req.setAttribute("contentView", "/WEB-INF/technician/report-detail.jsp");
+                    req.setAttribute("activePage", "reports");
+                    req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+                } else {
+                    req.setAttribute("error", "Report not found or not assigned to you");
+                    doGetReportList(req, resp, technicianId);
+                }
+                
             } else {
-                resp.sendRedirect(req.getContextPath() + "/login.jsp");
-                return;
+                // Show report list
+                doGetReportList(req, resp, technicianId);
             }
-        } else {
-            // Real user - get their reports
-            long techId = sessionId.longValue();
-            loadReportList(req, resp, techId, dev);
+            
+        } catch (SQLException e) {
+            throw new ServletException("Database error: " + e.getMessage(), e);
+        } catch (NumberFormatException e) {
+            req.setAttribute("error", "Invalid ID parameter");
+            doGetReportList(req, resp, sessionId.intValue());
+        }
+    }
+    
+    private void doGetReportList(HttpServletRequest req, HttpServletResponse resp, int technicianId) 
+            throws ServletException, IOException {
+        try {
+            String searchQuery = sanitize(req.getParameter("q"));
+            String statusFilter = sanitize(req.getParameter("status"));
+            int page = parseInt(req.getParameter("page"), 1);
+            int pageSize = Math.min(parseInt(req.getParameter("pageSize"), 10), 100);
+            
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            List<RepairReport> reports = reportDAO.findByTechnicianId(technicianId, searchQuery, statusFilter, page, pageSize);
+            int totalReports = reportDAO.getReportCountForTechnician(technicianId, statusFilter);
+            
+            req.setAttribute("reports", reports);
+            req.setAttribute("totalReports", totalReports);
+            req.setAttribute("currentPage", page);
+            req.setAttribute("pageSize", pageSize);
+            req.setAttribute("totalPages", (int) Math.ceil((double) totalReports / pageSize));
+            req.setAttribute("pageTitle", "My Repair Reports");
+            req.setAttribute("contentView", "/WEB-INF/technician/technician-reports.jsp");
+            req.setAttribute("activePage", "reports");
+            req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+            
+        } catch (SQLException e) {
+            throw new ServletException("Database error: " + e.getMessage(), e);
         }
     }
 
@@ -53,122 +148,161 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         Integer sessionId = session != null ? (Integer) session.getAttribute("session_login_id") : null;
         String userRole = session != null ? (String) session.getAttribute("session_role") : null;
-
+        
+        // Check authentication
         if (sessionId == null || !isTechnicianOrAdmin(userRole)) {
             resp.sendRedirect(req.getContextPath() + "/login.jsp");
             return;
         }
-
-        // Get form parameters
-        String requestIdStr = req.getParameter("requestId");
-        String details = req.getParameter("details");
-        String diagnosis = req.getParameter("diagnosis");
-        String estimatedCostStr = req.getParameter("estimatedCost");
-        String repairDateStr = req.getParameter("repairDate");
-        String reportIdStr = req.getParameter("reportId"); // For updates
-
-        // Server-side validation
-        ValidationUtils.ValidationResult validation = validateRepairReport(requestIdStr, details, diagnosis, estimatedCostStr, repairDateStr);
-
-        if (!validation.isValid()) {
-            // Validation failed - redirect back with error
-            String errorMsg = validation.getFirstError();
-            resp.sendRedirect(req.getContextPath() + "/technician/reports?error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
-            return;
-        }
-
-        // Create repair report object
-        TechRepairReport report = new TechRepairReport();
-
-        // Set fields
-        report.setRequestId(Long.parseLong(requestIdStr));
-        report.setTechnicianId(sessionId.longValue());
-        report.setDetails(ValidationUtils.sanitize(details));
-        report.setDiagnosis(ValidationUtils.sanitize(diagnosis));
-        report.setEstimatedCost(new BigDecimal(estimatedCostStr));
-        report.setRepairDate(LocalDate.parse(repairDateStr));
-        report.setQuotationStatus("Pending"); // Always set to pending on creation/update by technician
-
-        // Handle update vs create
-        if (reportIdStr != null && !reportIdStr.trim().isEmpty()) {
-            try {
-                report.setReportId(Long.parseLong(reportIdStr));
-            } catch (NumberFormatException e) {
-                resp.sendRedirect(req.getContextPath() + "/technician/reports?error=Invalid report ID");
-                return;
-            }
-        }
-
-        // Save to database
-        boolean dev = "true".equalsIgnoreCase(req.getParameter("dev"));
-        RepairReportDAO dao = new RepairReportDAO();
-
+        
+        String action = req.getParameter("action");
+        
         try {
-            long savedId = dao.save(report);
-            if (savedId > 0) {
-                // Success - redirect with success message
-                resp.sendRedirect(req.getContextPath() + "/technician/reports?success=Repair Report has been submitted successfully ✅");
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            int technicianId = sessionId.intValue();
+            
+            if ("create".equals(action)) {
+                // Create new report
+                RepairReport report = new RepairReport();
+                String requestIdStr = req.getParameter("requestId");
+                int requestId = 0; // Default to 0 if no request ID provided
+                if (requestIdStr != null && !requestIdStr.trim().isEmpty()) {
+                    try {
+                        requestId = Integer.parseInt(requestIdStr);
+                    } catch (NumberFormatException e) {
+                        req.setAttribute("error", "Invalid request ID");
+                        doGet(req, resp);
+                        return;
+                    }
+                }
+                report.setRequestId(requestId);
+                report.setTechnicianId(technicianId);
+                report.setDetails(req.getParameter("details"));
+                report.setDiagnosis(req.getParameter("diagnosis"));
+                report.setEstimatedCost(new BigDecimal(req.getParameter("estimatedCost")));
+                report.setRepairDate(LocalDate.parse(req.getParameter("repairDate")));
+                report.setQuotationStatus("Pending"); // Default status
+                
+                // Validate input using new validation system
+                List<String> validationErrors = validateRepairReportInput(req);
+                if (!validationErrors.isEmpty()) {
+                    req.setAttribute("validationErrors", validationErrors);
+                    req.setAttribute("requestId", report.getRequestId());
+                    req.setAttribute("pageTitle", "Create Repair Report");
+                    req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
+                    req.setAttribute("activePage", "reports");
+                    req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+                    return;
+                }
+                
+                int reportId = reportDAO.createRepairReport(report);
+                if (reportId > 0) {
+                    req.getSession().setAttribute("successMessage", "Repair Report has been submitted successfully ✅");
+                    resp.sendRedirect(req.getContextPath() + "/technician/reports");
+                } else {
+                    req.setAttribute("error", "Failed to create repair report");
+                    doGet(req, resp);
+                }
+                
+            } else if ("update".equals(action)) {
+                // Update existing report
+                int reportId = Integer.parseInt(req.getParameter("reportId"));
+                
+                if (!reportDAO.canTechnicianEditReport(reportId, technicianId)) {
+                    req.setAttribute("error", "This report cannot be edited (quotation status is not Pending)");
+                    doGet(req, resp);
+                    return;
+                }
+                
+                RepairReport report = new RepairReport();
+                report.setReportId(reportId);
+                report.setRequestId(Integer.parseInt(req.getParameter("requestId")));
+                report.setTechnicianId(technicianId);
+                report.setDetails(req.getParameter("details"));
+                report.setDiagnosis(req.getParameter("diagnosis"));
+                report.setEstimatedCost(new BigDecimal(req.getParameter("estimatedCost")));
+                report.setRepairDate(LocalDate.parse(req.getParameter("repairDate")));
+                report.setQuotationStatus("Pending"); // Keep as Pending
+                
+                // Validate input using new validation system
+                List<String> validationErrors = validateRepairReportInput(req);
+                if (!validationErrors.isEmpty()) {
+                    req.setAttribute("validationErrors", validationErrors);
+                    req.setAttribute("report", report);
+                    req.setAttribute("pageTitle", "Edit Repair Report");
+                    req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
+                    req.setAttribute("activePage", "reports");
+                    req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+                    return;
+                }
+                
+                boolean updated = reportDAO.updateRepairReport(report);
+                if (updated) {
+                    req.setAttribute("success", "Repair report updated successfully");
+                    resp.sendRedirect(req.getContextPath() + "/technician/reports?action=detail&reportId=" + reportId);
+                } else {
+                    req.setAttribute("error", "Failed to update repair report");
+                    doGet(req, resp);
+                }
+                
             } else {
-                resp.sendRedirect(req.getContextPath() + "/technician/reports?error=Failed to save repair report");
+                req.setAttribute("error", "Invalid action");
+                doGet(req, resp);
             }
+            
         } catch (SQLException e) {
-            resp.sendRedirect(req.getContextPath() + "/technician/reports?error=Database error occurred: " + e.getMessage());
+            throw new ServletException("Database error: " + e.getMessage(), e);
+        } catch (NumberFormatException e) {
+            req.setAttribute("error", "Invalid numeric input");
+            doGet(req, resp);
+        } catch (DateTimeParseException e) {
+            req.setAttribute("error", "Invalid date format");
+            doGet(req, resp);
         }
     }
+    
+    private List<String> validateRepairReportInput(HttpServletRequest req) {
+        List<String> errors = new ArrayList<>();
+        
+        // Validate details
+        TechnicianValidator.ValidationResult detailsResult = TechnicianValidator.validateDetails(req.getParameter("details"));
+        if (!detailsResult.isValid()) {
+            errors.addAll(detailsResult.getErrors());
+        }
+        
+        // Validate diagnosis
+        TechnicianValidator.ValidationResult diagnosisResult = TechnicianValidator.validateDiagnosis(req.getParameter("diagnosis"));
+        if (!diagnosisResult.isValid()) {
+            errors.addAll(diagnosisResult.getErrors());
+        }
+        
+        // Validate estimated cost
+        TechnicianValidator.ValidationResult costResult = TechnicianValidator.validateEstimatedCost(req.getParameter("estimatedCost"));
+        if (!costResult.isValid()) {
+            errors.addAll(costResult.getErrors());
+        }
+        
+        // Validate repair date
+        TechnicianValidator.ValidationResult dateResult = TechnicianValidator.validateRepairDate(req.getParameter("repairDate"));
+        if (!dateResult.isValid()) {
+            errors.addAll(dateResult.getErrors());
+        }
+        
+        return errors;
+    }
 
-    /**
-     * Load report list for display
-     */
-    private void loadReportList(HttpServletRequest req, HttpServletResponse resp, long techId, String dev)
-            throws ServletException, IOException {
+    private String sanitize(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
+    }
 
-        RepairReportDAO dao = new RepairReportDAO();
-
+    private int parseInt(String s, int def) {
         try {
-            List<TechRepairReport> reports = dao.findByTechnicianId(techId);
-            req.setAttribute("reports", reports);
-            req.setAttribute("pageTitle", "Repair Reports");
-            req.setAttribute("contentView", "/WEB-INF/technician/technician-reports.jsp");
-            req.setAttribute("activePage", "reports");
-            req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
-        } catch (SQLException e) {
-            throw new ServletException(e);
+            return Integer.parseInt(s);
+        } catch (Exception e) {
+            return def;
         }
-    }
-
-    /**
-     * Validate all repair report fields
-     */
-    private ValidationUtils.ValidationResult validateRepairReport(String requestId, String details, String diagnosis, String estimatedCost, String repairDate) {
-        ValidationUtils.ValidationResult result = new ValidationUtils.ValidationResult();
-
-        // Validate each field
-        ValidationUtils.ValidationResult requestIdValidation = ValidationUtils.validateRequestId(requestId);
-        if (!requestIdValidation.isValid()) {
-            result.addError(requestIdValidation.getFirstError());
-        }
-
-        ValidationUtils.ValidationResult detailsValidation = ValidationUtils.validateDetails(details);
-        if (!detailsValidation.isValid()) {
-            result.addError(detailsValidation.getFirstError());
-        }
-
-        ValidationUtils.ValidationResult diagnosisValidation = ValidationUtils.validateDiagnosis(diagnosis);
-        if (!diagnosisValidation.isValid()) {
-            result.addError(diagnosisValidation.getFirstError());
-        }
-
-        ValidationUtils.ValidationResult costValidation = ValidationUtils.validateEstimatedCost(estimatedCost);
-        if (!costValidation.isValid()) {
-            result.addError(costValidation.getFirstError());
-        }
-
-        ValidationUtils.ValidationResult dateValidation = ValidationUtils.validateRepairDate(repairDate);
-        if (!dateValidation.isValid()) {
-            result.addError(dateValidation.getFirstError());
-        }
-
-        return result;
     }
 
     private boolean isTechnicianOrAdmin(String role) {

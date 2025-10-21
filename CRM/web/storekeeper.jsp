@@ -395,6 +395,17 @@ tr:hover {
   background-color: #e9f3ff;
 }
 
+.sidebar {
+    max-width: 250px;
+    height: 610px;
+    margin-top: 77px;
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+
         </style>
     </head>
     <body>
@@ -424,6 +435,15 @@ tr:hover {
         <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
         <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
         <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiệt bị</span></a>
+        <a href="logout" style="
+        margin-top: auto;
+        background: rgba(255, 255, 255, 0.15);
+        border-top: 1px solid rgba(255,255,255,0.2);
+        text-align: center;
+        font-weight: 500;
+    ">
+        <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+    </a>
     </div>
             </div>
             <div class="content">
