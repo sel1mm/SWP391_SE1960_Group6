@@ -189,9 +189,11 @@ public class UserController extends HttpServlet {
         // 1️⃣ Full name không được chứa số
         if (fullName == null || fullName.trim().isEmpty()) {
             error = "Full name is required.";
-        } else if (!fullName.matches("^[^\\d]+$")) {
-            error = "Full name must not contain numbers.";
-        } // 2️⃣ Số điện thoại chỉ được chứa số (và độ dài hợp lý)
+        } else if (!fullName.matches("^[a-zA-ZÀ-ỹ\\s]+$")) {
+            error = "Full name must not contain numbers or special characters.";
+        } else if (phone == null || phone.trim().isEmpty()) {
+            error = "Phone is required.";
+        }// 2️⃣ Số điện thoại chỉ được chứa số (và độ dài hợp lý)
         else if (phone != null && !phone.trim().isEmpty() && !phone.matches("^\\d{9,11}$")) {
             error = "Phone number must contain only digits (9–11 digits).";
         } // 3️⃣ Email không trùng
@@ -280,6 +282,48 @@ public class UserController extends HttpServlet {
             account.setEmail(email);
             account.setPhone(phone);
             account.setStatus(status);
+
+            String error = null;
+
+            // 1️⃣ Full name không được chứa số
+            if (fullName == null || fullName.trim().isEmpty()) {
+                error = "Full name is required.";
+            } else if (!fullName.matches("^[a-zA-ZÀ-ỹ\\s]+$")) {
+                error = "Full name must not contain numbers or special characters.";
+            } else if (phone == null || phone.trim().isEmpty()) {
+                error = "Phone is required.";
+            }// 2️⃣ Số điện thoại chỉ được chứa số (và độ dài hợp lý)
+            else if (phone != null && !phone.trim().isEmpty() && !phone.matches("^\\d{9,11}$")) {
+                error = "Phone number must contain only digits (9–11 digits).";
+            } // 3️⃣ Email không trùng
+            else {
+                Response<Boolean> emailExists = accountService.isEmailExists(email);
+                if (emailExists.isSuccess() && emailExists.getData()) {
+                    error = "Email already exists.";
+                }
+            }
+
+            // 4️⃣ Số điện thoại không trùng
+            if (error == null && phone != null && !phone.trim().isEmpty()) {
+                Response<Boolean> phoneExists = accountService.isPhoneExists(phone);
+                if (phoneExists.isSuccess() && phoneExists.getData()) {
+                    error = "Phone number already exists.";
+                }
+            }
+
+            // Nếu có lỗi → quay lại form
+            if (error != null) {
+                request.setAttribute("error", error);
+                request.setAttribute("user", account);
+
+                Response<List<model.Role>> rolesResult = roleService.getAllRoles();
+                if (rolesResult.isSuccess()) {
+                    request.setAttribute("roles", rolesResult.getData());
+                }
+
+                request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+                return;
+            }
 
             // === VALIDATE ===
             // 1️⃣ Tên không được chứa số
