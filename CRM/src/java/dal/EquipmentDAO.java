@@ -121,4 +121,26 @@ public class EquipmentDAO extends MyDAO {
             e.printStackTrace();
         }
     }
+    public List<Equipment> getAllEquipment() {
+        List<Equipment> list = new ArrayList<>();
+        String sql = "SELECT equipmentId, serialNumber, model, description FROM Equipment";
+
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Equipment e = new Equipment();
+                e.setEquipmentId(rs.getInt("equipmentId"));
+                e.setSerialNumber(rs.getString("serialNumber"));
+                e.setModel(rs.getString("model"));
+                e.setDescription(rs.getString("description"));
+                list.add(e);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 }

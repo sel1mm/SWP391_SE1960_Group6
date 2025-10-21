@@ -325,6 +325,94 @@
                 </button>
             </div>
         </div>
+<<<<<<< Updated upstream
+=======
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="dashboard.jsp">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="technicalManagerApproval">
+                    <i class="fas fa-clipboard-check me-2"></i>Duyệt Yêu Cầu
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="assignWork">
+                    <i class="fas fa-user-plus me-2"></i>Phân Công Công Việc
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="scheduleMaintenance">
+                    <i class="fas fa-calendar-alt me-2"></i>Lập Lịch Bảo Trì
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="reviewMaintenanceReport">
+                    <i class="fas fa-file-alt me-2"></i>Xem Báo Cáo Bảo Trì
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="manageProfile.jsp">
+                    <i class="fas fa-cog me-2"></i>Cài Đặt
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="logout">
+                    <i class="fas fa-sign-out-alt me-2"></i>Đăng Xuất
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="content-wrapper">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-clipboard-check text-primary"></i> Duyệt Yêu Cầu Dịch Vụ</h2>
+                    <p class="text-muted mb-0">
+                        <c:choose>
+                            <c:when test="${viewMode == 'history'}">
+                                Xem lịch sử tất cả các yêu cầu dịch vụ
+                            </c:when>
+                            <c:otherwise>
+                                Xem xét và xử lý các yêu cầu được giao cho bạn
+                            </c:otherwise>
+                        </c:choose>
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="refreshPage()">
+                        <i class="fas fa-sync-alt"></i> Làm Mới
+                    </button>
+                   
+                </div>
+            </div>
+
+            <!-- View Mode Navigation -->
+            <div class="mb-4">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link ${viewMode != 'history' ? 'active' : ''}" 
+                           href="${pageContext.request.contextPath}/technicalManagerApproval">
+                            <i class="fas fa-tasks"></i> Yêu Cầu Được Giao
+                            <c:if test="${awaitingApprovalCount > 0}">
+                                <span class="badge bg-warning text-dark ms-2">${awaitingApprovalCount}</span>
+                            </c:if>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link ${viewMode == 'history' ? 'active' : ''}" 
+                           href="${pageContext.request.contextPath}/technicalManagerApproval?action=history">
+                            <i class="fas fa-history"></i> Lịch Sử Tất Cả
+                        </a>
+                    </li>
+                </ul>
+            </div>
+>>>>>>> Stashed changes
 
         <!-- Alert Messages từ session -->
         <%

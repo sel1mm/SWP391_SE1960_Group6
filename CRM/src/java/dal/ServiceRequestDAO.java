@@ -622,6 +622,7 @@ public class ServiceRequestDAO extends MyDAO {
      */
     public List<ServiceRequest> getPendingRequestsWithDetails() {
         List<ServiceRequest> list = new ArrayList<>();
+<<<<<<< Updated upstream
         xSql = "SELECT sr.*, " +
                 "a.fullName as customerName, a.email as customerEmail, a.phone as customerPhone, " +
                 "e.serialNumber, e.model as equipmentModel, e.description as equipmentDescription, " +
@@ -638,6 +639,24 @@ public class ServiceRequestDAO extends MyDAO {
                 "    WHEN 'High' THEN 2 " +
                 "    WHEN 'Normal' THEN 3 " +
                 "END, sr.requestDate ASC";
+=======
+        xSql = "SELECT sr.*, "
+                + "a.fullName as customerName, a.email as customerEmail, a.phone as customerPhone, "
+                + "e.serialNumber, e.model as equipmentModel, e.description as equipmentDescription, "
+                + "c.contractType, c.contractDate, "
+                + "DATEDIFF(CURRENT_DATE, sr.requestDate) as daysPending "
+                + "FROM ServiceRequest sr "
+                + "INNER JOIN Account a ON sr.createdBy = a.accountId "
+                + "INNER JOIN Equipment e ON sr.equipmentId = e.equipmentId "
+                + "INNER JOIN Contract c ON sr.contractId = c.contractId "
+                + "WHERE sr.status = 'Awaiting Approval' "
+                + "ORDER BY "
+                + "CASE sr.priorityLevel "
+                + "    WHEN 'Urgent' THEN 1 "
+                + "    WHEN 'High' THEN 2 "
+                + "    WHEN 'Normal' THEN 3 "
+                + "END, sr.requestDate ASC";
+>>>>>>> Stashed changes
         try {
             ps = con.prepareStatement(xSql);
             rs = ps.executeQuery();
