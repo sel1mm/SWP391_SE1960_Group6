@@ -276,6 +276,11 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
             return;
         }
+        if (description.trim().length() > 500) {
+            session.setAttribute("error", "Mô tả vấn đề không được vượt quá 1000 ký tự!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
 
         // ✅ Validate và set default priority
         if (priorityLevel == null || priorityLevel.trim().isEmpty()) {
@@ -292,6 +297,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         // ✅ Tạo object ServiceRequest
         ServiceRequest newRequest = new ServiceRequest();
         newRequest.setCreatedBy(customerId);
+
         newRequest.setDescription(description.trim());
         newRequest.setPriorityLevel(priorityLevel);
         newRequest.setRequestDate(new Date());
@@ -387,7 +393,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         System.out.println("🔍 Result from DAO: " + newRequestId);
 
         if (newRequestId > 0) {
-            session.setAttribute("success", "Tạo đơn thành công với mã số #" + newRequestId);
+            session.setAttribute("success", "Tạo đơn thành công");
         } else {
             session.setAttribute("error", "Đã có lỗi xảy ra phía máy chủ khi tạo yêu cầu. Vui lòng thử lại!");
         }
@@ -455,7 +461,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         boolean success = serviceRequestDAO.updateServiceRequest(requestId, description.trim(), priorityLevel);
 
         if (success) {
-            session.setAttribute("success", "Cập nhật yêu cầu #" + requestId + " thành công!");
+            session.setAttribute("success", "Cập nhật yêu cầu thành công!");
         } else {
             session.setAttribute("error", "Có lỗi xảy ra khi cập nhật yêu cầu. Vui lòng thử lại!");
         }
@@ -508,7 +514,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         boolean success = serviceRequestDAO.cancelServiceRequest(requestId);
 
         if (success) {
-            session.setAttribute("success", "Đã hủy yêu cầu #" + requestId + " thành công!");
+            session.setAttribute("success", "Đã hủy yêu cầu thành công!");
         } else {
             session.setAttribute("error", "Có lỗi xảy ra khi hủy yêu cầu. Vui lòng thử lại!");
         }
