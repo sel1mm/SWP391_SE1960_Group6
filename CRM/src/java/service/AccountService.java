@@ -299,8 +299,10 @@ public class AccountService {
             }
 
  
-            if (account.getPasswordHash() != null && !account.getPasswordHash().isEmpty()) {
-                String hashed = passwordHasher.hashPassword(account.getPasswordHash());
+            String rawPassword = account.getPasswordHash();
+
+            if (rawPassword != null && !rawPassword.isEmpty()) {               
+                String hashed = passwordHasher.hashPassword(rawPassword);
                 account.setPasswordHash(hashed);
             } else {
                 account.setPasswordHash(existingAccount.getPasswordHash());
