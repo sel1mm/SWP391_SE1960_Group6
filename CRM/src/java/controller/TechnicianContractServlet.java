@@ -4,6 +4,7 @@ import dal.ContractDAO;
 import dal.EquipmentDAO;
 import model.Contract;
 import model.Equipment;
+import model.EquipmentWithStatus;
 import model.ContractEquipment;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -12,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,7 +48,10 @@ public class TechnicianContractServlet extends HttpServlet {
             if ("create".equals(action)) {
                 // Show contract creation form
                 List<ContractDAO.Customer> customers = contractDAO.getAllCustomers();
+                List<EquipmentWithStatus> availableEquipment = contractDAO.getAvailableEquipment();
+                
                 req.setAttribute("customers", customers);
+                req.setAttribute("availableEquipment", availableEquipment);
                 req.setAttribute("pageTitle", "Create Contract");
                 req.setAttribute("contentView", "/WEB-INF/technician/contract-form.jsp");
                 req.setAttribute("activePage", "contracts");
@@ -59,17 +64,10 @@ public class TechnicianContractServlet extends HttpServlet {
             } else if ("contractDetail".equals(action) && contractIdParam != null) {
                 // Show contract detail with equipment
                 int contractId = Integer.parseInt(contractIdParam);
-                Contract contract = contractDAO.getContractById(contractId);
+                ContractDAO.ContractWithEquipment contractWithEquipment = contractDAO.getContractWithEquipment(contractId);
                 
-                if (contract != null) {
-                    String customerName = contractDAO.getCustomerNameByContractId(contractId);
-                    List<Equipment> equipmentList = equipmentDAO.findByContractId(contractId);
-                    List<ContractEquipment> contractEquipmentList = equipmentDAO.findContractEquipmentByContractId(contractId);
-                    
-                    req.setAttribute("contract", contract);
-                    req.setAttribute("customerName", customerName);
-                    req.setAttribute("equipmentList", equipmentList);
-                    req.setAttribute("contractEquipmentList", contractEquipmentList);
+                if (contractWithEquipment != null) {
+                    req.setAttribute("contractWithEquipment", contractWithEquipment);
                     req.setAttribute("pageTitle", "Contract Detail");
                     req.setAttribute("contentView", "/WEB-INF/technician/contract-detail.jsp");
                     req.setAttribute("activePage", "contracts");
@@ -124,7 +122,21 @@ public class TechnicianContractServlet extends HttpServlet {
             List<ContractDAO.ContractWithCustomer> contracts = contractDAO.searchContracts(searchQuery, statusFilter, page, pageSize);
             int totalContracts = contractDAO.getContractCount(searchQuery, statusFilter);
             
-            req.setAttribute("contracts", contracts);
+            // Convert ContractWithCustomer to ContractWithEquipment for each contract
+            List<ContractDAO.ContractWithEquipment> contractsWithEquipment = new ArrayList<>();
+            for (ContractDAO.ContractWithCustomer contractWithCustomer : contracts) {
+                ContractDAO.ContractWithEquipment contractWithEquipment = contractDAO.getContractWithEquipment(contractWithCustomer.contract.getContractId());
+                if (contractWithEquipment == null) {
+                    // Create a ContractWithEquipment without equipment if none exists
+                    contractWithEquipment = new ContractDAO.ContractWithEquipment();
+                    contractWithEquipment.contract = contractWithCustomer.contract;
+                    contractWithEquipment.customerName = contractWithCustomer.customerName;
+                    contractWithEquipment.equipment = null;
+                }
+                contractsWithEquipment.add(contractWithEquipment);
+            }
+            
+            req.setAttribute("contracts", contractsWithEquipment);
             req.setAttribute("totalContracts", totalContracts);
             req.setAttribute("currentPage", page);
             req.setAttribute("pageSize", pageSize);
@@ -149,20 +161,38 @@ public class TechnicianContractServlet extends HttpServlet {
             int pageSize = Math.min(parseInt(req.getParameter("pageSize"), 10), 100);
             
             EquipmentDAO equipmentDAO = new EquipmentDAO();
-            List<Equipment> equipmentList = equipmentDAO.searchEquipment(searchQuery, page, pageSize);
-            int totalEquipment = equipmentDAO.getEquipmentCount(searchQuery);
             
-            req.setAttribute("equipmentList", equipmentList);
+            // Get equipment with status information from inventory
+            List<EquipmentWithStatus> equipmentWithStatusList = equipmentDAO.getEquipmentWithStatus();
+            
+            // Apply search filter if provided
+            if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+                equipmentWithStatusList = equipmentWithStatusList.stream()
+                    .filter(e -> e.getModel().toLowerCase().contains(searchQuery.toLowerCase()) ||
+                               e.getDescription().toLowerCase().contains(searchQuery.toLowerCase()) ||
+                               e.getSerialNumber().toLowerCase().contains(searchQuery.toLowerCase()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            // Apply pagination
+            int totalEquipment = equipmentWithStatusList.size();
+            int startIndex = (page - 1) * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, totalEquipment);
+            
+            List<EquipmentWithStatus> paginatedList = equipmentWithStatusList.subList(startIndex, endIndex);
+            
+            req.setAttribute("equipmentList", paginatedList);
             req.setAttribute("totalEquipment", totalEquipment);
             req.setAttribute("currentPage", page);
             req.setAttribute("pageSize", pageSize);
             req.setAttribute("totalPages", (int) Math.ceil((double) totalEquipment / pageSize));
-            req.setAttribute("pageTitle", "Equipment");
+            req.setAttribute("searchQuery", searchQuery);
+            req.setAttribute("pageTitle", "Equipment Inventory");
             req.setAttribute("contentView", "/WEB-INF/technician/equipment.jsp");
             req.setAttribute("activePage", "equipment");
             req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
             
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new ServletException("Database error: " + e.getMessage(), e);
         }
     }
@@ -199,7 +229,7 @@ public class TechnicianContractServlet extends HttpServlet {
         String action = req.getParameter("action");
         
         if ("create".equals(action)) {
-            // Handle contract creation
+            // Handle contract creation with equipment validation
             try {
                 ContractDAO contractDAO = new ContractDAO();
                 
@@ -209,18 +239,46 @@ public class TechnicianContractServlet extends HttpServlet {
                 String description = req.getParameter("description");
                 String contractDate = req.getParameter("contractDate");
                 String status = req.getParameter("status");
+                String equipmentIdParam = req.getParameter("equipmentId");
                 
-                // Create contract using DAO method
-                long contractId = contractDAO.createContract(
-                    customerId, 
-                    java.sql.Date.valueOf(contractDate), 
-                    contractType, 
-                    status, 
-                    description
-                );
+                // Validate equipment availability if equipment is selected
+                int equipmentId = 0;
+                if (equipmentIdParam != null && !equipmentIdParam.trim().isEmpty()) {
+                    equipmentId = Integer.parseInt(equipmentIdParam);
+                    
+                    if (!contractDAO.isEquipmentAvailable(equipmentId)) {
+                        req.getSession().setAttribute("errorMessage", "Selected equipment is not available. Please choose another equipment or contact storekeeper.");
+                        resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
+                        return;
+                    }
+                }
+                
+                // Create contract with or without equipment
+                long contractId;
+                if (equipmentId > 0) {
+                    contractId = contractDAO.createContractWithEquipment(
+                        customerId, 
+                        java.sql.Date.valueOf(contractDate), 
+                        contractType, 
+                        status, 
+                        description,
+                        equipmentId
+                    );
+                } else {
+                    contractId = contractDAO.createContract(
+                        customerId, 
+                        java.sql.Date.valueOf(contractDate), 
+                        contractType, 
+                        status, 
+                        description
+                    );
+                }
                 
                 if (contractId > 0) {
-                    req.getSession().setAttribute("successMessage", "Contract created successfully ✅");
+                    String successMsg = equipmentId > 0 ? 
+                        "Contract created successfully with equipment assignment ✅" : 
+                        "Contract created successfully ✅";
+                    req.getSession().setAttribute("successMessage", successMsg);
                 } else {
                     req.getSession().setAttribute("errorMessage", "Failed to create contract. Please try again.");
                 }

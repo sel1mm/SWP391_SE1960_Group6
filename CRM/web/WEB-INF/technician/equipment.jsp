@@ -25,8 +25,8 @@
           <li class="breadcrumb-item active">Equipment</li>
         </ol>
       </nav>
-      <h1 class="h4 crm-page-title mt-2">Equipment</h1>
-      <p class="text-muted">View equipment information and specifications</p>
+      <h1 class="h4 crm-page-title mt-2">Equipment Inventory</h1>
+      <p class="text-muted">View equipment from inventory with real-time status and availability</p>
     </div>
     <div class="col-auto">
       <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
@@ -43,7 +43,7 @@
       <form id="equipmentSearchForm" class="row g-2 align-items-center" method="get" action="${pageContext.request.contextPath}/technician/contracts">
         <input type="hidden" name="action" value="equipment">
         <div class="col-12 col-md-6">
-          <input type="text" name="q" value="${param.q}" class="form-control" placeholder="Search by model, description, or serial number"/>
+          <input type="text" name="q" value="${param.q}" class="form-control" placeholder="Search equipment by model, description, or serial number"/>
         </div>
         <div class="col-6 col-md-3 text-end">
           <button class="btn btn-secondary" type="submit"><i class="bi bi-search me-1"></i>Search</button>
@@ -71,6 +71,8 @@
             <th>Serial Number</th>
             <th>Model</th>
             <th class="d-none d-md-table-cell">Description</th>
+            <th>Status</th>
+            <th>Location</th>
             <th>Install Date</th>
             <th>Last Updated</th>
             <th>Actions</th>
@@ -96,6 +98,35 @@
                     </c:when>
                     <c:otherwise>
                       <span class="text-muted">No description</span>
+                    </c:otherwise>
+                  </c:choose>
+                </td>
+                <td>
+                  <c:choose>
+                    <c:when test="${equipment.status == 'Available'}">
+                      <span class="badge bg-success">Available</span>
+                    </c:when>
+                    <c:when test="${equipment.status == 'InUse'}">
+                      <span class="badge bg-warning">In Use</span>
+                    </c:when>
+                    <c:when test="${equipment.status == 'Faulty'}">
+                      <span class="badge bg-danger">Faulty</span>
+                    </c:when>
+                    <c:when test="${equipment.status == 'Retired'}">
+                      <span class="badge bg-secondary">Retired</span>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="badge bg-light text-dark">${fn:escapeXml(equipment.status)}</span>
+                    </c:otherwise>
+                  </c:choose>
+                </td>
+                <td>
+                  <c:choose>
+                    <c:when test="${equipment.location != null && !equipment.location.isEmpty()}">
+                      <i class="bi bi-geo-alt me-1"></i>${fn:escapeXml(equipment.location)}
+                    </c:when>
+                    <c:otherwise>
+                      <span class="text-muted">Not specified</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
@@ -131,7 +162,7 @@
           </c:when>
           <c:otherwise>
             <tr>
-              <td colspan="8" class="text-center py-4">
+              <td colspan="10" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-gear fs-1 d-block mb-2"></i>
                   <p>No equipment found</p>

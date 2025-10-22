@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <div class="container-fluid">
   <!-- Success/Error Messages -->
@@ -97,6 +98,50 @@
           </div>
         </div>
         
+        <!-- Equipment Selection -->
+        <div class="mb-3">
+          <label for="equipmentId" class="form-label fw-bold">Equipment Assignment (Optional)</label>
+          <select class="form-select" id="equipmentId" name="equipmentId">
+            <option value="">No Equipment Assignment</option>
+            <c:forEach var="equipment" items="${availableEquipment}">
+              <option value="${equipment.equipmentId}" 
+                      data-model="${fn:escapeXml(equipment.model)}"
+                      data-serial="${fn:escapeXml(equipment.serialNumber)}"
+                      data-location="${fn:escapeXml(equipment.location)}"
+                      data-price="${equipment.unitPrice}">
+                ${fn:escapeXml(equipment.model)} - ${fn:escapeXml(equipment.serialNumber)} 
+                <c:if test="${equipment.location != null && !equipment.location.isEmpty()}">
+                  (Location: ${fn:escapeXml(equipment.location)})
+                </c:if>
+                - $${equipment.unitPrice}
+              </option>
+            </c:forEach>
+          </select>
+          <div class="form-text">
+            <i class="bi bi-info-circle me-1"></i>
+            Only available equipment from inventory is shown. Equipment will be marked as "In Use" when assigned to contract.
+          </div>
+        </div>
+        
+        <!-- Equipment Details Preview -->
+        <div id="equipmentPreview" class="card mt-3" style="display: none;">
+          <div class="card-header">
+            <h6 class="mb-0"><i class="bi bi-gear me-1"></i>Selected Equipment Details</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <strong>Model:</strong> <span id="previewModel"></span><br>
+                <strong>Serial Number:</strong> <span id="previewSerial"></span>
+              </div>
+              <div class="col-md-6">
+                <strong>Location:</strong> <span id="previewLocation"></span><br>
+                <strong>Unit Price:</strong> <span id="previewPrice"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="d-flex justify-content-end gap-2">
           <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
             Cancel
@@ -135,10 +180,29 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('contractForm');
     const contractDateInput = document.getElementById('contractDate');
+    const equipmentSelect = document.getElementById('equipmentId');
+    const equipmentPreview = document.getElementById('equipmentPreview');
     
     // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
     contractDateInput.min = today;
+    
+    // Handle equipment selection preview
+    equipmentSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        
+        if (this.value && selectedOption.dataset.model) {
+            // Show equipment preview
+            document.getElementById('previewModel').textContent = selectedOption.dataset.model;
+            document.getElementById('previewSerial').textContent = selectedOption.dataset.serial;
+            document.getElementById('previewLocation').textContent = selectedOption.dataset.location || 'Not specified';
+            document.getElementById('previewPrice').textContent = '$' + parseFloat(selectedOption.dataset.price).toFixed(2);
+            equipmentPreview.style.display = 'block';
+        } else {
+            // Hide equipment preview
+            equipmentPreview.style.display = 'none';
+        }
+    });
     
     form.addEventListener('submit', function(e) {
         e.preventDefault();

@@ -22,7 +22,7 @@
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0">
           <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/technician/contracts">Contracts</a></li>
-          <li class="breadcrumb-item active">Contract #${contract.contractId}</li>
+          <li class="breadcrumb-item active">Contract #${contractWithEquipment.contract.contractId}</li>
         </ol>
       </nav>
       <h1 class="h4 crm-page-title mt-2">Contract Detail</h1>
@@ -48,24 +48,24 @@
             <div class="col-md-6">
               <div class="mb-3">
                 <label class="form-label fw-bold">Contract ID</label>
-                <p class="form-control-plaintext">#${contract.contractId}</p>
+                <p class="form-control-plaintext">#${contractWithEquipment.contract.contractId}</p>
               </div>
               <div class="mb-3">
                 <label class="form-label fw-bold">Customer</label>
                 <p class="form-control-plaintext">
-                  <i class="bi bi-person-circle me-1"></i>${fn:escapeXml(customerName)}
+                  <i class="bi bi-person-circle me-1"></i>${fn:escapeXml(contractWithEquipment.customerName)}
                 </p>
               </div>
               <div class="mb-3">
                 <label class="form-label fw-bold">Contract Type</label>
-                <p class="form-control-plaintext">${fn:escapeXml(contract.contractType)}</p>
+                <p class="form-control-plaintext">${fn:escapeXml(contractWithEquipment.contract.contractType)}</p>
               </div>
             </div>
             <div class="col-md-6">
               <div class="mb-3">
                 <label class="form-label fw-bold">Status</label>
                 <p class="form-control-plaintext">
-                  <c:set var="status" value="${contract.status}"/>
+                  <c:set var="status" value="${contractWithEquipment.contract.status}"/>
                   <c:choose>
                     <c:when test="${status == 'Active'}">
                       <span class="badge bg-success">Active</span>
@@ -77,7 +77,7 @@
                       <span class="badge bg-danger">Cancelled</span>
                     </c:when>
                     <c:otherwise>
-                      <span class="badge bg-dark">${contract.status}</span>
+                      <span class="badge bg-dark">${contractWithEquipment.contract.status}</span>
                     </c:otherwise>
                   </c:choose>
                 </p>
@@ -85,7 +85,7 @@
               <div class="mb-3">
                 <label class="form-label fw-bold">Contract Date</label>
                 <p class="form-control-plaintext">
-                  <i class="bi bi-calendar-event me-1"></i>${contract.contractDate}
+                  <i class="bi bi-calendar-event me-1"></i>${contractWithEquipment.contract.contractDate}
                 </p>
               </div>
             </div>
@@ -95,8 +95,8 @@
             <label class="form-label fw-bold">Details</label>
             <div class="border rounded p-3 bg-light">
               <c:choose>
-                <c:when test="${contract.details != null && !contract.details.isEmpty()}">
-                  <p class="mb-0">${fn:escapeXml(contract.details)}</p>
+                <c:when test="${contractWithEquipment.contract.details != null && !contractWithEquipment.contract.details.isEmpty()}">
+                  <p class="mb-0">${fn:escapeXml(contractWithEquipment.contract.details)}</p>
                 </c:when>
                 <c:otherwise>
                   <p class="mb-0 text-muted">No details provided</p>
@@ -107,65 +107,95 @@
         </div>
       </div>
       
-      <!-- Equipment List -->
+      <!-- Equipment Information -->
       <div class="card crm-card-shadow mt-3">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="mb-0">Associated Equipment</h5>
-          <span class="badge bg-primary">${fn:length(equipmentList)} equipment</span>
+          <c:choose>
+            <c:when test="${contractWithEquipment.equipment != null}">
+              <span class="badge bg-success">1 Equipment</span>
+            </c:when>
+            <c:otherwise>
+              <span class="badge bg-secondary">No Equipment</span>
+            </c:otherwise>
+          </c:choose>
         </div>
         <div class="card-body">
           <c:choose>
-            <c:when test="${not empty equipmentList}">
-              <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Equipment ID</th>
-                      <th>Serial Number</th>
-                      <th>Model</th>
-                      <th>Description</th>
-                      <th>Install Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <c:forEach var="equipment" items="${equipmentList}">
-                      <tr>
-                        <td><strong>#${equipment.equipmentId}</strong></td>
-                        <td><code class="text-primary">${fn:escapeXml(equipment.serialNumber)}</code></td>
-                        <td>${fn:escapeXml(equipment.model)}</td>
-                        <td>
-                          <c:choose>
-                            <c:when test="${equipment.description != null && !equipment.description.isEmpty()}">
-                              <div class="text-truncate" style="max-width:200px;" title="${fn:escapeXml(equipment.description)}">
-                                ${fn:escapeXml(equipment.description)}
-                              </div>
-                            </c:when>
-                            <c:otherwise>
-                              <span class="text-muted">No description</span>
-                            </c:otherwise>
-                          </c:choose>
-                        </td>
-                        <td>
-                          <c:choose>
-                            <c:when test="${equipment.installDate != null}">
-                              <i class="bi bi-calendar-event me-1"></i>${equipment.installDate}
-                            </c:when>
-                            <c:otherwise>
-                              <span class="text-muted">Not set</span>
-                            </c:otherwise>
-                          </c:choose>
-                        </td>
-                      </tr>
-                    </c:forEach>
-                  </tbody>
-                </table>
+            <c:when test="${contractWithEquipment.equipment != null}">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Equipment ID</label>
+                    <p class="form-control-plaintext">#${contractWithEquipment.equipment.equipmentId}</p>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Model</label>
+                    <p class="form-control-plaintext">${fn:escapeXml(contractWithEquipment.equipment.model)}</p>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Serial Number</label>
+                    <p class="form-control-plaintext"><code class="text-primary">${fn:escapeXml(contractWithEquipment.equipment.serialNumber)}</code></p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Status</label>
+                    <p class="form-control-plaintext">
+                      <c:choose>
+                        <c:when test="${contractWithEquipment.equipment.status == 'InUse'}">
+                          <span class="badge bg-warning">In Use</span>
+                        </c:when>
+                        <c:when test="${contractWithEquipment.equipment.status == 'Available'}">
+                          <span class="badge bg-success">Available</span>
+                        </c:when>
+                        <c:when test="${contractWithEquipment.equipment.status == 'Faulty'}">
+                          <span class="badge bg-danger">Faulty</span>
+                        </c:when>
+                        <c:when test="${contractWithEquipment.equipment.status == 'Retired'}">
+                          <span class="badge bg-secondary">Retired</span>
+                        </c:when>
+                        <c:otherwise>
+                          <span class="badge bg-light text-dark">${contractWithEquipment.equipment.status}</span>
+                        </c:otherwise>
+                      </c:choose>
+                    </p>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Location</label>
+                    <p class="form-control-plaintext">
+                      <c:choose>
+                        <c:when test="${contractWithEquipment.equipment.location != null && !contractWithEquipment.equipment.location.isEmpty()}">
+                          <i class="bi bi-geo-alt me-1"></i>${fn:escapeXml(contractWithEquipment.equipment.location)}
+                        </c:when>
+                        <c:otherwise>
+                          <span class="text-muted">Not specified</span>
+                        </c:otherwise>
+                      </c:choose>
+                    </p>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Unit Price</label>
+                    <p class="form-control-plaintext">$${contractWithEquipment.equipment.unitPrice}</p>
+                  </div>
+                </div>
               </div>
+              
+              <c:if test="${contractWithEquipment.equipment.description != null && !contractWithEquipment.equipment.description.isEmpty()}">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Description</label>
+                  <div class="border rounded p-3 bg-light">
+                    <p class="mb-0">${fn:escapeXml(contractWithEquipment.equipment.description)}</p>
+                  </div>
+                </div>
+              </c:if>
             </c:when>
             <c:otherwise>
               <div class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-gear fs-1 d-block mb-2"></i>
                   <p>No equipment associated with this contract</p>
+                  <small>This contract was created without equipment assignment</small>
                 </div>
               </div>
             </c:otherwise>
@@ -182,26 +212,28 @@
         <div class="card-body">
           <div class="mb-3">
             <label class="form-label fw-bold">Total Equipment</label>
-            <p class="form-control-plaintext fs-5">${fn:length(equipmentList)} items</p>
+            <p class="form-control-plaintext fs-5">
+              <c:choose>
+                <c:when test="${contractWithEquipment.equipment != null}">1 item</c:when>
+                <c:otherwise>0 items</c:otherwise>
+              </c:choose>
+            </p>
           </div>
           
-          <c:if test="${not empty contractEquipmentList}">
+          <c:if test="${contractWithEquipment.equipment != null}">
             <div class="mb-3">
               <label class="form-label fw-bold">Contract Equipment Details</label>
               <div class="border rounded p-2 bg-light">
-                <c:forEach var="ce" items="${contractEquipmentList}">
-                  <div class="d-flex justify-content-between mb-1">
-                    <small>Equipment #${ce.equipmentId}</small>
-                    <small class="text-muted">Qty: ${ce.quantity}</small>
+                <div class="d-flex justify-content-between mb-1">
+                  <small>Equipment #${contractWithEquipment.equipment.equipmentId}</small>
+                  <small class="text-muted">Qty: ${contractWithEquipment.quantity}</small>
+                </div>
+                <c:if test="${contractWithEquipment.price != null}">
+                  <div class="d-flex justify-content-between">
+                    <small>Price:</small>
+                    <small class="fw-bold">$${contractWithEquipment.price}</small>
                   </div>
-                  <c:if test="${ce.price != null}">
-                    <div class="d-flex justify-content-between">
-                      <small>Price:</small>
-                      <small class="fw-bold">$${ce.price}</small>
-                    </div>
-                  </c:if>
-                  <hr class="my-2">
-                </c:forEach>
+                </c:if>
               </div>
             </div>
           </c:if>
