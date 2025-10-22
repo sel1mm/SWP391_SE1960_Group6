@@ -449,7 +449,14 @@
                 flex-direction: column;
                 justify-content: space-between;
             }
+.success-message, .error-message {
+    transition: all 0.5s ease;
+}
 
+.message-fade-out {
+    opacity: 0;
+    transform: translateY(-20px);
+}
         </style>
     </head>
 
@@ -590,7 +597,7 @@
                             <input type="number" name="partId" id="partId" required>
 
                             <label>Serial Number *</label>
-                            <input type="text" name="serialNumber" id="serialNumber" required>
+                            <input type="text" name="serialNumber" id="serialNumber" required maxlength="30">
 
                             <label>Status *</label>
                             <select name="status" id="status" required>
@@ -789,6 +796,18 @@
             });
 
             document.addEventListener("DOMContentLoaded", renderPartDetailTable);
+            document.addEventListener("DOMContentLoaded", function() {
+    const messages = document.querySelectorAll(".success-message, .error-message");
+    
+    messages.forEach(function(msg) {
+        setTimeout(function() {
+            msg.classList.add("message-fade-out");
+            setTimeout(function() {
+                msg.style.display = "none";
+            }, 500);
+        }, 5000); // Hiện trong 5 giây
+    });
+});
         </script>
     </body>
 </html>

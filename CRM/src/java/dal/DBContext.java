@@ -21,8 +21,11 @@ public class DBContext {
 
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection(url, username, password);
+            System.out.println("✅ Database connection successful!");
         } catch (ClassNotFoundException | SQLException ex) {
+            System.err.println("❌ Database connection failed: " + ex.getMessage());
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
+            connection = null; // Ensure connection is null on failure
         }
     }
 
@@ -61,5 +64,4 @@ public class DBContext {
 
   
 }
-
 

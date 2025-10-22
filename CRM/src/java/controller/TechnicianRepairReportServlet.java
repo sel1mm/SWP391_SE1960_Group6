@@ -184,7 +184,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 report.setQuotationStatus("Pending"); // Default status
                 
                 // Validate input using new validation system
-                List<String> validationErrors = validateRepairReportInput(req);
+                List<String> validationErrors = validateRepairReportInput(req, false); // false = create mode
                 if (!validationErrors.isEmpty()) {
                     req.setAttribute("validationErrors", validationErrors);
                     req.setAttribute("requestId", report.getRequestId());
@@ -214,18 +214,26 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     return;
                 }
                 
+                // Get existing report data first
+                RepairReport existingReport = reportDAO.findById(reportId);
+                if (existingReport == null) {
+                    req.setAttribute("error", "Report not found");
+                    doGet(req, resp);
+                    return;
+                }
+                
                 RepairReport report = new RepairReport();
                 report.setReportId(reportId);
-                report.setRequestId(Integer.parseInt(req.getParameter("requestId")));
+                report.setRequestId(existingReport.getRequestId()); // Use existing requestId
                 report.setTechnicianId(technicianId);
                 report.setDetails(req.getParameter("details"));
                 report.setDiagnosis(req.getParameter("diagnosis"));
                 report.setEstimatedCost(new BigDecimal(req.getParameter("estimatedCost")));
-                report.setRepairDate(LocalDate.parse(req.getParameter("repairDate")));
+                report.setRepairDate(existingReport.getRepairDate()); // Use existing repair date
                 report.setQuotationStatus("Pending"); // Keep as Pending
                 
                 // Validate input using new validation system
-                List<String> validationErrors = validateRepairReportInput(req);
+                List<String> validationErrors = validateRepairReportInput(req, true); // true = update mode
                 if (!validationErrors.isEmpty()) {
                     req.setAttribute("validationErrors", validationErrors);
                     req.setAttribute("report", report);
@@ -261,7 +269,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         }
     }
     
-    private List<String> validateRepairReportInput(HttpServletRequest req) {
+    private List<String> validateRepairReportInput(HttpServletRequest req, boolean isEditMode) {
         List<String> errors = new ArrayList<>();
         
         // Validate details
@@ -282,10 +290,16 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             errors.addAll(costResult.getErrors());
         }
         
-        // Validate repair date
-        TechnicianValidator.ValidationResult dateResult = TechnicianValidator.validateRepairDate(req.getParameter("repairDate"));
-        if (!dateResult.isValid()) {
-            errors.addAll(dateResult.getErrors());
+        // Validate repair date (with edit mode consideration)
+        String repairDateParam = req.getParameter("repairDate");
+        if (isEditMode && repairDateParam == null) {
+            // For edit mode, if repair date is null (disabled field), skip validation
+            // The repair date will be preserved from existing report
+        } else {
+            TechnicianValidator.ValidationResult dateResult = TechnicianValidator.validateRepairDate(repairDateParam, isEditMode);
+            if (!dateResult.isValid()) {
+                errors.addAll(dateResult.getErrors());
+            }
         }
         
         return errors;

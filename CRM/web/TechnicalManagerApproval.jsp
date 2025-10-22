@@ -708,6 +708,8 @@
                     </li>
                 </ul>
             </div>
+        </div>
+
 
         <!-- Alert Messages từ session -->
         <%

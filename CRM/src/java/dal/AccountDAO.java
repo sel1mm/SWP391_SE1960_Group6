@@ -923,4 +923,41 @@ public class AccountDAO extends MyDAO {
             e.printStackTrace();
         }
     }
+     
+     public Response<Boolean> isEmailExistsExcludingId(String email, int accountId) {
+    String sql = "SELECT COUNT(*) as count FROM Account WHERE email = ? AND accountId <> ?";
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setString(1, email);
+        ps.setInt(2, accountId);
+        rs = ps.executeQuery();
+        if (rs.next()) {
+            return new Response<>(rs.getInt("count") > 0, true, rs.getInt("count") > 0 ? "Email already exists" : "Email available");
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        try { if(rs != null) rs.close(); if(ps != null) ps.close(); } catch(SQLException ex){ ex.printStackTrace(); }
+    }
+    return new Response<>(false, false, "Failed to check email");
+}
+
+public Response<Boolean> isPhoneExistsExcludingId(String phone, int accountId) {
+    String sql = "SELECT COUNT(*) as count FROM Account WHERE phone = ? AND accountId <> ?";
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setString(1, phone);
+        ps.setInt(2, accountId);
+        rs = ps.executeQuery();
+        if (rs.next()) {
+            return new Response<>(rs.getInt("count") > 0, true, rs.getInt("count") > 0 ? "Phone already exists" : "Phone available");
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        try { if(rs != null) rs.close(); if(ps != null) ps.close(); } catch(SQLException ex){ ex.printStackTrace(); }
+    }
+    return new Response<>(false, false, "Failed to check phone");
+}
+
 }

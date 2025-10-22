@@ -224,5 +224,3 @@ function showStatusUpdateModal(taskId, currentStatus) {
   new bootstrap.Modal(document.getElementById('statusUpdateModal')).show();
 }
 </script>
-
-

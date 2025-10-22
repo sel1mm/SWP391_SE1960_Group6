@@ -489,7 +489,7 @@
                                         <option value="">Chọn hợp đồng (tùy chọn)...</option>
                                         <c:forEach var="contract" items="${contractList}">
                                             <option value="${contract.contractId}">
-                                                #${contract.contractId} - ${contract.contractName}
+                                                #${contract.contractId} - ${contract.details}
                                             </option>
                                         </c:forEach>
                                     </select>
@@ -501,7 +501,7 @@
                                         <option value="">Chọn thiết bị (tùy chọn)...</option>
                                         <c:forEach var="equipment" items="${equipmentList}">
                                             <option value="${equipment.equipmentId}">
-                                                ${equipment.equipmentName} - ${equipment.model}
+                                                ${equipment.serialNumber} - ${equipment.model} - ${equipment.description}
                                             </option>
                                         </c:forEach>
                                     </select>

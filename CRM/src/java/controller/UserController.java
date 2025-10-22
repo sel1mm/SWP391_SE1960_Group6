@@ -163,8 +163,7 @@ public class UserController extends HttpServlet {
         }
     }
 
-    // validate cái này à
-    // muốn validate tên với số đt thế  đung r đại ca ơi với cả edit phần này nx giờ em chạy thử cho đại ca xem là đại ca hiểu
+    
     private void createUser(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -193,18 +192,24 @@ public class UserController extends HttpServlet {
             error = "Full name must not contain numbers or special characters.";
         } else if (phone == null || phone.trim().isEmpty()) {
             error = "Phone is required.";
-        }// 2️⃣ Số điện thoại chỉ được chứa số (và độ dài hợp lý)
-        else if (phone != null && !phone.trim().isEmpty() && !phone.matches("^\\d{9,11}$")) {
+        } else if (phone != null && !phone.trim().isEmpty() && !phone.matches("^\\d{9,11}$")) {
+            // 2️⃣ Số điện thoại chỉ được chứa số (9–11 chữ số)
             error = "Phone number must contain only digits (9–11 digits).";
-        } // 3️⃣ Email không trùng
-        else {
+        } else if (password == null || password.trim().isEmpty()) {
+            // 3️⃣ Password không được để trống
+            error = "Password is required.";
+        } else if (!password.matches("^(?=.*[A-Za-z])(?=.*\\d).{6,20}$")) {
+            // 4️⃣ Password phải có ít nhất 1 chữ cái, 1 số và độ dài 6–20
+            error = "Password must be 6-20 characters long and include at least one letter and one number.";
+        } else {
+            // 5️⃣ Email không trùng
             Response<Boolean> emailExists = accountService.isEmailExists(email);
             if (emailExists.isSuccess() && emailExists.getData()) {
                 error = "Email already exists.";
             }
         }
 
-        // 4️⃣ Số điện thoại không trùng
+        // 6️⃣ Số điện thoại không trùng
         if (error == null && phone != null && !phone.trim().isEmpty()) {
             Response<Boolean> phoneExists = accountService.isPhoneExists(phone);
             if (phoneExists.isSuccess() && phoneExists.getData()) {
@@ -295,20 +300,6 @@ public class UserController extends HttpServlet {
             }// 2️⃣ Số điện thoại chỉ được chứa số (và độ dài hợp lý)
             else if (phone != null && !phone.trim().isEmpty() && !phone.matches("^\\d{9,11}$")) {
                 error = "Phone number must contain only digits (9–11 digits).";
-            } // 3️⃣ Email không trùng
-            else {
-                Response<Boolean> emailExists = accountService.isEmailExists(email);
-                if (emailExists.isSuccess() && emailExists.getData()) {
-                    error = "Email already exists.";
-                }
-            }
-
-            // 4️⃣ Số điện thoại không trùng
-            if (error == null && phone != null && !phone.trim().isEmpty()) {
-                Response<Boolean> phoneExists = accountService.isPhoneExists(phone);
-                if (phoneExists.isSuccess() && phoneExists.getData()) {
-                    error = "Phone number already exists.";
-                }
             }
 
             // Nếu có lỗi → quay lại form
@@ -343,31 +334,23 @@ public class UserController extends HttpServlet {
             }
 
             // 3️⃣ Kiểm tra email trùng (nhưng bỏ qua chính người này)
-            Response<Boolean> emailExists = accountService.isEmailExists(email.trim());
+            //Response<Boolean> emailExists = accountService.isEmailExists(email.trim());
             Response<Account> existingAccRes = accountService.getAccountById(userId);
 
+            Response<Boolean> emailExists = accountService.isEmailExistsForUpdate(email.trim(), userId);
             if (emailExists.isSuccess() && emailExists.getData()) {
-                Account existing = existingAccRes.getData();
-                if (existing != null && !email.trim().equalsIgnoreCase(existing.getEmail())) {
-                    request.setAttribute("error", "Email already exists.");
-                    request.setAttribute("user", account);
-                    reloadRolesAndReturn(request, response);
-                    return;
-                }
+                request.setAttribute("error", "Email already exists.");
+                request.setAttribute("user", account);
+                reloadRolesAndReturn(request, response);
+                return;
             }
 
-            // 4️⃣ Kiểm tra số điện thoại trùng (nếu có nhập)
-            if (phone != null && !phone.trim().isEmpty()) {
-                Response<Boolean> phoneExists = accountService.isPhoneExists(phone.trim());
-                Account existing = existingAccRes.getData();
-                if (phoneExists.isSuccess() && phoneExists.getData()) {
-                    if (existing != null && !phone.trim().equalsIgnoreCase(existing.getPhone())) {
-                        request.setAttribute("error", "Phone number already exists.");
-                        request.setAttribute("user", account);
-                        reloadRolesAndReturn(request, response);
-                        return;
-                    }
-                }
+            Response<Boolean> phoneExists = accountService.isPhoneExistsForUpdate(phone.trim(), userId);
+            if (phoneExists.isSuccess() && phoneExists.getData()) {
+                request.setAttribute("error", "Phone number already exists.");
+                request.setAttribute("user", account);
+                reloadRolesAndReturn(request, response);
+                return;
             }
 
             // === Cập nhật tài khoản ===
@@ -399,31 +382,61 @@ public class UserController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
     }
 
-    private void updatePassword(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String idParam = request.getParameter("id");
-        String newPassword = request.getParameter("newPassword");
+   private void updatePassword(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
 
-        if (idParam == null || idParam.trim().isEmpty()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID is required");
-            return;
-        }
+    String idParam = request.getParameter("id");
+    String newPassword = request.getParameter("newPassword");
+    String confirmPassword = request.getParameter("confirmPassword");
 
-        try {
-            int userId = Integer.parseInt(idParam);
-            Response<Account> result = accountService.updatePassword(userId, newPassword);
-
-            if (result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/user/edit?id=" + userId + "&message="
-                        + java.net.URLEncoder.encode("Password updated successfully", "UTF-8"));
-            } else {
-                response.sendRedirect(request.getContextPath() + "/user/edit?id=" + userId + "&error="
-                        + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
-            }
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
-        }
+    if (idParam == null || idParam.trim().isEmpty()) {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID is required");
+        return;
     }
+
+    int userId;
+    try {
+        userId = Integer.parseInt(idParam);
+    } catch (NumberFormatException e) {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
+        return;
+    }
+
+    // ===== VALIDATION =====
+    String error = null;
+    if (newPassword == null || newPassword.trim().isEmpty()) {
+        error = "New password is required.";
+    } else if (!newPassword.matches("^(?=.*[A-Za-z])(?=.*\\d).{6,20}$")) {
+        error = "Password must be 6-20 characters long and include at least one letter and one number.";
+    } else if (!newPassword.equals(confirmPassword)) {
+        error = "Passwords do not match.";
+    }
+
+    // Lấy user để hiển thị lại form
+    Response<Account> userResult = accountService.getAccountById(userId);
+    if (userResult.isSuccess() && userResult.getData() != null) {
+        request.setAttribute("user", userResult.getData());
+    }
+
+    if (error != null) {
+        request.setAttribute("error", error);
+        request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+        return;
+    }
+
+    // ===== CẬP NHẬT PASSWORD =====
+    Response<Account> result = accountService.updatePassword(userId, newPassword);
+
+    if (result.isSuccess()) {
+        request.setAttribute("message", "Password updated successfully!");
+        request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+    } else {
+        request.setAttribute("error", result.getMessage());
+        request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+    }
+}
+
+
 
     private void deleteUser(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

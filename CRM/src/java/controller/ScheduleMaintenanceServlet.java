@@ -163,6 +163,11 @@ public class ScheduleMaintenanceServlet extends HttpServlet {
             List<MaintenanceSchedule> overdueSchedules = maintenanceScheduleDAO.getOverdueSchedules();
             request.setAttribute("overdueSchedules", overdueSchedules);
             
+            List<Contract> contractList = contractDAO.getEveryContracts();
+request.setAttribute("contractList", contractList);
+
+List<Equipment> equipmentList = equipmentDAO.getAllEquipment();
+request.setAttribute("equipmentList", equipmentList);
             // Equipment list will be loaded via AJAX or other means
             
             // Get contracts for dropdown

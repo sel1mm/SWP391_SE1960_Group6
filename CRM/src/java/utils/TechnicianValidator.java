@@ -12,8 +12,8 @@ import java.util.regex.Pattern;
  */
 public class TechnicianValidator {
     
-    // Validation patterns
-    private static final Pattern SAFE_TEXT_PATTERN = Pattern.compile("^[a-zA-Z0-9\\s,.-()]*$");
+    // Validation patterns - allow Unicode characters (including Vietnamese) and common punctuation
+    private static final Pattern SAFE_TEXT_PATTERN = Pattern.compile("^[\\p{L}\\p{N}\\s,.\\(\\)!?;:'\"-]*$", Pattern.UNICODE_CASE);
     private static final Pattern NUMERIC_PATTERN = Pattern.compile("^\\d+(\\.\\d{1,2})?$");
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     
@@ -129,8 +129,10 @@ public class TechnicianValidator {
     
     /**
      * Validate repair date field
+     * @param dateStr the date string to validate
+     * @param isEditMode true if editing existing report, false if creating new report
      */
-    public static ValidationResult validateRepairDate(String dateStr) {
+    public static ValidationResult validateRepairDate(String dateStr, boolean isEditMode) {
         ValidationResult result = new ValidationResult("repairDate");
         
         if (dateStr == null || dateStr.trim().isEmpty()) {
@@ -140,16 +142,24 @@ public class TechnicianValidator {
         
         try {
             LocalDate repairDate = LocalDate.parse(dateStr.trim());
-            LocalDate today = LocalDate.now();
             
-            if (repairDate.isBefore(today)) {
-                result.addError("Repair date cannot be in the past");
-            }
-            
-            // Check if date is too far in the future (e.g., more than 1 year)
-            LocalDate maxDate = today.plusYears(1);
-            if (repairDate.isAfter(maxDate)) {
-                result.addError("Repair date cannot be more than 1 year in the future");
+            if (isEditMode) {
+                // For existing reports, repair date should not be changed
+                // Just validate that it's a valid date format
+                return result; // Valid date is sufficient for edit mode
+            } else {
+                // For new reports, repair date cannot be in the past
+                LocalDate today = LocalDate.now();
+                
+                if (repairDate.isBefore(today)) {
+                    result.addError("Repair date cannot be in the past");
+                }
+                
+                // Check if date is too far in the future (e.g., more than 1 year)
+                LocalDate maxDate = today.plusYears(1);
+                if (repairDate.isAfter(maxDate)) {
+                    result.addError("Repair date cannot be more than 1 year in the future");
+                }
             }
             
         } catch (DateTimeParseException e) {

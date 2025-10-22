@@ -411,6 +411,7 @@
                                    class="form-input" 
                                    placeholder="Enter new password"
                                    oninput="checkPasswordStrength()"
+                                   maxlength="128"
                                    required>
                             <i class="fas fa-eye toggle-password" onclick="togglePassword('newPassword')"></i>
                         </div>
@@ -448,6 +449,7 @@
                                    id="renewPassword"
                                    class="form-input" 
                                    placeholder="Re-enter new password"
+                                   maxlength="128"
                                    required>
                             <i class="fas fa-eye toggle-password" onclick="togglePassword('renewPassword')"></i>
                         </div>

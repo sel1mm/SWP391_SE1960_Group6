@@ -299,8 +299,10 @@ public class AccountService {
             }
 
  
-            if (account.getPasswordHash() != null && !account.getPasswordHash().isEmpty()) {
-                String hashed = passwordHasher.hashPassword(account.getPasswordHash());
+            String rawPassword = account.getPasswordHash();
+
+            if (rawPassword != null && !rawPassword.isEmpty()) {               
+                String hashed = passwordHasher.hashPassword(rawPassword);
                 account.setPasswordHash(hashed);
             } else {
                 account.setPasswordHash(existingAccount.getPasswordHash());
@@ -377,6 +379,7 @@ public class AccountService {
         return new Response<>(null, false, "Lỗi khi lấy thông tin tài khoản: " + e.getMessage());
     }
 }
+    
 
 
     public Response<Boolean> isUsernameExists(String username) {
@@ -390,4 +393,14 @@ public class AccountService {
     public Response<Boolean> isPhoneExists(String phone) {
         return accountDAO.isPhoneExists(phone);
     }
+    
+    
+    public Response<Boolean> isEmailExistsForUpdate(String email, int accountId) {
+    return accountDAO.isEmailExistsExcludingId(email, accountId);
+}
+
+public Response<Boolean> isPhoneExistsForUpdate(String phone, int accountId) {
+    return accountDAO.isPhoneExistsExcludingId(phone, accountId);
+}
+
 }

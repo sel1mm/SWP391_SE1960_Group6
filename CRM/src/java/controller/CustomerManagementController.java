@@ -289,10 +289,11 @@ public class CustomerManagementController extends HttpServlet {
                         return;
                     }
 
-                    // Xử lý password (chỉ hash nếu nhập mới)
-                    String hashedPassword = null;
-                    if (password != null && !password.trim().isEmpty()) {
-                        hashedPassword = passwordHasher.hashPassword(password.trim());
+                    if (password != null) {
+                        password = password.trim(); // loại bỏ khoảng trắng đầu/cuối
+                        if (password.isEmpty()) {
+                            password = null; // nếu sau khi trim mà trống thì coi như không nhập
+                        }
                     }
 
                     // Chuyển đổi verified
@@ -308,7 +309,7 @@ public class CustomerManagementController extends HttpServlet {
                     account.setEmail(email);
                     account.setPhone(phone);
                     account.setStatus(status);
-                    account.setPasswordHash(hashedPassword);
+                    account.setPasswordHash(password);
 
                     AccountProfile profile = new AccountProfile();
                     profile.setAccountId(editId);
