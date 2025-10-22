@@ -377,6 +377,7 @@ public class AccountService {
         return new Response<>(null, false, "Lỗi khi lấy thông tin tài khoản: " + e.getMessage());
     }
 }
+    
 
 
     public Response<Boolean> isUsernameExists(String username) {
@@ -390,4 +391,14 @@ public class AccountService {
     public Response<Boolean> isPhoneExists(String phone) {
         return accountDAO.isPhoneExists(phone);
     }
+    
+    
+    public Response<Boolean> isEmailExistsForUpdate(String email, int accountId) {
+    return accountDAO.isEmailExistsExcludingId(email, accountId);
+}
+
+public Response<Boolean> isPhoneExistsForUpdate(String phone, int accountId) {
+    return accountDAO.isPhoneExistsExcludingId(phone, accountId);
+}
+
 }

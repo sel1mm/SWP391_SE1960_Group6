@@ -75,6 +75,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     </c:if>
+                    
 
                     <c:if test="${not empty user}">
                         <!-- Edit User Form -->
@@ -87,7 +88,7 @@
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="username" name="username" 
+                                                <input type="text" class="form-control" readonly id="username" name="username" 
                                                        value="${user.username}" required>
                                             </div>
                                         </div>
