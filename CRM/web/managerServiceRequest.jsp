@@ -24,13 +24,14 @@
             }
 
             /* SIDEBAR STYLES */
+            /* SIDEBAR STYLES */
             .sidebar {
                 position: fixed;
                 top: 0;
                 left: 0;
                 height: 100vh;
                 width: 260px;
-                background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
                 padding: 0;
                 transition: all 0.3s ease;
                 z-index: 1000;
@@ -209,9 +210,9 @@
             .btn-logout {
                 width: 100%;
                 padding: 12px;
-                background: #dc3545;
+                background: transparent;
                 color: white;
-                border: none;
+                border: 1px solid white;
                 border-radius: 8px;
                 font-weight: 600;
                 display: flex;
@@ -220,14 +221,13 @@
                 gap: 10px;
                 transition: all 0.3s;
                 cursor: pointer;
+                text-decoration: none;
             }
-
             .btn-logout:hover {
-                background: #c82333;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(220,53,69,0.3);
+                background: white;
+                color: #1a1a2e;
+                border-color: white;
             }
-
             .sidebar.collapsed .btn-logout span {
                 display: none;
             }
@@ -435,6 +435,32 @@
                 color: #333;
             }
 
+            /* CSS cho description display */
+            .description-display {
+                white-space: pre-wrap !important;
+                word-wrap: break-word !important;
+                word-break: break-word !important;
+                overflow-wrap: anywhere !important;
+                max-height: 300px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                line-height: 1.6;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+
+            .description-display::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            .description-display::-webkit-scrollbar-thumb {
+                background: rgba(0,0,0,0.2);
+                border-radius: 4px;
+            }
+
+            .description-display::-webkit-scrollbar-thumb:hover {
+                background: rgba(0,0,0,0.3);
+            }
+
             /* FOOTER STYLES */
             .site-footer {
                 background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
@@ -638,32 +664,6 @@
                 display: flex;
             }
 
-            /* CSS cho description display */
-            .description-display {
-                white-space: pre-wrap !important;
-                word-wrap: break-word !important;
-                word-break: break-word !important;
-                overflow-wrap: anywhere !important;
-                max-height: 300px;
-                overflow-y: auto;
-                overflow-x: hidden;
-                line-height: 1.6;
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            }
-
-            .description-display::-webkit-scrollbar {
-                width: 8px;
-            }
-
-            .description-display::-webkit-scrollbar-thumb {
-                background: rgba(0,0,0,0.2);
-                border-radius: 4px;
-            }
-
-            .description-display::-webkit-scrollbar-thumb:hover {
-                background: rgba(0,0,0,0.3);
-            }
-
             /* RESPONSIVE */
             @media (max-width: 768px) {
                 .sidebar {
@@ -708,14 +708,14 @@
 
             <div class="sidebar-header">
                 <a href="#" class="sidebar-brand">
-                    <i class="fas fa-building"></i>
+                    <i></i>
                     <span>CRM System</span>
                 </a>
             </div>
 
             <div class="sidebar-menu">
                 <div class="menu-section">
-                    <div class="menu-section-title">Main Menu</div>
+
                     <a href="${pageContext.request.contextPath}/dashboard" class="menu-item">
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
@@ -736,7 +736,7 @@
                 </div>
 
                 <div class="menu-section">
-                    <div class="menu-section-title">Management</div>
+
                     <a href="${pageContext.request.contextPath}/customers" class="menu-item">
                         <i class="fas fa-users"></i>
                         <span>Khách Hàng</span>
@@ -752,7 +752,7 @@
                 </div>
 
                 <div class="menu-section">
-                    <div class="menu-section-title">Settings</div>
+
                     <a href="${pageContext.request.contextPath}/manageProfile" class="menu-item">
                         <i class="fas fa-user-circle"></i>
                         <span>Hồ Sơ</span>
@@ -865,9 +865,9 @@
                 </script>
                 <% } %>
 
-                <!-- THỐNG KÊ -->
+                <!-- THỐNG KÊ - 5 Ô TRẢI ĐỀU TOÀN MÀN HÌNH -->
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
                         <div class="stats-card bg-primary text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -878,7 +878,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
                         <div class="stats-card bg-warning text-dark">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -889,7 +889,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
                         <div class="stats-card bg-info text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -900,7 +900,18 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-xl col-lg-6 col-md-6 col-sm-6">
+                        <div class="stats-card bg-success text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6>Hoàn Thành</h6>
+                                    <h2>${completedCount}</h2>
+                                </div>
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl col-lg-6 col-md-6 col-sm-6">
                         <div class="stats-card bg-danger text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -1224,7 +1235,7 @@
         <div class="modal fade" id="createModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post" id="createForm">
+                    <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post" id="createForm" onsubmit="return validateCreateForm(event)">
                         <input type="hidden" name="action" value="CreateServiceRequest">
                         <div class="modal-header bg-primary text-white">
                             <h5 class="modal-title"><i class="fas fa-plus"></i> Tạo Yêu Cầu Dịch Vụ Mới</h5>
@@ -1268,23 +1279,21 @@
                             </div>
 
                             <!-- MÔ TẢ VẤN ĐỀ -->
-
-                            <div class="mb-3">
+                            <div class="mb-3" id="descriptionField" style="display: none;">
                                 <label class="form-label">Mô Tả Vấn Đề <span class="text-danger">*</span></label>
                                 <textarea class="form-control" 
                                           name="description" 
-                                          id="editDescription" 
+                                          id="description" 
                                           rows="5" 
-                                          required 
+                                          placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải..." 
                                           maxlength="1000"
-                                          spellcheck="false"
-                                          autocomplete="off"
-                                          autocorrect="off"
-                                          autocapitalize="off"></textarea>
-                                <small class="form-text text-muted">
-                                    Tối thiểu 10 ký tự, tối đa 1000 ký tự.
-                                    <span id="editCharCount" class="float-end text-primary">0/1000</span>
-                                </small>
+                                          oninput="updateCharCount()"></textarea>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <small class="form-text text-muted">
+                                        Tối thiểu 10 ký tự, tối đa 1000 ký tự.
+                                    </small>
+                                    <span id="charCount" class="text-muted" style="font-size: 0.875rem;">0/1000</span>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -1356,7 +1365,7 @@
         <div class="modal fade" id="editModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post" id="editForm">
+                    <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post" id="editForm" onsubmit="return validateEditForm(event)">
                         <input type="hidden" name="action" value="UpdateServiceRequest">
                         <div class="modal-header bg-warning text-dark">
                             <h5 class="modal-title"><i class="fas fa-edit"></i> Chỉnh Sửa Yêu Cầu</h5>
@@ -1376,11 +1385,14 @@
                                 <label class="form-label">Mô Tả Vấn Đề <span class="text-danger">*</span></label>
                                 <textarea class="form-control" name="description" id="editDescription" rows="5" 
                                           required 
-                                          maxlength="1000"></textarea>
-                                <small class="form-text text-muted">
-                                    Tối thiểu 10 ký tự, tối đa 1000 ký tự.
-                                    <span id="editCharCount" class="float-end text-primary">0/1000</span>
-                                </small>
+                                          maxlength="1000"
+                                          oninput="updateEditCharCount()"></textarea>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <small class="form-text text-muted">
+                                        Tối thiểu 10 ký tự, tối đa 1000 ký tự.
+                                    </small>
+                                    <span id="editCharCount" class="text-muted" style="font-size: 0.875rem;">0/1000</span>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -1394,430 +1406,388 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-                                    // ========== TOAST NOTIFICATION ==========
-                                    let currentToastTimeout = null;
+                        // ========== TOAST NOTIFICATION ==========
+                        let currentToastTimeout = null;
 
-                                    function showToast(message, type) {
-                                        const container = document.getElementById('toastContainer');
-                                        if (currentToastTimeout) {
-                                            clearTimeout(currentToastTimeout);
-                                        }
+                        function showToast(message, type) {
+                            const container = document.getElementById('toastContainer');
+                            if (currentToastTimeout) {
+                                clearTimeout(currentToastTimeout);
+                            }
 
-                                        let iconClass = 'fa-check-circle';
-                                        if (type === 'error')
-                                            iconClass = 'fa-exclamation-circle';
-                                        if (type === 'info')
-                                            iconClass = 'fa-info-circle';
+                            let iconClass = 'fa-check-circle';
+                            if (type === 'error')
+                                iconClass = 'fa-exclamation-circle';
+                            if (type === 'info')
+                                iconClass = 'fa-info-circle';
 
-                                        const toastDiv = document.createElement('div');
-                                        toastDiv.className = 'toast-notification ' + type;
+                            const toastDiv = document.createElement('div');
+                            toastDiv.className = 'toast-notification ' + type;
 
-                                        const iconDiv = document.createElement('div');
-                                        iconDiv.className = 'toast-icon ' + type;
-                                        iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
+                            const iconDiv = document.createElement('div');
+                            iconDiv.className = 'toast-icon ' + type;
+                            iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
 
-                                        const contentDiv = document.createElement('div');
-                                        contentDiv.className = 'toast-content';
-                                        contentDiv.textContent = message;
+                            const contentDiv = document.createElement('div');
+                            contentDiv.className = 'toast-content';
+                            contentDiv.textContent = message;
 
-                                        const closeBtn = document.createElement('button');
-                                        closeBtn.className = 'toast-close';
-                                        closeBtn.type = 'button';
-                                        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                                        closeBtn.onclick = hideToast;
+                            const closeBtn = document.createElement('button');
+                            closeBtn.className = 'toast-close';
+                            closeBtn.type = 'button';
+                            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                            closeBtn.onclick = hideToast;
 
-                                        toastDiv.appendChild(iconDiv);
-                                        toastDiv.appendChild(contentDiv);
-                                        toastDiv.appendChild(closeBtn);
+                            toastDiv.appendChild(iconDiv);
+                            toastDiv.appendChild(contentDiv);
+                            toastDiv.appendChild(closeBtn);
 
-                                        container.innerHTML = '';
-                                        container.appendChild(toastDiv);
+                            container.innerHTML = '';
+                            container.appendChild(toastDiv);
 
-                                        currentToastTimeout = setTimeout(hideToast, 5000);
-                                    }
+                            currentToastTimeout = setTimeout(hideToast, 5000);
+                        }
 
-                                    function hideToast() {
-                                        const container = document.getElementById('toastContainer');
-                                        const toast = container.querySelector('.toast-notification');
-                                        if (toast) {
-                                            toast.classList.add('hiding');
-                                            setTimeout(() => {
-                                                container.innerHTML = '';
-                                            }, 400);
-                                        }
-                                        if (currentToastTimeout) {
-                                            clearTimeout(currentToastTimeout);
-                                            currentToastTimeout = null;
-                                        }
-                                    }
+                        function hideToast() {
+                            const container = document.getElementById('toastContainer');
+                            const toast = container.querySelector('.toast-notification');
+                            if (toast) {
+                                toast.classList.add('hiding');
+                                setTimeout(() => {
+                                    container.innerHTML = '';
+                                }, 400);
+                            }
+                            if (currentToastTimeout) {
+                                clearTimeout(currentToastTimeout);
+                                currentToastTimeout = null;
+                            }
+                        }
 
-                                    // ========== CHARACTER COUNT FUNCTIONS ==========
-                                    let charCountTimer = null;
-                                    function updateCharCount() {
-                                        const textarea = document.getElementById('description');
-                                        const charCount = document.getElementById('charCount');
-                                        if (!textarea || !charCount)
-                                            return;
+                        // ========== CHARACTER COUNT FUNCTIONS ==========
+                        function updateCharCount() {
+                            const textarea = document.getElementById('description');
+                            const charCount = document.getElementById('charCount');
+                            if (!textarea || !charCount)
+                                return;
 
-                                        // Cập nhật số ký tự ngay lập tức (không debounce)
-                                        const currentLength = textarea.value.length;
-                                        charCount.textContent = currentLength + '/1000';
+                            const currentLength = textarea.value.length;
+                            charCount.textContent = currentLength + '/1000';
 
-                                        // Debounce việc thay đổi màu (không quan trọng)
-                                        if (charCountTimer) {
-                                            clearTimeout(charCountTimer);
-                                        }
+                            if (currentLength > 900) {
+                                charCount.className = 'text-danger';
+                            } else if (currentLength > 700) {
+                                charCount.className = 'text-warning';
+                            } else {
+                                charCount.className = 'text-muted';
+                            }
+                        }
 
-                                        charCountTimer = setTimeout(function () {
-                                            if (currentLength > 900) {
-                                                charCount.className = 'float-end text-danger';
-                                            } else if (currentLength > 700) {
-                                                charCount.className = 'float-end text-warning';
-                                            } else {
-                                                charCount.className = 'float-end text-primary';
-                                            }
-                                        }, 50);
-                                    }
-                                    let editCharCountTimer = null;
-                                    function updateEditCharCount() {
-                                        const textarea = document.getElementById('editDescription');
-                                        const charCount = document.getElementById('editCharCount');
-                                        if (!textarea || !charCount)
-                                            return;
+                        function updateEditCharCount() {
+                            const textarea = document.getElementById('editDescription');
+                            const charCount = document.getElementById('editCharCount');
+                            if (!textarea || !charCount)
+                                return;
 
-                                        // Cập nhật số ký tự ngay lập tức
-                                        const currentLength = textarea.value.length;
-                                        charCount.textContent = currentLength + '/1000';
+                            const currentLength = textarea.value.length;
+                            charCount.textContent = currentLength + '/1000';
 
-                                        // Debounce việc thay đổi màu
-                                        if (editCharCountTimer) {
-                                            clearTimeout(editCharCountTimer);
-                                        }
+                            if (currentLength > 900) {
+                                charCount.className = 'text-danger';
+                            } else if (currentLength > 700) {
+                                charCount.className = 'text-warning';
+                            } else {
+                                charCount.className = 'text-muted';
+                            }
+                        }
 
-                                        editCharCountTimer = setTimeout(function () {
-                                            if (currentLength > 900) {
-                                                charCount.className = 'float-end text-danger';
-                                            } else if (currentLength > 700) {
-                                                charCount.className = 'float-end text-warning';
-                                            } else {
-                                                charCount.className = 'float-end text-primary';
-                                            }
-                                        }, 50);
-                                    }
-                                    // ========== TOGGLE FIELDS FUNCTION ==========
-                                    function toggleFields() {
-                                        var supportType = document.getElementById('supportType').value;
-                                        var contractField = document.
-                                                getElementById('contractIdField');
-                                        var equipmentField = document.getElementById('equipmentIdField');
-                                        var priorityField = document.getElementById('priorityField');
-                                        var descriptionField = document.getElementById('descriptionField');
+                        // ========== TOGGLE FIELDS FUNCTION ==========
+                        function toggleFields() {
+                            const supportType = document.getElementById('supportType').value;
+                            const contractField = document.getElementById('contractIdField');
+                            const equipmentField = document.getElementById('equipmentIdField');
+                            const priorityField = document.getElementById('priorityField');
+                            const descriptionField = document.getElementById('descriptionField');
 
-                                        var contractInput = document.getElementById('contractId');
-                                        var equipmentInput = document.getElementById('equipmentId');
-                                        var priorityInput = document.getElementById('priorityLevel');
-                                        var descriptionInput = document.getElementById('description');
+                            const contractInput = document.getElementById('contractId');
+                            const equipmentInput = document.getElementById('equipmentId');
+                            const priorityInput = document.getElementById('priorityLevel');
+                            const descriptionInput = document.getElementById('description');
 
-                                        if (supportType === 'equipment') {
-                                            // Hiển thị tất cả cho hỗ trợ thiết bị
-                                            contractField.style.display = 'block';
-                                            equipmentField.style.display = 'block';
-                                            priorityField.style.display = 'block';
-                                            descriptionField.style.display = 'block';
+                            if (supportType === 'equipment') {
+                                contractField.style.display = 'block';
+                                equipmentField.style.display = 'block';
+                                priorityField.style.display = 'block';
+                                descriptionField.style.display = 'block';
 
-                                            contractInput.setAttribute('required', 'required');
-                                            equipmentInput.setAttribute('required', 'required');
-                                            priorityInput.setAttribute('required', 'required');
-                                            descriptionInput.setAttribute('required', 'required');
+                                contractInput.setAttribute('required', 'required');
+                                equipmentInput.setAttribute('required', 'required');
+                                priorityInput.setAttribute('required', 'required');
+                                descriptionInput.setAttribute('required', 'required');
 
-                                            updateCharCount();
+                                updateCharCount();
+                            } else if (supportType === 'account') {
+                                contractField.style.display = 'none';
+                                equipmentField.style.display = 'none';
+                                priorityField.style.display = 'block';
+                                descriptionField.style.display = 'block';
 
-                                        } else if (supportType === 'account') {
-                                            // Chỉ hiển thị ưu tiên và mô tả cho hỗ trợ tài khoản
-                                            contractField.style.display = 'none';
-                                            equipmentField.style.display = 'none';
-                                            priorityField.style.display = 'block';
-                                            descriptionField.style.display = 'block';
+                                contractInput.removeAttribute('required');
+                                equipmentInput.removeAttribute('required');
+                                contractInput.value = '';
+                                equipmentInput.value = '';
+                                priorityInput.setAttribute('required', 'required');
+                                descriptionInput.setAttribute('required', 'required');
 
-                                            contractInput.removeAttribute('required');
-                                            equipmentInput.removeAttribute('required');
-                                            contractInput.value = '';
-                                            equipmentInput.value = '';
-                                            priorityInput.setAttribute('required', 'required');
-                                            descriptionInput.setAttribute('required', 'required');
+                                updateCharCount();
+                            } else {
+                                contractField.style.display = 'none';
+                                equipmentField.style.display = 'none';
+                                priorityField.style.display = 'none';
+                                descriptionField.style.display = 'none';
 
-                                            updateCharCount();
+                                contractInput.removeAttribute('required');
+                                equipmentInput.removeAttribute('required');
+                                priorityInput.removeAttribute('required');
+                                descriptionInput.removeAttribute('required');
+                            }
+                        }
 
-                                        } else {
-                                            // Ẩn tất cả nếu chưa chọn
-                                            contractField.style.display = 'none';
-                                            equipmentField.style.display = 'none';
-                                            priorityField.style.display = 'none';
-                                            descriptionField.style.display = 'none';
+                        // ========== VALIDATION FUNCTIONS ==========
+                        function validateCreateForm(event) {
+                            const supportType = document.getElementById('supportType').value;
+                            const description = document.getElementById('description').value.trim();
+                            const contractId = document.getElementById('contractId').value;
+                            const equipmentId = document.getElementById('equipmentId').value;
 
-                                            contractInput.removeAttribute('required');
-                                            equipmentInput.removeAttribute('required');
-                                            priorityInput.removeAttribute('required');
-                                            descriptionInput.removeAttribute('required');
-                                        }
-                                    }
+                            if (!supportType) {
+                                event.preventDefault();
+                                showToast('Vui lòng chọn loại hỗ trợ!', 'error');
+                                return false;
+                            }
 
-                                    // ========== VALIDATION FUNCTIONS ==========
-                                    function validateCreateForm(event) {
-                                        const supportType = document.getElementById('supportType').value;
-                                        const description = document.getElementById('description').value.trim();
-                                        const contractId = document.getElementById('contractId').value;
-                                        const equipmentId = document.getElementById('equipmentId').value;
+                            if (description.length < 10) {
+                                event.preventDefault();
+                                showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
+                                document.getElementById('description').focus();
+                                return false;
+                            }
 
-                                        // Kiểm tra loại hỗ trợ
-                                        if (!supportType) {
-                                            event.preventDefault();
-                                            showToast('Vui lòng chọn loại hỗ trợ!', 'error');
-                                            return false;
-                                        }
+                            if (description.length > 1000) {
+                                event.preventDefault();
+                                showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
+                                document.getElementById('description').focus();
+                                return false;
+                            }
 
-                                        // Kiểm tra mô tả
-                                        if (description.length < 10) {
-                                            event.preventDefault();
-                                            showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
-                                            document.getElementById('description').focus();
-                                            return false;
-                                        }
+                            if (supportType === 'equipment') {
+                                if (!contractId || contractId <= 0) {
+                                    event.preventDefault();
+                                    showToast('Vui lòng nhập mã hợp đồng hợp lệ!', 'error');
+                                    document.getElementById('contractId').focus();
+                                    return false;
+                                }
 
-                                        if (description.length > 1000) {
-                                            event.preventDefault();
-                                            showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
-                                            document.getElementById('description').focus();
-                                            return false;
-                                        }
+                                if (!equipmentId || equipmentId <= 0) {
+                                    event.preventDefault();
+                                    showToast('Vui lòng nhập mã thiết bị hợp lệ!', 'error');
+                                    document.getElementById('equipmentId').focus();
+                                    return false;
+                                }
+                            }
 
-                                        // Kiểm tra cho hỗ trợ thiết bị
-                                        if (supportType === 'equipment') {
-                                            if (!contractId || contractId <= 0) {
-                                                event.preventDefault();
-                                                showToast('Vui lòng nhập mã hợp đồng hợp lệ!', 'error');
-                                                document.getElementById('contractId').focus();
-                                                return false;
-                                            }
+                            return true;
+                        }
 
-                                            if (!equipmentId || equipmentId <= 0) {
-                                                event.preventDefault();
-                                                showToast('Vui lòng nhập mã thiết bị hợp lệ!', 'error');
-                                                document.getElementById('equipmentId').focus();
-                                                return false;
-                                            }
-                                        }
+                        function validateEditForm(event) {
+                            const description = document.getElementById('editDescription').value.trim();
 
-                                        return true;
-                                    }
+                            if (description.length < 10) {
+                                event.preventDefault();
+                                showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
+                                document.getElementById('editDescription').focus();
+                                return false;
+                            }
 
-                                    function validateEditForm(event) {
-                                        const description = document.getElementById('editDescription').value.trim();
+                            if (description.length > 1000) {
+                                event.preventDefault();
+                                showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
+                                document.getElementById('editDescription').focus();
+                                return false;
+                            }
 
-                                        // Kiểm tra mô tả
-                                        if (description.length < 10) {
-                                            event.preventDefault();
-                                            showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
-                                            document.getElementById('editDescription').focus();
-                                            return false;
-                                        }
+                            return true;
+                        }
 
-                                        if (description.length > 1000) {
-                                            event.preventDefault();
-                                            showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
-                                            document.getElementById('editDescription').focus();
-                                            return false;
-                                        }
+                        // ========== UTILITY FUNCTIONS ==========
+                        function refreshPage() {
+                            window.location.href = "${pageContext.request.contextPath}/managerServiceRequest";
+                        }
 
-                                        return true;
-                                    }
+                        function toggleSidebar() {
+                            const sidebar = document.getElementById('sidebar');
+                            const toggleIcon = document.getElementById('toggleIcon');
+                            sidebar.classList.toggle('collapsed');
 
-                                    // ========== UTILITY FUNCTIONS ==========
-                                    function refreshPage() {
-                                        window.location.href = "${pageContext.request.contextPath}/managerServiceRequest";
-                                    }
+                            if (sidebar.classList.contains('collapsed')) {
+                                toggleIcon.classList.remove('fa-chevron-left');
+                                toggleIcon.classList.add('fa-chevron-right');
+                            } else {
+                                toggleIcon.classList.remove('fa-chevron-right');
+                                toggleIcon.classList.add('fa-chevron-left');
+                            }
+                        }
 
-                                    function toggleSidebar() {
-                                        const sidebar = document.getElementById('sidebar');
-                                        const toggleIcon = document.getElementById('toggleIcon');
-                                        sidebar.classList.toggle('collapsed');
+                        function viewRequest(id, contractId, equipmentId, description, requestDate, status, priorityLevel) {
+                            document.getElementById('viewRequestId').textContent = '#' + id;
+                            document.getElementById('viewContractId').textContent = contractId || 'N/A';
+                            document.getElementById('viewEquipmentId').textContent = equipmentId || 'N/A';
+                            document.getElementById('viewDescription').textContent = description;
+                            document.getElementById('viewRequestDate').textContent = requestDate;
 
-                                        if (sidebar.classList.contains('collapsed')) {
-                                            toggleIcon.classList.remove('fa-chevron-left');
-                                            toggleIcon.classList.add('fa-chevron-right');
-                                        } else {
-                                            toggleIcon.classList.remove('fa-chevron-right');
-                                            toggleIcon.classList.add('fa-chevron-left');
-                                        }
-                                    }
+                            const statusBadge = document.getElementById('viewStatus');
+                            const statusMap = {
+                                'Pending': {className: 'badge-pending', text: 'Chờ Xử Lý'},
+                                'Approved': {className: 'badge-inprogress', text: 'Đã Duyệt'},
+                                'Completed': {className: 'badge-completed', text: 'Hoàn Thành'},
+                                'Rejected': {className: 'badge-cancelled', text: 'Bị từ chối'},
+                                'Cancelled': {className: 'badge-cancelled', text: 'Đã Hủy'}
+                            };
+                            const statusInfo = statusMap[status] || {className: 'bg-secondary', text: status};
+                            statusBadge.className = 'badge ' + statusInfo.className;
+                            statusBadge.textContent = statusInfo.text;
 
-                                    function viewRequest(id, contractId, equipmentId, description, requestDate, status, priorityLevel) {
-                                        document.getElementById('viewRequestId').textContent = '#' + id;
-                                        document.getElementById('viewContractId').textContent = contractId || 'N/A';
-                                        document.getElementById('viewEquipmentId').textContent = equipmentId || 'N/A';
-                                        document.getElementById('viewDescription').textContent = description;
-                                        document.getElementById('viewRequestDate').textContent = requestDate;
+                            const priorityBadge = document.getElementById('viewPriority');
+                            const priorityMap = {
+                                'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
+                                'High': {className: 'bg-warning text-dark', text: 'Cao'},
+                                'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
+                            };
+                            const priorityInfo = priorityMap[priorityLevel] || {className: 'bg-dark', text: priorityLevel};
+                            priorityBadge.className = 'badge ' + priorityInfo.className;
+                            priorityBadge.textContent = priorityInfo.text;
 
-                                        const statusBadge = document.getElementById('viewStatus');
-                                        const statusMap = {
-                                            'Pending': {className: 'badge-pending', text: 'Chờ Xử Lý'},
-                                            'Approved': {className: 'badge-inprogress', text: 'Đã Duyệt'},
-                                            'Completed': {className: 'badge-completed', text: 'Hoàn Thành'},
-                                            'Rejected': {className: 'badge-cancelled', text: 'Bị từ chối'},
-                                            'Cancelled': {className: 'badge-cancelled', text: 'Đã Hủy'}
-                                        };
-                                        const statusInfo = statusMap[status] || {className: 'bg-secondary', text: status};
-                                        statusBadge.className = 'badge ' + statusInfo.className;
-                                        statusBadge.textContent = statusInfo.text;
+                            new bootstrap.Modal(document.getElementById('viewModal')).show();
+                        }
 
-                                        const priorityBadge = document.getElementById('viewPriority');
-                                        const priorityMap = {
-                                            'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
-                                            'High': {className: 'bg-warning text-dark', text: 'Cao'},
-                                            'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
-                                        };
-                                        const priorityInfo = priorityMap[priorityLevel] || {className: 'bg-dark', text: priorityLevel};
-                                        priorityBadge.className = 'badge ' + priorityInfo.className;
-                                        priorityBadge.textContent = priorityInfo.text;
+                        function editRequest(id, description, priorityLevel) {
+                            document.getElementById('editRequestId').value = id;
+                            document.getElementById('editDescription').value = description;
+                            document.getElementById('editPriorityLevel').value = priorityLevel;
+                            updateEditCharCount();
+                            new bootstrap.Modal(document.getElementById('editModal')).show();
+                        }
 
-                                        new bootstrap.Modal(document.getElementById('viewModal')).show();
-                                    }
+                        function confirmCancel(id) {
+                            document.getElementById('cancelRequestId').value = id;
+                            new bootstrap.Modal(document.getElementById('cancelModal')).show();
+                        }
 
-                                    function editRequest(id, description, priorityLevel) {
-                                        document.getElementById('editRequestId').value = id;
-                                        document.getElementById('editDescription').value = description;
-                                        document.getElementById('editPriorityLevel').value = priorityLevel;
-                                        updateEditCharCount();
-                                        new bootstrap.Modal(document.getElementById('editModal')).show();
-                                    }
+                        function scrollToTop() {
+                            window.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
+                            });
+                        }
 
-                                    function confirmCancel(id) {
-                                        document.getElementById('cancelRequestId').value = id;
-                                        new bootstrap.Modal(document.getElementById('cancelModal')).show();
-                                    }
+                        // ========== EVENT LISTENERS ==========
+                        window.addEventListener('scroll', function () {
+                            const scrollBtn = document.getElementById('scrollToTop');
+                            if (window.pageYOffset > 300) {
+                                scrollBtn.classList.add('show');
+                            } else {
+                                scrollBtn.classList.remove('show');
+                            }
+                        });
 
-                                    function scrollToTop() {
-                                        window.scrollTo({
-                                            top: 0,
-                                            behavior: 'smooth'
-                                        });
-                                    }
+                        document.addEventListener('DOMContentLoaded', function () {
+                            // Event cho nút VIEW - LẤY DESCRIPTION TỪ HIDDEN DIV
+                            document.querySelectorAll('.btn-view').forEach(button => {
+                                button.addEventListener('click', function () {
+                                    const data = this.dataset;
+                                    const requestId = data.id;
 
-                                    // ========== EVENT LISTENERS ==========
-                                    window.addEventListener('scroll', function () {
-                                        const scrollBtn = document.getElementById('scrollToTop');
-                                        if (window.pageYOffset > 300) {
-                                            scrollBtn.classList.add('show');
-                                        } else {
-                                            scrollBtn.classList.remove('show');
+                                    const descElement = document.getElementById('desc-' + requestId);
+                                    const description = descElement ? descElement.textContent.trim() : 'Không có mô tả';
+
+                                    viewRequest(
+                                            requestId,
+                                            data.contractId,
+                                            data.equipmentId,
+                                            description,
+                                            data.requestDate,
+                                            data.status,
+                                            data.priority
+                                            );
+                                });
+                            });
+
+                            // Event cho nút EDIT
+                            document.querySelectorAll('.btn-edit').forEach(button => {
+                                button.addEventListener('click', function () {
+                                    const data = this.dataset;
+                                    editRequest(data.id, data.description, data.priority);
+                                });
+                            });
+
+                            // Event cho nút CANCEL
+                            document.querySelectorAll('.btn-cancel').forEach(button => {
+                                button.addEventListener('click', function () {
+                                    confirmCancel(this.dataset.id);
+                                });
+                            });
+
+                            // Event cho textarea description trong create modal
+                            const descriptionTextarea = document.getElementById('description');
+                            if (descriptionTextarea) {
+                                descriptionTextarea.addEventListener('input', updateCharCount);
+                            }
+
+                            // Event cho textarea description trong edit modal
+                            const editDescriptionTextarea = document.getElementById('editDescription');
+                            if (editDescriptionTextarea) {
+                                editDescriptionTextarea.addEventListener('input', updateEditCharCount);
+                            }
+
+                            // Reset form khi đóng modal TẠO MỚI
+                            const createModal = document.getElementById('createModal');
+                            if (createModal) {
+                                createModal.addEventListener('hidden.bs.modal', function () {
+                                    document.getElementById('createForm').reset();
+                                    toggleFields();
+                                });
+
+                                createModal.addEventListener('shown.bs.modal', function () {
+                                    updateCharCount();
+                                });
+                            }
+
+                            // Cập nhật char count khi mở modal CHỈNH SỬA
+                            const editModal = document.getElementById('editModal');
+                            if (editModal) {
+                                editModal.addEventListener('shown.bs.modal', function () {
+                                    updateEditCharCount();
+                                });
+                            }
+
+                            // Ngăn nhập ký tự không phải số cho contract và equipment ID
+                            const numberInputs = ['contractId', 'equipmentId'];
+                            numberInputs.forEach(function (inputId) {
+                                const input = document.getElementById(inputId);
+                                if (input) {
+                                    input.addEventListener('keypress', function (e) {
+                                        if (e.key < '0' || e.key > '9') {
+                                            e.preventDefault();
                                         }
                                     });
 
-                                    document.addEventListener('DOMContentLoaded', function () {
-
-                                        // Event cho nút VIEW - LẤY DESCRIPTION TỪ HIDDEN DIV
-                                        document.querySelectorAll('.btn-view').forEach(button => {
-                                            button.addEventListener('click', function () {
-                                                const data = this.dataset;
-                                                const requestId = data.id;
-
-                                                // Lấy description từ hidden div
-                                                const descElement = document.getElementById('desc-' + requestId);
-                                                const description = descElement ? descElement.textContent.trim() : 'Không có mô tả';
-
-                                                viewRequest(
-                                                        requestId,
-                                                        data.contractId,
-                                                        data.equipmentId,
-                                                        description,
-                                                        data.requestDate,
-                                                        data.status,
-                                                        data.priority
-                                                        );
-                                            });
-                                        });
-
-                                        // Event cho nút EDIT
-                                        document.querySelectorAll('.btn-edit').forEach(button => {
-                                            button.addEventListener('click', function () {
-                                                const data = this.dataset;
-                                                editRequest(data.id, data.description, data.priority);
-                                            });
-                                        });
-
-                                        // Event cho nút CANCEL
-                                        document.querySelectorAll('.btn-cancel').forEach(button => {
-                                            button.addEventListener('click', function () {
-                                                confirmCancel(this.dataset.id);
-                                            });
-                                        });
-
-                                        // Event cho textarea description trong create modal
-                                        const descriptionTextarea = document.getElementById('description');
-                                        if (descriptionTextarea) {
-                                            descriptionTextarea.addEventListener('input', updateCharCount);
-                                        }
-
-                                        // Event cho textarea description trong edit modal
-                                        const editDescriptionTextarea = document.getElementById('editDescription');
-                                        if (editDescriptionTextarea) {
-                                            editDescriptionTextarea.addEventListener('input', updateEditCharCount);
-                                        }
-
-                                        // Gắn sự kiện validate cho form TẠO MỚI
-                                        const createForm = document.getElementById('createForm');
-                                        if (createForm) {
-                                            createForm.addEventListener('submit', validateCreateForm);
-                                        }
-
-                                        // Gắn sự kiện validate cho form CHỈNH SỬA
-                                        const editForm = document.getElementById('editForm');
-                                        if (editForm) {
-                                            editForm.addEventListener('submit', validateEditForm);
-                                        }
-
-                                        // Reset form khi đóng modal TẠO MỚI
-                                        const createModal = document.getElementById('createModal');
-                                        if (createModal) {
-                                            createModal.addEventListener('hidden.bs.modal', function () {
-                                                document.getElementById('createForm').reset();
-                                                toggleFields(); // Ẩn tất cả fields
-                                            });
-
-                                            createModal.addEventListener('shown.bs.modal', function () {
-                                                updateCharCount();
-                                            });
-                                        }
-
-                                        // Cập nhật char count khi mở modal CHỈNH SỬA
-                                        const editModal = document.getElementById('editModal');
-                                        if (editModal) {
-                                            editModal.addEventListener('shown.bs.modal', function () {
-                                                updateEditCharCount();
-                                            });
-                                        }
-
-                                        // Ngăn nhập ký tự không phải số cho contract và equipment ID
-                                        const numberInputs = ['contractId', 'equipmentId'];
-                                        numberInputs.forEach(function (inputId) {
-                                            const input = document.getElementById(inputId);
-                                            if (input) {
-                                                input.addEventListener('keypress', function (e) {
-                                                    // Chỉ cho phép số (0-9)
-                                                    if (e.key < '0' || e.key > '9') {
-                                                        e.preventDefault();
-                                                    }
-                                                });
-
-                                                // Xóa ký tự không phải số khi paste
-                                                input.addEventListener('paste', function (e) {
-                                                    setTimeout(function () {
-                                                        input.value = input.value.replace(/[^0-9]/g, '');
-                                                    }, 0);
-                                                });
-                                            }
-                                        });
+                                    input.addEventListener('paste', function (e) {
+                                        setTimeout(function () {
+                                            input.value = input.value.replace(/[^0-9]/g, '');
+                                        }, 0);
                                     });
+                                }
+                            });
+                        });
         </script>
     </body>
 </html>

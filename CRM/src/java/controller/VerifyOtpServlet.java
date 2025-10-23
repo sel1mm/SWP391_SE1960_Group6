@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import dto.RegisterRequest;
 import dto.Response;
 import jakarta.servlet.http.HttpSession;
+import model.Account;
 import service.AccountService;
 
 /**
@@ -77,7 +78,39 @@ public class VerifyOtpServlet extends HttpServlet {
                 session.removeAttribute("otpPurpose");
                 response.sendRedirect("resetPassword.jsp");
                 return;
-            }
+            } else if ("createUser".equals(purpose)) {
+                Account pendingUser = (Account) session.getAttribute("pendingUser");
+                if (pendingUser != null) {
+                    AccountService accountService = new AccountService();
+                    Response<Account> createResult = accountService.createAccount(pendingUser);
+
+                    if (createResult.isSuccess()) {
+                        session.removeAttribute("pendingUser");
+                        session.invalidate();
+                        response.sendRedirect("user/list?message=User created successfully");
+                        return;
+                    } else {
+                        request.setAttribute("error", createResult.getMessage());
+                        request.getRequestDispatcher("verifyOtp.jsp").forward(request, response);
+                        return;
+                    }
+                }
+            } else if ("updateUserEmail".equals(purpose)) {
+                Account pendingUpdate = (Account) session.getAttribute("pendingUpdateUser");
+                if (pendingUpdate != null) {
+                    AccountService accountService = new AccountService();
+                    Response<Account> result = accountService.updateAccount(pendingUpdate);
+                    if (result.isSuccess()) {
+                        session.invalidate();
+                        response.sendRedirect("user/list?message=User updated successfully");
+                        return;
+                    } else {
+                        request.setAttribute("error", result.getMessage());
+                        request.getRequestDispatcher("verifyOtp.jsp").forward(request, response);
+                        return;
+                    }
+                }
+            } 
         } else {
             request.setAttribute("error", "Mã OTP không đúng.");
             request.getRequestDispatcher("verifyOtp.jsp").forward(request, response);

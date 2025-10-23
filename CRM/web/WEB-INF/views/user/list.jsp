@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -145,38 +147,46 @@
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </td>
-                                     
                                                         <td>
                                                             <div class="btn-group" role="group">
+                                                                <!-- Nút Edit -->
                                                                 <a href="${pageContext.request.contextPath}/user/edit?id=${user.accountId}" 
                                                                    class="btn btn-sm btn-outline-primary" title="Edit">
                                                                     <i class="fas fa-edit"></i>
                                                                 </a>
+
+                                                                <!-- Nút Manage Roles -->
                                                                 <a href="${pageContext.request.contextPath}/user/roles?id=${user.accountId}" 
                                                                    class="btn btn-sm btn-outline-info" title="Manage Roles">
                                                                     <i class="fas fa-user-tag"></i>
                                                                 </a>
 
-    <c:choose>
-    <c:when test="${user.status == 'Active'}">
-        <!-- Hiển thị nút Ban -->
-        <a href="${pageContext.request.contextPath}/user/delete?id=${user.accountId}" 
-           class="btn btn-sm btn-outline-danger" 
-           onclick="return confirm('Are you sure you want to ban this user?')" 
-           title="Ban User">
-            <i class="fas fa-user-slash"></i>
-        </a>
-    </c:when>
-    <c:otherwise>
-        <!-- Hiển thị nút Unban -->
-        <a href="${pageContext.request.contextPath}/user/delete?id=${user.accountId}" 
-           class="btn btn-sm btn-outline-success" 
-           onclick="return confirm('Are you sure you want to unban this user?')" 
-           title="Unban User">
-            <i class="fas fa-user-check"></i>
-        </a>
-    </c:otherwise>
-</c:choose>
+                                                                <c:choose>
+                                                                    <c:when test="${user.accountId ne sessionScope.session_login.accountId}">
+                                                                        <c:choose>
+                                                                            <c:when test="${user.status == 'Active'}">
+                                                                                <a href="${pageContext.request.contextPath}/user/delete?id=${user.accountId}" 
+                                                                                   class="btn btn-sm btn-outline-danger" 
+                                                                                   onclick="return confirm('Are you sure you want to ban this user?')" 
+                                                                                   title="Ban User">
+                                                                                    <i class="fas fa-user-slash"></i>
+                                                                                </a>
+                                                                            </c:when>
+                                                                            <c:otherwise>
+                                                                                <a href="${pageContext.request.contextPath}/user/delete?id=${user.accountId}" 
+                                                                                   class="btn btn-sm btn-outline-success" 
+                                                                                   onclick="return confirm('Are you sure you want to unban this user?')" 
+                                                                                   title="Unban User">
+                                                                                    <i class="fas fa-user-check"></i>
+                                                                                </a>
+                                                                            </c:otherwise>
+                                                                        </c:choose>
+                                                                    </c:when>
+                                                                  
+                                                                </c:choose>
+                                                            </div>
+                                                        </td>
+                                                       
 
 
                                                             </div>
