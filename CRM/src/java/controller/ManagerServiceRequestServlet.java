@@ -17,7 +17,7 @@ import java.util.List;
 public class ManagerServiceRequestServlet extends HttpServlet {
 
     private ServiceRequestDAO serviceRequestDAO;
-    private static final int PAGE_SIZE = 8; // Số hợp đồng per page
+    private static final int PAGE_SIZE = 5; // Số hợp đồng per page
 
     @Override
     public void init() throws ServletException {
@@ -123,7 +123,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         int totalRequests = serviceRequestDAO.getTotalRequests(customerId);
         int pendingCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Pending");
         int inProgressCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Approved");
-        int completedCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Rejected");
+        int completedCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Completed");
         int cancelledCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Cancelled");
 
         request.setAttribute("requests", requests);
@@ -171,7 +171,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         int totalRequests = serviceRequestDAO.getTotalRequests(customerId);
         int pendingCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Pending");
         int inProgressCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Approved");
-        int completedCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Rejected");
+        int completedCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Completed");
         int cancelledCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Cancelled");
 
         request.setAttribute("requests", requests);
@@ -221,7 +221,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         int totalRequests = serviceRequestDAO.getTotalRequests(customerId);
         int pendingCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Pending");
         int inProgressCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Approved");
-        int completedCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Rejected");
+        int completedCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Completed");
         int cancelledCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Cancelled");
 
         request.setAttribute("requests", requests);
@@ -276,7 +276,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
             return;
         }
-        if (description.trim().length() > 500) {
+        if (description.trim().length() > 1000) {
             session.setAttribute("error", "Mô tả vấn đề không được vượt quá 1000 ký tự!");
             response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
             return;
