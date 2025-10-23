@@ -249,4 +249,61 @@ public class WorkTaskDAO extends MyDAO {
             e.printStackTrace();
         }
     }
+    public int getTaskIdByRequestId(int requestId) throws SQLException {
+        String sql = "SELECT taskId FROM WorkTask WHERE requestId = ?";
+        try (
+            PreparedStatement ps = con.prepareStatement(sql)
+        ) {
+            ps.setInt(1, requestId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("taskId");
+                }
+            }
+        }
+        return -1; // không tìm thấy task tương ứng
+    }
+    public int createWorkTask(WorkTask task) throws SQLException {
+    String sql = "INSERT INTO WorkTask (requestId, scheduleId, technicianId, taskType, taskDetails, startDate, endDate, status) "
+               + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        if (task.getRequestId() != null) {
+            ps.setInt(1, task.getRequestId());
+        } else {
+            ps.setNull(1, Types.INTEGER);
+        }
+
+        if (task.getScheduleId() != null) {
+            ps.setInt(2, task.getScheduleId());
+        } else {
+            ps.setNull(2, Types.INTEGER);
+        }
+
+        ps.setInt(3, task.getTechnicianId());
+        ps.setString(4, task.getTaskType());
+        ps.setString(5, task.getTaskDetails());
+        ps.setDate(6, Date.valueOf(task.getStartDate()));
+        ps.setDate(7, Date.valueOf(task.getEndDate()));
+        ps.setString(8, task.getStatus());
+
+        int affected = ps.executeUpdate();
+        if (affected > 0) {
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+    }
+    return -1;
+}
+public boolean deleteTaskById(int taskId) throws SQLException {
+    String sql = "DELETE FROM WorkTask WHERE taskId = ?";
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, taskId);
+        int affected = ps.executeUpdate();
+        return affected > 0;
+    }
+}
+
 }

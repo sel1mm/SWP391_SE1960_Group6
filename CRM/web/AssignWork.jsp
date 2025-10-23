@@ -33,17 +33,22 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            z-index: 1000;
-            transition: all 0.3s;
-        }
+       /* SIDEBAR STYLES */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 260px;
+                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+                padding: 0;
+                transition: all 0.3s ease;
+                z-index: 1000;
+                box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+                display: flex;
+                flex-direction: column;
+            }
+
         
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8);
@@ -259,7 +264,8 @@
     <!-- Sidebar -->
     <nav class="sidebar">
         <div class="p-4">
-            <h4><i class="fas fa-tools me-2"></i>Technical Manager</h4>
+            <h4 style="color: white;"><i class="fas fa-tools me-2"></i>Technical Manager</h4>
+
             <hr class="text-white">
         </div>
         <ul class="nav flex-column">
@@ -380,9 +386,9 @@
                                         <label for="priority" class="form-label">Độ Ưu Tiên</label>
                                         <select class="form-select" id="priority" name="priority" required>
                                             <option value="Low">Thấp</option>
-                                            <option value="Medium" selected>Trung Bình</option>
+                                            <option value="Normal" selected>Trung Bình</option>
                                             <option value="High">Cao</option>
-                                            <option value="Critical">Khẩn Cấp</option>
+                                            <option value="Urgent">Khẩn Cấp</option>
                                         </select>
                                     </div>
                                 </div>
@@ -411,6 +417,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Tình Trạng Kỹ Thuật Viên</h5>
+                            
                         </div>
                         <div class="card-body">
                             <c:forEach var="technician" items="${availableTechnicians}">
@@ -546,11 +553,11 @@
                             '<td>#' + assignment.taskId + '</td>' +
                             '<td>KTV #' + assignment.assignedTo + '</td>' +
                             '<td>' + assignment.assignmentDate + '</td>' +
-                            '<td>' + assignment.estimatedDuration + 'h</td>' +
+                            '<td>' +  parseFloat(assignment.estimatedDuration).toFixed(2) + 'h</td>' +
                             '<td>' +
-                                '<span class="badge ' + getPriorityClass(assignment.priorityLevel) + '">' +
-                                    assignment.priorityLevel +
-                                '</span>' +
+                                '<span class="badge ' + getPriorityClass(assignment.priority) + '">' +
+                                assignment.priority +
+                            '</span>' +
                             '</td>' +
                             '<td>' +
                                 '<span class="badge ' + (assignment.accepted ? 'bg-success' : 'bg-warning') + '">' +
@@ -612,9 +619,9 @@
         // Helper functions
         function getPriorityClass(priority) {
             switch(priority) {
-                case 'Critical': return 'bg-danger';
+                case 'Urgent': return 'bg-danger';
                 case 'High': return 'bg-warning';
-                case 'Medium': return 'bg-info';
+                case 'Normal': return 'bg-info';
                 default: return 'bg-secondary';
             }
         }
