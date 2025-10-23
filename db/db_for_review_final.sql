@@ -446,7 +446,7 @@ NOT NULL DEFAULT 'Service';
 -- Step 1: Drop the UNIQUE constraint on requestId
 -- First, find the constraint name (it might be auto-generated)
 -- We'll use a more generic approach that works regardless of constraint name
-ALTER TABLE RequestApproval DROP INDEX requestId;
+-- ALTER TABLE RequestApproval DROP INDEX requestId;
 
 -- Step 2: Modify approvedBy to be nullable
 ALTER TABLE RequestApproval 
@@ -1372,16 +1372,16 @@ INSERT INTO ContractEquipment (contractEquipmentId, contractId, equipmentId, sta
 INSERT INTO ServiceRequest (requestId, contractId, equipmentId, createdBy, description, priorityLevel, requestDate, status, requestType) VALUES 
 
 -- PENDING REQUESTS (for approval testing)
-(1, 1, 1, 4, 'Máy lạnh không mát, tiếng ồn lớn khi hoạt động', 'Urgent', '2024-12-01', 'Pending', 'Service'),
-(2, 1, 2, 4, 'Máy lạnh chảy nước, có mùi khó chịu', 'High', '2024-12-02', 'Pending', 'Service'),
-(3, 2, 5, 5, 'Máy bơm không hoạt động, có tiếng kêu lạ', 'Normal', '2024-12-03', 'Pending', 'Warranty'),
-(4, 3, 7, 6, 'Tủ điện bị nóng, cầu dao tự ngắt', 'Urgent', '2024-12-04', 'Pending', 'Service'),
-(5, 2, 6, 5, 'Máy bơm công nghiệp giảm áp suất', 'High', '2024-12-05', 'Pending', 'Warranty'),
-(6, 4, 9, 7, 'Hệ thống HVAC không đạt nhiệt độ', 'Normal', '2024-12-06', 'Pending', 'Warranty'),
-(7, 3, 8, 6, 'Biến tần báo lỗi E001', 'High', '2024-12-07', 'Pending', 'Service'),
-(8, 5, 3, 4, 'Máy lạnh phòng làm việc không khởi động', 'Normal', '2024-12-08', 'Pending', 'Service'),
-(9, 4, 10, 7, 'Máy lạnh công nghiệp rò gas', 'Urgent', '2024-12-09', 'Pending', 'Warranty'),
-(10, 5, 4, 4, 'Máy lạnh phòng khách có mùi cháy', 'Urgent', '2024-12-10', 'Pending', 'Service'),
+(1, 1, 1, 4, 'Máy lạnh không mát, tiếng ồn lớn khi hoạt động', 'Urgent', '2024-12-01', 'Awaiting Approval', 'Service'),
+(2, 1, 2, 4, 'Máy lạnh chảy nước, có mùi khó chịu', 'High', '2024-12-02', 'Awaiting Approval', 'Service'),
+(3, 2, 5, 5, 'Máy bơm không hoạt động, có tiếng kêu lạ', 'Normal', '2024-12-03', 'Awaiting Approval', 'Warranty'),
+(4, 3, 7, 6, 'Tủ điện bị nóng, cầu dao tự ngắt', 'Urgent', '2024-12-04', 'Awaiting Approval', 'Service'),
+(5, 2, 6, 5, 'Máy bơm công nghiệp giảm áp suất', 'High', '2024-12-05', 'Awaiting Approval', 'Warranty'),
+(6, 4, 9, 7, 'Hệ thống HVAC không đạt nhiệt độ', 'Normal', '2024-12-06', 'Awaiting Approval', 'Warranty'),
+(7, 3, 8, 6, 'Biến tần báo lỗi E001', 'High', '2024-12-07', 'Awaiting Approval', 'Service'),
+(8, 5, 3, 4, 'Máy lạnh phòng làm việc không khởi động', 'Normal', '2024-12-08', 'Awaiting Approval', 'Service'),
+(9, 4, 10, 7, 'Máy lạnh công nghiệp rò gas', 'Urgent', '2024-12-09', 'Awaiting Approval', 'Warranty'),
+(10, 5, 4, 4, 'Máy lạnh phòng khách có mùi cháy', 'Urgent', '2024-12-10', 'Awaiting Approval', 'Service'),
 
 -- APPROVED REQUESTS (for history testing)
 (11, 1, 1, 4, 'Bảo trì định kỳ máy lạnh phòng khách', 'Normal', '2024-11-25', 'Approved', 'Service'),
@@ -1396,10 +1396,10 @@ INSERT INTO ServiceRequest (requestId, contractId, equipmentId, createdBy, descr
 (18, 4, 10, 7, 'Thay thế máy lạnh công nghiệp', 'Low', '2024-11-22', 'Rejected', 'Warranty'),
 
 -- TODAY'S REQUESTS (for dashboard statistics)
-(19, 1, 1, 4, 'Kiểm tra máy lạnh sau sửa chữa', 'Normal', CURDATE(), 'Pending', 'Service'),
-(20, 2, 5, 5, 'Máy bơm có tiếng động lạ', 'High', CURDATE(), 'Pending', 'Warranty'),
-(21, 3, 7, 6, 'Tủ điện báo cảnh báo', 'Urgent', CURDATE(), 'Pending', 'Service'),
-(22, 5, 4, 4, 'Máy lạnh không tự động tắt', 'Normal', CURDATE(), 'Approved', 'Service');
+(19, 1, 1, 4, 'Kiểm tra máy lạnh sau sửa chữa', 'Normal', CURDATE(), 'Awaiting Approval', 'Service'),
+(20, 2, 5, 5, 'Máy bơm có tiếng động lạ', 'High', CURDATE(), 'Awaiting Approval', 'Warranty'),
+(21, 3, 7, 6, 'Tủ điện báo cảnh báo', 'Urgent', CURDATE(), 'Awaiting Approval', 'Service'),
+(22, 5, 4, 4, 'Máy lạnh không tự động tắt', 'Normal', CURDATE(), 'Awaiting Approval', 'Service');
 
 -- ====================================================================
 -- 5. REQUEST APPROVALS (for approved/rejected requests)
@@ -1423,23 +1423,23 @@ INSERT INTO RequestApproval (approvalId, requestId, approvedBy, approvalDate, de
 -- 6. MAINTENANCE SCHEDULES (for scheduling testing)
 -- ====================================================================
 
-INSERT INTO MaintenanceSchedule (scheduleId, requestId, contractId, equipmentId, assignedTo, scheduledDate, scheduleType, recurrenceRule, status, priorityId) VALUES 
+-- INSERT INTO MaintenanceSchedule (scheduleId, requestId, contractId, equipmentId, assignedTo, scheduledDate, scheduleType, recurrenceRule, status, priorityId) VALUES 
 -- Scheduled from approved requests
-(1, 11, 1, 1, 8, '2024-12-15', 'Request', NULL, 'Scheduled', 2),
-(2, 12, 2, 5, 9, '2024-12-16', 'Request', NULL, 'Scheduled', 2),
-(3, 13, 3, 7, 10, '2024-12-17', 'Request', NULL, 'Scheduled', 2),
-(4, 14, 4, 9, 11, '2024-12-18', 'Request', NULL, 'Scheduled', 2),
-(5, 15, 1, 2, 8, '2024-12-19', 'Request', NULL, 'Scheduled', 1),
+-- (1, 11, 1, 1, 8, '2024-12-15', 'Request', NULL, 'Scheduled', 2),
+-- (2, 12, 2, 5, 9, '2024-12-16', 'Request', NULL, 'Scheduled', 2),
+-- (3, 13, 3, 7, 10, '2024-12-17', 'Request', NULL, 'Scheduled', 2),
+-- (4, 14, 4, 9, 11, '2024-12-18', 'Request', NULL, 'Scheduled', 2),
+-- (5, 15, 1, 2, 8, '2024-12-19', 'Request', NULL, 'Scheduled', 1),
 
 -- Periodic maintenance schedules
-(6, NULL, 1, 1, 8, '2025-01-15', 'Periodic', 'MONTHLY', 'Scheduled', 2),
-(7, NULL, 2, 5, 9, '2025-01-20', 'Periodic', 'QUARTERLY', 'Scheduled', 2),
-(8, NULL, 3, 7, 10, '2025-02-15', 'Periodic', 'MONTHLY', 'Scheduled', 2),
-(9, NULL, 4, 9, 11, '2025-03-01', 'Periodic', 'QUARTERLY', 'Scheduled', 2),
+-- (6, NULL, 1, 1, 8, '2025-01-15', 'Periodic', 'MONTHLY', 'Scheduled', 2),
+-- (7, NULL, 2, 5, 9, '2025-01-20', 'Periodic', 'QUARTERLY', 'Scheduled', 2),
+-- (8, NULL, 3, 7, 10, '2025-02-15', 'Periodic', 'MONTHLY', 'Scheduled', 2),
+-- (9, NULL, 4, 9, 11, '2025-03-01', 'Periodic', 'QUARTERLY', 'Scheduled', 2),
 
 -- Completed schedules
-(10, NULL, 1, 2, 8, '2024-11-15', 'Periodic', 'MONTHLY', 'Completed', 2),
-(11, NULL, 2, 6, 9, '2024-11-20', 'Periodic', 'QUARTERLY', 'Completed', 2);
+-- (10, NULL, 1, 2, 8, '2024-11-15', 'Periodic', 'MONTHLY', 'Completed', 2),
+-- (11, NULL, 2, 6, 9, '2024-11-20', 'Periodic', 'QUARTERLY', 'Completed', 2);
 
 -- ====================================================================
 -- 7. WORK TASKS (for assignment testing)
