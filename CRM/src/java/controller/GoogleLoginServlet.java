@@ -3,6 +3,7 @@ package controller;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import constant.Iconstant;
+import constant.MessageConstant;
 import model.GoogleAccount;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
@@ -71,9 +72,23 @@ public class GoogleLoginServlet extends HttpServlet {
         if (roleService.isAdmin(existingAccount.getAccountId())) {
             session.setAttribute("session_role", "admin");
             response.sendRedirect("admin.jsp"); 
-        } else {
+        } else if (roleService.isTechnicalManager(existingAccount.getAccountId())) {
+            session.setAttribute("session_role", "Technical Manager");
+            response.sendRedirect("technicalManagerApproval");
+        } else if (roleService.isCustomerSupportStaff(existingAccount.getAccountId())) {
+            session.setAttribute("session_role", "customer support staff");
+            response.sendRedirect("dashboard.jsp");
+        } else if (roleService.isStorekeeper(existingAccount.getAccountId())) {
+            session.setAttribute("session_role", "Storekeeper");
+            response.sendRedirect(MessageConstant.STOREKEEPER_URL);
+        } else if (roleService.isTechnician(existingAccount.getAccountId())) {
+            session.setAttribute("session_role", "Technician");
+            response.sendRedirect("technician/dashboard");
+        } else if (roleService.isCustomer(existingAccount.getAccountId())) {
             session.setAttribute("session_role", "customer");
-            response.sendRedirect("home.jsp"); 
+            response.sendRedirect("managerServiceRequest");
+        } else {
+            response.sendRedirect("home.jsp");
         }
     }
 }
