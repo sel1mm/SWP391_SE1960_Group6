@@ -266,15 +266,15 @@ public class ContractDAO extends MyDAO {
  
     public List<Contract> getEveryContracts() {
     List<Contract> list = new ArrayList<>();
-    String sql = "SELECT contractId, details FROM Contract"; // lấy details thay cho contractName
+    String sql = "SELECT contractId, details FROM Contract";
 
-    try (PreparedStatement ps = con.prepareStatement(sql);
+    try (PreparedStatement ps = connection.prepareStatement(sql);
          ResultSet rs = ps.executeQuery()) {
 
         while (rs.next()) {
             Contract c = new Contract();
             c.setContractId(rs.getInt("contractId"));
-            c.setDetails(rs.getString("details")); // dùng details
+            c.setDetails(rs.getString("details"));
             list.add(c);
         }
 
@@ -284,6 +284,7 @@ public class ContractDAO extends MyDAO {
 
     return list;
 }
+
 
     /**
      * Get available equipment from inventory for contract creation

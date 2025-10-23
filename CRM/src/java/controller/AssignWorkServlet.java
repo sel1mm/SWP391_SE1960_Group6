@@ -4,7 +4,7 @@ import dal.WorkAssignmentDAO;
 import dal.TechnicianWorkloadDAO;
 import dal.ServiceRequestDAO;
 import dal.TechnicianSkillDAO;
-import dal.WorkJobDAO;
+import dal.WorkTaskDAO;
 import model.WorkAssignment;
 import model.TechnicianWorkload;
 import model.ServiceRequest;
@@ -23,7 +23,9 @@ import java.util.List;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.stream.Collectors;
+import model.WorkTask;
 
 @WebServlet(name = "AssignWorkServlet", urlPatterns = {"/assignWork"})
 public class AssignWorkServlet extends HttpServlet {
@@ -246,39 +248,39 @@ public class AssignWorkServlet extends HttpServlet {
         out.flush();
     }
 
-  private void handleAssignWork(HttpServletRequest request, HttpServletResponse response, int managerId, HttpSession session)
+private void handleAssignWork(HttpServletRequest request, HttpServletResponse response, int managerId, HttpSession session)
         throws ServletException, IOException, SQLException {
 
     try {
-        // Lấy requestId (tên field trong form vẫn là taskId)
+        // ✅ Lấy requestId (từ form assignWork.jsp)
         int requestId = Integer.parseInt(request.getParameter("taskId")); // thực chất là requestId
-
-        // Lấy technicianId và các thông tin khác
         int technicianId = Integer.parseInt(request.getParameter("technicianId"));
         String estimatedDurationStr = request.getParameter("estimatedDuration");
         String requiredSkills = request.getParameter("requiredSkills");
         String priority = request.getParameter("priority");
 
-        // Validate estimatedDuration
+        // Kiểm tra input
         if (estimatedDurationStr == null || estimatedDurationStr.trim().isEmpty()) {
             session.setAttribute("errorMessage", "Estimated duration is required");
             response.sendRedirect(request.getContextPath() + "/assignWork");
             return;
         }
-
         BigDecimal estimatedDuration = new BigDecimal(estimatedDurationStr);
 
-        // ✅ Tra taskId thật từ WorkJob dựa theo requestId
-        WorkJobDAO workJobDAO = new WorkJobDAO();
-        int taskId = workJobDAO.getTaskIdByRequestId(requestId);
+        // DAO
+        WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+        WorkAssignmentDAO workAssignmentDAO = new WorkAssignmentDAO();
+        TechnicianWorkloadDAO technicianWorkloadDAO = new TechnicianWorkloadDAO();
 
-        if (taskId == -1) {
-            session.setAttribute("errorMessage", "Không tìm thấy công việc tương ứng với yêu cầu #" + requestId);
+        // 0️⃣ Kiểm tra requestId đã được phân công chưa
+        int existingTaskId = workTaskDAO.getTaskIdByRequestId(requestId);
+        if (existingTaskId != -1) {
+            session.setAttribute("errorMessage", "Yêu cầu #" + requestId + " đã được phân công trước đó");
             response.sendRedirect(request.getContextPath() + "/assignWork");
             return;
         }
 
-        // ✅ Kiểm tra tải công việc của technician
+        // 1️⃣ Kiểm tra kỹ thuật viên còn capacity không
         TechnicianWorkload workload = technicianWorkloadDAO.getWorkloadByTechnician(technicianId);
         if (workload != null && workload.getAvailableCapacity() <= 0) {
             session.setAttribute("errorMessage", "Selected technician has no available capacity");
@@ -286,9 +288,27 @@ public class AssignWorkServlet extends HttpServlet {
             return;
         }
 
-        // ✅ Tạo đối tượng WorkAssignment
+        // 2️⃣ Tạo mới task trong WorkTask (liên kết với requestId)
+        WorkTask task = new WorkTask();
+        task.setRequestId(requestId);
+        task.setScheduleId(null); // vì là từ request
+        task.setTechnicianId(technicianId);
+        task.setTaskType("Request");
+        task.setTaskDetails("Task generated from approved service request #" + requestId);
+        task.setStartDate(LocalDate.now());
+        task.setEndDate(LocalDate.now().plusDays(3)); // tạm ví dụ
+        task.setStatus("Assigned");
+
+        int taskId = workTaskDAO.createWorkTask(task);
+        if (taskId <= 0) {
+            session.setAttribute("errorMessage", "Không thể tạo WorkTask cho yêu cầu #" + requestId);
+            response.sendRedirect(request.getContextPath() + "/assignWork");
+            return;
+        }
+
+        // 3️⃣ Tạo bản ghi WorkAssignment
         WorkAssignment assignment = new WorkAssignment();
-        assignment.setTaskId(taskId); // taskId thật
+        assignment.setTaskId(taskId);
         assignment.setAssignedBy(managerId);
         assignment.setAssignedTo(technicianId);
         assignment.setAssignmentDate(LocalDateTime.now());
@@ -297,15 +317,13 @@ public class AssignWorkServlet extends HttpServlet {
         assignment.setPriority(priority != null ? priority : "Normal");
         assignment.setAcceptedByTechnician(false);
 
-        // ✅ Insert vào DB
         int assignmentId = workAssignmentDAO.createWorkAssignment(assignment);
-
         if (assignmentId > 0) {
-            // Cập nhật workload cho technician
+            // ✅ Cập nhật workload cho technician
             technicianWorkloadDAO.incrementActiveTasks(technicianId);
             session.setAttribute("successMessage", "Work assigned successfully to technician");
         } else {
-session.setAttribute("errorMessage", "Failed to assign work. Please try again.");
+            session.setAttribute("errorMessage", "Failed to assign work. Please try again.");
         }
 
     } catch (NumberFormatException e) {
@@ -315,9 +333,11 @@ session.setAttribute("errorMessage", "Failed to assign work. Please try again.")
         session.setAttribute("errorMessage", "An error occurred while assigning work: " + e.getMessage());
     }
 
-    // ✅ Dù thành công hay thất bại, luôn quay về trang assignWork
+    // Luôn redirect về trang assignWork
     response.sendRedirect(request.getContextPath() + "/assignWork");
 }
+
+
 
     private void handleUpdateAssignment(HttpServletRequest request, HttpServletResponse response, int managerId)
             throws ServletException, IOException, SQLException {
@@ -343,36 +363,45 @@ session.setAttribute("errorMessage", "Failed to assign work. Please try again.")
         }
     }
 
-    private void handleDeleteAssignment(HttpServletRequest request, HttpServletResponse response, int managerId)
-            throws ServletException, IOException, SQLException {
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        
-        try {
-            int assignmentId = Integer.parseInt(request.getParameter("assignmentId"));
-            
-            // Get assignment details before deletion to update workload
-            WorkAssignment assignment = workAssignmentDAO.getAssignmentById(assignmentId);
-            
-            boolean success = workAssignmentDAO.deleteAssignment(assignmentId);
-            
-            if (success && assignment != null) {
-                // Decrement technician workload
-                technicianWorkloadDAO.decrementActiveTasks(assignment.getAssignedTo());
-            }
-            
-            PrintWriter out = response.getWriter();
-            out.print("{\"success\":" + success + "}");
-            out.flush();
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            PrintWriter out = response.getWriter();
-            out.print("{\"success\":false,\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
-            out.flush();
+   private void handleDeleteAssignment(HttpServletRequest request, HttpServletResponse response, int managerId)
+        throws ServletException, IOException, SQLException {
+
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+
+    try {
+        int assignmentId = Integer.parseInt(request.getParameter("assignmentId"));
+
+        // 1️⃣ Lấy thông tin assignment trước khi xóa
+        WorkAssignment assignment = workAssignmentDAO.getAssignmentById(assignmentId);
+
+        // 2️⃣ Xóa bản ghi WorkAssignment
+        boolean successAssignment = workAssignmentDAO.deleteAssignment(assignmentId);
+
+        boolean successTask = false; // kết quả xóa WorkTask
+
+        if (successAssignment && assignment != null) {
+            // 3️⃣ Giảm workload của kỹ thuật viên
+            technicianWorkloadDAO.decrementActiveTasks(assignment.getAssignedTo());
+
+            // 4️⃣ Xóa luôn WorkTask liên quan
+            WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+            successTask = workTaskDAO.deleteTaskById(assignment.getTaskId());
         }
+
+        PrintWriter out = response.getWriter();
+        // chỉ báo thành công nếu cả assignment và task đều xóa thành công
+        out.print("{\"success\":" + (successAssignment && successTask) + "}");
+        out.flush();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        PrintWriter out = response.getWriter();
+        out.print("{\"success\":false,\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
+        out.flush();
     }
+}
+
 
     private String escapeJson(String str) {
         if (str == null) return "";

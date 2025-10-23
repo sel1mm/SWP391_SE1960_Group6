@@ -96,11 +96,20 @@ public class UserController extends HttpServlet {
     private void listUsers(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // 👉 Lấy message hoặc error từ query string
+        String message = request.getParameter("message");
+        String error = request.getParameter("error");
+        if (message != null && !message.trim().isEmpty()) {
+            request.setAttribute("message", message);
+        }
+        if (error != null && !error.trim().isEmpty()) {
+            request.setAttribute("error", error);
+        }
+
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
 
         Response<List<Account>> result;
-
         if ((keyword != null && !keyword.trim().isEmpty())
                 || (status != null && !status.trim().isEmpty())) {
             result = accountService.searchAccounts(keyword, status);
@@ -114,6 +123,7 @@ public class UserController extends HttpServlet {
             request.setAttribute("error", result.getMessage());
         }
 
+        // Forward đến trang JSP hiển thị danh sách
         request.getRequestDispatcher("/WEB-INF/views/user/list.jsp").forward(request, response);
     }
 
@@ -163,7 +173,6 @@ public class UserController extends HttpServlet {
         }
     }
 
-    
     private void createUser(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -198,9 +207,8 @@ public class UserController extends HttpServlet {
         } else if (password == null || password.trim().isEmpty()) {
             // 3️⃣ Password không được để trống
             error = "Password is required.";
-        } else if (!password.matches("^(?=.*[A-Za-z])(?=.*\\d).{6,20}$")) {
-            // 4️⃣ Password phải có ít nhất 1 chữ cái, 1 số và độ dài 6–20
-            error = "Password must be 6-20 characters long and include at least one letter and one number.";
+        }else if (!password.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
+            error = "Password must be 6–30 characters and may include letters, numbers, or special characters (!@#$%^&*()_+=-).";
         } else {
             // 5️⃣ Email không trùng
             Response<Boolean> emailExists = accountService.isEmailExists(email);
@@ -231,38 +239,17 @@ public class UserController extends HttpServlet {
             return;
         }
 
-        // ================= TẠO ACCOUNT =================
+// Hash password trước khi lưu vào session để khi xác minh tạo luôn được
         account.setPasswordHash(passwordHasher.hashPassword(password));
-        Response<Account> result = accountService.createAccount(account);
 
-        if (result.isSuccess() && result.getData() != null) {
-            // Assign roles nếu có
-            if (roleIds != null && roleIds.length > 0) {
-                for (String roleIdStr : roleIds) {
-                    try {
-                        int roleId = Integer.parseInt(roleIdStr);
-                        accountRoleService.assignRoleToAccount(result.getData().getAccountId(), roleId);
-                    } catch (NumberFormatException e) {
-                        // Bỏ qua ID không hợp lệ
-                    }
-                }
-            }
+// Lưu user tạm và gửi OTP
+        HttpSession session = request.getSession();
+        session.setAttribute("pendingUser", account);
+        utils.OtpHelper.sendOtpToEmail(session, email, "createUser");
+        request.getRequestDispatcher("/verifyOtp.jsp").forward(request, response);
+        return;
 
-            response.sendRedirect(request.getContextPath() + "/user/list?message="
-                    + java.net.URLEncoder.encode("User created successfully", "UTF-8"));
-        } else {
-            request.setAttribute("error", result.getMessage());
-            request.setAttribute("user", account);
-
-            Response<List<model.Role>> rolesResult = roleService.getAllRoles();
-            if (rolesResult.isSuccess()) {
-                request.setAttribute("roles", rolesResult.getData());
-            }
-
-            request.getRequestDispatcher("/WEB-INF/views/user/create.jsp").forward(request, response);
-        }
     }
-
     private void updateUser(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String idParam = request.getParameter("id");
@@ -279,7 +266,6 @@ public class UserController extends HttpServlet {
             String phone = request.getParameter("phone");
             String status = request.getParameter("status");
 
-            // Giữ lại thông tin nhập
             Account account = new Account();
             account.setAccountId(userId);
             account.setUsername(username);
@@ -288,55 +274,39 @@ public class UserController extends HttpServlet {
             account.setPhone(phone);
             account.setStatus(status);
 
+            // ✅ VALIDATE CƠ BẢN
             String error = null;
-
-            // 1️⃣ Full name không được chứa số
             if (fullName == null || fullName.trim().isEmpty()) {
                 error = "Full name is required.";
             } else if (!fullName.matches("^[a-zA-ZÀ-ỹ\\s]+$")) {
                 error = "Full name must not contain numbers or special characters.";
             } else if (phone == null || phone.trim().isEmpty()) {
                 error = "Phone is required.";
-            }// 2️⃣ Số điện thoại chỉ được chứa số (và độ dài hợp lý)
-            else if (phone != null && !phone.trim().isEmpty() && !phone.matches("^\\d{9,11}$")) {
+            } else if (!phone.matches("^\\d{9,11}$")) {
                 error = "Phone number must contain only digits (9–11 digits).";
             }
 
-            // Nếu có lỗi → quay lại form
             if (error != null) {
                 request.setAttribute("error", error);
                 request.setAttribute("user", account);
-
-                Response<List<model.Role>> rolesResult = roleService.getAllRoles();
-                if (rolesResult.isSuccess()) {
-                    request.setAttribute("roles", rolesResult.getData());
-                }
-
-                request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
-                return;
-            }
-
-            // === VALIDATE ===
-            // 1️⃣ Tên không được chứa số
-            if (fullName != null && !fullName.trim().isEmpty() && fullName.matches(".*\\d.*")) {
-                request.setAttribute("error", "Full name cannot contain numbers.");
-                request.setAttribute("user", account);
                 reloadRolesAndReturn(request, response);
                 return;
             }
 
-            // 2️⃣ Kiểm tra định dạng số điện thoại (chỉ cho phép số)
-            if (phone != null && !phone.trim().isEmpty() && !phone.matches("\\d+")) {
-                request.setAttribute("error", "Phone number must contain only digits.");
-                request.setAttribute("user", account);
-                reloadRolesAndReturn(request, response);
-                return;
-            }
-
-            // 3️⃣ Kiểm tra email trùng (nhưng bỏ qua chính người này)
-            //Response<Boolean> emailExists = accountService.isEmailExists(email.trim());
+            // ✅ LẤY USER CŨ ĐỂ KIỂM TRA EMAIL
             Response<Account> existingAccRes = accountService.getAccountById(userId);
+            Account oldAccount = existingAccRes.getData();
 
+            // 🔹 Nếu email thay đổi → gửi OTP xác minh
+            if (oldAccount != null && !oldAccount.getEmail().trim().equalsIgnoreCase(email.trim())) {
+                HttpSession session = request.getSession();
+                session.setAttribute("pendingUpdateUser", account);
+                utils.OtpHelper.sendOtpToEmail(session, email.trim(), "updateUserEmail");
+                request.getRequestDispatcher("/verifyOtp.jsp").forward(request, response);
+                return;
+            }
+
+            // 🔹 Nếu KHÔNG đổi email → kiểm tra trùng lặp & cập nhật luôn
             Response<Boolean> emailExists = accountService.isEmailExistsForUpdate(email.trim(), userId);
             if (emailExists.isSuccess() && emailExists.getData()) {
                 request.setAttribute("error", "Email already exists.");
@@ -353,9 +323,8 @@ public class UserController extends HttpServlet {
                 return;
             }
 
-            // === Cập nhật tài khoản ===
+            // 🔹 Nếu không đổi email → update luôn
             Response<Account> result = accountService.updateAccount(account);
-
             if (result.isSuccess()) {
                 response.sendRedirect(request.getContextPath() + "/user/list?message="
                         + java.net.URLEncoder.encode("User updated successfully", "UTF-8"));
@@ -369,6 +338,7 @@ public class UserController extends HttpServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
         }
     }
+   
 
     /**
      * Tải lại danh sách role và quay lại form edit.jsp khi có lỗi
@@ -382,61 +352,59 @@ public class UserController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
     }
 
-   private void updatePassword(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+    private void updatePassword(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-    String idParam = request.getParameter("id");
-    String newPassword = request.getParameter("newPassword");
-    String confirmPassword = request.getParameter("confirmPassword");
+        String idParam = request.getParameter("id");
+        String newPassword = request.getParameter("newPassword");
+        String confirmPassword = request.getParameter("confirmPassword");
 
-    if (idParam == null || idParam.trim().isEmpty()) {
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID is required");
-        return;
+        if (idParam == null || idParam.trim().isEmpty()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID is required");
+            return;
+        }
+
+        int userId;
+        try {
+            userId = Integer.parseInt(idParam);
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
+            return;
+        }
+
+        // ===== VALIDATION =====
+        String error = null;
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            error = "New password is required.";
+        }else if (!newPassword.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
+            error = "Password must be 6–30 characters and may include letters, numbers, or special characters (!@#$%^&*()_+=-).";
+        }  else if (!newPassword.equals(confirmPassword)) {
+            error = "Passwords do not match.";
+        }
+
+        // Lấy user để hiển thị lại form
+        Response<Account> userResult = accountService.getAccountById(userId);
+        if (userResult.isSuccess() && userResult.getData() != null) {
+            request.setAttribute("user", userResult.getData());
+        }
+
+        if (error != null) {
+            request.setAttribute("error", error);
+            request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+            return;
+        }
+
+        // ===== CẬP NHẬT PASSWORD =====
+        Response<Account> result = accountService.updatePassword(userId, newPassword);
+
+        if (result.isSuccess()) {
+            request.setAttribute("message", "Password updated successfully!");
+            request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+        } else {
+            request.setAttribute("error", result.getMessage());
+            request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+        }
     }
-
-    int userId;
-    try {
-        userId = Integer.parseInt(idParam);
-    } catch (NumberFormatException e) {
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
-        return;
-    }
-
-    // ===== VALIDATION =====
-    String error = null;
-    if (newPassword == null || newPassword.trim().isEmpty()) {
-        error = "New password is required.";
-    } else if (!newPassword.matches("^(?=.*[A-Za-z])(?=.*\\d).{6,20}$")) {
-        error = "Password must be 6-20 characters long and include at least one letter and one number.";
-    } else if (!newPassword.equals(confirmPassword)) {
-        error = "Passwords do not match.";
-    }
-
-    // Lấy user để hiển thị lại form
-    Response<Account> userResult = accountService.getAccountById(userId);
-    if (userResult.isSuccess() && userResult.getData() != null) {
-        request.setAttribute("user", userResult.getData());
-    }
-
-    if (error != null) {
-        request.setAttribute("error", error);
-        request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
-        return;
-    }
-
-    // ===== CẬP NHẬT PASSWORD =====
-    Response<Account> result = accountService.updatePassword(userId, newPassword);
-
-    if (result.isSuccess()) {
-        request.setAttribute("message", "Password updated successfully!");
-        request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
-    } else {
-        request.setAttribute("error", result.getMessage());
-        request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
-    }
-}
-
-
 
     private void deleteUser(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -448,15 +416,44 @@ public class UserController extends HttpServlet {
 
         try {
             int userId = Integer.parseInt(idParam);
-            Response<Boolean> result = accountService.deleteAccount(userId);
 
-            if (result.isSuccess()) {
+            // 🔹 Lấy thông tin người dùng đang đăng nhập
+            HttpSession session = request.getSession(false);
+            Account currentLogin = (session != null) ? (Account) session.getAttribute("account") : null;
+
+            // 🔹 Kiểm tra nếu người đang login trùng với userId cần inactive
+            if (currentLogin != null && currentLogin.getAccountId() == userId) {
+                response.sendRedirect(request.getContextPath() + "/user/list?error="
+                        + java.net.URLEncoder.encode("You cannot deactivate your own account.", "UTF-8"));
+                return;
+            }
+
+            // 🔹 Lấy thông tin user mục tiêu
+            Response<Account> userResponse = accountService.getAccountById(userId);
+            if (!userResponse.isSuccess() || userResponse.getData() == null) {
+                response.sendRedirect(request.getContextPath() + "/user/list?error="
+                        + java.net.URLEncoder.encode("User not found", "UTF-8"));
+                return;
+            }
+
+            Account targetUser = userResponse.getData();
+            String newStatus = targetUser.getStatus().equalsIgnoreCase("Active") ? "Inactive" : "Active";
+
+            // 🔹 Cập nhật trạng thái
+            targetUser.setStatus(newStatus);
+            Response<Account> updateResult = accountService.updateAccount(targetUser);
+
+            if (updateResult.isSuccess()) {
+                String message = newStatus.equals("Active")
+                        ? "User activated successfully"
+                        : "User inactivated successfully";
                 response.sendRedirect(request.getContextPath() + "/user/list?message="
-                        + java.net.URLEncoder.encode("User deleted successfully", "UTF-8"));
+                        + java.net.URLEncoder.encode(message, "UTF-8"));
             } else {
                 response.sendRedirect(request.getContextPath() + "/user/list?error="
-                        + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
+                        + java.net.URLEncoder.encode(updateResult.getMessage(), "UTF-8"));
             }
+
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
         }

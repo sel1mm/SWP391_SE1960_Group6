@@ -31,7 +31,7 @@
                 left: 0;
                 height: 100vh;
                 width: 260px;
-                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+                background: #000000;
                 padding: 0;
                 transition: all 0.3s ease;
                 z-index: 1000;

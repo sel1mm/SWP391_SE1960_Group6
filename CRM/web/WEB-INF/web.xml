@@ -79,6 +79,15 @@
         <servlet-name>AssignWorkServlet</servlet-name>
         <servlet-class>controller.AssignWorkServlet</servlet-class>
     </servlet>
+     <servlet>
+        <servlet-name>ScheduleMaintenanceServlet</servlet-name>
+        <servlet-class>controller.ScheduleMaintenanceServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ReviewMaintenanceReportServlet</servlet-name>
+        <servlet-class>controller.ReviewMaintenanceReportServlet</servlet-class>
+    </servlet>
+
     <servlet>
         <servlet-name>AvatarServlet</servlet-name>
         <servlet-class>controller.AvatarServlet</servlet-class>
@@ -159,6 +168,15 @@
         <servlet-name>AssignWorkServlet</servlet-name>
         <url-pattern>/assignWork</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ScheduleMaintenanceServlet</servlet-name>
+        <url-pattern>/scheduleMaintenance</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ReviewMaintenanceReportServlet</servlet-name>
+        <url-pattern>/reviewMaintenanceReport</url-pattern>
+    </servlet-mapping>
+
     <!-- Technician Module Servlets -->
     <servlet>
         <servlet-name>TechnicianTaskServlet</servlet-name>

@@ -14,7 +14,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-                <div class="col-md-2 bg-dark min-vh-100 d-flex flex-column justify-content-between">
+                <div class="col-md-2 min-vh-100 d-flex flex-column justify-content-between" style="background-color: #000000;">
                     <!-- Phần trên của sidebar -->
                     <div class="p-3">
                         <h4 class="text-white">CRM System</h4>

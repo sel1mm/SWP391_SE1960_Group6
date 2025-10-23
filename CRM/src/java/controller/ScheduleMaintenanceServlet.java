@@ -569,4 +569,4 @@ request.setAttribute("equipmentList", equipmentList);
         
         out.flush();
     }
-}
+} 

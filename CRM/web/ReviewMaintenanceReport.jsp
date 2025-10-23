@@ -40,18 +40,22 @@
             padding: 0;
         }
 
-        /* Sidebar Styles */
-        .sidebar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 280px;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-        }
+      /* SIDEBAR STYLES */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 260px;
+                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+                padding: 0;
+                transition: all 0.3s ease;
+                z-index: 1000;
+                box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+                display: flex;
+                flex-direction: column;
+            }
+
 
         .sidebar-header {
             padding: 25px 20px;
@@ -393,7 +397,7 @@
     <!-- Sidebar -->
     <nav class="sidebar">
         <div class="p-4">
-            <h4><i class="fas fa-tools me-2"></i>Technical Manager</h4>
+            <h4 style="color: white;"><i class="fas fa-tools me-2"></i>Technical Manager</h4>
             <hr class="text-white">
         </div>
         <ul class="nav flex-column">

@@ -16,52 +16,39 @@ public class EquipmentDAO extends DBContext {
     /**
      * Get all equipment from inventory (using Part/PartDetail system)
      */
-    public List<Equipment> getAllEquipment() {
-        List<Equipment> list = new ArrayList<>();
-        String sql = "SELECT " +
-                     "    pd.partDetailId as equipmentId, " +
-                     "    pd.serialNumber, " +
-                     "    p.partName as model, " +
-                     "    p.description, " +
-                     "    pd.lastUpdatedDate as installDate, " +
-                     "    pd.lastUpdatedBy, " +
-                     "    pd.lastUpdatedDate, " +
-                     "    pd.status, " +
-                     "    pd.location " +
-                     "FROM PartDetail pd " +
-                     "JOIN Part p ON pd.partId = p.partId " +
-                     "ORDER BY pd.partDetailId DESC";
+ public List<Equipment> getAllEquipment() {
+    List<Equipment> list = new ArrayList<>();
+    String sql = "SELECT equipmentId, serialNumber, model, description, installDate, lastUpdatedBy, lastUpdatedDate " +
+                 "FROM Equipment ORDER BY equipmentId DESC";
 
-        try (PreparedStatement ps = connection.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+    try (PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                Equipment e = new Equipment();
-                e.setEquipmentId(rs.getInt("equipmentId"));
-                e.setSerialNumber(rs.getString("serialNumber"));
-                e.setModel(rs.getString("model"));
-                e.setDescription(rs.getString("description"));
-                e.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
-                
-                Date installDate = rs.getDate("installDate");
-                if (installDate != null) {
-                    e.setInstallDate(installDate.toLocalDate());
-                }
-                
-                Date lastUpdatedDate = rs.getDate("lastUpdatedDate");
-                if (lastUpdatedDate != null) {
-                    e.setLastUpdatedDate(lastUpdatedDate.toLocalDate());
-                }
-                
-                list.add(e);
-            }
+        while (rs.next()) {
+            Equipment e = new Equipment();
+            e.setEquipmentId(rs.getInt("equipmentId"));
+            e.setSerialNumber(rs.getString("serialNumber"));
+            e.setModel(rs.getString("model"));
+            e.setDescription(rs.getString("description"));
+            
+            Date installDate = rs.getDate("installDate");
+            if (installDate != null) e.setInstallDate(installDate.toLocalDate());
 
-        } catch (Exception e) {
-            e.printStackTrace();
+            Date lastUpdatedDate = rs.getDate("lastUpdatedDate");
+            if (lastUpdatedDate != null) e.setLastUpdatedDate(lastUpdatedDate.toLocalDate());
+
+            e.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
+
+            list.add(e);
         }
 
-        return list;
+    } catch (Exception ex) {
+        ex.printStackTrace();
     }
+
+    return list;
+}
+
     
     /**
      * Get equipment with inventory status information

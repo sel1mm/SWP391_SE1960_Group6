@@ -28,7 +28,7 @@ public class RoleController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getPathInfo();
-        
+
         if (action == null) {
             action = "/list";
         }
@@ -55,7 +55,7 @@ public class RoleController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getPathInfo();
-        
+
         if (action == null) {
             action = "/create";
         }
@@ -74,15 +74,26 @@ public class RoleController extends HttpServlet {
 
     private void listRoles(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
+        // Lấy message từ session (nếu có) và xóa sau khi hiển thị
+        String message = (String) request.getSession().getAttribute("flash_message");
+        String error = (String) request.getSession().getAttribute("flash_error");
+        if (message != null) {
+            request.setAttribute("message", message);
+            request.getSession().removeAttribute("flash_message");
+        }
+        if (error != null) {
+            request.setAttribute("error", error);
+            request.getSession().removeAttribute("flash_error");
+        }
+
         Response<List<Role>> result = roleService.getAllRoles();
-        
         if (result.isSuccess()) {
             request.setAttribute("roles", result.getData());
-            request.setAttribute("message", result.getMessage());
         } else {
             request.setAttribute("error", result.getMessage());
         }
-        
+
         request.getRequestDispatcher("/WEB-INF/views/role/list.jsp").forward(request, response);
     }
 
@@ -102,7 +113,7 @@ public class RoleController extends HttpServlet {
         try {
             int roleId = Integer.parseInt(idParam);
             Response<Role> result = roleService.getRoleById(roleId);
-            
+
             if (result.isSuccess() && result.getData() != null) {
                 request.setAttribute("role", result.getData());
                 request.getRequestDispatcher("/WEB-INF/views/role/edit.jsp").forward(request, response);
@@ -123,15 +134,16 @@ public class RoleController extends HttpServlet {
         role.setRoleName(roleName);
 
         Response<Role> result = roleService.createRole(role);
-        
+
         if (result.isSuccess()) {
-            response.sendRedirect(request.getContextPath() + "/role/list?message=" + 
-                java.net.URLEncoder.encode("Role created successfully", "UTF-8"));
+            request.getSession().setAttribute("flash_message", "Role created successfully");
+            response.sendRedirect(request.getContextPath() + "/role/list");
         } else {
             request.setAttribute("error", result.getMessage());
             request.setAttribute("role", role);
             request.getRequestDispatcher("/WEB-INF/views/role/create.jsp").forward(request, response);
         }
+
     }
 
     private void updateRole(HttpServletRequest request, HttpServletResponse response)
@@ -151,14 +163,14 @@ public class RoleController extends HttpServlet {
             role.setRoleName(roleName);
 
             Response<Role> result = roleService.updateRole(role);
-            
+
             if (result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/role/list?message=" + 
-                    java.net.URLEncoder.encode("Role updated successfully", "UTF-8"));
+                request.getSession().setAttribute("flash_message", "Role updated successfully");
+                response.sendRedirect(request.getContextPath() + "/role/list");
             } else {
                 request.setAttribute("error", result.getMessage());
                 request.setAttribute("role", role);
-                request.getRequestDispatcher("/WEB-INF/views/role/edit.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/role/create.jsp").forward(request, response);
             }
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid role ID");
@@ -176,13 +188,13 @@ public class RoleController extends HttpServlet {
         try {
             int roleId = Integer.parseInt(idParam);
             Response<Boolean> result = roleService.deleteRole(roleId);
-            
+
             if (result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/role/list?message=" + 
-                    java.net.URLEncoder.encode("Role deleted successfully", "UTF-8"));
+                request.getSession().setAttribute("flash_message", "Role deleted successfully");
+                response.sendRedirect(request.getContextPath() + "/role/list");
             } else {
-                response.sendRedirect(request.getContextPath() + "/role/list?error=" + 
-                    java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/role/list?error="
+                        + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
             }
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid role ID");
