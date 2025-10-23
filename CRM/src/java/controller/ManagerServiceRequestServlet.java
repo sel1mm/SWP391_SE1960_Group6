@@ -17,7 +17,7 @@ import java.util.List;
 public class ManagerServiceRequestServlet extends HttpServlet {
 
     private ServiceRequestDAO serviceRequestDAO;
-    private static final int PAGE_SIZE = 5; // Số hợp đồng per page
+    private static final int PAGE_SIZE = 10; // Số hợp đồng per page
 
     @Override
     public void init() throws ServletException {
