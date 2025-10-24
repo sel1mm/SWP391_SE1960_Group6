@@ -21,7 +21,7 @@
   <div class="row mb-3 align-items-center">
     <div class="col">
       <h1 class="h4 crm-page-title">Create New Contract</h1>
-      <p class="text-muted">Create a new equipment contract for customer</p>
+      <p class="text-muted">Create a new contract for customer with optional part assignment</p>
     </div>
     <div class="col-auto">
       <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
@@ -57,10 +57,8 @@
               <label for="contractType" class="form-label fw-bold">Contract Type <span class="text-danger">*</span></label>
               <select class="form-select" id="contractType" name="contractType" required>
                 <option value="">Select Type</option>
-                <option value="Equipment Lease">Equipment Lease</option>
+                <option value="Equipment Warranty Return">Equipment Warranty Return</option>
                 <option value="Equipment Purchase">Equipment Purchase</option>
-                <option value="Maintenance Agreement">Maintenance Agreement</option>
-                <option value="Service Contract">Service Contract</option>
               </select>
               <div class="invalid-feedback">Please select a contract type.</div>
             </div>
@@ -98,35 +96,35 @@
           </div>
         </div>
         
-        <!-- Equipment Selection -->
+        <!-- Part Selection -->
         <div class="mb-3">
-          <label for="equipmentId" class="form-label fw-bold">Equipment Assignment (Optional)</label>
-          <select class="form-select" id="equipmentId" name="equipmentId">
-            <option value="">No Equipment Assignment</option>
-            <c:forEach var="equipment" items="${availableEquipment}">
-              <option value="${equipment.equipmentId}" 
-                      data-model="${fn:escapeXml(equipment.model)}"
-                      data-serial="${fn:escapeXml(equipment.serialNumber)}"
-                      data-location="${fn:escapeXml(equipment.location)}"
-                      data-price="${equipment.unitPrice}">
-                ${fn:escapeXml(equipment.model)} - ${fn:escapeXml(equipment.serialNumber)} 
-                <c:if test="${equipment.location != null && !equipment.location.isEmpty()}">
-                  (Location: ${fn:escapeXml(equipment.location)})
+          <label for="partId" class="form-label fw-bold">Part for Repair (Optional)</label>
+          <select class="form-select" id="partId" name="partId">
+            <option value="">No Part Assignment</option>
+            <c:forEach var="part" items="${availableParts}">
+              <option value="${part.equipmentId}" 
+                      data-model="${fn:escapeXml(part.model)}"
+                      data-serial="${fn:escapeXml(part.serialNumber)}"
+                      data-location="${fn:escapeXml(part.location)}"
+                      data-price="${part.unitPrice}">
+                ${fn:escapeXml(part.model)} - ${fn:escapeXml(part.serialNumber)} 
+                <c:if test="${part.location != null && !part.location.isEmpty()}">
+                  (Location: ${fn:escapeXml(part.location)})
                 </c:if>
-                - $${equipment.unitPrice}
+                - $${part.unitPrice}
               </option>
             </c:forEach>
           </select>
           <div class="form-text">
             <i class="bi bi-info-circle me-1"></i>
-            Only available equipment from inventory is shown. Equipment will be marked as "In Use" when assigned to contract.
+            Only available parts from inventory are shown. This is optional.
           </div>
         </div>
         
-        <!-- Equipment Details Preview -->
-        <div id="equipmentPreview" class="card mt-3" style="display: none;">
+        <!-- Part Details Preview -->
+        <div id="partPreview" class="card mt-3" style="display: none;">
           <div class="card-header">
-            <h6 class="mb-0"><i class="bi bi-gear me-1"></i>Selected Equipment Details</h6>
+            <h6 class="mb-0"><i class="bi bi-gear me-1"></i>Selected Part Details</h6>
           </div>
           <div class="card-body">
             <div class="row">
@@ -180,28 +178,33 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('contractForm');
     const contractDateInput = document.getElementById('contractDate');
-    const equipmentSelect = document.getElementById('equipmentId');
-    const equipmentPreview = document.getElementById('equipmentPreview');
+    const partSelect = document.getElementById('partId');
+    const partPreview = document.getElementById('partPreview');
     
     // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
     contractDateInput.min = today;
     
-    // Handle equipment selection preview
-    equipmentSelect.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
+    // Handle part selection preview
+    function updatePreview(selectElement, previewElement) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
         
-        if (this.value && selectedOption.dataset.model) {
-            // Show equipment preview
+        if (selectElement.value && selectedOption.dataset.model) {
+            // Show preview
             document.getElementById('previewModel').textContent = selectedOption.dataset.model;
             document.getElementById('previewSerial').textContent = selectedOption.dataset.serial;
             document.getElementById('previewLocation').textContent = selectedOption.dataset.location || 'Not specified';
             document.getElementById('previewPrice').textContent = '$' + parseFloat(selectedOption.dataset.price).toFixed(2);
-            equipmentPreview.style.display = 'block';
+            previewElement.style.display = 'block';
         } else {
-            // Hide equipment preview
-            equipmentPreview.style.display = 'none';
+            // Hide preview
+            previewElement.style.display = 'none';
         }
+    }
+    
+    // Handle part selection
+    partSelect.addEventListener('change', function() {
+        updatePreview(this, partPreview);
     });
     
     form.addEventListener('submit', function(e) {

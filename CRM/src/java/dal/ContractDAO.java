@@ -107,6 +107,33 @@ public class ContractDAO extends MyDAO {
         return customers;
     }
 
+    /**
+     * Get customers assigned to technician via WorkTask
+     */
+    public List<Customer> getCustomersAssignedToTechnician(int technicianId) throws SQLException {
+        List<Customer> customers = new ArrayList<>();
+        String sql = "SELECT DISTINCT a.accountId, a.fullName, a.email " +
+                     "FROM Account a " +
+                     "JOIN ServiceRequest sr ON a.accountId = sr.createdBy " +
+                     "JOIN WorkTask wt ON sr.requestId = wt.requestId " +
+                     "WHERE wt.technicianId = ? " +
+                     "ORDER BY a.fullName";
+        
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, technicianId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Customer customer = new Customer();
+                    customer.accountId = rs.getInt("accountId");
+                    customer.fullName = rs.getString("fullName");
+                    customer.email = rs.getString("email");
+                    customers.add(customer);
+                }
+            }
+        }
+        return customers;
+    }
+
     public List<ContractWithCustomer> getAllContracts() throws SQLException {
         List<ContractWithCustomer> contracts = new ArrayList<>();
         xSql = "SELECT c.contractId, c.customerId, c.contractDate, c.contractType, c.status, c.details, " +
@@ -266,15 +293,15 @@ public class ContractDAO extends MyDAO {
  
     public List<Contract> getEveryContracts() {
     List<Contract> list = new ArrayList<>();
-    String sql = "SELECT contractId, details FROM Contract";
+    String sql = "SELECT contractId, details FROM Contract"; // lấy details thay cho contractName
 
-    try (PreparedStatement ps = connection.prepareStatement(sql);
+    try (PreparedStatement ps = con.prepareStatement(sql);
          ResultSet rs = ps.executeQuery()) {
 
         while (rs.next()) {
             Contract c = new Contract();
             c.setContractId(rs.getInt("contractId"));
-            c.setDetails(rs.getString("details"));
+            c.setDetails(rs.getString("details")); // dùng details
             list.add(c);
         }
 
@@ -285,12 +312,11 @@ public class ContractDAO extends MyDAO {
     return list;
 }
 
-
     /**
-     * Get available equipment from inventory for contract creation
+     * Get available parts from PartDetail table for contract creation
      */
-    public List<EquipmentWithStatus> getAvailableEquipment() throws SQLException {
-        List<EquipmentWithStatus> equipmentList = new ArrayList<>();
+    public List<EquipmentWithStatus> getAvailableParts() throws SQLException {
+        List<EquipmentWithStatus> partsList = new ArrayList<>();
         String sql = "SELECT " +
                      "    pd.partDetailId as equipmentId, " +
                      "    pd.serialNumber, " +
@@ -311,15 +337,316 @@ public class ContractDAO extends MyDAO {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
+                EquipmentWithStatus part = new EquipmentWithStatus();
+                part.setEquipmentId(rs.getInt("equipmentId"));
+                part.setSerialNumber(rs.getString("serialNumber"));
+                part.setModel(rs.getString("model"));
+                part.setDescription(rs.getString("description"));
+                part.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
+                part.setStatus(rs.getString("status"));
+                part.setLocation(rs.getString("location"));
+                part.setUnitPrice(rs.getDouble("unitPrice"));
+                
+                Date installDate = rs.getDate("installDate");
+                if (installDate != null) {
+                    part.setInstallDate(installDate.toLocalDate());
+                }
+                
+                Date lastUpdatedDate = rs.getDate("lastUpdatedDate");
+                if (lastUpdatedDate != null) {
+                    part.setLastUpdatedDate(lastUpdatedDate.toLocalDate());
+                }
+                
+                partsList.add(part);
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error getting available parts: " + e.getMessage());
+            throw e;
+        }
+        
+        return partsList;
+    }
+
+    /**
+     * Validate if part is available for contract
+     */
+    public boolean isPartAvailable(int partDetailId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM PartDetail WHERE partDetailId = ? AND status = 'Available'";
+        
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, partDetailId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error checking part availability: " + e.getMessage());
+            throw e;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Create contract with part assignment (creates Equipment entry from PartDetail)
+     */
+    public long createContractWithPart(int customerId, java.sql.Date contractDate, String contractType, 
+                                     String status, String details, int partDetailId) throws SQLException {
+        con.setAutoCommit(false);
+        
+        try {
+            // 1. Create the contract
+            String contractSql = "INSERT INTO Contract (customerId, contractDate, contractType, status, details) " +
+                                "VALUES (?, ?, ?, ?, ?)";
+            
+            long contractId = 0;
+            try (PreparedStatement ps = con.prepareStatement(contractSql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setInt(1, customerId);
+                ps.setDate(2, contractDate);
+                ps.setString(3, contractType);
+                ps.setString(4, status);
+                ps.setString(5, details);
+                
+                int affected = ps.executeUpdate();
+                if (affected > 0) {
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            contractId = rs.getLong(1);
+                        }
+                    }
+                }
+            }
+            
+            if (contractId > 0 && partDetailId > 0) {
+                // 2. Get part details
+                String selectPartSql = "SELECT pd.serialNumber, p.partName, p.description, p.unitPrice " +
+                                       "FROM PartDetail pd JOIN Part p ON pd.partId = p.partId WHERE pd.partDetailId = ?";
+                String serialNumber = null;
+                String partName = null;
+                String description = null;
+                double unitPrice = 0.0;
+                
+                try (PreparedStatement ps = con.prepareStatement(selectPartSql)) {
+                    ps.setInt(1, partDetailId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            serialNumber = rs.getString("serialNumber");
+                            partName = rs.getString("partName");
+                            description = rs.getString("description");
+                            unitPrice = rs.getDouble("unitPrice");
+                        }
+                    }
+                }
+
+                if (serialNumber == null) {
+                    throw new SQLException("Part details not found for partDetailId=" + partDetailId);
+                }
+
+                // 3. Create Equipment entry from PartDetail
+                String insertEquipmentSql = "INSERT INTO Equipment (serialNumber, model, description, installDate, lastUpdatedBy, lastUpdatedDate) " +
+                                           "VALUES (?, ?, ?, ?, ?, ?)";
+                int equipmentId = 0;
+                try (PreparedStatement ps = con.prepareStatement(insertEquipmentSql, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, serialNumber);
+                    ps.setString(2, partName);
+                    ps.setString(3, description);
+                    ps.setDate(4, contractDate);
+                    ps.setInt(5, customerId);
+                    ps.setDate(6, contractDate);
+                    
+                    int affected = ps.executeUpdate();
+                    if (affected > 0) {
+                        try (ResultSet rs = ps.getGeneratedKeys()) {
+                            if (rs.next()) {
+                                equipmentId = rs.getInt(1);
+                            }
+                        }
+                    }
+                }
+
+                // 4. Create ContractEquipment relationship
+                String contractEquipmentSql = "INSERT INTO ContractEquipment (contractId, equipmentId, startDate, quantity, price) " +
+                                              "VALUES (?, ?, ?, 1, ?)";
+                try (PreparedStatement ps = con.prepareStatement(contractEquipmentSql)) {
+                    ps.setLong(1, contractId);
+                    ps.setInt(2, equipmentId);
+                    ps.setDate(3, contractDate);
+                    ps.setBigDecimal(4, java.math.BigDecimal.valueOf(unitPrice));
+                    ps.executeUpdate();
+                }
+
+                // 5. Update PartDetail status to InUse
+                String updatePartSql = "UPDATE PartDetail SET status = 'InUse', lastUpdatedDate = ? WHERE partDetailId = ?";
+                try (PreparedStatement ps = con.prepareStatement(updatePartSql)) {
+                    ps.setDate(1, contractDate);
+                    ps.setInt(2, partDetailId);
+                    ps.executeUpdate();
+                }
+            }
+            
+            con.commit();
+            return contractId;
+            
+        } catch (SQLException e) {
+            con.rollback();
+            System.out.println("❌ Error creating contract with part: " + e.getMessage());
+            throw e;
+        } finally {
+            con.setAutoCommit(true);
+        }
+    }
+
+    /**
+     * Simple test method to get all equipment (for debugging)
+     */
+    public List<EquipmentWithStatus> getAllEquipment() throws SQLException {
+        List<EquipmentWithStatus> equipmentList = new ArrayList<>();
+        String sql = "SELECT equipmentId, serialNumber, model, description, installDate, lastUpdatedBy, lastUpdatedDate FROM Equipment ORDER BY equipmentId";
+
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
                 EquipmentWithStatus equipment = new EquipmentWithStatus();
                 equipment.setEquipmentId(rs.getInt("equipmentId"));
                 equipment.setSerialNumber(rs.getString("serialNumber"));
                 equipment.setModel(rs.getString("model"));
                 equipment.setDescription(rs.getString("description"));
                 equipment.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
-                equipment.setStatus(rs.getString("status"));
-                equipment.setLocation(rs.getString("location"));
-                equipment.setUnitPrice(rs.getDouble("unitPrice"));
+                equipment.setStatus("Test"); // Test status
+                equipment.setLocation("Test Location"); // Test location
+                equipment.setUnitPrice(0.0);
+                
+                Date installDate = rs.getDate("installDate");
+                if (installDate != null) {
+                    equipment.setInstallDate(installDate.toLocalDate());
+                }
+                
+                Date lastUpdatedDate = rs.getDate("lastUpdatedDate");
+                if (lastUpdatedDate != null) {
+                    equipment.setLastUpdatedDate(lastUpdatedDate.toLocalDate());
+                }
+                
+                equipmentList.add(equipment);
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error getting all equipment: " + e.getMessage());
+            throw e;
+        }
+        
+        System.out.println("📊 getAllEquipment() returning " + equipmentList.size() + " equipment items");
+        return equipmentList;
+    }
+
+    /**
+     * Debug method to test equipment query
+     */
+    public void debugEquipmentQuery() throws SQLException {
+        System.out.println("🔍 Debugging Equipment Query...");
+        
+        // Test 1: Check database connection
+        if (con == null) {
+            System.out.println("❌ Database connection is NULL!");
+            return;
+        }
+        System.out.println("✅ Database connection is active");
+        
+        // Test 2: Count total equipment
+        String countSql = "SELECT COUNT(*) FROM Equipment";
+        try (PreparedStatement ps = con.prepareStatement(countSql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                System.out.println("📊 Total Equipment in database: " + rs.getInt(1));
+            }
+        }
+        
+        // Test 3: Show all equipment
+        String allEquipmentSql = "SELECT equipmentId, serialNumber, model FROM Equipment ORDER BY equipmentId";
+        try (PreparedStatement ps = con.prepareStatement(allEquipmentSql);
+             ResultSet rs = ps.executeQuery()) {
+            System.out.println("📊 All Equipment in database:");
+            while (rs.next()) {
+                System.out.println("  ID: " + rs.getInt("equipmentId") + 
+                                 ", Serial: " + rs.getString("serialNumber") + 
+                                 ", Model: " + rs.getString("model"));
+            }
+        }
+        
+        // Test 4: Count assigned equipment
+        String assignedSql = "SELECT COUNT(*) FROM ContractEquipment";
+        try (PreparedStatement ps = con.prepareStatement(assignedSql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                System.out.println("📊 Equipment assigned to contracts: " + rs.getInt(1));
+            }
+        }
+        
+        // Test 5: Show assigned equipment
+        String assignedEquipmentSql = "SELECT ce.equipmentId, e.serialNumber, e.model FROM ContractEquipment ce JOIN Equipment e ON ce.equipmentId = e.equipmentId";
+        try (PreparedStatement ps = con.prepareStatement(assignedEquipmentSql);
+             ResultSet rs = ps.executeQuery()) {
+            System.out.println("📊 Assigned Equipment:");
+            while (rs.next()) {
+                System.out.println("  ID: " + rs.getInt("equipmentId") + 
+                                 ", Serial: " + rs.getString("serialNumber") + 
+                                 ", Model: " + rs.getString("model"));
+            }
+        }
+        
+        // Test 6: Show available equipment
+        String availableSql = "SELECT e.equipmentId, e.serialNumber, e.model " +
+                             "FROM Equipment e " +
+                             "LEFT JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId " +
+                             "WHERE ce.equipmentId IS NULL";
+        try (PreparedStatement ps = con.prepareStatement(availableSql);
+             ResultSet rs = ps.executeQuery()) {
+            System.out.println("📊 Available Equipment:");
+            int count = 0;
+            while (rs.next()) {
+                count++;
+                System.out.println("  " + count + ". ID: " + rs.getInt("equipmentId") + 
+                                 ", Serial: " + rs.getString("serialNumber") + 
+                                 ", Model: " + rs.getString("model"));
+            }
+            System.out.println("📊 Total Available Equipment: " + count);
+        }
+    }
+
+    /**
+     * Get available equipment from Equipment table for contract creation
+     */
+    public List<EquipmentWithStatus> getAvailableEquipment() throws SQLException {
+        // Debug the query first
+        debugEquipmentQuery();
+        
+        List<EquipmentWithStatus> equipmentList = new ArrayList<>();
+        String sql = "SELECT " +
+                     "    e.equipmentId, " +
+                     "    e.serialNumber, " +
+                     "    e.model, " +
+                     "    e.description, " +
+                     "    e.installDate, " +
+                     "    e.lastUpdatedBy, " +
+                     "    e.lastUpdatedDate " +
+                     "FROM Equipment e " +
+                     "LEFT JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId " +
+                     "WHERE ce.equipmentId IS NULL " + // Equipment not assigned to any contract
+                     "ORDER BY e.model, e.serialNumber";
+
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                EquipmentWithStatus equipment = new EquipmentWithStatus();
+                equipment.setEquipmentId(rs.getInt("equipmentId"));
+                equipment.setSerialNumber(rs.getString("serialNumber"));
+                equipment.setModel(rs.getString("model"));
+                equipment.setDescription(rs.getString("description"));
+                equipment.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
+                equipment.setStatus("Available"); // Available for contract assignment
+                equipment.setLocation("Equipment Inventory"); // Default location
+                equipment.setUnitPrice(0.0); // Equipment doesn't have unitPrice, set to 0
                 
                 Date installDate = rs.getDate("installDate");
                 if (installDate != null) {
@@ -338,6 +665,7 @@ public class ContractDAO extends MyDAO {
             throw e;
         }
         
+        System.out.println("📊 getAvailableEquipment() returning " + equipmentList.size() + " equipment items");
         return equipmentList;
     }
 
@@ -345,7 +673,9 @@ public class ContractDAO extends MyDAO {
      * Validate if equipment is available for contract
      */
     public boolean isEquipmentAvailable(int equipmentId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM PartDetail WHERE partDetailId = ? AND status = 'Available'";
+        String sql = "SELECT COUNT(*) FROM Equipment e " +
+                     "LEFT JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId " +
+                     "WHERE e.equipmentId = ? AND ce.equipmentId IS NULL";
         
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, equipmentId);
@@ -395,22 +725,12 @@ public class ContractDAO extends MyDAO {
             if (contractId > 0 && equipmentId > 0) {
                 // 2. Create ContractEquipment relationship
                 String contractEquipmentSql = "INSERT INTO ContractEquipment (contractId, equipmentId, startDate, quantity, price) " +
-                                            "VALUES (?, ?, ?, 1, (SELECT unitPrice FROM Part p JOIN PartDetail pd ON p.partId = pd.partId WHERE pd.partDetailId = ?))";
-                
+                                              "VALUES (?, ?, ?, 1, (SELECT unitPrice FROM Equipment WHERE equipmentId = ?))";
                 try (PreparedStatement ps = con.prepareStatement(contractEquipmentSql)) {
                     ps.setLong(1, contractId);
                     ps.setInt(2, equipmentId);
                     ps.setDate(3, contractDate);
                     ps.setInt(4, equipmentId);
-                    
-                    ps.executeUpdate();
-                }
-                
-                // 3. Update equipment status to InUse
-                String updateEquipmentSql = "UPDATE PartDetail SET status = 'InUse', lastUpdatedDate = ? WHERE partDetailId = ?";
-                try (PreparedStatement ps = con.prepareStatement(updateEquipmentSql)) {
-                    ps.setDate(1, contractDate);
-                    ps.setInt(2, equipmentId);
                     ps.executeUpdate();
                 }
             }
@@ -435,13 +755,12 @@ public class ContractDAO extends MyDAO {
                      "    c.contractId, c.customerId, c.contractDate, c.contractType, c.status, c.details, " +
                      "    a.fullName as customerName, " +
                      "    ce.contractEquipmentId, ce.equipmentId, ce.startDate, ce.endDate, ce.quantity, ce.price, " +
-                     "    pd.serialNumber, p.partName as equipmentModel, p.description as equipmentDescription, " +
-                     "    pd.status as equipmentStatus, pd.location " +
+                     "    e.serialNumber, e.model as equipmentModel, e.description as equipmentDescription, " +
+                     "    e.installDate " +
                      "FROM Contract c " +
                      "JOIN Account a ON c.customerId = a.accountId " +
                      "LEFT JOIN ContractEquipment ce ON c.contractId = ce.contractId " +
-                     "LEFT JOIN PartDetail pd ON ce.equipmentId = pd.partDetailId " +
-                     "LEFT JOIN Part p ON pd.partId = p.partId " +
+                     "LEFT JOIN Equipment e ON ce.equipmentId = e.equipmentId " +
                      "WHERE c.contractId = ?";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -459,12 +778,12 @@ public class ContractDAO extends MyDAO {
                         equipment.setSerialNumber(rs.getString("serialNumber"));
                         equipment.setModel(rs.getString("equipmentModel"));
                         equipment.setDescription(rs.getString("equipmentDescription"));
-                        equipment.setStatus(rs.getString("equipmentStatus"));
-                        equipment.setLocation(rs.getString("location"));
+                        equipment.setStatus("InUse"); // Equipment in contracts is always InUse
+                        equipment.setLocation("Contract Assignment"); // Default location
                         
-                        Date startDate = rs.getDate("startDate");
-                        if (startDate != null) {
-                            equipment.setInstallDate(startDate.toLocalDate());
+                        Date installDate = rs.getDate("installDate");
+                        if (installDate != null) {
+                            equipment.setInstallDate(installDate.toLocalDate());
                         }
                         
                         contractWithEquipment.equipment = equipment;
@@ -483,7 +802,6 @@ public class ContractDAO extends MyDAO {
         
         return null;
     }
-
     /**
      * Inner class for contract with equipment details
      */

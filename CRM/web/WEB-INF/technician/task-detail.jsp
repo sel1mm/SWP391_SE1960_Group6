@@ -62,6 +62,9 @@
                     <c:when test="${status == 'Pending'}">
                       <span class="badge bg-warning">Pending</span>
                     </c:when>
+                    <c:when test="${status == 'Assigned'}">
+                      <span class="badge bg-info">Assigned</span>
+                    </c:when>
                     <c:when test="${status == 'In Progress'}">
                       <span class="badge bg-primary">In Progress</span>
                     </c:when>
@@ -208,6 +211,7 @@
             <select class="form-select" name="status" id="statusSelect" required>
               <option value="">Select Status</option>
               <option value="Pending">Pending</option>
+              <option value="Assigned">Assigned</option>
               <option value="In Progress">In Progress</option>
               <option value="Completed">Completed</option>
               <option value="On Hold">On Hold</option>

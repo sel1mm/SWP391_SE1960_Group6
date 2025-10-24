@@ -38,6 +38,7 @@
           <select class="form-select" name="status">
             <option value="">All Statuses</option>
             <option value="Pending" ${param.status == 'Pending' ? 'selected' : ''}>Pending</option>
+            <option value="Assigned" ${param.status == 'Assigned' ? 'selected' : ''}>Assigned</option>
             <option value="In Progress" ${param.status == 'In Progress' ? 'selected' : ''}>In Progress</option>
             <option value="Completed" ${param.status == 'Completed' ? 'selected' : ''}>Completed</option>
             <option value="On Hold" ${param.status == 'On Hold' ? 'selected' : ''}>On Hold</option>
@@ -62,6 +63,7 @@
           <tr>
             <th>#</th>
             <th>Task ID</th>
+            <th>Customer</th>
             <th>Task Type</th>
             <th class="d-none d-md-table-cell">Details</th>
             <th>Status</th>
@@ -72,44 +74,58 @@
         </thead>
         <tbody id="tasks-table-body">
         <c:choose>
-          <c:when test="${not empty tasks}">
-            <c:forEach var="task" items="${tasks}" varStatus="st">
+          <c:when test="${not empty tasksWithCustomer}">
+            <c:forEach var="taskWithCustomer" items="${tasksWithCustomer}" varStatus="st">
               <tr>
                 <td>${st.index + 1}</td>
-                <td><strong>#${task.taskId}</strong></td>
-                <td>${fn:escapeXml(task.taskType)}</td>
+                <td><strong>#${taskWithCustomer.task.taskId}</strong></td>
+                <td>
+                  <c:choose>
+                    <c:when test="${taskWithCustomer.customerName != null}">
+                      <div class="fw-bold">${fn:escapeXml(taskWithCustomer.customerName)}</div>
+                      <small class="text-muted">ID: ${taskWithCustomer.customerId}</small>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="text-muted">No customer assigned</span>
+                    </c:otherwise>
+                  </c:choose>
+                </td>
+                <td>${fn:escapeXml(taskWithCustomer.task.taskType)}</td>
                 <td class="d-none d-md-table-cell">
-                  <div class="text-truncate" style="max-width:300px;" title="${fn:escapeXml(task.taskDetails)}">
-                    ${fn:escapeXml(task.taskDetails)}
+                  <div class="text-truncate" style="max-width:300px;" title="${fn:escapeXml(taskWithCustomer.task.taskDetails)}">
+                    ${fn:escapeXml(taskWithCustomer.task.taskDetails)}
                   </div>
                 </td>
                 <td>
-                  <c:set var="status" value="${task.status}"/>
+                  <c:set var="status" value="${taskWithCustomer.task.status}"/>
                   <c:choose>
                     <c:when test="${status == 'Pending'}">
-                      <span class="badge bg-warning" data-task-status-badge="${task.taskId}">Pending</span>
+                      <span class="badge bg-warning" data-task-status-badge="${taskWithCustomer.task.taskId}">Pending</span>
+                    </c:when>
+                    <c:when test="${status == 'Assigned'}">
+                      <span class="badge bg-info" data-task-status-badge="${taskWithCustomer.task.taskId}">Assigned</span>
                     </c:when>
                     <c:when test="${status == 'In Progress'}">
-                      <span class="badge bg-primary" data-task-status-badge="${task.taskId}">In Progress</span>
+                      <span class="badge bg-primary" data-task-status-badge="${taskWithCustomer.task.taskId}">In Progress</span>
                     </c:when>
                     <c:when test="${status == 'Completed'}">
-                      <span class="badge bg-success" data-task-status-badge="${task.taskId}">Completed</span>
+                      <span class="badge bg-success" data-task-status-badge="${taskWithCustomer.task.taskId}">Completed</span>
                     </c:when>
                     <c:when test="${status == 'On Hold'}">
-                      <span class="badge bg-secondary" data-task-status-badge="${task.taskId}">On Hold</span>
+                      <span class="badge bg-secondary" data-task-status-badge="${taskWithCustomer.task.taskId}">On Hold</span>
                     </c:when>
                     <c:when test="${status == 'Cancelled'}">
-                      <span class="badge bg-danger" data-task-status-badge="${task.taskId}">Cancelled</span>
+                      <span class="badge bg-danger" data-task-status-badge="${taskWithCustomer.task.taskId}">Cancelled</span>
                     </c:when>
                     <c:otherwise>
-                      <span class="badge bg-dark" data-task-status-badge="${task.taskId}">${task.status}</span>
+                      <span class="badge bg-dark" data-task-status-badge="${taskWithCustomer.task.taskId}">${taskWithCustomer.task.status}</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
                 <td>
                   <c:choose>
-                    <c:when test="${task.startDate != null}">
-                      ${task.startDate}
+                    <c:when test="${taskWithCustomer.task.startDate != null}">
+                      ${taskWithCustomer.task.startDate}
                     </c:when>
                     <c:otherwise>
                       <span class="text-muted">Not set</span>
@@ -118,8 +134,8 @@
                 </td>
                 <td>
                   <c:choose>
-                    <c:when test="${task.endDate != null}">
-                      ${task.endDate}
+                    <c:when test="${taskWithCustomer.task.endDate != null}">
+                      ${taskWithCustomer.task.endDate}
                     </c:when>
                     <c:otherwise>
                       <span class="text-muted">Not set</span>
@@ -127,10 +143,10 @@
                   </c:choose>
                 </td>
                 <td class="text-end">
-                  <a class="btn btn-sm btn-outline-secondary" href="${pageContext.request.contextPath}/technician/tasks?action=detail&taskId=${task.taskId}" title="View Details">
+                  <a class="btn btn-sm btn-outline-secondary" href="${pageContext.request.contextPath}/technician/tasks?action=detail&taskId=${taskWithCustomer.task.taskId}" title="View Details">
                     <i class="bi bi-eye"></i>
                   </a>
-                  <button class="btn btn-sm btn-primary" onclick="showStatusUpdateModal(${task.taskId}, '${task.status}')" title="Update Status">
+                  <button class="btn btn-sm btn-primary" onclick="showStatusUpdateModal(${taskWithCustomer.task.taskId}, '${taskWithCustomer.task.status}')" title="Update Status">
                     <i class="bi bi-pencil"></i>
                   </button>
                 </td>
@@ -139,7 +155,7 @@
           </c:when>
           <c:otherwise>
             <tr>
-              <td colspan="8" class="text-center py-4">
+              <td colspan="9" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                   <p>No tasks found</p>
