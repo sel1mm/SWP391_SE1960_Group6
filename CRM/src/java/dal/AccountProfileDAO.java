@@ -8,36 +8,52 @@ public class AccountProfileDAO extends MyDAO {
 
     public boolean updateProfileDetails(int accountId, String address, LocalDate dateOfBirth,
             String avatarUrl, String nationalId, boolean verified, String extraData) {
-        String sqlUpdate = """
-            UPDATE AccountProfile
-            SET address = ?, dateOfBirth = ?, avatarUrl = ?, nationalId = ?, verified = ?, extraData = ?
-            WHERE accountId = ?
-        """;
+        String sql = """
+        UPDATE AccountProfile
+        SET address = ?, dateOfBirth = ?, avatarUrl = ?, nationalId = ?, verified = ?, extraData = ?
+        WHERE accountId = ?
+    """;
 
-        try (PreparedStatement ps = con.prepareStatement(sqlUpdate)) {
-            ps.setString(1, address);
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            // NULL-safe cho từng cột
+            ps.setString(1, isNotBlank(address) ? address.trim() : null);
             if (dateOfBirth != null) {
-                ps.setDate(2, Date.valueOf(dateOfBirth));
+                ps.setDate(2, java.sql.Date.valueOf(dateOfBirth));
             } else {
                 ps.setNull(2, Types.DATE);
             }
-            ps.setString(3, avatarUrl);
-            ps.setString(4, nationalId);
+            ps.setString(3, isNotBlank(avatarUrl) ? avatarUrl.trim() : null);
+            ps.setString(4, isNotBlank(nationalId) ? nationalId.trim() : null);
             ps.setBoolean(5, verified);
-            ps.setString(6, extraData);
+            ps.setString(6, isNotBlank(extraData) ? extraData.trim() : null);
             ps.setInt(7, accountId);
 
             int rows = ps.executeUpdate();
+            System.out.println("🟢 Update profile - Rows affected: " + rows);
+
             if (rows > 0) {
+                // ✅ Profile tồn tại và được update
                 return true;
+            } else {
+                // ⚠️ Không có bản ghi nào bị ảnh hưởng → chèn mới (vì profile có thể chưa tồn tại)
+                System.out.println("⚠️ No profile found for accountId = " + accountId + ", inserting new one...");
+                AccountProfile newProfile = new AccountProfile();
+                newProfile.setAccountId(accountId);
+                newProfile.setAddress(address);
+                newProfile.setDateOfBirth(dateOfBirth);
+                newProfile.setAvatarUrl(avatarUrl);
+                newProfile.setNationalId(nationalId);
+                newProfile.setVerified(verified);
+                newProfile.setExtraData(extraData);
+
+                return insertProfile(newProfile);
             }
 
-            return insertProfileIfNotExists(accountId, address, dateOfBirth, avatarUrl, nationalId, verified, extraData);
-
         } catch (SQLException e) {
+            System.err.println("❌ Error updating profile: " + e.getMessage());
             e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
     private boolean insertProfileIfNotExists(int accountId, String address, LocalDate dateOfBirth,
