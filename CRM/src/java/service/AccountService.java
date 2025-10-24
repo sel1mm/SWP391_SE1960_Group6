@@ -390,6 +390,7 @@ public class AccountService {
         return accountDAO.isEmailExistsExcludingId(email, accountId);
     }
 
+
     public Response<Boolean> isPhoneExistsForUpdate(String phone, int accountId) {
         return accountDAO.isPhoneExistsExcludingId(phone, accountId);
     }
@@ -431,5 +432,9 @@ public class AccountService {
             return 0;
         }
     }
+ public boolean updateEmail(String email, int accountId) {
+        return accountDAO.updateEmail(accountId, email);
+    }
+
 
 }
