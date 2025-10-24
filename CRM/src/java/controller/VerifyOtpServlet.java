@@ -86,7 +86,10 @@ public class VerifyOtpServlet extends HttpServlet {
 
                     if (createResult.isSuccess()) {
                         session.removeAttribute("pendingUser");
-                        session.invalidate();
+                        session.removeAttribute("otp");
+                        session.removeAttribute("otpTime");
+                        session.removeAttribute("otpPurpose");
+
                         response.sendRedirect("user/list?message=User created successfully");
                         return;
                     } else {
@@ -101,7 +104,10 @@ public class VerifyOtpServlet extends HttpServlet {
                     AccountService accountService = new AccountService();
                     Response<Account> result = accountService.updateAccount(pendingUpdate);
                     if (result.isSuccess()) {
-                        session.invalidate();
+                        session.removeAttribute("pendingUpdateUser");
+                        session.removeAttribute("otp");
+                        session.removeAttribute("otpTime");
+                        session.removeAttribute("otpPurpose");
                         response.sendRedirect("user/list?message=User updated successfully");
                         return;
                     } else {
@@ -110,11 +116,13 @@ public class VerifyOtpServlet extends HttpServlet {
                         return;
                     }
                 }
-            } 
+            }
+
         } else {
+            // Nếu OTP sai
             request.setAttribute("error", "Mã OTP không đúng.");
             request.getRequestDispatcher("verifyOtp.jsp").forward(request, response);
         }
-    }
 
+    }
 }

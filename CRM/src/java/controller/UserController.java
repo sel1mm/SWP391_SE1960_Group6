@@ -193,7 +193,16 @@ public class UserController extends HttpServlet {
 
         // ================= VALIDATION =================
         String error = null;
-
+        //Validate username chuẩn thực tế (giống Google/GitHub)
+        if (username == null || username.trim().isEmpty()) {
+            error = "Username is required.";
+        } else if (!username.matches("^[A-Za-z][A-Za-z0-9._-]{3,19}$")) {
+            error = "Username must start with a letter, be 4–20 characters long, and can include letters, numbers, '.', '_', or '-'.";
+        } else if (username.matches(".*[._-]{2,}.*")) {
+            error = "Username cannot contain consecutive special characters (like '..' or '__').";
+        } else if (username.endsWith(".") || username.endsWith("_") || username.endsWith("-")) {
+            error = "Username cannot end with '.', '_' or '-'.";
+        }
         // 1️⃣ Full name không được chứa số
         if (fullName == null || fullName.trim().isEmpty()) {
             error = "Full name is required.";
@@ -207,7 +216,7 @@ public class UserController extends HttpServlet {
         } else if (password == null || password.trim().isEmpty()) {
             // 3️⃣ Password không được để trống
             error = "Password is required.";
-        }else if (!password.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
+        } else if (!password.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
             error = "Password must be 6–30 characters and may include letters, numbers, or special characters (!@#$%^&*()_+=-).";
         } else {
             // 5️⃣ Email không trùng
@@ -250,6 +259,7 @@ public class UserController extends HttpServlet {
         return;
 
     }
+
     private void updateUser(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String idParam = request.getParameter("id");
@@ -338,7 +348,6 @@ public class UserController extends HttpServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
         }
     }
-   
 
     /**
      * Tải lại danh sách role và quay lại form edit.jsp khi có lỗi
@@ -376,9 +385,9 @@ public class UserController extends HttpServlet {
         String error = null;
         if (newPassword == null || newPassword.trim().isEmpty()) {
             error = "New password is required.";
-        }else if (!newPassword.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
+        } else if (!newPassword.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
             error = "Password must be 6–30 characters and may include letters, numbers, or special characters (!@#$%^&*()_+=-).";
-        }  else if (!newPassword.equals(confirmPassword)) {
+        } else if (!newPassword.equals(confirmPassword)) {
             error = "Passwords do not match.";
         }
 
