@@ -959,5 +959,26 @@ public Response<Boolean> isPhoneExistsExcludingId(String phone, int accountId) {
     }
     return new Response<>(false, false, "Failed to check phone");
 }
+public boolean updateEmail(int accountId, String newEmail) {
+    String sql = "UPDATE Account SET email = ?, updatedAt = ? WHERE accountId = ?";
+    PreparedStatement ps = null;
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setString(1, newEmail);
+        ps.setTimestamp(2, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+        ps.setInt(3, accountId);
 
+        int affectedRows = ps.executeUpdate();
+        return affectedRows > 0; // true nếu update thành công
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    } finally {
+        try {
+            if (ps != null) ps.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
 }

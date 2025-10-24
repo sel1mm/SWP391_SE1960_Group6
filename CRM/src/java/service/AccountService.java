@@ -402,5 +402,7 @@ public class AccountService {
 public Response<Boolean> isPhoneExistsForUpdate(String phone, int accountId) {
     return accountDAO.isPhoneExistsExcludingId(phone, accountId);
 }
-
+public boolean updateEmail(String email, int accountId) {
+    return accountDAO.updateEmail(accountId, email) ;
+}
 }
