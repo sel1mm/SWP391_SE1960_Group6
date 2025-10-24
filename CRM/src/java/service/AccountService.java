@@ -132,6 +132,15 @@ public class AccountService {
             return new Response<>(null, false, "Error during search: " + e.getMessage());
         }
     }
+    
+    public Response<List<Account>> searchAccountsWithRole(String keyword, String status, String roleId) {
+        try {
+            List<Account> list = accountDAO.searchAccountsWithRole(keyword, status, roleId);
+            return new Response<>(list, true, "Search completed successfully");
+        } catch (Exception e) {
+            return new Response<>(null, false, "Error during search: " + e.getMessage());
+        }
+    }
 
     public Response<List<Account>> searchCustomerAccounts(String keyword, String status) {
         try {
@@ -431,5 +440,9 @@ public class AccountService {
             return 0;
         }
     }
+ public boolean updateEmail(String email, int accountId) {
+        return accountDAO.updateEmail(accountId, email);
+    }
+
 
 }

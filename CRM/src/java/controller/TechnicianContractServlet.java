@@ -47,11 +47,15 @@ public class TechnicianContractServlet extends HttpServlet {
             
             if ("create".equals(action)) {
                 // Show contract creation form
-                List<ContractDAO.Customer> customers = contractDAO.getAllCustomers();
-                List<EquipmentWithStatus> availableEquipment = contractDAO.getAvailableEquipment();
+                System.out.println("🔍 TechnicianContractServlet: Creating contract form...");
+                List<ContractDAO.Customer> customers = contractDAO.getCustomersAssignedToTechnician(sessionId);
+                System.out.println("📊 Found " + customers.size() + " customers assigned to technician");
+                
+                List<EquipmentWithStatus> availableParts = contractDAO.getAvailableParts();
+                System.out.println("📊 Found " + availableParts.size() + " available parts");
                 
                 req.setAttribute("customers", customers);
-                req.setAttribute("availableEquipment", availableEquipment);
+                req.setAttribute("availableParts", availableParts);
                 req.setAttribute("pageTitle", "Create Contract");
                 req.setAttribute("contentView", "/WEB-INF/technician/contract-form.jsp");
                 req.setAttribute("activePage", "contracts");
@@ -229,7 +233,7 @@ public class TechnicianContractServlet extends HttpServlet {
         String action = req.getParameter("action");
         
         if ("create".equals(action)) {
-            // Handle contract creation with equipment validation
+            // Handle contract creation with equipment/part validation
             try {
                 ContractDAO contractDAO = new ContractDAO();
                 
@@ -239,30 +243,31 @@ public class TechnicianContractServlet extends HttpServlet {
                 String description = req.getParameter("description");
                 String contractDate = req.getParameter("contractDate");
                 String status = req.getParameter("status");
-                String equipmentIdParam = req.getParameter("equipmentId");
+                String partIdParam = req.getParameter("partId");
                 
-                // Validate equipment availability if equipment is selected
-                int equipmentId = 0;
-                if (equipmentIdParam != null && !equipmentIdParam.trim().isEmpty()) {
-                    equipmentId = Integer.parseInt(equipmentIdParam);
+                // Validate part availability if selected
+                int partId = 0;
+                
+                if (partIdParam != null && !partIdParam.trim().isEmpty()) {
+                    partId = Integer.parseInt(partIdParam);
                     
-                    if (!contractDAO.isEquipmentAvailable(equipmentId)) {
-                        req.getSession().setAttribute("errorMessage", "Selected equipment is not available. Please choose another equipment or contact storekeeper.");
+                    if (!contractDAO.isPartAvailable(partId)) {
+                        req.getSession().setAttribute("errorMessage", "Selected part is not available. Please choose another part or contact storekeeper.");
                         resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
                         return;
                     }
                 }
                 
-                // Create contract with or without equipment
+                // Create contract with or without part
                 long contractId;
-                if (equipmentId > 0) {
-                    contractId = contractDAO.createContractWithEquipment(
+                if (partId > 0) {
+                    contractId = contractDAO.createContractWithPart(
                         customerId, 
                         java.sql.Date.valueOf(contractDate), 
                         contractType, 
                         status, 
                         description,
-                        equipmentId
+                        partId
                     );
                 } else {
                     contractId = contractDAO.createContract(
@@ -275,9 +280,12 @@ public class TechnicianContractServlet extends HttpServlet {
                 }
                 
                 if (contractId > 0) {
-                    String successMsg = equipmentId > 0 ? 
-                        "Contract created successfully with equipment assignment ✅" : 
-                        "Contract created successfully ✅";
+                    String successMsg;
+                    if (partId > 0) {
+                        successMsg = "Contract created successfully with part assignment ✅";
+                    } else {
+                        successMsg = "Contract created successfully ✅";
+                    }
                     req.getSession().setAttribute("successMessage", successMsg);
                 } else {
                     req.getSession().setAttribute("errorMessage", "Failed to create contract. Please try again.");

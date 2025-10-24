@@ -79,7 +79,7 @@
         <servlet-name>AssignWorkServlet</servlet-name>
         <servlet-class>controller.AssignWorkServlet</servlet-class>
     </servlet>
-     <servlet>
+    <servlet>
         <servlet-name>ScheduleMaintenanceServlet</servlet-name>
         <servlet-class>controller.ScheduleMaintenanceServlet</servlet-class>
     </servlet>
@@ -87,10 +87,17 @@
         <servlet-name>ReviewMaintenanceReportServlet</servlet-name>
         <servlet-class>controller.ReviewMaintenanceReportServlet</servlet-class>
     </servlet>
-
     <servlet>
         <servlet-name>AvatarServlet</servlet-name>
         <servlet-class>controller.AvatarServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ChangeEmailServlet</servlet-name>
+        <servlet-class>controller.ChangeEmailServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>VerifyOtp2Servlet</servlet-name>
+        <servlet-class>controller.VerifyOtp2Servlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>LoginController</servlet-name>
@@ -176,7 +183,6 @@
         <servlet-name>ReviewMaintenanceReportServlet</servlet-name>
         <url-pattern>/reviewMaintenanceReport</url-pattern>
     </servlet-mapping>
-
     <!-- Technician Module Servlets -->
     <servlet>
         <servlet-name>TechnicianTaskServlet</servlet-name>
@@ -230,6 +236,14 @@
     <servlet-mapping>
         <servlet-name>AvatarServlet</servlet-name>
         <url-pattern>/avatar/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ChangeEmailServlet</servlet-name>
+        <url-pattern>/changeEmail</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>VerifyOtp2Servlet</servlet-name>
+        <url-pattern>/verifyOtp2</url-pattern>
     </servlet-mapping>
     <welcome-file-list>
         <welcome-file>home.jsp</welcome-file>

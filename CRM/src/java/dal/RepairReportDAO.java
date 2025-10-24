@@ -2,7 +2,6 @@ package dal;
 
 import model.RepairReport;
 import java.sql.*;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +10,128 @@ import java.util.List;
  * Handles database operations for technician repair reports.
  */
 public class RepairReportDAO extends MyDAO {
+    
+    /**
+     * Get repair reports for a technician with customer information
+     */
+    public List<RepairReportWithCustomer> getRepairReportsForTechnicianWithCustomer(int technicianId, String searchQuery, String statusFilter, int page, int pageSize) throws SQLException {
+        List<RepairReportWithCustomer> reports = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT rr.reportId, rr.requestId, rr.technicianId, rr.details, rr.diagnosis, ");
+        sql.append("rr.estimatedCost, rr.quotationStatus, rr.repairDate, rr.invoiceDetailId, ");
+        sql.append("sr.createdBy as customerId, a.fullName as customerName, a.email as customerEmail ");
+        sql.append("FROM RepairReport rr ");
+        sql.append("JOIN ServiceRequest sr ON rr.requestId = sr.requestId ");
+        sql.append("JOIN Account a ON sr.createdBy = a.accountId ");
+        sql.append("WHERE rr.technicianId = ?");
+        
+        List<Object> params = new ArrayList<>();
+        params.add(technicianId);
+        
+        // Add search filter
+        if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+            sql.append(" AND (rr.details LIKE ? OR rr.diagnosis LIKE ? OR CAST(rr.reportId AS CHAR) LIKE ? OR a.fullName LIKE ?)");
+            String searchPattern = "%" + searchQuery.trim() + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+        
+        // Add status filter
+        if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+            sql.append(" AND rr.quotationStatus = ?");
+            params.add(statusFilter.trim());
+        }
+        
+        sql.append(" ORDER BY rr.repairDate DESC LIMIT ? OFFSET ?");
+        params.add(pageSize);
+        params.add((page - 1) * pageSize);
+        
+        ps = con.prepareStatement(sql.toString());
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+        
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            RepairReportWithCustomer reportWithCustomer = new RepairReportWithCustomer();
+            reportWithCustomer.report = mapResultSetToRepairReport(rs);
+            reportWithCustomer.customerId = rs.getInt("customerId");
+            reportWithCustomer.customerName = rs.getString("customerName");
+            reportWithCustomer.customerEmail = rs.getString("customerEmail");
+            reports.add(reportWithCustomer);
+        }
+        
+        return reports;
+    }
+
+    /**
+     * Get repair report count for technician with customer information
+     */
+    public int getRepairReportCountForTechnicianWithCustomer(int technicianId, String statusFilter) throws SQLException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM RepairReport rr ");
+        sql.append("JOIN ServiceRequest sr ON rr.requestId = sr.requestId ");
+        sql.append("JOIN Account a ON sr.createdBy = a.accountId ");
+        sql.append("WHERE rr.technicianId = ?");
+        
+        List<Object> params = new ArrayList<>();
+        params.add(technicianId);
+        
+        if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+            sql.append(" AND rr.quotationStatus = ?");
+            params.add(statusFilter.trim());
+        }
+        
+        ps = con.prepareStatement(sql.toString());
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+        
+        rs = ps.executeQuery();
+        if (rs.next()) {
+            return rs.getInt(1);
+        }
+        return 0;
+    }
+
+    /**
+     * Map ResultSet to RepairReport object
+     */
+    private RepairReport mapResultSetToRepairReport(ResultSet rs) throws SQLException {
+        RepairReport report = new RepairReport();
+        report.setReportId(rs.getInt("reportId"));
+        report.setRequestId(rs.getInt("requestId"));
+        report.setTechnicianId(rs.getObject("technicianId", Integer.class));
+        report.setDetails(rs.getString("details"));
+        report.setDiagnosis(rs.getString("diagnosis"));
+        report.setEstimatedCost(rs.getBigDecimal("estimatedCost"));
+        report.setQuotationStatus(rs.getString("quotationStatus"));
+        
+        Date repairDate = rs.getDate("repairDate");
+        if (repairDate != null) {
+            report.setRepairDate(repairDate.toLocalDate());
+        }
+        
+        report.setInvoiceDetailId(rs.getObject("invoiceDetailId", Integer.class));
+        return report;
+    }
+
+    /**
+     * Inner class for RepairReport with customer information
+     */
+    public static class RepairReportWithCustomer {
+        public RepairReport report;
+        public int customerId;
+        public String customerName;
+        public String customerEmail;
+        
+        public RepairReport getReport() { return report; }
+        public int getCustomerId() { return customerId; }
+        public String getCustomerName() { return customerName; }
+        public String getCustomerEmail() { return customerEmail; }
+    }
     
     /**
      * Create a new repair report
@@ -175,35 +296,8 @@ public class RepairReportDAO extends MyDAO {
     }
     
     /**
-     * Map ResultSet to RepairReport object
+     * Find submitted reports by technician
      */
-    private RepairReport mapResultSetToRepairReport(ResultSet rs) throws SQLException {
-        RepairReport report = new RepairReport();
-        report.setReportId(rs.getInt("reportId"));
-        report.setRequestId(rs.getInt("requestId"));
-        
-        Integer technicianId = rs.getObject("technicianId", Integer.class);
-        report.setTechnicianId(technicianId);
-        
-        report.setDetails(rs.getString("details"));
-        report.setDiagnosis(rs.getString("diagnosis"));
-        
-        BigDecimal estimatedCost = rs.getBigDecimal("estimatedCost");
-        report.setEstimatedCost(estimatedCost);
-        
-        report.setQuotationStatus(rs.getString("quotationStatus"));
-        
-        Date repairDate = rs.getDate("repairDate");
-        if (repairDate != null) {
-            report.setRepairDate(repairDate.toLocalDate());
-        }
-        
-        Integer invoiceDetailId = rs.getObject("invoiceDetailId", Integer.class);
-        report.setInvoiceDetailId(invoiceDetailId);
-        
-        return report;
-    }
-    
     public List<RepairReport> findSubmittedReportsByTechnician(int technicianId, String searchQuery, int page, int pageSize) throws SQLException {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT * FROM RepairReport ");
@@ -277,6 +371,99 @@ public class RepairReportDAO extends MyDAO {
             closeResources();
         }
         
+        return 0;
+    }
+    
+    /**
+     * Find all repair reports (for managers)
+     */
+    public List<RepairReport> findAllReports(String searchQuery, String statusFilter, int page, int pageSize) throws SQLException {
+        List<RepairReport> reports = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT rr.reportId, rr.requestId, rr.technicianId, rr.details, rr.diagnosis, ");
+        sql.append("rr.estimatedCost, rr.quotationStatus, rr.repairDate, rr.invoiceDetailId, ");
+        sql.append("a.fullName as technicianName ");
+        sql.append("FROM RepairReport rr ");
+        sql.append("LEFT JOIN Account a ON rr.technicianId = a.accountId ");
+        sql.append("WHERE 1=1");
+        
+        List<Object> params = new ArrayList<>();
+        
+        // Add search filter
+        if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+            sql.append(" AND (rr.details LIKE ? OR rr.diagnosis LIKE ? OR CAST(rr.reportId AS CHAR) LIKE ? OR a.fullName LIKE ?)");
+            String searchPattern = "%" + searchQuery.trim() + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+        
+        // Add status filter
+        if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+            sql.append(" AND rr.quotationStatus = ?");
+            params.add(statusFilter.trim());
+        }
+        
+        sql.append(" ORDER BY rr.repairDate DESC LIMIT ? OFFSET ?");
+        params.add(pageSize);
+        params.add((page - 1) * pageSize);
+        
+        ps = con.prepareStatement(sql.toString());
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+        
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            RepairReport report = mapResultSetToRepairReport(rs);
+            // Add technician name if available
+            String technicianName = rs.getString("technicianName");
+            if (technicianName != null) {
+                report.setTechnicianName(technicianName);
+            }
+            reports.add(report);
+        }
+        
+        return reports;
+    }
+    
+    /**
+     * Get total count of all reports (for managers)
+     */
+    public int getAllReportsCount(String searchQuery, String statusFilter) throws SQLException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM RepairReport rr ");
+        sql.append("LEFT JOIN Account a ON rr.technicianId = a.accountId ");
+        sql.append("WHERE 1=1");
+        
+        List<Object> params = new ArrayList<>();
+        
+        // Add search filter
+        if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+            sql.append(" AND (rr.details LIKE ? OR rr.diagnosis LIKE ? OR CAST(rr.reportId AS CHAR) LIKE ? OR a.fullName LIKE ?)");
+            String searchPattern = "%" + searchQuery.trim() + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+        
+        // Add status filter
+        if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+            sql.append(" AND rr.quotationStatus = ?");
+            params.add(statusFilter.trim());
+        }
+        
+        ps = con.prepareStatement(sql.toString());
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+        
+        rs = ps.executeQuery();
+        if (rs.next()) {
+            return rs.getInt(1);
+        }
         return 0;
     }
     

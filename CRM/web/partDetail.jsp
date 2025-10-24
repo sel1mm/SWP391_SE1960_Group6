@@ -5,6 +5,7 @@
 
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -23,33 +24,36 @@
 
             body {
                 font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-                background: #f8f9fc;
-                color: #333;
+                background: #ffffff;
+                color: #1a1a1a;
                 line-height: 1.6;
+                min-height: 100vh;
             }
 
+            /* NAVBAR */
             .navbar {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                padding: 0;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                background: #000000;
+                padding: 1rem 0;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
                 position: sticky;
                 top: 0;
                 z-index: 1000;
             }
 
             .nav-container {
-                max-width: 1200px;
-                margin: 0 auto;
+                max-width: 100%;
+                padding: 0 2rem;
+                margin: 0;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 1rem 2rem;
             }
 
             .logo {
                 color: white;
                 font-size: 28px;
                 font-weight: 700;
+                letter-spacing: -0.5px;
             }
 
             .nav-links {
@@ -63,75 +67,82 @@
                 text-decoration: none;
                 font-weight: 500;
                 font-size: 15px;
-                transition: all 0.3s;
+                transition: all 0.3s ease;
                 padding: 8px 16px;
                 border-radius: 6px;
             }
 
             .nav-links a:hover {
-                background: rgba(255,255,255,0.12);
+                background: rgba(255,255,255,0.15);
+                transform: translateY(-1px);
             }
 
+            /* SIDEBAR */
             .sidebar {
-                max-width: 250px;
-                height: 100vh;
-                margin-top: 77px;
+                width: 250px;
+                min-height: calc(100vh - 77px);
                 position: fixed;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
+                top: 77px;
+                left: 0;
+                background: #000000;
                 display: flex;
                 flex-direction: column;
-                padding-top: 20px;
-                left: 0;
-                top: 0;
-                overflow: auto;
+                justify-content: space-between;
+                box-shadow: 2px 0 8px rgba(0,0,0,0.1);
             }
 
             .sidebar a {
                 color: white;
                 text-decoration: none;
-                padding: 14px 20px;
+                padding: 15px 20px;
                 font-size: 15px;
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                transition: all 0.3s;
+                transition: all 0.3s ease;
+                font-weight: 500;
             }
 
             .sidebar a:hover {
-                background: rgba(255,255,255,0.08);
+                background: rgba(255,255,255,0.15);
                 padding-left: 24px;
             }
 
+            .sidebar a i {
+                min-width: 20px;
+                text-align: center;
+            }
+
+            /* CONTAINER & CONTENT */
             .container {
                 display: flex;
-                margin-top: 60px;
             }
 
             .content {
                 margin-left: 250px;
-                padding: 30px;
-                background: #f4f6f8;
-                min-height: calc(100vh - 60px);
+                padding: 40px;
+                background: #ffffff;
+                min-height: calc(100vh - 77px);
                 width: calc(100% - 250px);
             }
 
             .content h2 {
-                margin-left: 8px;
-                color: #666;
-                font-weight: 600;
-                margin-bottom: 16px;
+                color: #1a1a1a;
+                font-weight: 700;
+                margin-bottom: 24px;
+                font-size: 28px;
             }
 
+            /* SEARCH & FILTER */
             .search-filter-container {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin: 12px 8px 20px;
-                background: #fff;
-                padding: 14px 18px;
-                border-radius: 10px;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+                margin: 0 0 24px;
+                background: #f8f9fa;
+                padding: 16px 20px;
+                border-radius: 12px;
+                border: 1px solid #e9ecef;
                 flex-wrap: wrap;
                 gap: 10px;
             }
@@ -150,11 +161,14 @@
             }
 
             .search-input, .filter-select {
-                padding: 10px 14px;
-                border: 1px solid #e3e6ee;
+                padding: 11px 16px;
+                border: 1px solid #dee2e6;
                 border-radius: 8px;
                 font-size: 14px;
                 outline: none;
+                background: white;
+                color: #1a1a1a;
+                transition: all 0.2s ease;
             }
 
             .search-input {
@@ -162,66 +176,100 @@
             }
 
             .search-input:focus, .filter-select:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 4px rgba(102,126,234,0.06);
+                border-color: #000000;
+                box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
             }
 
             .btn-search, .btn-new {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: #000000;
                 color: white;
                 border: none;
-                padding: 10px 18px;
+                padding: 11px 20px;
                 border-radius: 8px;
                 cursor: pointer;
                 font-weight: 600;
-                transition: 0.25s;
+                transition: all 0.25s ease;
                 display: inline-flex;
                 align-items: center;
                 gap: 8px;
+                font-size: 14px;
             }
 
             .btn-search:hover, .btn-new:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 6px 18px rgba(102,126,234,0.15);
+                background: #1a1a1a;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             }
 
+            /* TABLE */
             .inventory-table {
-                width: 95%;
-                margin: 12px auto 0;
+                width: 100%;
+                margin: 0 auto;
                 border-collapse: collapse;
                 background: white;
                 border-radius: 12px;
                 overflow: hidden;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                border: 1px solid #e9ecef;
             }
 
             .inventory-table thead tr th {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: #000000;
                 color: white;
-                padding: 12px 16px;
+                padding: 14px 16px;
                 text-align: left;
                 font-weight: 600;
-                font-size: 14px;
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
             }
 
+            .inventory-table thead tr th:nth-child(1) { width: 5%; }
+            .inventory-table thead tr th:nth-child(2) { width: 5%; }
+            .inventory-table thead tr th:nth-child(3) { width: 15%; }
+            .inventory-table thead tr th:nth-child(4) { width: 10%; }
+            .inventory-table thead tr th:nth-child(5) { width: 15%; }
+            .inventory-table thead tr th:nth-child(6) { width: 15%; }
+            .inventory-table thead tr th:nth-child(7) { width: 19%; }
+            .inventory-table thead tr th:nth-child(8) { width: 18%; }
+
             .inventory-table tbody td {
-                padding: 12px 16px;
-                border-bottom: 1px solid #f0f2f6;
+                padding: 14px 16px;
+                border-bottom: 1px solid #e9ecef;
                 font-size: 14px;
-                color: #333;
+                color: #495057;
             }
 
             .inventory-table tbody tr:hover {
-                background-color: #f2f6ff;
+                background-color: #f8f9fa;
             }
 
+            .inventory-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .inventory-table tbody td:nth-child(3) {
+                max-width: 300px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .inventory-table tbody td:nth-child(3):hover {
+                white-space: normal;
+                overflow: visible;
+                word-wrap: break-word;
+                background-color: #fff8e1;
+            }
+
+            /* BUTTONS */
             .btn-edit, .btn-delete {
                 color: white;
                 border: none;
-                padding: 8px 12px;
+                padding: 8px 14px;
                 border-radius: 6px;
                 cursor: pointer;
-                transition: 0.3s;
+                transition: all 0.3s ease;
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
@@ -230,17 +278,27 @@
             }
 
             .btn-edit {
-                background: #4a69bd;
+                background: #0d6efd;
+                margin-bottom: 8px;
             }
 
             .btn-delete {
-                background: #e55039;
+                background: #dc3545;
             }
 
-            .btn-edit:hover, .btn-delete:hover {
-                background: #28a745;
+            .btn-edit:hover {
+                background: #0b5ed7;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(13,110,253,0.3);
+            }
+            
+            .btn-delete:hover {
+                background: #bb2d3b;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(220,53,69,0.3);
             }
 
+            /* PAGINATION */
             .pagination {
                 display: flex;
                 justify-content: center;
@@ -250,20 +308,21 @@
             }
 
             .pagination a {
-                padding: 8px 14px;
+                padding: 9px 15px;
                 border-radius: 8px;
                 background: white;
-                color: #333;
+                color: #1a1a1a;
                 text-decoration: none;
                 font-weight: 600;
-                border: 1px solid #e6e8ef;
+                border: 1px solid #dee2e6;
                 transition: all 0.2s ease;
             }
 
             .pagination a:hover, .pagination a.active {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: #000000;
                 color: white;
-                border: none;
+                border-color: #000000;
+                transform: translateY(-1px);
             }
 
             /* FORM POPUP */
@@ -273,59 +332,62 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0,0,0,0.6);
+                background: rgba(0,0,0,0.5);
                 display: none;
                 justify-content: center;
                 align-items: center;
                 z-index: 2000;
+                backdrop-filter: blur(4px);
             }
 
             .form-container {
                 background: #fff;
-                padding: 30px 25px;
+                padding: 32px 28px;
                 border-radius: 12px;
-                width: 450px;
+                width: 480px;
                 max-width: 95%;
-                box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             }
 
             #partDetailFormTitle {
-                margin-bottom: 20px;
-                font-size: 22px;
-                font-weight: 600;
-                color: #333;
+                margin-bottom: 24px;
+                font-size: 24px;
+                font-weight: 700;
+                color: #1a1a1a;
                 text-align: center;
             }
 
             .form-container label {
-                font-weight: 500;
+                font-weight: 600;
                 margin-bottom: 6px;
-                margin-top: 12px;
-                color: #555;
+                margin-top: 14px;
+                color: #1a1a1a;
                 display: block;
+                font-size: 14px;
             }
 
             .form-container input[type="text"],
             .form-container input[type="number"],
             .form-container select {
                 width: 100%;
-                padding: 10px 12px;
-                border: 1px solid #ccc;
+                padding: 11px 14px;
+                border: 1px solid #dee2e6;
                 border-radius: 8px;
                 font-size: 14px;
                 outline: none;
                 transition: all 0.2s ease;
+                color: #1a1a1a;
             }
 
             .form-container input:focus,
             .form-container select:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+                border-color: #000000;
+                box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
             }
 
             #partDetailFormMessage {
                 font-size: 13px;
-                color: #e74c3c;
+                color: #dc3545;
                 text-align: center;
                 min-height: 18px;
                 margin-top: 10px;
@@ -339,7 +401,7 @@
             }
 
             .btn-save, .btn-cancel {
-                padding: 10px 18px;
+                padding: 11px 20px;
                 border-radius: 8px;
                 font-weight: 600;
                 font-size: 14px;
@@ -350,12 +412,14 @@
             }
 
             .btn-save {
-                background: #28a745;
+                background: #198754;
                 color: #fff;
             }
 
             .btn-save:hover {
-                background: #218838;
+                background: #157347;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(25,135,84,0.3);
             }
 
             .btn-cancel {
@@ -365,98 +429,61 @@
 
             .btn-cancel:hover {
                 background: #5a6268;
+                transform: translateY(-1px);
             }
 
+            /* MESSAGES */
             .success-message {
-                background: #d4edda;
-                color: #155724;
+                background: #d1e7dd;
+                color: #0f5132;
                 padding: 12px 20px;
                 border-radius: 8px;
-                margin: 10px 8px;
-                border: 1px solid #c3e6cb;
+                margin: 0 0 20px;
+                border: 1px solid #badbcc;
+                display: flex;
+                align-items: center;
+                gap: 10px;
             }
 
             .error-message {
                 background: #f8d7da;
-                color: #721c24;
+                color: #842029;
                 padding: 12px 20px;
                 border-radius: 8px;
-                margin: 10px 8px;
-                border: 1px solid #f5c6cb;
+                margin: 0 0 20px;
+                border: 1px solid #f5c2c7;
+                display: flex;
+                align-items: center;
+                gap: 10px;
             }
 
+            .success-message, .error-message {
+                transition: all 0.5s ease;
+            }
+
+            .message-fade-out {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            /* RESPONSIVE */
             @media (max-width: 900px) {
                 .content {
-                    padding: 18px;
+                    padding: 20px;
                     margin-left: 0;
                     width: 100%;
                 }
                 .sidebar {
                     display: none;
                 }
+                .search-filter-container {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .search-input {
+                    width: 100%;
+                }
             }
-            /* Giới hạn độ rộng các cột - THÊM VÀO PHẦN <style> */
-            .inventory-table thead tr th:nth-child(1) {
-                width: 5%;
-            }   /* Part ID */
-            .inventory-table thead tr th:nth-child(2) {
-                width: 5%;
-            }  /* Inventory ID */
-            .inventory-table thead tr th:nth-child(3) {
-                width: 15%;
-            }  /* Part Name */
-            .inventory-table thead tr th:nth-child(4) {
-                width: 10%;
-            }  /* Quantity */
-            .inventory-table thead tr th:nth-child(5) {
-                width: 15%;
-            }  /* Last Updated By */
-            .inventory-table thead tr th:nth-child(6) {
-                width: 15%;
-            }  /* Last Update Time */
-            .inventory-table thead tr th:nth-child(7) {
-                width: 19%;
-            }  /* Last Update Time */
-
-            .inventory-table thead tr th:nth-child(8) {
-                width: 18%;
-            }  /* Last Update Time */
-            /* Giới hạn text quá dài trong Part Name */
-            .inventory-table tbody td:nth-child(3) {
-                max-width: 300px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-
-            /* Hover để xem full text */
-            .inventory-table tbody td:nth-child(3):hover {
-                white-space: normal;
-                overflow: visible;
-                word-wrap: break-word;
-                background-color: #fff3cd;
-            }
-            .btn-edit {
-                margin-bottom: 8px; /* tạo khoảng cách dọc giữa Edit và Delete */
-            }
-
-            .sidebar {
-                max-width: 250px;
-                height: 610px;
-                margin-top: 77px;
-                position: fixed;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-            }
-.success-message, .error-message {
-    transition: all 0.5s ease;
-}
-
-.message-fade-out {
-    opacity: 0;
-    transform: translateY(-20px);
-}
         </style>
     </head>
 
@@ -476,27 +503,21 @@
         <div class="container">
             <!-- Sidebar -->
             <div class="sidebar">
-                <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
-                <a href="manageProfile"><i class="fas fa-tachometer-alt" ></i><span>Quản lý người dùng</span></a>
-                <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
-                <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
-                <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
-                <a href="transactionHistory"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
-                <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
-                <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
-                <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
-                <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiết bị </span></a>
-                <!-- Nút Đăng xuất -->
-                <a href="logout" style="
-                   margin-top: auto;
-                   background: rgba(255, 255, 255, 0.15);
-                   border-top: 1px solid rgba(255,255,255,0.2);
-                   text-align: center;
-                   font-weight: 500;
-                   ">
+                <div>
+                    <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
+                    <a href="manageProfile"><i class="fas fa-tachometer-alt"></i><span>Quản lý người dùng</span></a>
+                    <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
+                    <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
+                    <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
+                    <a href="transactionHistory"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
+                    <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
+                    <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
+                    <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
+                    <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiết bị</span></a>
+                </div>
+                <a href="logout" style="background: rgba(255, 255, 255, 0.1); border-top: 1px solid rgba(255,255,255,0.2); text-align: center; font-weight: 600;">
                     <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
                 </a>
-
             </div>
 
             <!-- Content -->
@@ -517,7 +538,7 @@
 
                 <!-- Search & Filter -->
                 <div class="search-filter-container">
-                    <form action="partDetail" method="POST" style="display:flex; width:100%; align-items:center; gap:10px;">
+                    <form action="partDetail" method="POST" style="display:flex; width:100%; align-items:center; gap:10px; flex-wrap:wrap;">
                         <div class="search-group">
                             <input type="text" placeholder="Nhập từ khoá..." name="keyword"
                                    value="${param.keyword}" class="search-input"/>
@@ -638,7 +659,6 @@
         </div>
 
         <script>
-            // Mở form Add/Edit
             function openPartDetailForm(mode, partDetailId = '', partId = '', serialNumber = '', status = 'Available', location = '') {
                 const overlay = document.getElementById("partDetailFormOverlay");
                 const title = document.getElementById("partDetailFormTitle");
@@ -663,18 +683,15 @@
                     document.getElementById("serialNumber").value = serialNumber;
                     document.getElementById("status").value = status;
                     document.getElementById("location").value = location;
-            }
+                }
             }
 
-            // Đóng form
             function closePartDetailForm() {
                 document.getElementById("partDetailFormOverlay").style.display = "none";
             }
 
-            // Xác nhận xóa - GỬI REQUEST VỀ SERVER
             function confirmDelete(partDetailId) {
                 if (confirm("Bạn có chắc muốn xóa PartDetailId = " + partDetailId + " ?")) {
-                    // Tạo form ẩn để submit DELETE
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = 'partDetail';
@@ -696,21 +713,18 @@
                 }
             }
 
-            // Đóng popup khi click bên ngoài
             document.getElementById("partDetailFormOverlay").addEventListener('click', function (e) {
                 if (e.target === this) {
                     closePartDetailForm();
                 }
             });
 
-            // Pagination logic
             let currentPage = 1;
             const rowsPerPage = 10;
 
             function renderPartDetailTable() {
                 const tableBody = document.querySelector(".inventory-table tbody");
-                if (!tableBody)
-                    return;
+                if (!tableBody) return;
 
                 const keyword = document.querySelector(".search-input").value.toLowerCase();
                 const rows = Array.from(tableBody.rows);
@@ -726,10 +740,8 @@
                     return;
                 }
 
-                if (currentPage > totalPages)
-                    currentPage = totalPages;
-                if (currentPage < 1)
-                    currentPage = 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
 
                 rows.forEach(row => row.style.display = "none");
                 const start = (currentPage - 1) * rowsPerPage;
@@ -741,16 +753,14 @@
 
             function renderPagination(totalPages) {
                 const pagination = document.querySelector(".pagination");
-                if (!pagination)
-                    return;
+                if (!pagination) return;
                 pagination.innerHTML = "";
 
                 function createBtn(text, onClick, active = false) {
                     const btn = document.createElement("a");
                     btn.href = "#";
                     btn.textContent = text;
-                    if (active)
-                        btn.classList.add("active");
+                    if (active) btn.classList.add("active");
                     btn.onclick = e => {
                         e.preventDefault();
                         onClick();
@@ -796,18 +806,19 @@
             });
 
             document.addEventListener("DOMContentLoaded", renderPartDetailTable);
+            
             document.addEventListener("DOMContentLoaded", function() {
-    const messages = document.querySelectorAll(".success-message, .error-message");
-    
-    messages.forEach(function(msg) {
-        setTimeout(function() {
-            msg.classList.add("message-fade-out");
-            setTimeout(function() {
-                msg.style.display = "none";
-            }, 500);
-        }, 5000); // Hiện trong 5 giây
-    });
-});
+                const messages = document.querySelectorAll(".success-message, .error-message");
+                
+                messages.forEach(function(msg) {
+                    setTimeout(function() {
+                        msg.classList.add("message-fade-out");
+                        setTimeout(function() {
+                            msg.style.display = "none";
+                        }, 500);
+                    }, 5000);
+                });
+            });
         </script>
     </body>
 </html>

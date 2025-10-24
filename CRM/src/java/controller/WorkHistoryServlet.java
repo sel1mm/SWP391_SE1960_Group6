@@ -39,13 +39,14 @@ public class WorkHistoryServlet extends HttpServlet {
         try {
             // Get pagination parameters
             String searchQuery = sanitize(req.getParameter("q"));
+            String statusFilter = sanitize(req.getParameter("status"));
             int page = parseInt(req.getParameter("page"), 1);
             int pageSize = Math.min(parseInt(req.getParameter("pageSize"), 10), 100);
             
-            // Fetch completed tasks
+            // Fetch all tasks (not just completed)
             WorkTaskDAO taskDAO = new WorkTaskDAO();
-            List<WorkTask> completedTasks = taskDAO.findCompletedTasksByTechnician(technicianId, searchQuery, page, pageSize);
-            int totalCompletedTasks = taskDAO.getCompletedTaskCountForTechnician(technicianId, searchQuery);
+            List<WorkTask> allTasks = taskDAO.findByTechnicianId(technicianId, searchQuery, statusFilter, page, pageSize);
+            int totalTasks = taskDAO.getTaskCountForTechnician(technicianId, statusFilter);
             
             // Fetch submitted reports
             RepairReportDAO reportDAO = new RepairReportDAO();
@@ -53,14 +54,15 @@ public class WorkHistoryServlet extends HttpServlet {
             int totalSubmittedReports = reportDAO.getSubmittedReportCountForTechnician(technicianId, searchQuery);
             
             // Set attributes
-            req.setAttribute("completedTasks", completedTasks);
-            req.setAttribute("totalCompletedTasks", totalCompletedTasks);
+            req.setAttribute("allTasks", allTasks);
+            req.setAttribute("totalTasks", totalTasks);
             req.setAttribute("submittedReports", submittedReports);
             req.setAttribute("totalSubmittedReports", totalSubmittedReports);
             req.setAttribute("currentPage", page);
             req.setAttribute("pageSize", pageSize);
-            req.setAttribute("totalPages", (int) Math.ceil((double) Math.max(totalCompletedTasks, totalSubmittedReports) / pageSize));
+            req.setAttribute("totalPages", (int) Math.ceil((double) Math.max(totalTasks, totalSubmittedReports) / pageSize));
             req.setAttribute("searchQuery", searchQuery);
+            req.setAttribute("statusFilter", statusFilter);
             req.setAttribute("pageTitle", "Work History");
             req.setAttribute("contentView", "/WEB-INF/technician/work-history.jsp");
             req.setAttribute("activePage", "work");

@@ -4,8 +4,11 @@ import constant.MessageConstant;
 import dto.Response;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import model.AccountRole;
+import model.Role;
 
 public class AccountRoleDAO extends MyDAO {
 
@@ -192,5 +195,70 @@ public class AccountRoleDAO extends MyDAO {
             }
         }
         return new Response<>(false, false, "Failed to remove roles");
+    }
+    
+    /**
+     * Get roles for multiple accounts - returns a Map<accountId, List<Role>>
+     */
+    public Response<Map<Integer, List<Role>>> getRolesForAccounts(List<Integer> accountIds) {
+        if (accountIds == null || accountIds.isEmpty()) {
+            return new Response<>(new HashMap<>(), true, "No accounts provided");
+        }
+        
+        Map<Integer, List<Role>> accountRolesMap = new HashMap<>();
+        
+        // Initialize map with empty lists
+        for (Integer accountId : accountIds) {
+            accountRolesMap.put(accountId, new ArrayList<>());
+        }
+        
+        // Build SQL with IN clause
+        StringBuilder sql = new StringBuilder(
+            "SELECT ar.accountId, r.roleId, r.roleName " +
+            "FROM AccountRole ar " +
+            "INNER JOIN Role r ON ar.roleId = r.roleId " +
+            "WHERE ar.accountId IN ("
+        );
+        
+        for (int i = 0; i < accountIds.size(); i++) {
+            sql.append("?");
+            if (i < accountIds.size() - 1) {
+                sql.append(",");
+            }
+        }
+        sql.append(") ORDER BY ar.accountId, r.roleName");
+        
+        try {
+            ps = con.prepareStatement(sql.toString());
+            
+            // Set parameters
+            for (int i = 0; i < accountIds.size(); i++) {
+                ps.setInt(i + 1, accountIds.get(i));
+            }
+            
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                int accountId = rs.getInt("accountId");
+                Role role = new Role(
+                    rs.getInt("roleId"),
+                    rs.getString("roleName")
+                );
+                
+                accountRolesMap.get(accountId).add(role);
+            }
+            
+            return new Response<>(accountRolesMap, true, "Roles loaded successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response<>(null, false, "Failed to load roles: " + e.getMessage());
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 }

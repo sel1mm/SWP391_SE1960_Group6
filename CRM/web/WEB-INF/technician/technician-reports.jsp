@@ -71,6 +71,7 @@
           <tr>
             <th>#</th>
             <th>Report ID</th>
+            <th>Customer</th>
             <th>Request ID</th>
             <th class="d-none d-md-table-cell">Details</th>
             <th>Diagnosis</th>
@@ -82,15 +83,19 @@
         </thead>
         <tbody id="reports-table-body">
         <c:choose>
-          <c:when test="${not empty reports}">
-            <c:forEach var="report" items="${reports}" varStatus="st">
+          <c:when test="${not empty reportsWithCustomer}">
+            <c:forEach var="reportWithCustomer" items="${reportsWithCustomer}" varStatus="st">
               <tr>
                 <td>${st.index + 1}</td>
-                <td><strong>#${report.reportId}</strong></td>
+                <td><strong>#${reportWithCustomer.report.reportId}</strong></td>
+                <td>
+                  <div class="fw-bold">${fn:escapeXml(reportWithCustomer.customerName)}</div>
+                  <small class="text-muted">ID: ${reportWithCustomer.customerId}</small>
+                </td>
                 <td>
                   <c:choose>
-                    <c:when test="${report.requestId != null}">
-                      <a href="#" class="text-decoration-none">#${report.requestId}</a>
+                    <c:when test="${reportWithCustomer.report.requestId != null}">
+                      <a href="#" class="text-decoration-none">#${reportWithCustomer.report.requestId}</a>
                     </c:when>
                     <c:otherwise>
                       <span class="text-muted">General Report</span>
@@ -98,20 +103,20 @@
                   </c:choose>
                 </td>
                 <td class="d-none d-md-table-cell">
-                  <div class="text-truncate" style="max-width:200px;" title="${fn:escapeXml(report.details)}">
-                    ${fn:escapeXml(report.details)}
+                  <div class="text-truncate" style="max-width:200px;" title="${fn:escapeXml(reportWithCustomer.report.details)}">
+                    ${fn:escapeXml(reportWithCustomer.report.details)}
                   </div>
                 </td>
                 <td>
-                  <div class="text-truncate" style="max-width:150px;" title="${fn:escapeXml(report.diagnosis)}">
-                    ${fn:escapeXml(report.diagnosis)}
+                  <div class="text-truncate" style="max-width:150px;" title="${fn:escapeXml(reportWithCustomer.report.diagnosis)}">
+                    ${fn:escapeXml(reportWithCustomer.report.diagnosis)}
                   </div>
                 </td>
                 <td>
-                  <span class="fw-bold text-success">$${report.estimatedCost}</span>
+                  <span class="fw-bold text-success">$${reportWithCustomer.report.estimatedCost}</span>
                 </td>
                 <td>
-                  <c:set var="status" value="${report.quotationStatus}"/>
+                  <c:set var="status" value="${reportWithCustomer.report.quotationStatus}"/>
                   <c:choose>
                     <c:when test="${status == 'Pending'}">
                       <span class="badge bg-warning">Pending</span>
@@ -126,14 +131,14 @@
                       <span class="badge bg-info">In Review</span>
                     </c:when>
                     <c:otherwise>
-                      <span class="badge bg-dark">${report.quotationStatus}</span>
+                      <span class="badge bg-dark">${reportWithCustomer.report.quotationStatus}</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
                 <td>
                   <c:choose>
-                    <c:when test="${report.repairDate != null}">
-                      ${report.repairDate}
+                    <c:when test="${reportWithCustomer.report.repairDate != null}">
+                      ${reportWithCustomer.report.repairDate}
                     </c:when>
                     <c:otherwise>
                       <span class="text-muted">Not set</span>
@@ -141,11 +146,11 @@
                   </c:choose>
                 </td>
                 <td class="text-end">
-                  <a class="btn btn-sm btn-outline-secondary" href="${pageContext.request.contextPath}/technician/reports?action=detail&reportId=${report.reportId}" title="View Details">
+                  <a class="btn btn-sm btn-outline-secondary" href="${pageContext.request.contextPath}/technician/reports?action=detail&reportId=${reportWithCustomer.report.reportId}" title="View Details">
                     <i class="bi bi-eye"></i>
                   </a>
                   <c:if test="${status == 'Pending'}">
-                    <a class="btn btn-sm btn-primary" href="${pageContext.request.contextPath}/technician/reports?action=edit&reportId=${report.reportId}" title="Edit Report">
+                    <a class="btn btn-sm btn-primary" href="${pageContext.request.contextPath}/technician/reports?action=edit&reportId=${reportWithCustomer.report.reportId}" title="Edit Report">
                       <i class="bi bi-pencil"></i>
                     </a>
                   </c:if>
@@ -155,7 +160,7 @@
           </c:when>
           <c:otherwise>
             <tr>
-              <td colspan="9" class="text-center py-4">
+              <td colspan="10" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-clipboard fs-1 d-block mb-2"></i>
                   <p>No reports found</p>

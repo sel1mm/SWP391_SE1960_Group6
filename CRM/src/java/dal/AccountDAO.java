@@ -68,6 +68,77 @@ public class AccountDAO extends MyDAO {
         }
         return list;
     }
+    
+    public List<Account> searchAccountsWithRole(String keyword, String status, String roleId) {
+        List<Account> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+            "SELECT DISTINCT a.* FROM Account a "
+        );
+        
+        // Add JOIN if roleId filter is provided
+        if (roleId != null && !roleId.trim().isEmpty()) {
+            sql.append("INNER JOIN AccountRole ar ON a.accountId = ar.accountId ");
+        }
+        
+        sql.append("WHERE 1=1 ");
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ?) ");
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            sql.append("AND a.status = ? ");
+        }
+        if (roleId != null && !roleId.trim().isEmpty()) {
+            sql.append("AND ar.roleId = ? ");
+        }
+        
+        sql.append("ORDER BY a.accountId");
+
+        try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchPattern = "%" + keyword.trim() + "%";
+                ps.setString(index++, searchPattern);
+                ps.setString(index++, searchPattern);
+                ps.setString(index++, searchPattern);
+            }
+            if (status != null && !status.trim().isEmpty()) {
+                ps.setString(index++, status);
+            }
+            if (roleId != null && !roleId.trim().isEmpty()) {
+                ps.setInt(index++, Integer.parseInt(roleId));
+            }
+
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                LocalDateTime createdAt = null;
+                LocalDateTime updatedAt = null;
+
+                if (rs.getTimestamp("createdAt") != null) {
+                    createdAt = rs.getTimestamp("createdAt").toLocalDateTime();
+                }
+                if (rs.getTimestamp("updatedAt") != null) {
+                    updatedAt = rs.getTimestamp("updatedAt").toLocalDateTime();
+                }
+
+                Account a = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
+                );
+                list.add(a);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 
     public List<Account> searchCustomerAccounts(String keyword, String status) {
         List<Account> list = new ArrayList<>();
@@ -1199,4 +1270,47 @@ public class AccountDAO extends MyDAO {
         return 0;
     }
 
+
+
+
+//public Response<Boolean> isPhoneExistsExcludingId(String phone, int accountId) {
+//    String sql = "SELECT COUNT(*) as count FROM Account WHERE phone = ? AND accountId <> ?";
+//    try {
+//        ps = con.prepareStatement(sql);
+//        ps.setString(1, phone);
+//        ps.setInt(2, accountId);
+//        rs = ps.executeQuery();
+//        if (rs.next()) {
+//            return new Response<>(rs.getInt("count") > 0, true, rs.getInt("count") > 0 ? "Phone already exists" : "Phone available");
+//        }
+//    } catch (Exception e) {
+//        e.printStackTrace();
+//    } finally {
+//        try { if(rs != null) rs.close(); if(ps != null) ps.close(); } catch(SQLException ex){ ex.printStackTrace(); }
+//    }
+//    return new Response<>(false, false, "Failed to check phone");
+//}
+public boolean updateEmail(int accountId, String newEmail) {
+    String sql = "UPDATE Account SET email = ?, updatedAt = ? WHERE accountId = ?";
+    PreparedStatement ps = null;
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setString(1, newEmail);
+        ps.setTimestamp(2, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+        ps.setInt(3, accountId);
+
+
+        int affectedRows = ps.executeUpdate();
+        return affectedRows > 0; // true nếu update thành công
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    } finally {
+        try {
+            if (ps != null) ps.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
 }
