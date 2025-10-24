@@ -108,19 +108,43 @@ public class UserController extends HttpServlet {
 
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
+        String roleId = request.getParameter("roleId");
 
         Response<List<Account>> result;
         if ((keyword != null && !keyword.trim().isEmpty())
-                || (status != null && !status.trim().isEmpty())) {
-            result = accountService.searchAccounts(keyword, status);
+                || (status != null && !status.trim().isEmpty())
+                || (roleId != null && !roleId.trim().isEmpty())) {
+            result = accountService.searchAccountsWithRole(keyword, status, roleId);
         } else {
             result = accountService.getAllAccounts();
         }
 
         if (result.isSuccess()) {
-            request.setAttribute("users", result.getData());
+            List<Account> users = result.getData();
+            request.setAttribute("users", users);
+            
+            // Load roles for all users
+            if (users != null && !users.isEmpty()) {
+                List<Integer> accountIds = new java.util.ArrayList<>();
+                for (Account user : users) {
+                    accountIds.add(user.getAccountId());
+                }
+                
+                Response<java.util.Map<Integer, List<model.Role>>> rolesResult = 
+                    accountRoleService.getRolesForAccounts(accountIds);
+                
+                if (rolesResult.isSuccess()) {
+                    request.setAttribute("userRolesMap", rolesResult.getData());
+                }
+            }
         } else {
             request.setAttribute("error", result.getMessage());
+        }
+        
+        // Load all roles for filter dropdown
+        Response<List<model.Role>> allRolesResult = roleService.getAllRoles();
+        if (allRolesResult.isSuccess()) {
+            request.setAttribute("allRoles", allRolesResult.getData());
         }
 
         // Forward đến trang JSP hiển thị danh sách
@@ -254,6 +278,7 @@ public class UserController extends HttpServlet {
 // Lưu user tạm và gửi OTP
         HttpSession session = request.getSession();
         session.setAttribute("pendingUser", account);
+        session.setAttribute("pendingUserRoleIds", roleIds); // Save roleIds for later
         utils.OtpHelper.sendOtpToEmail(session, email, "createUser");
         request.getRequestDispatcher("/verifyOtp.jsp").forward(request, response);
         return;
@@ -523,12 +548,31 @@ public class UserController extends HttpServlet {
 
             Response<model.AccountRole> result = accountRoleService.assignRoleToAccount(userId, roleId);
 
-            if (result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&message="
-                        + java.net.URLEncoder.encode("Role assigned successfully", "UTF-8"));
+            // Check if this is an AJAX request
+            String ajaxHeader = request.getHeader("X-Requested-With");
+            boolean isAjax = "XMLHttpRequest".equals(ajaxHeader) || 
+                           request.getContentType() != null && request.getContentType().contains("application/x-www-form-urlencoded");
+            
+            if (isAjax) {
+                // Return JSON response for AJAX
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                PrintWriter out = response.getWriter();
+                if (result.isSuccess()) {
+                    out.print("{\"success\": true, \"message\": \"Role assigned successfully\"}");
+                } else {
+                    out.print("{\"success\": false, \"message\": \"" + result.getMessage() + "\"}");
+                }
+                out.flush();
             } else {
-                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&error="
-                        + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
+                // Regular redirect for non-AJAX requests
+                if (result.isSuccess()) {
+                    response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&message="
+                            + java.net.URLEncoder.encode("Role assigned successfully", "UTF-8"));
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&error="
+                            + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
+                }
             }
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID or role ID");
@@ -551,12 +595,31 @@ public class UserController extends HttpServlet {
 
             Response<Boolean> result = accountRoleService.removeRoleFromAccount(userId, roleId);
 
-            if (result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&message="
-                        + java.net.URLEncoder.encode("Role removed successfully", "UTF-8"));
+            // Check if this is an AJAX request
+            String ajaxHeader = request.getHeader("X-Requested-With");
+            boolean isAjax = "XMLHttpRequest".equals(ajaxHeader) || 
+                           request.getContentType() != null && request.getContentType().contains("application/x-www-form-urlencoded");
+            
+            if (isAjax) {
+                // Return JSON response for AJAX
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                PrintWriter out = response.getWriter();
+                if (result.isSuccess()) {
+                    out.print("{\"success\": true, \"message\": \"Role removed successfully\"}");
+                } else {
+                    out.print("{\"success\": false, \"message\": \"" + result.getMessage() + "\"}");
+                }
+                out.flush();
             } else {
-                response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&error="
-                        + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
+                // Regular redirect for non-AJAX requests
+                if (result.isSuccess()) {
+                    response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&message="
+                            + java.net.URLEncoder.encode("Role removed successfully", "UTF-8"));
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/user/roles?id=" + userId + "&error="
+                            + java.net.URLEncoder.encode(result.getMessage(), "UTF-8"));
+                }
             }
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID or role ID");

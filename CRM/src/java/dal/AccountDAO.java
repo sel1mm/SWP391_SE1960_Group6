@@ -68,6 +68,77 @@ public class AccountDAO extends MyDAO {
         }
         return list;
     }
+    
+    public List<Account> searchAccountsWithRole(String keyword, String status, String roleId) {
+        List<Account> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+            "SELECT DISTINCT a.* FROM Account a "
+        );
+        
+        // Add JOIN if roleId filter is provided
+        if (roleId != null && !roleId.trim().isEmpty()) {
+            sql.append("INNER JOIN AccountRole ar ON a.accountId = ar.accountId ");
+        }
+        
+        sql.append("WHERE 1=1 ");
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ?) ");
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            sql.append("AND a.status = ? ");
+        }
+        if (roleId != null && !roleId.trim().isEmpty()) {
+            sql.append("AND ar.roleId = ? ");
+        }
+        
+        sql.append("ORDER BY a.accountId");
+
+        try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchPattern = "%" + keyword.trim() + "%";
+                ps.setString(index++, searchPattern);
+                ps.setString(index++, searchPattern);
+                ps.setString(index++, searchPattern);
+            }
+            if (status != null && !status.trim().isEmpty()) {
+                ps.setString(index++, status);
+            }
+            if (roleId != null && !roleId.trim().isEmpty()) {
+                ps.setInt(index++, Integer.parseInt(roleId));
+            }
+
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                LocalDateTime createdAt = null;
+                LocalDateTime updatedAt = null;
+
+                if (rs.getTimestamp("createdAt") != null) {
+                    createdAt = rs.getTimestamp("createdAt").toLocalDateTime();
+                }
+                if (rs.getTimestamp("updatedAt") != null) {
+                    updatedAt = rs.getTimestamp("updatedAt").toLocalDateTime();
+                }
+
+                Account a = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
+                );
+                list.add(a);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 
     public List<Account> searchCustomerAccounts(String keyword, String status) {
         List<Account> list = new ArrayList<>();

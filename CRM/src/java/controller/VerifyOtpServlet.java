@@ -80,12 +80,28 @@ public class VerifyOtpServlet extends HttpServlet {
                 return;
             } else if ("createUser".equals(purpose)) {
                 Account pendingUser = (Account) session.getAttribute("pendingUser");
+                String[] roleIds = (String[]) session.getAttribute("pendingUserRoleIds");
                 if (pendingUser != null) {
                     AccountService accountService = new AccountService();
                     Response<Account> createResult = accountService.createAccount(pendingUser);
 
                     if (createResult.isSuccess()) {
+                        // Assign roles if provided
+                        if (roleIds != null && roleIds.length > 0) {
+                            service.AccountRoleService accountRoleService = new service.AccountRoleService();
+                            int accountId = createResult.getData().getAccountId();
+                            for (String roleIdStr : roleIds) {
+                                try {
+                                    int roleId = Integer.parseInt(roleIdStr);
+                                    accountRoleService.assignRoleToAccount(accountId, roleId);
+                                } catch (NumberFormatException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                        
                         session.removeAttribute("pendingUser");
+                        session.removeAttribute("pendingUserRoleIds");
                         session.removeAttribute("otp");
                         session.removeAttribute("otpTime");
                         session.removeAttribute("otpPurpose");

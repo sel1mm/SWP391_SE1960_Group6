@@ -128,8 +128,37 @@
                                                 </select>
                                             </div>
                                         </div>
-
                                     </div>
+
+                                    <!-- Roles Section -->
+                                    <c:if test="${not empty roles}">
+                                        <div class="mb-3">
+                                            <label class="form-label">Roles</label>
+                                            <div class="row">
+                                                <c:forEach var="role" items="${roles}">
+                                                    <div class="col-md-4">
+                                                        <div class="form-check">
+                                                            <c:set var="hasRole" value="false" />
+                                                            <c:forEach var="userRole" items="${userRoles}">
+                                                                <c:if test="${userRole.roleId == role.roleId}">
+                                                                    <c:set var="hasRole" value="true" />
+                                                                </c:if>
+                                                            </c:forEach>
+                                                            <input class="form-check-input role-checkbox" type="checkbox" 
+                                                                   data-user-id="${user.accountId}"
+                                                                   data-role-id="${role.roleId}"
+                                                                   id="role_${role.roleId}" 
+                                                                   ${hasRole ? 'checked' : ''}>
+                                                            <label class="form-check-label" for="role_${role.roleId}">
+                                                                ${role.roleName}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </c:forEach>
+                                            </div>
+                                            <small class="text-muted">Changes to roles are saved automatically</small>
+                                        </div>
+                                    </c:if>
 
                                     <div class="d-flex justify-content-end gap-2">
                                         <a href="${pageContext.request.contextPath}/user/list" class="btn btn-secondary">
@@ -176,31 +205,6 @@
                             </div>
                         </div>
 
-                        <!-- User Roles -->
-                        <c:if test="${not empty userRoles}">
-                            <div class="card mt-4">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5><i class="fas fa-user-tag"></i> Current Roles</h5>
-                                    <a href="${pageContext.request.contextPath}/user/roles?id=${user.accountId}" 
-                                       class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-edit"></i> Manage Roles
-                                    </a>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <c:forEach var="userRole" items="${userRoles}">
-                                            <c:forEach var="role" items="${roles}">
-                                                <c:if test="${userRole.roleId == role.roleId}">
-                                                    <div class="col-md-3">
-                                                        <span class="badge bg-primary me-2">${role.roleName}</span>
-                                                    </div>
-                                                </c:if>
-                                            </c:forEach>
-                                        </c:forEach>
-                                    </div>
-                                </div>
-                            </div>
-                        </c:if>
                     </c:if>
                 </div>
             </div>
@@ -219,6 +223,49 @@
             } else {
                 this.setCustomValidity('');
             }
+        });
+
+        // Handle role checkbox changes
+        document.querySelectorAll('.role-checkbox').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                const userId = this.getAttribute('data-user-id');
+                const roleId = this.getAttribute('data-role-id');
+                const isChecked = this.checked;
+                
+                const action = isChecked ? 'assignRole' : 'removeRole';
+                const url = '${pageContext.request.contextPath}/user/' + action;
+                
+                // Create form data
+                const formData = new URLSearchParams();
+                formData.append('userId', userId);
+                formData.append('roleId', roleId);
+                
+                // Send AJAX request
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message (optional)
+                        console.log(data.message);
+                    } else {
+                        alert('Error: ' + data.message);
+                        // Revert checkbox state
+                        checkbox.checked = !isChecked;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to update role. Please try again.');
+                    // Revert checkbox state
+                    checkbox.checked = !isChecked;
+                });
+            });
         });
     </script>
 </body>
