@@ -263,8 +263,12 @@ public class ServiceRequestDAO extends MyDAO {
      */
     public List<ServiceRequest> getRequestsByCustomerId(int customerId) {
         List<ServiceRequest> list = new ArrayList<>();
-        xSql = "SELECT sr.* FROM ServiceRequest sr "
-                + "WHERE sr.createdBy = ? "
+        xSql = "SELECT sr.*, e.model as equipmentName "
+                + // ✅ THÊM equipmentName
+                "FROM ServiceRequest sr "
+                + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
+                + // ✅ LEFT JOIN
+                "WHERE sr.createdBy = ? "
                 + "ORDER BY sr.requestId DESC";
         try {
             ps = con.prepareStatement(xSql);
@@ -307,8 +311,12 @@ public class ServiceRequestDAO extends MyDAO {
      */
     public List<ServiceRequest> searchRequests(int customerId, String keyword) {
         List<ServiceRequest> list = new ArrayList<>();
-        xSql = "SELECT sr.* FROM ServiceRequest sr "
-                + "WHERE sr.createdBy = ? "
+        xSql = "SELECT sr.*, e.model as equipmentName "
+                + // ✅ THÊM equipmentName
+                "FROM ServiceRequest sr "
+                + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
+                + // ✅ LEFT JOIN
+                "WHERE sr.createdBy = ? "
                 + "AND (sr.description LIKE ? OR CAST(sr.requestId AS CHAR) LIKE ?) "
                 + "ORDER BY sr.requestDate ASC, sr.requestId ASC";
         try {
@@ -333,9 +341,13 @@ public class ServiceRequestDAO extends MyDAO {
      */
     public List<ServiceRequest> filterRequestsByStatus(int customerId, String status) {
         List<ServiceRequest> list = new ArrayList<>();
-        xSql = "SELECT sr.* FROM ServiceRequest sr "
-        + "WHERE sr.createdBy = ? AND sr.status = ? "
-        + "ORDER BY sr.requestDate ASC, sr.requestId ASC";
+        xSql = "SELECT sr.*, e.model as equipmentName "
+                + // ✅ THÊM equipmentName
+                "FROM ServiceRequest sr "
+                + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
+                + // ✅ LEFT JOIN
+                "WHERE sr.createdBy = ? AND sr.status = ? "
+                + "ORDER BY sr.requestDate ASC, sr.requestId ASC";
         try {
             ps = con.prepareStatement(xSql);
             ps.setInt(1, customerId);
@@ -358,7 +370,7 @@ public class ServiceRequestDAO extends MyDAO {
      */
     public int getTotalRequests(int customerId) {
         xSql = xSql = "SELECT COUNT(*) FROM ServiceRequest "
-            + "WHERE createdBy = ?";
+                + "WHERE createdBy = ?";
         return getCount(customerId);
     }
 
@@ -367,7 +379,7 @@ public class ServiceRequestDAO extends MyDAO {
      */
     public int getRequestCountByStatus(int customerId, String status) {
         xSql = "SELECT COUNT(*) FROM ServiceRequest "
-            + "WHERE createdBy = ? AND status = ?";
+                + "WHERE createdBy = ? AND status = ?";
         try {
             ps = con.prepareStatement(xSql);
             ps.setInt(1, customerId);
@@ -467,7 +479,10 @@ public class ServiceRequestDAO extends MyDAO {
         }
 
         try {
-            sr.setEquipmentName(rs.getString("equipmentModel"));
+            String equipmentName = rs.getString("equipmentName");
+            if (equipmentName != null) {
+                sr.setEquipmentName(equipmentName);
+            }
         } catch (SQLException e) {
             // Column might not exist in all queries, ignore
         }
@@ -914,7 +929,7 @@ public class ServiceRequestDAO extends MyDAO {
      */
     public List<ServiceRequest> getPendingRequestsWithDetails() {
         List<ServiceRequest> list = new ArrayList<>();
-       
+
         xSql = "SELECT sr.*, "
                 + "a.fullName as customerName, a.email as customerEmail, a.phone as customerPhone, "
                 + "e.serialNumber, e.model as equipmentModel, e.description as equipmentDescription, "
