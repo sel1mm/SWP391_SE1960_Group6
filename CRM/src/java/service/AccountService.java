@@ -29,7 +29,7 @@ public class AccountService {
 
     public Response<Account> checkLogin(String username, String password) {
         Account account = accountDAO.getAccountByUserName(username);
-        if (account != null && "Active".equalsIgnoreCase(account.getStatus())  && passwordHasher.checkPassword(password, account.getPasswordHash())) {
+        if (account != null && "Active".equalsIgnoreCase(account.getStatus()) && passwordHasher.checkPassword(password, account.getPasswordHash())) {
             return new Response<>(account, true, MessageConstant.LOGIN_SUCCESS);
         } else {
             return new Response<>(null, false, MessageConstant.LOGIN_FAILED);
@@ -262,52 +262,45 @@ public class AccountService {
 
     public Response<Account> updateCustomerAccount(Account account, AccountProfile profile) {
         try {
-            if (account.getUsername() == null || account.getUsername().trim().isEmpty()) {
-                return new Response<>(null, false, "Username is required");
-            }
-            if (account.getEmail() == null || account.getEmail().trim().isEmpty()) {
-                return new Response<>(null, false, "Email is required");
-            }
-
             Response<Account> existingAccountRes = accountDAO.getAccountById2(account.getAccountId());
             if (!existingAccountRes.isSuccess() || existingAccountRes.getData() == null) {
                 return new Response<>(null, false, "Account not found");
             }
             Account existingAccount = existingAccountRes.getData();
 
-            Response<Boolean> usernameExists = accountDAO.isUsernameExists(account.getUsername().trim());
-            if (usernameExists.isSuccess() && usernameExists.getData()) {
-                if (!accountDAO.isSameAccountByUsername(account.getUsername().trim(), account.getAccountId())) {
+            // ✅ Giữ lại username nếu form không gửi
+            if (account.getUsername() == null || account.getUsername().trim().isEmpty()) {
+                account.setUsername(existingAccount.getUsername());
+            }
+
+            // ✅ Kiểm tra trùng khi có thay đổi
+            if (!account.getUsername().equals(existingAccount.getUsername())) {
+                if (accountDAO.isUsernameExists(account.getUsername()).getData()) {
                     return new Response<>(null, false, "Username already exists");
                 }
             }
 
-            Response<Boolean> emailExists = accountDAO.isEmailExists(account.getEmail().trim());
-            if (emailExists.isSuccess() && emailExists.getData()) {
-                if (!account.getEmail().trim().equals(existingAccount.getEmail())) {
+            if (!account.getEmail().equals(existingAccount.getEmail())) {
+                if (accountDAO.isEmailExists(account.getEmail()).getData()) {
                     return new Response<>(null, false, "Email already exists");
                 }
             }
 
-            if (account.getPhone() != null && !account.getPhone().trim().isEmpty()) {
-                Response<Boolean> phoneExists = accountDAO.isPhoneExists(account.getPhone().trim());
-                if (phoneExists.isSuccess() && phoneExists.getData()) {
-                    if (!account.getPhone().trim().equals(existingAccount.getPhone())) {
-                        return new Response<>(null, false, "Phone number already exists");
-                    }
+            if (account.getPhone() != null && !account.getPhone().equals(existingAccount.getPhone())) {
+                if (accountDAO.isPhoneExists(account.getPhone()).getData()) {
+                    return new Response<>(null, false, "Phone number already exists");
                 }
             }
 
- 
+            // ✅ Mật khẩu: giữ lại hoặc hash mới
             String rawPassword = account.getPasswordHash();
-
-            if (rawPassword != null && !rawPassword.isEmpty()) {               
-                String hashed = passwordHasher.hashPassword(rawPassword);
-                account.setPasswordHash(hashed);
+            if (rawPassword != null && !rawPassword.isEmpty()) {
+                account.setPasswordHash(passwordHasher.hashPassword(rawPassword));
             } else {
                 account.setPasswordHash(existingAccount.getPasswordHash());
             }
 
+            // ✅ Update Account
             boolean accountUpdated = accountDAO.updateAccountDetails(
                     account.getAccountId(),
                     account.getUsername(),
@@ -318,6 +311,7 @@ public class AccountService {
                     account.getStatus()
             );
 
+            // ✅ Update / Insert Profile
             boolean profileUpdated = accountProfileDAO.updateProfileDetails(
                     account.getAccountId(),
                     profile.getAddress(),
@@ -328,10 +322,10 @@ public class AccountService {
                     profile.getExtraData()
             );
 
-            if (accountUpdated && profileUpdated) {
+            if (accountUpdated || profileUpdated) {
                 return new Response<>(account, true, "Cập nhật thông tin khách hàng thành công");
             } else {
-                return new Response<>(account, false, "Cập nhật thất bại hoặc dữ liệu không thay đổi");
+                return new Response<>(account, true, "Không có thay đổi nào được áp dụng");
             }
 
         } catch (Exception e) {
@@ -360,27 +354,25 @@ public class AccountService {
         //  accountRoleDAO.removeAllRolesFromAccount(accountId);
         return accountDAO.deleteAccount(accountId);
     }
-    
+
     public Response<Account> getAccountByUsername(String username) {
-    try {
-        if (username == null || username.trim().isEmpty()) {
-            return new Response<>(null, false, "Username is required");
-        }
+        try {
+            if (username == null || username.trim().isEmpty()) {
+                return new Response<>(null, false, "Username is required");
+            }
 
-        Response<Account> res = accountDAO.getAccountByUsername(username);
-        if (res.isSuccess() && res.getData() != null) {
-            return new Response<>(res.getData(), true, MessageConstant.MESSAGE_SUCCESS);
-        } else {
-            return new Response<>(null, false, "Không tìm thấy tài khoản với username này");
-        }
+            Response<Account> res = accountDAO.getAccountByUsername(username);
+            if (res.isSuccess() && res.getData() != null) {
+                return new Response<>(res.getData(), true, MessageConstant.MESSAGE_SUCCESS);
+            } else {
+                return new Response<>(null, false, "Không tìm thấy tài khoản với username này");
+            }
 
-    } catch (Exception e) {
-        e.printStackTrace();
-        return new Response<>(null, false, "Lỗi khi lấy thông tin tài khoản: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response<>(null, false, "Lỗi khi lấy thông tin tài khoản: " + e.getMessage());
+        }
     }
-}
-    
-
 
     public Response<Boolean> isUsernameExists(String username) {
         return accountDAO.isUsernameExists(username);
@@ -393,14 +385,51 @@ public class AccountService {
     public Response<Boolean> isPhoneExists(String phone) {
         return accountDAO.isPhoneExists(phone);
     }
-    
-    
-    public Response<Boolean> isEmailExistsForUpdate(String email, int accountId) {
-    return accountDAO.isEmailExistsExcludingId(email, accountId);
-}
 
-public Response<Boolean> isPhoneExistsForUpdate(String phone, int accountId) {
-    return accountDAO.isPhoneExistsExcludingId(phone, accountId);
-}
+    public Response<Boolean> isEmailExistsForUpdate(String email, int accountId) {
+        return accountDAO.isEmailExistsExcludingId(email, accountId);
+    }
+
+    public Response<Boolean> isPhoneExistsForUpdate(String phone, int accountId) {
+        return accountDAO.isPhoneExistsExcludingId(phone, accountId);
+    }
+
+    public Response<List<Account>> getCustomerAccountsPaged(int offset, int limit) {
+        try {
+            List<Account> list = accountDAO.getCustomerAccountsPaged(offset, limit);
+            return new Response<>(list, true, "Lấy danh sách khách hàng phân trang thành công");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response<>(null, false, "Lỗi khi lấy danh sách khách hàng phân trang: " + e.getMessage());
+        }
+    }
+
+    public int countAllCustomerAccounts() {
+        try {
+            return accountDAO.countAllCustomerAccounts();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public Response<List<Account>> searchCustomerAccountsPaged(String keyword, String status, int offset, int limit) {
+        try {
+            List<Account> list = accountDAO.searchCustomerAccountsPaged(keyword, status, offset, limit);
+            return new Response<>(list, true, "Tìm kiếm khách hàng có phân trang thành công");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response<>(null, false, "Lỗi khi tìm kiếm khách hàng có phân trang: " + e.getMessage());
+        }
+    }
+
+    public int countSearchCustomerAccounts(String keyword, String status) {
+        try {
+            return accountDAO.countSearchCustomerAccounts(keyword, status);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
 
 }
