@@ -39,9 +39,8 @@ public class ChangeInformationServlet extends HttpServlet {
     private AccountProfileDAO profileDAO;
     private AccountDAO accountDAO;
     
-    // Avatar upload configuration - LƯU Ở VỊ TRÍ CỐ ĐỊNH NGOÀI PROJECT
+    // Avatar upload configuration
     private static final String UPLOAD_DIR = "D:/Every thing relate to Lam/BTVN/Hoc tap/SWP/app-uploads/avatar";
-    
     private static final String[] ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"};
     private static final long MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
@@ -68,7 +67,7 @@ public class ChangeInformationServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
+HttpSession session = request.getSession(false);
         response.setContentType("text/html;charset=UTF-8");
 
         try {
@@ -76,7 +75,7 @@ public class ChangeInformationServlet extends HttpServlet {
             System.out.println("========== ChangeInformationServlet GET ==========");
             System.out.println("=".repeat(60));
             
-            HttpSession session = request.getSession();
+            
        
             if (session == null) {
                 System.err.println("❌ Session is NULL - Redirecting to login");
@@ -86,7 +85,7 @@ public class ChangeInformationServlet extends HttpServlet {
             System.out.println("✅ Session exists: " + session.getId());
 
             Account acc = (Account) session.getAttribute("session_login");
-            if (acc == null || acc.getAccountId() == -1) {
+            if (acc == null || acc.getAccountId() == -1 || acc.getAccountId() == -1) {
                 System.err.println("❌ Account not found in session or invalid - Redirecting to login");
                 response.sendRedirect("login.jsp");
                 return;
@@ -96,6 +95,7 @@ public class ChangeInformationServlet extends HttpServlet {
             System.out.println("   - Account ID: " + acc.getAccountId());
             System.out.println("   - Username: " + acc.getUsername());
 
+            // Load account and profile data
             Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
             AccountProfile accountProfile = profileDAO.getProfileByAccountId(acc.getAccountId());
 
@@ -112,16 +112,17 @@ public class ChangeInformationServlet extends HttpServlet {
                     user.setNationalId(accountProfile.getNationalId());
                     user.setDob(accountProfile.getDateOfBirth() != null ? 
                         accountProfile.getDateOfBirth().toString() : "");
-                    // Sửa avatar URL để dùng servlet
+                    
                     String avatarUrl = accountProfile.getAvatarUrl();
                     if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                        // Chuyển từ filename sang URL servlet
                         user.setAvatar("avatar/" + avatarUrl);
                     }
                 }
                 
                 session.setAttribute("user", user);
                 System.out.println("✅ UserDTO created and stored in session");
+                System.out.println("   - Full Name: " + user.getFullName());
+                System.out.println("   - Email: " + user.getEmail());
             }
 
             request.getRequestDispatcher("changeInformation.jsp").forward(request, response);
@@ -129,7 +130,8 @@ public class ChangeInformationServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("\n❌ ERROR in ChangeInformationServlet GET: " + e.getMessage());
-            handleError(request, response, "Unable to load information form: " + e.getMessage());
+            session.setAttribute("errorMessage", "Unable to load information form: " + e.getMessage());
+            response.sendRedirect("storekeeper");
         }
     }
 
@@ -140,7 +142,7 @@ public class ChangeInformationServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
 
-        HttpSession session = request.getSession();
+        HttpSession session = request.getSession(false);
    
         if (session == null) {
             System.err.println("❌ Session is NULL - Redirecting to login");
@@ -149,7 +151,7 @@ public class ChangeInformationServlet extends HttpServlet {
         }
 
         Account acc = (Account) session.getAttribute("session_login");
-        if (acc == null || acc.getAccountId() == -1) {
+        if (acc == null || acc.getAccountId() == -1 || acc.getAccountId() == -1) {
             System.err.println("❌ Account not found in session - Redirecting to login");
             response.sendRedirect("login.jsp");
             return;
@@ -160,6 +162,7 @@ public class ChangeInformationServlet extends HttpServlet {
             System.out.println("========== ChangeInformationServlet POST ==========");
             System.out.println("=".repeat(60));
             
+            // Get form parameters
             String fullName = request.getParameter("fullName");
             String email = request.getParameter("email");
             String phone = request.getParameter("phone");
@@ -167,13 +170,24 @@ public class ChangeInformationServlet extends HttpServlet {
             String nationalId = request.getParameter("nationalId");
             String dobString = request.getParameter("dob");
 
+            System.out.println("📝 Form data received:");
+            System.out.println("   - Full Name: " + fullName);
+            System.out.println("   - Email: " + email);
+            System.out.println("   - Phone: " + phone);
+            System.out.println("   - Address: " + address);
+            System.out.println("   - National ID: " + nationalId);
+            System.out.println("   - DOB: " + dobString);
+
+            // Validate input
             String validationError = validateInput(fullName, email, phone, address, nationalId, dobString);
             if (validationError != null) {
+                System.err.println("❌ Validation error: " + validationError);
                 session.setAttribute("errorMessage", validationError);
                 response.sendRedirect("changeInformation");
                 return;
             }
 
+            // Parse and validate date of birth
             LocalDate dateOfBirth = null;
             try {
                 dateOfBirth = LocalDate.parse(dobString);
@@ -192,7 +206,7 @@ public class ChangeInformationServlet extends HttpServlet {
             String avatarFileName = null;
             Part avatarPart = request.getPart("avatar");
             if (avatarPart != null && avatarPart.getSize() > 0) {
-                System.out.println("Avatar file detected:");
+                System.out.println("📷 Avatar file detected:");
                 System.out.println("   - File name: " + avatarPart.getSubmittedFileName());
                 System.out.println("   - File size: " + avatarPart.getSize() + " bytes");
                 
@@ -207,29 +221,48 @@ public class ChangeInformationServlet extends HttpServlet {
                 }
             }
 
-            // Update Account table
+            // Update Account table (fullName, email, phone)
             Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
             if (accountResponse != null && accountResponse.getData() != null) {
                 Account account = accountResponse.getData();
+                
+                // Store old email for logging
+                String oldEmail = account.getEmail();
+                
                 account.setFullName(fullName);
                 account.setEmail(email);
                 account.setPhone(phone);
 
                 Response<Account> updateResponse = accountDAO.updateAccount(account);
                 if (updateResponse == null || !updateResponse.isSuccess()) {
+                    System.err.println("❌ Failed to update account information");
                     session.setAttribute("errorMessage", "Failed to update account information.");
                     response.sendRedirect("changeInformation");
                     return;
                 }
+                
+                System.out.println("✅ Account updated successfully");
+                if (!oldEmail.equals(email)) {
+                    System.out.println("   - Email changed from: " + oldEmail + " to: " + email);
+                }
+                
+                // Update session_login với thông tin mới
+                acc.setFullName(fullName);
+                acc.setEmail(email);
+                acc.setPhone(phone);
+                session.setAttribute("session_login", acc);
             }
 
-            // Update AccountProfile table
+            // Update AccountProfile table (address, dob, nationalId, avatar)
             AccountProfile profile = profileDAO.getProfileByAccountId(acc.getAccountId());
             boolean isNewProfile = (profile == null);
 
             if (isNewProfile) {
+                System.out.println("📋 Creating new profile...");
                 profile = new AccountProfile();
                 profile.setAccountId(acc.getAccountId());
+            } else {
+                System.out.println("📋 Updating existing profile...");
             }
 
             profile.setAddress(address);
@@ -238,6 +271,11 @@ public class ChangeInformationServlet extends HttpServlet {
 
             // Update avatar if new file was uploaded
             if (avatarFileName != null) {
+                // Delete old avatar file if exists
+                String oldAvatar = profile.getAvatarUrl();
+                if (oldAvatar != null && !oldAvatar.isEmpty()) {
+                    deleteOldAvatar(oldAvatar);
+                }
                 profile.setAvatarUrl(avatarFileName);
             }
 
@@ -249,6 +287,8 @@ public class ChangeInformationServlet extends HttpServlet {
             }
 
             if (success) {
+                System.out.println("✅ Profile " + (isNewProfile ? "created" : "updated") + " successfully");
+                
                 // Update session with new user data
                 UserDTO user = new UserDTO();
                 user.setFullName(fullName);
@@ -257,28 +297,31 @@ public class ChangeInformationServlet extends HttpServlet {
                 user.setAddress(address);
                 user.setNationalId(nationalId);
                 user.setDob(dobString);
-                // Sửa avatar URL để dùng servlet
+                
                 if (profile.getAvatarUrl() != null && !profile.getAvatarUrl().isEmpty()) {
                     user.setAvatar("avatar/" + profile.getAvatarUrl());
                 }
                 session.setAttribute("user", user);
 
                 session.setAttribute("successMessage", "Information updated successfully!");
+                System.out.println("✅ All operations completed successfully");
                 response.sendRedirect("changeInformation");
             } else {
+                System.err.println("❌ Failed to " + (isNewProfile ? "create" : "update") + " profile");
                 session.setAttribute("errorMessage", "Failed to update information. Please try again.");
                 response.sendRedirect("changeInformation");
             }
 
         } catch (Exception e) {
             e.printStackTrace();
+            System.err.println("❌ Unexpected error: " + e.getMessage());
             session.setAttribute("errorMessage", "Unable to update information: " + e.getMessage());
             response.sendRedirect("changeInformation");
         }
     }
 
     /**
-     * Handle avatar file upload - Lưu vào thư mục cố định
+     * Handle avatar file upload
      */
     private String handleAvatarUpload(Part filePart, Integer accountId) throws Exception {
         String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
@@ -305,11 +348,27 @@ public class ChangeInformationServlet extends HttpServlet {
         }
 
         System.out.println("✅ File saved to: " + filePath.toString());
-        
-        // Chỉ trả về tên file, không phải đường dẫn đầy đủ
         return newFileName;
     }
 
+    /**
+     * Delete old avatar file
+     */
+    private void deleteOldAvatar(String fileName) {
+        try {
+            Path filePath = Paths.get(UPLOAD_DIR, fileName);
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+                System.out.println("🗑️ Old avatar deleted: " + fileName);
+            }
+        } catch (IOException e) {
+            System.err.println("⚠️ Failed to delete old avatar: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Validate file extension
+     */
     private boolean isValidFileExtension(String fileName) {
         String lowerFileName = fileName.toLowerCase();
         for (String ext : ALLOWED_EXTENSIONS) {
@@ -320,12 +379,18 @@ public class ChangeInformationServlet extends HttpServlet {
         return false;
     }
 
+    /**
+     * Check if user is at least 18 years old
+     */
     private boolean isAtLeast18YearsOld(LocalDate dateOfBirth) {
         LocalDate today = LocalDate.now();
         Period period = Period.between(dateOfBirth, today);
         return period.getYears() >= 18;
     }
 
+    /**
+     * Validate all input fields
+     */
     private String validateInput(String fullName, String email, String phone, 
                                  String address, String nationalId, String dob) {
         
@@ -333,16 +398,31 @@ public class ChangeInformationServlet extends HttpServlet {
             return "Full name must be at least 2 characters.";
         }
         
-        if (email == null || email.trim().isEmpty() || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+        if (fullName.trim().length() > 50) {
+            return "Full name must not exceed 50 characters.";
+        }
+        
+        if (email == null || email.trim().isEmpty() || !email.matches("^[\\w._%+-]+@[\\w.-]+\\.[A-Za-z]{2,}$")) {
             return "Invalid email format.";
         }
         
-        if (phone != null && !phone.trim().isEmpty() && !phone.matches("^[0-9]{10,11}$")) {
-            return "Phone number must be 10-11 digits.";
+        if (email.trim().length() > 100) {
+            return "Email must not exceed 100 characters.";
+        }
+        
+        // Phone is optional, but if provided must be valid
+        if (phone != null && !phone.trim().isEmpty()) {
+            if (!phone.matches("^[0-9]{10,11}$")) {
+                return "Phone number must be 10-11 digits.";
+            }
         }
         
         if (address == null || address.trim().isEmpty() || address.trim().length() < 5) {
             return "Address must be at least 5 characters.";
+        }
+        
+        if (address.trim().length() > 200) {
+            return "Address must not exceed 200 characters.";
         }
         
         if (nationalId == null || nationalId.trim().isEmpty() || !nationalId.matches("^[0-9]{9,12}$")) {
@@ -353,14 +433,7 @@ public class ChangeInformationServlet extends HttpServlet {
             return "Date of birth is required.";
         }
         
-        return null;
-    }
-
-    private void handleError(HttpServletRequest request, HttpServletResponse response, String message) 
-            throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        session.setAttribute("errorMessage", message);
-        response.sendRedirect("changeInformation");
+        return null; // No errors
     }
 
     @Override
@@ -368,7 +441,12 @@ public class ChangeInformationServlet extends HttpServlet {
         return "Servlet for changing user information with avatar upload support";
     }
     
+    /**
+     * Data Transfer Object for user information
+     */
     public static class UserDTO implements java.io.Serializable {
+        private static final long serialVersionUID = 1L;
+        
         private String fullName;
         private String email;
         private String phone;

@@ -1,8 +1,3 @@
-<%-- 
-    Document   : numberPart (OPTIMIZED)
-    Created on : Oct 11, 2025
-    Author     : Admin
---%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
@@ -15,7 +10,6 @@
         <title>CRM System - Danh sách hàng tồn kho</title>
 
         <style>
-
             * {
                 margin: 0;
                 padding: 0;
@@ -24,29 +18,31 @@
 
             body {
                 font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-                background: #f8f9fc;
+                background: #ffffff;
                 color: #333;
                 line-height: 1.6;
                 -webkit-font-smoothing: antialiased;
+                min-height: 100vh;
             }
 
             /* Navbar */
             .navbar {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                padding: 0;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                background: #000000;
+                padding: 1rem 0;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
                 position: sticky;
                 top: 0;
                 z-index: 1000;
+                width: 100%;
             }
 
             .nav-container {
-                max-width: 1200px;
-                margin: 0 auto;
+                max-width: 100%;
+                padding: 0 2rem;
+                margin: 0;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 1rem 2rem;
             }
 
             .logo {
@@ -72,60 +68,67 @@
             }
 
             .nav-links a:hover {
-                background: rgba(255,255,255,0.12);
+                background: rgba(255,255,255,0.1);
             }
 
             /* Sidebar */
             .sidebar {
-                max-width: 250px;
-                height: 100vh;
-                margin-top: 77px;
+                width: 250px;
+                min-height: calc(100vh - 77px);
                 position: fixed;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
+                top: 77px;
+                left: 0;
+                background: #000000;
                 display: flex;
                 flex-direction: column;
-                padding-top: 20px;
-                left: 0;
-                top: 0;
-                overflow: auto;
+                justify-content: space-between;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+                z-index: 100;
             }
 
             .sidebar a {
                 color: white;
                 text-decoration: none;
-                padding: 14px 20px;
-                font-size: 15px;
+                padding: 15px 20px;
+                font-size: 16px;
                 display: flex;
                 align-items: center;
-                gap: 12px;
+                gap: 10px;
                 transition: all 0.3s;
+                border-left: 3px solid transparent;
             }
 
             .sidebar a:hover {
-                background: rgba(255,255,255,0.08);
-                padding-left: 24px;
+                background: rgba(255,255,255,0.1);
+                border-left: 3px solid white;
+            }
+
+            .sidebar a i {
+                min-width: 20px;
+                text-align: center;
             }
 
             /* Content */
             .container {
                 display: flex;
-                margin-top: 60px;
+                margin-top: 0;
+                width: 100%;
             }
 
             .content {
                 margin-left: 250px;
-                padding: 30px;
-                background: #f4f6f8;
-                min-height: calc(100vh - 60px);
+                padding: 40px;
+                min-height: calc(100vh - 77px);
                 width: calc(100% - 250px);
+                background: #ffffff;
             }
 
             .content h2 {
-                margin-left: 8px;
-                color: #666;
+                margin: 0 0 30px 0;
+                color: #000000;
+                text-align: center;
+                font-size: 32px;
                 font-weight: 600;
-                margin-bottom: 16px;
             }
 
             /* Messages */
@@ -159,10 +162,11 @@
                 justify-content: space-between;
                 align-items: center;
                 margin: 12px 8px 20px;
-                background: #fff;
+                background: #f8f9fa;
                 padding: 14px 18px;
                 border-radius: 10px;
                 box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+                border: 1px solid #e9ecef;
                 flex-wrap: wrap;
                 gap: 10px;
             }
@@ -182,24 +186,24 @@
 
             .search-input, .filter-select {
                 padding: 10px 14px;
-                border: 1px solid #e3e6ee;
+                border: 1px solid #dee2e6;
                 border-radius: 8px;
                 font-size: 14px;
                 outline: none;
+                background: #ffffff;
             }
 
             .search-input {
                 width: 320px;
-                background: #fafbfc;
             }
 
             .search-input:focus, .filter-select:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 4px rgba(102,126,234,0.06);
+                border-color: #000000;
+                box-shadow: 0 0 0 4px rgba(0,0,0,0.06);
             }
 
             .btn-search, .btn-new {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: #000000;
                 color: white;
                 border: none;
                 padding: 10px 18px;
@@ -213,23 +217,26 @@
             }
 
             .btn-search:hover, .btn-new:hover {
+                background: #212529;
                 transform: translateY(-1px);
-                box-shadow: 0 6px 18px rgba(102,126,234,0.15);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             }
 
             /* Table */
             .inventory-table {
+                table-layout: fixed;
                 width: 95%;
                 margin: 12px auto 0;
                 border-collapse: collapse;
                 background: white;
                 border-radius: 12px;
                 overflow: hidden;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                border: 1px solid #e9ecef;
             }
 
             .inventory-table thead tr th {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: #000000;
                 color: white;
                 padding: 12px 16px;
                 text-align: left;
@@ -239,13 +246,13 @@
 
             .inventory-table tbody td {
                 padding: 12px 16px;
-                border-bottom: 1px solid #f0f2f6;
+                border-bottom: 1px solid #e9ecef;
                 font-size: 14px;
-                color: #333;
+                color: #495057;
             }
 
             .inventory-table tbody tr:hover {
-                background-color: #f2f6ff;
+                background-color: #f8f9fa;
             }
 
             .btn-edit, .btn-delete {
@@ -264,15 +271,19 @@
             }
 
             .btn-edit {
-                background: #4a69bd;
+                background: #000000;
             }
 
             .btn-delete {
-                background: #e55039;
+                background: #dc3545;
             }
 
-            .btn-edit:hover, .btn-delete:hover {
-                background: #28a745;
+            .btn-edit:hover {
+                background: #212529;
+            }
+
+            .btn-delete:hover {
+                background: #c82333;
             }
 
             /* Pagination */
@@ -288,17 +299,17 @@
                 padding: 8px 14px;
                 border-radius: 8px;
                 background: white;
-                color: #333;
+                color: #495057;
                 text-decoration: none;
                 font-weight: 600;
-                border: 1px solid #e6e8ef;
+                border: 1px solid #dee2e6;
                 transition: all 0.2s ease;
             }
 
             .pagination a:hover, .pagination a.active {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: #000000;
                 color: white;
-                border: none;
+                border-color: #000000;
             }
 
             /* Form Popup */
@@ -328,7 +339,7 @@
                 margin-bottom: 20px;
                 font-size: 22px;
                 font-weight: 600;
-                color: #333;
+                color: #000000;
                 text-align: center;
             }
 
@@ -336,7 +347,7 @@
                 font-weight: 500;
                 margin-bottom: 6px;
                 margin-top: 12px;
-                color: #555;
+                color: #495057;
                 display: block;
             }
 
@@ -344,7 +355,7 @@
             .form-container input[type="number"] {
                 width: 100%;
                 padding: 10px 12px;
-                border: 1px solid #ccc;
+                border: 1px solid #dee2e6;
                 border-radius: 8px;
                 font-size: 14px;
                 outline: none;
@@ -352,13 +363,13 @@
             }
 
             .form-container input:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+                border-color: #000000;
+                box-shadow: 0 0 0 4px rgba(0,0,0,0.1);
             }
 
             #formMessage {
                 font-size: 13px;
-                color: #e74c3c;
+                color: #dc3545;
                 text-align: center;
                 min-height: 18px;
                 margin-top: 10px;
@@ -401,6 +412,38 @@
                 background: #5a6268;
             }
 
+            /* Column widths */
+            .inventory-table thead tr th:nth-child(1) { width: 8%; }
+            .inventory-table thead tr th:nth-child(2) { width: 10%; }
+            .inventory-table thead tr th:nth-child(3) { width: 20%; }
+            .inventory-table thead tr th:nth-child(4) { width: 10%; }
+            .inventory-table thead tr th:nth-child(5) { width: 15%; }
+            .inventory-table thead tr th:nth-child(6) { width: 15%; }
+            .inventory-table thead tr th:nth-child(7) { width: 19%; }
+
+            .inventory-table tbody td:nth-child(3) {
+                max-width: 300px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .inventory-table tbody td:nth-child(3):hover {
+                white-space: normal;
+                overflow: visible;
+                word-wrap: break-word;
+                background-color: #fff3cd;
+            }
+
+            .success-message, .error-message {
+                transition: all 0.5s ease;
+            }
+
+            .message-fade-out {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
             @media (max-width: 900px) {
                 .content {
                     padding: 18px;
@@ -414,73 +457,6 @@
                     width: 100%;
                 }
             }
-            /* Giới hạn độ rộng các cột - THÊM VÀO PHẦN <style> */
-            .inventory-table thead tr th:nth-child(1) {
-                width: 8%;
-            }   /* Part ID */
-            .inventory-table thead tr th:nth-child(2) {
-                width: 10%;
-            }  /* Inventory ID */
-            .inventory-table thead tr th:nth-child(3) {
-                width: 20%;
-            }  /* Part Name */
-            .inventory-table thead tr th:nth-child(4) {
-                width: 10%;
-            }  /* Quantity */
-            .inventory-table thead tr th:nth-child(5) {
-                width: 15%;
-            }  /* Last Updated By */
-            .inventory-table thead tr th:nth-child(6) {
-                width: 15%;
-            }  /* Last Update Time */
-            .inventory-table thead tr th:nth-child(7) {
-                width: 19%;
-            }  /* Last Update Time */
-            /* Giới hạn text quá dài trong Part Name */
-            .inventory-table tbody td:nth-child(3) {
-                max-width: 300px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-
-            /* Hover để xem full text */
-            .inventory-table tbody td:nth-child(3):hover {
-                white-space: normal;
-                overflow: visible;
-                word-wrap: break-word;
-                background-color: #fff3cd;
-            }
-
-            /* Đảm bảo table có table-layout fixed */
-            .inventory-table {
-                table-layout: fixed;  /* QUAN TRỌNG */
-                width: 95%;
-                margin: 12px auto 0;
-                border-collapse: collapse;
-                background: white;
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            }
-
-            .sidebar {
-                max-width: 250px;
-                height: 610px;
-                margin-top: 77px;
-                position: fixed;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-            }
-            .success-message, .error-message {
-    transition: all 0.5s ease;
-}
-
-.message-fade-out {
-    opacity: 0;
-    transform: translateY(-20px);
-}
         </style>
     </head>
 
@@ -500,27 +476,21 @@
         <div class="container">
             <!-- Sidebar -->
             <div class="sidebar">
-                <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
-                <a href="manageProfile"><i class="fas fa-tachometer-alt" ></i><span>Quản lý người dùng</span></a>
-                <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
-                <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
-                <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
-                <a href="transactionHistory"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
-                <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
-                <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
-                <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
-                <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiết bị </span></a>
-                <!-- Nút Đăng xuất -->
-                <a href="logout" style="
-                   margin-top: auto;
-                   background: rgba(255, 255, 255, 0.15);
-                   border-top: 1px solid rgba(255,255,255,0.2);
-                   text-align: center;
-                   font-weight: 500;
-                   ">
-                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
-                </a>
-
+                <div class="sidebar navbar nav-container2">
+                    <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
+                    <a href="manageProfile"><i class="fas fa-tachometer-alt"></i><span>Quản lý người dùng</span></a>
+                    <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
+                    <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
+                    <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
+                    <a href="transactionHistory"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
+                    <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
+                    <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
+                    <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
+                    <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiết bị</span></a>
+                    <a href="logout" style="margin-top: auto; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-weight: 500;">
+                        <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                    </a>
+                </div>
             </div>
 
             <!-- Content -->
@@ -653,7 +623,6 @@
         </div>
 
         <script>
-            // Open form Add/Edit
             function openForm(mode, partId = '', partName = '', description = '', unitPrice = '') {
                 const overlay = document.getElementById("formOverlay");
                 const title = document.getElementById("formTitle");
@@ -676,15 +645,13 @@
                     document.getElementById("partName").value = partName;
                     document.getElementById("partDescription").value = description;
                     document.getElementById("partPrice").value = unitPrice;
-            }
+                }
             }
 
-            // Close form
             function closeForm() {
                 document.getElementById("formOverlay").style.display = "none";
             }
 
-            // Confirm delete
             function confirmDelete(partId) {
                 if (confirm("Bạn có chắc muốn xóa Part ID = " + partId + " ?")) {
                     const form = document.createElement('form');
@@ -708,21 +675,18 @@
                 }
             }
 
-            // Close popup when click outside
             document.getElementById("formOverlay").addEventListener('click', function (e) {
                 if (e.target === this) {
                     closeForm();
                 }
             });
 
-            // Pagination logic
             let currentPage = 1;
             const rowsPerPage = 10;
 
             function renderTable() {
                 const tableBody = document.querySelector(".inventory-table tbody");
-                if (!tableBody)
-                    return;
+                if (!tableBody) return;
 
                 const keyword = document.querySelector(".search-input").value.toLowerCase();
                 const rows = Array.from(tableBody.rows);
@@ -738,10 +702,8 @@
                     return;
                 }
 
-                if (currentPage > totalPages)
-                    currentPage = totalPages;
-                if (currentPage < 1)
-                    currentPage = 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
 
                 rows.forEach(row => row.style.display = "none");
                 const start = (currentPage - 1) * rowsPerPage;
@@ -753,16 +715,14 @@
 
             function renderPagination(totalPages) {
                 const pagination = document.querySelector(".pagination");
-                if (!pagination)
-                    return;
+                if (!pagination) return;
                 pagination.innerHTML = "";
 
                 function createBtn(text, onClick, active = false) {
                     const btn = document.createElement("a");
                     btn.href = "#";
                     btn.textContent = text;
-                    if (active)
-                        btn.classList.add("active");
+                    if (active) btn.classList.add("active");
                     btn.onclick = e => {
                         e.preventDefault();
                         onClick();
@@ -809,17 +769,17 @@
 
             document.addEventListener("DOMContentLoaded", renderTable);
             document.addEventListener("DOMContentLoaded", function() {
-    const messages = document.querySelectorAll(".success-message, .error-message");
-    
-    messages.forEach(function(msg) {
-        setTimeout(function() {
-            msg.classList.add("message-fade-out");
-            setTimeout(function() {
-                msg.style.display = "none";
-            }, 500);
-        }, 5000); // Hiện trong 5 giây
-    });
-});
+                const messages = document.querySelectorAll(".success-message, .error-message");
+                
+                messages.forEach(function(msg) {
+                    setTimeout(function() {
+                        msg.classList.add("message-fade-out");
+                        setTimeout(function() {
+                            msg.style.display = "none";
+                        }, 500);
+                    }, 5000);
+                });
+            });
         </script>
     </body>
 </html>
