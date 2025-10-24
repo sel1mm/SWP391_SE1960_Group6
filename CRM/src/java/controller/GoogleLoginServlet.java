@@ -72,22 +72,22 @@ public class GoogleLoginServlet extends HttpServlet {
         if (roleService.isAdmin(existingAccount.getAccountId())) {
             session.setAttribute("session_role", "admin");
             response.sendRedirect("admin.jsp"); 
-        } else if (roleService.isTechnicalManager(existingAccount.getAccountId())) {
+        } else if (roleService.isTechnicalManager(existingAccount.getAccountId()) && !existingAccount.getStatus().equalsIgnoreCase("Inactive")) {
             session.setAttribute("session_role", "Technical Manager");
             response.sendRedirect("technicalManagerApproval");
-        } else if (roleService.isCustomerSupportStaff(existingAccount.getAccountId())) {
+        } else if (roleService.isCustomerSupportStaff(existingAccount.getAccountId()) && !existingAccount.getStatus().equalsIgnoreCase("Inactive")) {
             session.setAttribute("session_role", "customer support staff");
             response.sendRedirect("dashboard.jsp");
-        } else if (roleService.isStorekeeper(existingAccount.getAccountId())) {
+        } else if (roleService.isStorekeeper(existingAccount.getAccountId()) && !existingAccount.getStatus().equalsIgnoreCase("Inactive")) {
             session.setAttribute("session_role", "Storekeeper");
             response.sendRedirect(MessageConstant.STOREKEEPER_URL);
-        } else if (roleService.isTechnician(existingAccount.getAccountId())) {
+        } else if (roleService.isTechnician(existingAccount.getAccountId()) && !existingAccount.getStatus().equalsIgnoreCase("Inactive")) {
             session.setAttribute("session_role", "Technician");
             response.sendRedirect("technician/dashboard");
-        } else if (roleService.isCustomer(existingAccount.getAccountId())) {
+        } else if (roleService.isCustomer(existingAccount.getAccountId()) && !existingAccount.getStatus().equalsIgnoreCase("Inactive")) {
             session.setAttribute("session_role", "customer");
             response.sendRedirect("managerServiceRequest");
-        } else {
+        } else if (!existingAccount.getStatus().equalsIgnoreCase("Inactive")) {
             response.sendRedirect("home.jsp");
         }
     }
