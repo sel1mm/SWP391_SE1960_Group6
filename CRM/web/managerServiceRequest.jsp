@@ -979,7 +979,16 @@
                                 <c:forEach var="req" items="${requests}">
                                     <tr>
                                         <td>${req.contractId}</td>
-                                        <td>${req.equipmentId}</td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${not empty req.equipmentName}">
+                                                    ${req.equipmentName}
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="text-muted">-</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
                                         <td>
                                             <c:choose>
                                                 <c:when test="${req.description.length() > 60}">
@@ -1009,6 +1018,7 @@
                                                     data-id="${req.requestId}"
                                                     data-contract-id="${req.contractId}"
                                                     data-equipment-id="${req.equipmentId}"
+                                                    data-equipment-name="${req.equipmentName}"
                                                     data-request-date="<fmt:formatDate value="${req.requestDate}" pattern="dd/MM/yyyy"/>"
                                                     data-status="${req.status}"
                                                     data-priority="${req.priorityLevel}">
@@ -1029,7 +1039,7 @@
                                             </c:if>
                                         </td>
                                     </tr>
-                                </c:forEach>
+                                </c:forEach>f
                                 <c:if test="${empty requests}">
                                     <tr>
                                         <td colspan="6" class="text-center py-4">
@@ -1346,8 +1356,11 @@
                             <div class="col-md-6"><strong>Mã Thiết Bị:</strong> <p class="fw-normal" id="viewEquipmentId"></p></div>
                         </div>
                         <div class="row mb-3">
+                            <div class="col-md-6"><strong>Tên Thiết Bị:</strong> <p class="fw-normal" id="viewEquipmentName"></p></div>
                             <div class="col-md-6"><strong>Trạng Thái:</strong> <span class="badge" id="viewStatus"></span></div>
-                            <div class="col-md-6"><strong>Mức Độ Ưu Tiên:</strong> <span class="badge" id="viewPriority"></span></div>
+                        </div>
+                        <div class="row mb-3">   
+                            <div class="col-md-12"><strong>Mức Độ Ưu Tiên:</strong> <span class="badge" id="viewPriority"></span></div>
                         </div>
                         <div class="mb-3">
                             <strong>Mô Tả Vấn Đề:</strong>
@@ -1637,36 +1650,65 @@
                             }
                         }
 
-                        function viewRequest(id, contractId, equipmentId, description, requestDate, status, priorityLevel) {
-                            document.getElementById('viewRequestId').textContent = '#' + id;
-                            document.getElementById('viewContractId').textContent = contractId || 'N/A';
-                            document.getElementById('viewEquipmentId').textContent = equipmentId || 'N/A';
-                            document.getElementById('viewDescription').textContent = description;
-                            document.getElementById('viewRequestDate').textContent = requestDate;
+                        function viewRequest(id, contractId, equipmentId, equipmentName, description, requestDate, status, priorityLevel) {
+                            console.log('📋 Opening modal with data:', {id, contractId, equipmentId, equipmentName, description, requestDate, status, priorityLevel});
+
+                            // Set các giá trị
+                            const viewRequestIdEl = document.getElementById('viewRequestId');
+                            const viewContractIdEl = document.getElementById('viewContractId');
+                            const viewEquipmentIdEl = document.getElementById('viewEquipmentId');
+                            const viewEquipmentNameEl = document.getElementById('viewEquipmentName');
+                            const viewDescriptionEl = document.getElementById('viewDescription');
+                            const viewRequestDateEl = document.getElementById('viewRequestDate');
+
+                            if (viewRequestIdEl)
+                                viewRequestIdEl.textContent = '#' + id;
+                            if (viewContractIdEl)
+                                viewContractIdEl.textContent = contractId;
+                            if (viewEquipmentIdEl)
+                                viewEquipmentIdEl.textContent = equipmentId;
+                            if (viewEquipmentNameEl)
+                                viewEquipmentNameEl.textContent = equipmentName;
+                            if (viewDescriptionEl)
+                                viewDescriptionEl.textContent = description;
+                            if (viewRequestDateEl)
+                                viewRequestDateEl.textContent = requestDate;
 
                             const statusBadge = document.getElementById('viewStatus');
-                            const statusMap = {
-                                'Pending': {className: 'badge-pending', text: 'Chờ Xử Lý'},
-                                'Approved': {className: 'badge-inprogress', text: 'Đã Duyệt'},
-                                'Completed': {className: 'badge-completed', text: 'Hoàn Thành'},
-                                'Rejected': {className: 'badge-cancelled', text: 'Bị từ chối'},
-                                'Cancelled': {className: 'badge-cancelled', text: 'Đã Hủy'}
-                            };
-                            const statusInfo = statusMap[status] || {className: 'bg-secondary', text: status};
-                            statusBadge.className = 'badge ' + statusInfo.className;
-                            statusBadge.textContent = statusInfo.text;
+                            if (statusBadge) {
+                                const statusMap = {
+                                    'Pending': {className: 'badge-pending', text: 'Chờ Xử Lý'},
+                                    'Approved': {className: 'badge-inprogress', text: 'Đã Duyệt'},
+                                    'Completed': {className: 'badge-completed', text: 'Hoàn Thành'},
+                                    'Rejected': {className: 'badge-cancelled', text: 'Bị từ chối'},
+                                    'Cancelled': {className: 'badge-cancelled', text: 'Đã Hủy'}
+                                };
+                                const statusInfo = statusMap[status] || {className: 'bg-secondary', text: status};
+                                statusBadge.className = 'badge ' + statusInfo.className;
+                                statusBadge.textContent = statusInfo.text;
+                            }
 
                             const priorityBadge = document.getElementById('viewPriority');
-                            const priorityMap = {
-                                'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
-                                'High': {className: 'bg-warning text-dark', text: 'Cao'},
-                                'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
-                            };
-                            const priorityInfo = priorityMap[priorityLevel] || {className: 'bg-dark', text: priorityLevel};
-                            priorityBadge.className = 'badge ' + priorityInfo.className;
-                            priorityBadge.textContent = priorityInfo.text;
+                            if (priorityBadge) {
+                                const priorityMap = {
+                                    'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
+                                    'High': {className: 'bg-warning text-dark', text: 'Cao'},
+                                    'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
+                                };
+                                const priorityInfo = priorityMap[priorityLevel] || {className: 'bg-dark', text: priorityLevel};
+                                priorityBadge.className = 'badge ' + priorityInfo.className;
+                                priorityBadge.textContent = priorityInfo.text;
+                            }
 
-                            new bootstrap.Modal(document.getElementById('viewModal')).show();
+                            // Mở modal
+                            const modalEl = document.getElementById('viewModal');
+                            if (modalEl) {
+                                const modal = new bootstrap.Modal(modalEl);
+                                modal.show();
+                                console.log('✅ Modal opened');
+                            } else {
+                                console.error('❌ Modal element not found!');
+                            }
                         }
 
                         function editRequest(id, description, priorityLevel) {
@@ -1700,23 +1742,31 @@
                         });
 
                         document.addEventListener('DOMContentLoaded', function () {
-                            // Event cho nút VIEW - LẤY DESCRIPTION TỪ HIDDEN DIV
+                            console.log('🔍 DOM Loaded');
+
+                            // Event cho nút VIEW
                             document.querySelectorAll('.btn-view').forEach(button => {
-                                button.addEventListener('click', function () {
+                                button.addEventListener('click', function (e) {
+                                    e.preventDefault(); // Ngăn hành động mặc định
+
                                     const data = this.dataset;
                                     const requestId = data.id;
+
+                                    console.log('✅ VIEW clicked, Request ID:', requestId);
 
                                     const descElement = document.getElementById('desc-' + requestId);
                                     const description = descElement ? descElement.textContent.trim() : 'Không có mô tả';
 
+                                    // Gọi hàm viewRequest
                                     viewRequest(
                                             requestId,
-                                            data.contractId,
-                                            data.equipmentId,
+                                            data.contractId || 'N/A',
+                                            data.equipmentId || 'N/A',
+                                            data.equipmentName || 'N/A',
                                             description,
-                                            data.requestDate,
-                                            data.status,
-                                            data.priority
+                                            data.requestDate || 'N/A',
+                                            data.status || 'N/A',
+                                            data.priority || 'Normal'
                                             );
                                 });
                             });
