@@ -1313,4 +1313,102 @@ public boolean updateEmail(int accountId, String newEmail) {
         }
     }
 }
+// Đếm tổng số user (có thể có điều kiện search/filter)
+public int countAllAccounts(String keyword, String status, String roleId) {
+    StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT a.accountId) FROM Account a ");
+    if (roleId != null && !roleId.trim().isEmpty()) {
+        sql.append("JOIN AccountRole ar ON a.accountId = ar.accountId ");
+    }
+    sql.append("WHERE 1=1 ");
+    if (keyword != null && !keyword.trim().isEmpty()) {
+        sql.append("AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ?) ");
+    }
+    if (status != null && !status.trim().isEmpty()) {
+        sql.append("AND a.status = ? ");
+    }
+    if (roleId != null && !roleId.trim().isEmpty()) {
+        sql.append("AND ar.roleId = ? ");
+    }
+
+    try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
+        int idx = 1;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String like = "%" + keyword.trim() + "%";
+            ps.setString(idx++, like);
+            ps.setString(idx++, like);
+            ps.setString(idx++, like);
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            ps.setString(idx++, status);
+        }
+        if (roleId != null && !roleId.trim().isEmpty()) {
+            ps.setInt(idx++, Integer.parseInt(roleId));
+        }
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return 0;
+}
+
+// Lấy danh sách user có phân trang
+public List<Account> getAccountsPaged(String keyword, String status, String roleId, int offset, int limit) {
+    List<Account> list = new ArrayList<>();
+    StringBuilder sql = new StringBuilder(
+        "SELECT DISTINCT a.* FROM Account a "
+    );
+    if (roleId != null && !roleId.trim().isEmpty()) {
+        sql.append("JOIN AccountRole ar ON a.accountId = ar.accountId ");
+    }
+    sql.append("WHERE 1=1 ");
+    if (keyword != null && !keyword.trim().isEmpty()) {
+        sql.append("AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ?) ");
+    }
+    if (status != null && !status.trim().isEmpty()) {
+        sql.append("AND a.status = ? ");
+    }
+    if (roleId != null && !roleId.trim().isEmpty()) {
+        sql.append("AND ar.roleId = ? ");
+    }
+    sql.append("ORDER BY a.accountId LIMIT ? OFFSET ?");
+
+    try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
+        int idx = 1;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String like = "%" + keyword.trim() + "%";
+            ps.setString(idx++, like);
+            ps.setString(idx++, like);
+            ps.setString(idx++, like);
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            ps.setString(idx++, status);
+        }
+        if (roleId != null && !roleId.trim().isEmpty()) {
+            ps.setInt(idx++, Integer.parseInt(roleId));
+        }
+        ps.setInt(idx++, limit);
+        ps.setInt(idx, offset);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            Account a = new Account(
+                rs.getInt("accountId"),
+                rs.getString("username"),
+                rs.getString("passwordHash"),
+                rs.getString("fullName"),
+                rs.getString("email"),
+                rs.getString("phone"),
+                rs.getString("status"),
+                rs.getTimestamp("createdAt") != null ? rs.getTimestamp("createdAt").toLocalDateTime() : null,
+                rs.getTimestamp("updatedAt") != null ? rs.getTimestamp("updatedAt").toLocalDateTime() : null
+            );
+            list.add(a);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return list;
+}
 }
