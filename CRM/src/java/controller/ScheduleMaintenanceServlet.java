@@ -5,6 +5,8 @@ import dal.ServiceRequestDAO;
 import dal.TechnicianWorkloadDAO;
 import dal.EquipmentDAO;
 import dal.ContractDAO;
+import dal.WorkTaskDAO;
+import model.WorkTask;
 import model.Account;
 import model.MaintenanceSchedule;
 import model.ServiceRequest;
@@ -183,115 +185,108 @@ request.setAttribute("equipmentList", equipmentList);
         }
     }
     
-    private void createMaintenanceSchedule(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        HttpSession session = request.getSession();
-        
-        try {
-            // Get form parameters
-            String requestIdStr = request.getParameter("requestId");
-            String contractIdStr = request.getParameter("contractId");
-            String equipmentIdStr = request.getParameter("equipmentId");
-            String assignedToStr = request.getParameter("assignedTo");
-            String scheduledDateStr = request.getParameter("scheduledDate");
-            String scheduleType = request.getParameter("scheduleType");
-            String recurrenceRule = request.getParameter("recurrenceRule");
-            String priorityIdStr = request.getParameter("priorityId");
-            
-            // Validate required fields
-            if (scheduledDateStr == null || scheduledDateStr.trim().isEmpty() ||
-                assignedToStr == null || assignedToStr.trim().isEmpty() ||
-                scheduleType == null || scheduleType.trim().isEmpty()) {
-                session.setAttribute("errorMessage", "Vui lòng điền đầy đủ thông tin bắt buộc!");
-                response.sendRedirect("scheduleMaintenance");
-                return;
-            }
-            
-            // Parse and validate parameters with null checks
-            Integer requestId = null;
-            if (requestIdStr != null && !requestIdStr.trim().isEmpty()) {
-                requestId = Integer.parseInt(requestIdStr);
-            }
-            
-            Integer contractId = null;
-            if (contractIdStr != null && !contractIdStr.trim().isEmpty()) {
-                contractId = Integer.parseInt(contractIdStr);
-            }
-            // Allow contractId to remain null if not provided
-            
-            Integer equipmentId = null;
-            if (equipmentIdStr != null && !equipmentIdStr.trim().isEmpty()) {
-                equipmentId = Integer.parseInt(equipmentIdStr);
-            }
-            // Allow equipmentId to remain null if not provided
-            int assignedTo = Integer.parseInt(assignedToStr);
-            int priorityId = (priorityIdStr != null && !priorityIdStr.trim().isEmpty()) ? 
-                            Integer.parseInt(priorityIdStr) : 1;
-            
-            // Parse scheduled date
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-            java.util.Date parsedDate = dateFormat.parse(scheduledDateStr);
-            Timestamp scheduledTimestamp = new Timestamp(parsedDate.getTime());
-            LocalDate scheduledDate = scheduledTimestamp.toLocalDateTime().toLocalDate();
-            
-            // Check technician availability
-            TechnicianWorkload technicianWorkload = technicianWorkloadDAO.getWorkloadByTechnician(assignedTo);
-            if (technicianWorkload == null || technicianWorkload.getAvailableCapacity() <= 0) {
-                session.setAttribute("errorMessage", "Kỹ thuật viên đã chọn không có khả năng nhận thêm công việc!");
-                response.sendRedirect("scheduleMaintenance");
-                return;
-            }
-            
-            // Create maintenance schedule
-            MaintenanceSchedule schedule = new MaintenanceSchedule();
-            
-            // Set requestId with null check
-            if (requestId != null) {
-                schedule.setRequestId(requestId);
-            }
-            
-            // Set contractId with null check
-            if (contractId != null) {
-                schedule.setContractId(contractId);
-            }
-            // Allow contractId to remain null if not provided
-            
-            // Set equipmentId with null check
-            if (equipmentId != null) {
-                schedule.setEquipmentId(equipmentId);
-            }
-            // Allow equipmentId to remain null if not provided
-            
-            schedule.setAssignedTo(assignedTo);
-            schedule.setScheduledDate(scheduledDate);
-            schedule.setScheduleType(scheduleType);
-            schedule.setRecurrenceRule(recurrenceRule);
-            schedule.setStatus("Scheduled");
-            schedule.setPriorityId(priorityId);
-            
-            int scheduleId = maintenanceScheduleDAO.createMaintenanceSchedule(schedule);
-            
-            if (scheduleId > 0) {
-                // Update technician workload
-                technicianWorkloadDAO.incrementActiveTasks(assignedTo);
-                
-                session.setAttribute("successMessage", "Lập lịch bảo trì thành công!");
-            } else {
-                session.setAttribute("errorMessage", "Lỗi khi lập lịch bảo trì!");
-            }
-            
-        } catch (ParseException e) {
-            session.setAttribute("errorMessage", "Định dạng ngày giờ không hợp lệ!");
-        } catch (NumberFormatException e) {
-            session.setAttribute("errorMessage", "Dữ liệu số không hợp lệ!");
-        } catch (Exception e) {
-            e.printStackTrace();
-            session.setAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
+private void createMaintenanceSchedule(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+
+    HttpSession session = request.getSession();
+
+    try {
+        // --- Lấy thông tin từ form ---
+        String requestIdStr = request.getParameter("requestId");
+        String contractIdStr = request.getParameter("contractId");
+        String equipmentIdStr = request.getParameter("equipmentId");
+        String assignedToStr = request.getParameter("assignedTo");
+        String scheduledDateStr = request.getParameter("scheduledDate");
+        String scheduleType = request.getParameter("scheduleType");
+        String recurrenceRule = request.getParameter("recurrenceRule");
+        String priorityIdStr = request.getParameter("priorityId");
+
+        // --- Validate thông tin bắt buộc ---
+        if (scheduledDateStr == null || scheduledDateStr.trim().isEmpty() ||
+            assignedToStr == null || assignedToStr.trim().isEmpty() ||
+            scheduleType == null || scheduleType.trim().isEmpty()) {
+            session.setAttribute("errorMessage", "Vui lòng điền đầy đủ thông tin bắt buộc!");
+            response.sendRedirect("scheduleMaintenance");
+            return;
         }
-        
-        response.sendRedirect("scheduleMaintenance");
+
+        // --- Parse thông tin ---
+        Integer requestId = (requestIdStr != null && !requestIdStr.trim().isEmpty()) ? Integer.parseInt(requestIdStr) : null;
+        Integer contractId = (contractIdStr != null && !contractIdStr.trim().isEmpty()) ? Integer.parseInt(contractIdStr) : null;
+        Integer equipmentId = (equipmentIdStr != null && !equipmentIdStr.trim().isEmpty()) ? Integer.parseInt(equipmentIdStr) : null;
+        int assignedTo = Integer.parseInt(assignedToStr);
+        int priorityId = (priorityIdStr != null && !priorityIdStr.trim().isEmpty()) ? Integer.parseInt(priorityIdStr) : 1;
+
+        // --- Chuyển đổi ngày giờ ---
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+        java.util.Date parsedDate = dateFormat.parse(scheduledDateStr);
+        Timestamp scheduledTimestamp = new Timestamp(parsedDate.getTime());
+        LocalDate scheduledDate = scheduledTimestamp.toLocalDateTime().toLocalDate();
+
+        // --- Kiểm tra khả năng KTV ---
+        TechnicianWorkload technicianWorkload = technicianWorkloadDAO.getWorkloadByTechnician(assignedTo);
+        if (technicianWorkload == null || technicianWorkload.getAvailableCapacity() <= 0) {
+            session.setAttribute("errorMessage", "Kỹ thuật viên đã chọn không có khả năng nhận thêm công việc!");
+            response.sendRedirect("scheduleMaintenance");
+            return;
+        }
+
+        // --- Tạo MaintenanceSchedule ---
+        MaintenanceSchedule schedule = new MaintenanceSchedule();
+        if (requestId != null) schedule.setRequestId(requestId);
+        if (contractId != null) schedule.setContractId(contractId);
+        if (equipmentId != null) schedule.setEquipmentId(equipmentId);
+
+        schedule.setAssignedTo(assignedTo);
+        schedule.setScheduledDate(scheduledDate);
+        schedule.setScheduleType(scheduleType);
+        schedule.setRecurrenceRule(recurrenceRule);
+        schedule.setStatus("Scheduled");
+        schedule.setPriorityId(priorityId);
+
+        int scheduleId = maintenanceScheduleDAO.createMaintenanceSchedule(schedule);
+
+        if (scheduleId > 0) {
+            // --- Update workload KTV ---
+            technicianWorkloadDAO.incrementActiveTasks(assignedTo);
+
+            // --- Tạo WorkTask ---
+            WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+            WorkTask task = new WorkTask();
+            task.setScheduleId(scheduleId);               // liên kết schedule
+            task.setRequestId(requestId);                // nếu có request
+            task.setTechnicianId(assignedTo);
+            task.setTaskType("Scheduled");
+            task.setTaskDetails("Bảo trì " + scheduleType + 
+                                (equipmentId != null ? " thiết bị #" + equipmentId : ""));
+            task.setStartDate(scheduledDate);
+            task.setEndDate(scheduledDate);             // chỉ 1 ngày
+            task.setStatus("Assigned");
+
+            int taskId = workTaskDAO.createWorkTask(task);
+
+            if (taskId > 0) {
+                session.setAttribute("successMessage", "Lập lịch bảo trì và tạo công việc thành công!");
+            } else {
+                session.setAttribute("errorMessage", "Lập lịch bảo trì thành công nhưng tạo công việc thất bại!");
+            }
+
+        } else {
+            session.setAttribute("errorMessage", "Lỗi khi lập lịch bảo trì!");
+        }
+
+    } catch (ParseException e) {
+        session.setAttribute("errorMessage", "Định dạng ngày giờ không hợp lệ!");
+    } catch (NumberFormatException e) {
+        session.setAttribute("errorMessage", "Dữ liệu số không hợp lệ!");
+    } catch (Exception e) {
+        e.printStackTrace();
+        session.setAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
     }
+
+    response.sendRedirect("scheduleMaintenance");
+}
+
     
     private void updateMaintenanceSchedule(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -359,73 +354,79 @@ request.setAttribute("equipmentList", equipmentList);
         response.sendRedirect("scheduleMaintenance");
     }
     
-    private void deleteMaintenanceSchedule(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        PrintWriter out = response.getWriter();
-        Gson gson = new Gson();
-        JsonObject jsonResponse = new JsonObject();
-        
-        try {
-            String scheduleIdStr = request.getParameter("scheduleId");
-            
-            // Validate scheduleId parameter
-            if (scheduleIdStr == null || scheduleIdStr.trim().isEmpty()) {
-                jsonResponse.addProperty("success", false);
-                jsonResponse.addProperty("error", "Thiếu thông tin ID lịch bảo trì!");
-                out.print(gson.toJson(jsonResponse));
-                out.flush();
-                return;
-            }
-            
-            int scheduleId = Integer.parseInt(scheduleIdStr.trim());
-            
-            // Get existing schedule to check status
-            MaintenanceSchedule existingSchedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
-            if (existingSchedule == null) {
-                jsonResponse.addProperty("success", false);
-                jsonResponse.addProperty("error", "Không tìm thấy lịch bảo trì!");
-                out.print(gson.toJson(jsonResponse));
-                return;
-            }
-            
-            // Don't allow deletion of completed or in-progress schedules
-            if ("Completed".equals(existingSchedule.getStatus()) || 
-                "In Progress".equals(existingSchedule.getStatus())) {
-                jsonResponse.addProperty("success", false);
-                jsonResponse.addProperty("error", "Không thể xóa lịch bảo trì đã hoàn thành hoặc đang thực hiện!");
-                out.print(gson.toJson(jsonResponse));
-                return;
-            }
-            
-            boolean success = maintenanceScheduleDAO.deleteMaintenanceSchedule(scheduleId);
-            
-            if (success) {
-                // Update technician workload if schedule was assigned
-                if (existingSchedule.getAssignedTo() > 0) {
-                    technicianWorkloadDAO.decrementActiveTasks(existingSchedule.getAssignedTo());
-                }
-                
-                jsonResponse.addProperty("success", true);
-                jsonResponse.addProperty("message", "Xóa lịch bảo trì thành công!");
-            } else {
-                jsonResponse.addProperty("success", false);
-                jsonResponse.addProperty("error", "Lỗi khi xóa lịch bảo trì!");
-            }
-            
-        } catch (Exception e) {
-            e.printStackTrace();
+   private void deleteMaintenanceSchedule(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+    PrintWriter out = response.getWriter();
+    Gson gson = new Gson();
+    JsonObject jsonResponse = new JsonObject();
+
+    try {
+        String scheduleIdStr = request.getParameter("scheduleId");
+
+        if (scheduleIdStr == null || scheduleIdStr.trim().isEmpty()) {
             jsonResponse.addProperty("success", false);
-            jsonResponse.addProperty("error", "Lỗi hệ thống: " + e.getMessage());
+            jsonResponse.addProperty("error", "Thiếu thông tin ID lịch bảo trì!");
+            out.print(gson.toJson(jsonResponse));
+            return;
         }
-        
-        out.print(gson.toJson(jsonResponse));
-        out.flush();
+
+        int scheduleId = Integer.parseInt(scheduleIdStr.trim());
+
+        // Lấy lịch bảo trì hiện tại
+        MaintenanceSchedule existingSchedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
+        if (existingSchedule == null) {
+            jsonResponse.addProperty("success", false);
+            jsonResponse.addProperty("error", "Không tìm thấy lịch bảo trì!");
+            out.print(gson.toJson(jsonResponse));
+            return;
+        }
+
+        // Không cho xóa nếu Completed hoặc In Progress
+        if ("Completed".equals(existingSchedule.getStatus()) ||
+            "In Progress".equals(existingSchedule.getStatus())) {
+            jsonResponse.addProperty("success", false);
+            jsonResponse.addProperty("error", "Không thể xóa lịch bảo trì đã hoàn thành hoặc đang thực hiện!");
+            out.print(gson.toJson(jsonResponse));
+            return;
+        }
+
+        // Xóa tất cả WorkTask liên quan
+        WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+        List<WorkTask> tasks = workTaskDAO.findByScheduleId(scheduleId);
+        for (WorkTask task : tasks) {
+            workTaskDAO.deleteTaskById(task.getTaskId());
+        }
+
+        // Xóa MaintenanceSchedule
+        boolean success = maintenanceScheduleDAO.deleteMaintenanceSchedule(scheduleId);
+
+        if (success) {
+            // Cập nhật workload kỹ thuật viên
+            if (existingSchedule.getAssignedTo() > 0) {
+                technicianWorkloadDAO.decrementActiveTasks(existingSchedule.getAssignedTo());
+            }
+
+            jsonResponse.addProperty("success", true);
+            jsonResponse.addProperty("message", "Xóa lịch bảo trì thành công!");
+        } else {
+            jsonResponse.addProperty("success", false);
+            jsonResponse.addProperty("error", "Lỗi khi xóa lịch bảo trì!");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        jsonResponse.addProperty("success", false);
+        jsonResponse.addProperty("error", "Lỗi hệ thống: " + e.getMessage());
     }
-    
-    private void updateScheduleStatus(HttpServletRequest request, HttpServletResponse response)
+
+    out.print(gson.toJson(jsonResponse));
+    out.flush();
+}
+
+  private void updateScheduleStatus(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
         response.setContentType("application/json");
@@ -475,7 +476,8 @@ request.setAttribute("equipmentList", equipmentList);
         
         out.print(gson.toJson(jsonResponse));
         out.flush();
-    }
+    } 
+
     
     private void getScheduleDetails(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

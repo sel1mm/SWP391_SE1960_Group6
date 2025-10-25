@@ -768,7 +768,8 @@
         {
             "id": "<c:out value='${schedule.scheduleId}' escapeXml='true'/>",
             "title": "<c:out value='${schedule.scheduleType}' escapeXml='true'/> - KTV #<c:out value='${schedule.assignedTo}' escapeXml='true'/>",
-            "start": "<c:out value='${schedule.scheduledDate}' escapeXml='true'/>",
+            "start": "<c:out value='${schedule.scheduledDate}' escapeXml='true'/>", 
+
             "className": "fc-event-<c:out value='${fn:toLowerCase(fn:replace(schedule.status, " ", "-"))}' escapeXml='true'/>",
             "extendedProps": {
                 "scheduleId": <c:out value='${schedule.scheduleId}' default='0'/>,
