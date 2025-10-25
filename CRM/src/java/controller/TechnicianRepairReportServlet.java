@@ -1,7 +1,9 @@
 package controller;
 
 import dal.RepairReportDAO;
+import dal.WorkTaskDAO;
 import model.RepairReport;
+import model.WorkTask;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,18 +48,35 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             int technicianId = sessionId.intValue();
             
             if ("create".equals(action)) {
-                // Show create form
+                // Show create form with assigned tasks dropdown
+                WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+                List<WorkTask> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
+                
                 Integer requestId = null;
                 if (requestIdParam != null && !requestIdParam.trim().isEmpty()) {
                     try {
                         requestId = Integer.parseInt(requestIdParam);
+                        // Validate that technician is assigned to this request
+                        if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
+                            req.setAttribute("error", "You are not assigned to this request");
+                            doGetReportList(req, resp, technicianId);
+                            return;
+                        }
+                        // Check if task is completed
+                        if (workTaskDAO.isTaskCompleted(requestId)) {
+                            req.setAttribute("error", "Cannot create report for completed task");
+                            doGetReportList(req, resp, technicianId);
+                            return;
+                        }
                     } catch (NumberFormatException e) {
                         req.setAttribute("error", "Invalid request ID");
                         doGetReportList(req, resp, technicianId);
                         return;
                     }
                 }
+                
                 req.setAttribute("requestId", requestId);
+                req.setAttribute("assignedTasks", assignedTasks);
                 req.setAttribute("pageTitle", "Create Repair Report");
                 req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
                 req.setAttribute("activePage", "reports");
@@ -122,10 +141,10 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             int pageSize = Math.min(parseInt(req.getParameter("pageSize"), 10), 100);
             
             RepairReportDAO reportDAO = new RepairReportDAO();
-            List<RepairReport> reports = reportDAO.findByTechnicianId(technicianId, searchQuery, statusFilter, page, pageSize);
-            int totalReports = reportDAO.getReportCountForTechnician(technicianId, statusFilter);
+            List<RepairReportDAO.RepairReportWithCustomer> reportsWithCustomer = reportDAO.getRepairReportsForTechnicianWithCustomer(technicianId, searchQuery, statusFilter, page, pageSize);
+            int totalReports = reportDAO.getRepairReportCountForTechnicianWithCustomer(technicianId, statusFilter);
             
-            req.setAttribute("reports", reports);
+            req.setAttribute("reportsWithCustomer", reportsWithCustomer);
             req.setAttribute("totalReports", totalReports);
             req.setAttribute("currentPage", page);
             req.setAttribute("pageSize", pageSize);
@@ -162,19 +181,40 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             int technicianId = sessionId.intValue();
             
             if ("create".equals(action)) {
-                // Create new report
+                // Create new report with validation
+                WorkTaskDAO workTaskDAO = new WorkTaskDAO();
                 RepairReport report = new RepairReport();
                 String requestIdStr = req.getParameter("requestId");
-                int requestId = 0; // Default to 0 if no request ID provided
-                if (requestIdStr != null && !requestIdStr.trim().isEmpty()) {
-                    try {
-                        requestId = Integer.parseInt(requestIdStr);
-                    } catch (NumberFormatException e) {
-                        req.setAttribute("error", "Invalid request ID");
-                        doGet(req, resp);
-                        return;
-                    }
+                
+                // Validate request ID
+                if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+                    req.setAttribute("error", "Request ID is required");
+                    doGet(req, resp);
+                    return;
                 }
+                
+                int requestId;
+                try {
+                    requestId = Integer.parseInt(requestIdStr);
+                } catch (NumberFormatException e) {
+                    req.setAttribute("error", "Invalid request ID");
+                    doGet(req, resp);
+                    return;
+                }
+                
+                // Validate technician assignment and task status
+                if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
+                    req.setAttribute("error", "You are not assigned to this request");
+                    doGet(req, resp);
+                    return;
+                }
+                
+                if (workTaskDAO.isTaskCompleted(requestId)) {
+                    req.setAttribute("error", "Cannot create report for completed task");
+                    doGet(req, resp);
+                    return;
+                }
+                
                 report.setRequestId(requestId);
                 report.setTechnicianId(technicianId);
                 report.setDetails(req.getParameter("details"));
@@ -184,10 +224,13 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 report.setQuotationStatus("Pending"); // Default status
                 
                 // Validate input using new validation system
-                List<String> validationErrors = validateRepairReportInput(req);
+                List<String> validationErrors = validateRepairReportInput(req, false); // false = create mode
                 if (!validationErrors.isEmpty()) {
                     req.setAttribute("validationErrors", validationErrors);
                     req.setAttribute("requestId", report.getRequestId());
+                    // Get assigned tasks for dropdown
+                    List<WorkTask> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
+                    req.setAttribute("assignedTasks", assignedTasks);
                     req.setAttribute("pageTitle", "Create Repair Report");
                     req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
                     req.setAttribute("activePage", "reports");
@@ -214,18 +257,26 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     return;
                 }
                 
+                // Get existing report data first
+                RepairReport existingReport = reportDAO.findById(reportId);
+                if (existingReport == null) {
+                    req.setAttribute("error", "Report not found");
+                    doGet(req, resp);
+                    return;
+                }
+                
                 RepairReport report = new RepairReport();
                 report.setReportId(reportId);
-                report.setRequestId(Integer.parseInt(req.getParameter("requestId")));
+                report.setRequestId(existingReport.getRequestId()); // Use existing requestId
                 report.setTechnicianId(technicianId);
                 report.setDetails(req.getParameter("details"));
                 report.setDiagnosis(req.getParameter("diagnosis"));
                 report.setEstimatedCost(new BigDecimal(req.getParameter("estimatedCost")));
-                report.setRepairDate(LocalDate.parse(req.getParameter("repairDate")));
+                report.setRepairDate(existingReport.getRepairDate()); // Use existing repair date
                 report.setQuotationStatus("Pending"); // Keep as Pending
                 
                 // Validate input using new validation system
-                List<String> validationErrors = validateRepairReportInput(req);
+                List<String> validationErrors = validateRepairReportInput(req, true); // true = update mode
                 if (!validationErrors.isEmpty()) {
                     req.setAttribute("validationErrors", validationErrors);
                     req.setAttribute("report", report);
@@ -261,7 +312,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         }
     }
     
-    private List<String> validateRepairReportInput(HttpServletRequest req) {
+    private List<String> validateRepairReportInput(HttpServletRequest req, boolean isEditMode) {
         List<String> errors = new ArrayList<>();
         
         // Validate details
@@ -282,10 +333,16 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             errors.addAll(costResult.getErrors());
         }
         
-        // Validate repair date
-        TechnicianValidator.ValidationResult dateResult = TechnicianValidator.validateRepairDate(req.getParameter("repairDate"));
-        if (!dateResult.isValid()) {
-            errors.addAll(dateResult.getErrors());
+        // Validate repair date (with edit mode consideration)
+        String repairDateParam = req.getParameter("repairDate");
+        if (isEditMode && repairDateParam == null) {
+            // For edit mode, if repair date is null (disabled field), skip validation
+            // The repair date will be preserved from existing report
+        } else {
+            TechnicianValidator.ValidationResult dateResult = TechnicianValidator.validateRepairDate(repairDateParam, isEditMode);
+            if (!dateResult.isValid()) {
+                errors.addAll(dateResult.getErrors());
+            }
         }
         
         return errors;

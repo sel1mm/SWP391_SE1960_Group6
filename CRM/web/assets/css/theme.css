@@ -14,17 +14,6 @@ body {
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
-.crm-sidebar {
-  min-height: 100vh;
-  background: #fff;
-  border-right: 1px solid rgba(0,0,0,.05);
-}
-
-.crm-sidebar .nav-link.active {
-  background-color: rgba(13,110,253,.1);
-  color: var(--crm-primary) !important;
-}
-
 .crm-page-title {
   font-weight: 600;
 }

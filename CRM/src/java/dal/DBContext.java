@@ -14,22 +14,25 @@ public class DBContext {
         try {
             String username = "root";
 
-            String password = "sa12345";
+            String password = "sa123456";
 
-            String url = "jdbc:mysql://localhost:3306/demo3?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
+            String url = "jdbc:mysql://localhost:3306/reviewiter2?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
 
 
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection(url, username, password);
+            System.out.println("✅ Database connection successful!");
         } catch (ClassNotFoundException | SQLException ex) {
+            System.err.println("❌ Database connection failed: " + ex.getMessage());
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
+            connection = null; // Ensure connection is null on failure
         }
     }
 
     public static void main(String[] args) throws ClassNotFoundException {
          String username = "root";
-            String password = "1choigamenhuhack";
-            String url = "jdbc:mysql://localhost:3306/demo3?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
+            String password = "sa12345";
+            String url = "jdbc:mysql://localhost:3306/swp?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
             Class.forName("com.mysql.cj.jdbc.Driver");
 
         try {
@@ -61,5 +64,4 @@ public class DBContext {
 
   
 }
-
 

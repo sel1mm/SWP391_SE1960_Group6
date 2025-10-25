@@ -80,8 +80,24 @@
         <servlet-class>controller.AssignWorkServlet</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>ScheduleMaintenanceServlet</servlet-name>
+        <servlet-class>controller.ScheduleMaintenanceServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ReviewMaintenanceReportServlet</servlet-name>
+        <servlet-class>controller.ReviewMaintenanceReportServlet</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>AvatarServlet</servlet-name>
         <servlet-class>controller.AvatarServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ChangeEmailServlet</servlet-name>
+        <servlet-class>controller.ChangeEmailServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>VerifyOtp2Servlet</servlet-name>
+        <servlet-class>controller.VerifyOtp2Servlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>LoginController</servlet-name>
@@ -159,45 +175,28 @@
         <servlet-name>AssignWorkServlet</servlet-name>
         <url-pattern>/assignWork</url-pattern>
     </servlet-mapping>
-<<<<<<< HEAD
-=======
-    
-    <servlet>
-        <servlet-name>TestServlet</servlet-name>
-        <servlet-class>controller.TestServlet</servlet-class>
-    </servlet>
-    
->>>>>>> 6f3f56698ad3a680cb43e6de101446d44e60e7b6
+    <servlet-mapping>
+        <servlet-name>ScheduleMaintenanceServlet</servlet-name>
+        <url-pattern>/scheduleMaintenance</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ReviewMaintenanceReportServlet</servlet-name>
+        <url-pattern>/reviewMaintenanceReport</url-pattern>
+    </servlet-mapping>
     <!-- Technician Module Servlets -->
     <servlet>
         <servlet-name>TechnicianTaskServlet</servlet-name>
         <servlet-class>controller.TechnicianTaskServlet</servlet-class>
     </servlet>
     <servlet>
-<<<<<<< HEAD
-        <servlet-name>TaskDetailServlet</servlet-name>
-        <servlet-class>controller.TaskDetailServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>TaskStatusUpdateServlet</servlet-name>
-        <servlet-class>controller.TaskStatusUpdateServlet</servlet-class>
-=======
         <servlet-name>TechnicianRepairReportServlet</servlet-name>
         <servlet-class>controller.TechnicianRepairReportServlet</servlet-class>
->>>>>>> 6f3f56698ad3a680cb43e6de101446d44e60e7b6
     </servlet>
     <servlet>
         <servlet-name>TechnicianContractServlet</servlet-name>
         <servlet-class>controller.TechnicianContractServlet</servlet-class>
     </servlet>
     <servlet>
-<<<<<<< HEAD
-        <servlet-name>TechnicianReportServlet</servlet-name>
-        <servlet-class>controller.TechnicianReportServlet</servlet-class>
-    </servlet>
-    <servlet>
-=======
->>>>>>> 6f3f56698ad3a680cb43e6de101446d44e60e7b6
         <servlet-name>TechnicianDashboardServlet</servlet-name>
         <servlet-class>controller.TechnicianDashboardServlet</servlet-class>
     </servlet>
@@ -205,49 +204,20 @@
         <servlet-name>WorkHistoryServlet</servlet-name>
         <servlet-class>controller.WorkHistoryServlet</servlet-class>
     </servlet>
-<<<<<<< HEAD
-=======
-    
-    <servlet-mapping>
-        <servlet-name>TestServlet</servlet-name>
-        <url-pattern>/test</url-pattern>
-    </servlet-mapping>
-    
->>>>>>> 6f3f56698ad3a680cb43e6de101446d44e60e7b6
     <!-- Technician Module Mappings -->
     <servlet-mapping>
         <servlet-name>TechnicianTaskServlet</servlet-name>
         <url-pattern>/technician/tasks</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-<<<<<<< HEAD
-        <servlet-name>TechnicianTasksServlet</servlet-name>
-        <url-pattern>/technician/task</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>TaskDetailServlet</servlet-name>
-        <url-pattern>/technician/task-detail</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>TaskStatusUpdateServlet</servlet-name>
-        <url-pattern>/technician/task-status-update</url-pattern>
-=======
         <servlet-name>TechnicianRepairReportServlet</servlet-name>
         <url-pattern>/technician/reports</url-pattern>
->>>>>>> 6f3f56698ad3a680cb43e6de101446d44e60e7b6
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>TechnicianContractServlet</servlet-name>
         <url-pattern>/technician/contracts</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-<<<<<<< HEAD
-        <servlet-name>TechnicianReportServlet</servlet-name>
-        <url-pattern>/technician/reports</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-=======
->>>>>>> 6f3f56698ad3a680cb43e6de101446d44e60e7b6
         <servlet-name>TechnicianDashboardServlet</servlet-name>
         <url-pattern>/technician/dashboard</url-pattern>
     </servlet-mapping>
@@ -260,19 +230,20 @@
         <url-pattern>/technician/approved-request</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-<<<<<<< HEAD
-        <servlet-name>TechnicianDashboardServlet</servlet-name>
-        <url-pattern>/technician/contract-history</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-=======
->>>>>>> 6f3f56698ad3a680cb43e6de101446d44e60e7b6
         <servlet-name>WorkHistoryServlet</servlet-name>
         <url-pattern>/technician/work-history</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>AvatarServlet</servlet-name>
         <url-pattern>/avatar/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ChangeEmailServlet</servlet-name>
+        <url-pattern>/changeEmail</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>VerifyOtp2Servlet</servlet-name>
+        <url-pattern>/verifyOtp2</url-pattern>
     </servlet-mapping>
     <welcome-file-list>
         <welcome-file>home.jsp</welcome-file>

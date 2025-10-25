@@ -1,13 +1,3 @@
--- =============================================
--- SWP_FULL_FIXED.sql
--- Safe-to-run version (no foreign key / duplicate errors)
--- =============================================
-
-SET FOREIGN_KEY_CHECKS = 0;
-
--- SWP FULL UNEDITED MERGE
-
--- BEGIN DBScript.sql
 
 -- 1. Role & Account
 --  Role
@@ -99,8 +89,8 @@ CREATE TABLE ContractEquipment (
 -- 3. Service Request & Work Flow
 CREATE TABLE ServiceRequest (
     requestId INT AUTO_INCREMENT PRIMARY KEY,
-    contractId INT NOT NULL,
-    equipmentId INT NOT NULL,
+    contractId INT NULL,
+    equipmentId INT NULL,
     createdBy INT NOT NULL, -- Account (Customer)
     description VARCHAR(255),
     priorityLevel VARCHAR(20) NOT NULL DEFAULT 'Normal', -- Normal / High / Urgent
@@ -405,203 +395,6 @@ VALUES (
 INSERT INTO AccountRole (accountId, roleId)
 VALUES (LAST_INSERT_ID(), 6);
 
-
-
-
-
--- END DBScript.sql
-
--- BEGIN Database_Update_Script.sql
--- ====================================================================
--- DATABASE UPDATE SCRIPT FOR SERVICEREQUEST AND REQUESTAPPROVAL TABLES
--- ====================================================================
--- This script updates the existing ServiceRequest and RequestApproval tables
--- to match the new specifications with ENUM types and improved field definitions.
---
--- IMPORTANT: Backup your database before running this script!
--- ====================================================================
-
--- ====================================================================
--- 1. UPDATE SERVICEREQUEST TABLE
--- ====================================================================
-
--- Step 1: Modify requestDate from DATE to DATETIME with DEFAULT CURRENT_TIMESTAMP
-ALTER TABLE ServiceRequest 
-MODIFY COLUMN requestDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
--- Step 2: Modify status from VARCHAR to ENUM
-ALTER TABLE ServiceRequest 
-MODIFY COLUMN status ENUM('Pending','Awaiting Approval','Approved','Rejected','Completed','Cancelled') 
-NOT NULL DEFAULT 'Pending';
-
--- Step 3: Modify requestType from VARCHAR to ENUM
-ALTER TABLE ServiceRequest 
-MODIFY COLUMN requestType ENUM('Service','Warranty','InformationUpdate') 
-NOT NULL DEFAULT 'Service';
-
--- ====================================================================
--- 2. UPDATE REQUESTAPPROVAL TABLE
--- ====================================================================
-
--- Step 1: Drop the UNIQUE constraint on requestId
--- First, find the constraint name (it might be auto-generated)
--- We'll use a more generic approach that works regardless of constraint name
--- ALTER TABLE RequestApproval DROP INDEX requestId;
-
--- Step 2: Modify approvedBy to be nullable
-ALTER TABLE RequestApproval 
-MODIFY COLUMN approvedBy INT NULL;
-
--- Step 3: Modify approvalDate from DATE NOT NULL to DATETIME NULL
-ALTER TABLE RequestApproval 
-MODIFY COLUMN approvalDate DATETIME NULL;
-
--- Step 4: Modify decision from VARCHAR to ENUM with DEFAULT 'Pending'
-ALTER TABLE RequestApproval 
-MODIFY COLUMN decision ENUM('Pending','Approved','Rejected') DEFAULT 'Pending';
-
--- ====================================================================
--- 3. DATA MIGRATION (OPTIONAL)
--- ====================================================================
--- If you have existing data, you might want to update it to match new ENUM values
-
--- Update any existing status values that don't match the new ENUM
--- (Uncomment and modify as needed based on your existing data)
-
--- UPDATE ServiceRequest 
--- SET status = 'Pending' 
--- WHERE status NOT IN ('Pending','Awaiting Approval','Approved','Rejected','Completed','Cancelled');
-
--- UPDATE ServiceRequest 
--- SET requestType = 'Service' 
--- WHERE requestType NOT IN ('Service','Warranty','InformationUpdate');
-
--- Update any existing decision values that don't match the new ENUM
--- UPDATE RequestApproval 
--- SET decision = 'Pending' 
--- WHERE decision NOT IN ('Pending','Approved','Rejected');
-
--- ====================================================================
--- 4. VERIFICATION QUERIES
--- ====================================================================
--- Run these queries to verify the changes were applied correctly
-
--- Verify ServiceRequest table structure
--- DESCRIBE ServiceRequest;
-
--- Verify RequestApproval table structure  
--- DESCRIBE RequestApproval;
-
--- Check for any data that might not fit the new constraints
--- SELECT status, COUNT(*) FROM ServiceRequest GROUP BY status;
--- SELECT requestType, COUNT(*) FROM ServiceRequest GROUP BY requestType;
--- SELECT decision, COUNT(*) FROM RequestApproval GROUP BY decision;
-
--- ====================================================================
--- NOTES:
--- ====================================================================
--- 1. The UNIQUE constraint on RequestApproval.requestId has been removed
---    This allows multiple approval records for the same request if needed
--- 2. approvedBy is now nullable to support 'Pending' state
--- 3. approvalDate is now nullable to support records without approval date
--- 4. All ENUM fields have appropriate DEFAULT values
--- 5. requestDate now uses DATETIME for more precise timestamps
--- ====================================================================
--- END Database_Update_Script.sql
-
--- BEGIN Add_Technician_Assignment_To_RequestApproval.sql
--- ====================================================================
--- DATABASE UPDATE: Add Technician Assignment to RequestApproval Table
--- ====================================================================
--- Purpose: Allow Technical Manager to assign technicians during approval process
--- Date: Current
--- Author: System Update
-
--- Add assignedTechnicianId column to RequestApproval table
-ALTER TABLE RequestApproval 
-ADD COLUMN assignedTechnicianId INT NULL COMMENT 'Technician assigned to handle the approved request';
-
--- Add foreign key constraint to ensure assigned technician exists and is valid
-ALTER TABLE RequestApproval 
-ADD CONSTRAINT FK_RequestApproval_AssignedTechnician 
-FOREIGN KEY (assignedTechnicianId) REFERENCES Account(accountId);
-
--- Add index for better query performance
-CREATE INDEX IDX_RequestApproval_AssignedTechnician ON RequestApproval(assignedTechnicianId);
-
--- Update existing approved requests to have NULL assignedTechnicianId (optional)
--- This allows existing data to remain valid while new approvals can include technician assignment
-
--- Verification query to check the update
-SELECT 
-    COLUMN_NAME, 
-    DATA_TYPE, 
-    IS_NULLABLE, 
-    COLUMN_DEFAULT,
-    COLUMN_COMMENT
-FROM INFORMATION_SCHEMA.COLUMNS 
-WHERE TABLE_SCHEMA = DATABASE() 
-  AND TABLE_NAME = 'RequestApproval' 
-  AND COLUMN_NAME = 'assignedTechnicianId';
-
--- Success message
-SELECT 'RequestApproval table has been successfully updated with technician assignment capability!' as Status;
--- END Add_Technician_Assignment_To_RequestApproval.sql
-
--- BEGIN TechnicalManager_Schema_Updates.sql
--- ====================================================================
--- DATABASE SCHEMA MODIFICATIONS FOR TECHNICAL MANAGER FUNCTIONALITY
--- ====================================================================
--- This script contains all necessary database changes to support
--- Technical Manager features as specified in the requirements document.
---
--- Technical Manager Use Cases:
--- UC-05: Approve/Reject Service Request
--- UC-06: Assign Work to Technician  
--- UC-07: Schedule Maintenance
--- UC-08: Review Maintenance Report
--- ====================================================================
-
--- Technician module tables (idempotent)
-CREATE TABLE IF NOT EXISTS tasks (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  status VARCHAR(50) NOT NULL,
-  priority VARCHAR(50),
-  due_date DATE,
-  assigned_date DATE,
-  assigned_technician_id BIGINT,
-  equipment_needed TEXT
-);
-
-CREATE TABLE IF NOT EXISTS contracts (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  equipment_name VARCHAR(255) NOT NULL,
-  quantity INT NOT NULL,
-  unit_price DECIMAL(15,2) NULL,
-  description TEXT,
-  date DATE,
-  technician_id BIGINT,
-  task_id BIGINT
-);
-
-CREATE TABLE IF NOT EXISTS repair_reports (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  task_id BIGINT NOT NULL,
-  summary VARCHAR(255) NOT NULL,
-  description TEXT NOT NULL,
-  file_path VARCHAR(500),
-  created_date DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS task_activity (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  task_id BIGINT NOT NULL,
-  technician_id BIGINT,
-  activity TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
 
 -- ====================================================================
 -- 1. TECHNICIAN SKILLS AND SPECIALIZATIONS
@@ -1175,74 +968,140 @@ WHERE routine_schema = DATABASE()
 -- - UC-07: Schedule Maintenance (with notifications)
 -- - UC-08: Review Maintenance Report (with feedback tracking)
 -- ====================================================================
--- END TechnicalManager_Schema_Updates.sql
 
--- BEGIN TECHNICIAN_MIGRATION.sql
--- Technician module migration (idempotent). Run this on database `swp`.
--- This script ONLY adds new tables used by the Technician module and will not alter existing ones.
+-- ====================================================================
+-- DATABASE UPDATE: Add Technician Assignment to RequestApproval Table
+-- ====================================================================
+-- Purpose: Allow Technical Manager to assign technicians during approval process
+-- Date: Current
+-- Author: System Update
 
--- 1) Tasks assigned to technicians
-CREATE TABLE IF NOT EXISTS tasks (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  status VARCHAR(50) NOT NULL,
-  priority VARCHAR(50),
-  due_date DATE,
-  assigned_date DATE,
-  assigned_technician_id BIGINT,
-  equipment_needed TEXT,
-  INDEX idx_tasks_assigned_technician (assigned_technician_id),
-  INDEX idx_tasks_status (status),
-  INDEX idx_tasks_due_date (due_date)
-);
+-- Add assignedTechnicianId column to RequestApproval table
+ALTER TABLE RequestApproval 
+ADD COLUMN assignedTechnicianId INT NULL COMMENT 'Technician assigned to handle the approved request';
 
--- 2) Technician equipment contracts (separate from existing Contract table)
-CREATE TABLE IF NOT EXISTS contracts (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  equipment_name VARCHAR(255) NOT NULL,
-  quantity INT NOT NULL,
-  unit_price DECIMAL(15,2) NULL,
-  description TEXT,
-  date DATE,
-  technician_id BIGINT,
-  task_id BIGINT,
-  INDEX idx_contracts_task (task_id),
-  INDEX idx_contracts_technician (technician_id)
-);
+-- Add foreign key constraint to ensure assigned technician exists and is valid
+ALTER TABLE RequestApproval 
+ADD CONSTRAINT FK_RequestApproval_AssignedTechnician 
+FOREIGN KEY (assignedTechnicianId) REFERENCES Account(accountId);
 
--- 3) Repair reports submitted by technicians for tasks
-CREATE TABLE IF NOT EXISTS repair_reports (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  task_id BIGINT NOT NULL,
-  summary VARCHAR(255) NOT NULL,
-  description TEXT NOT NULL,
-  file_path VARCHAR(500),
-  created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_reports_task (task_id)
-);
+-- Add index for better query performance
+CREATE INDEX IDX_RequestApproval_AssignedTechnician ON RequestApproval(assignedTechnicianId);
 
--- 4) Simple activity log for task status/comments
-CREATE TABLE IF NOT EXISTS task_activity (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  task_id BIGINT NOT NULL,
-  technician_id BIGINT,
-  activity TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_activity_task (task_id)
-);
+-- Update existing approved requests to have NULL assignedTechnicianId (optional)
+-- This allows existing data to remain valid while new approvals can include technician assignment
 
--- Notes:
--- - Foreign keys are omitted to avoid conflicts with existing schema naming; you can add them later
---   if desired, referencing your Account/WorkTask tables.
--- - These tables are pluralized and independent of existing tables like `Contract` and `WorkTask`.
--- - If you prefer to integrate with existing `WorkTask`, adjust DAL queries accordingly.
+-- Verification query to check the update
+SELECT 
+    COLUMN_NAME, 
+    DATA_TYPE, 
+    IS_NULLABLE, 
+    COLUMN_DEFAULT,
+    COLUMN_COMMENT
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = DATABASE() 
+  AND TABLE_NAME = 'RequestApproval' 
+  AND COLUMN_NAME = 'assignedTechnicianId';
 
+-- Success message
+SELECT 'RequestApproval table has been successfully updated with technician assignment capability!' as Status;
 
+-- ====================================================================
+-- DATABASE UPDATE SCRIPT FOR SERVICEREQUEST AND REQUESTAPPROVAL TABLES
+-- ====================================================================
+-- This script updates the existing ServiceRequest and RequestApproval tables
+-- to match the new specifications with ENUM types and improved field definitions.
+--
+-- IMPORTANT: Backup your database before running this script!
+-- ====================================================================
 
--- END TECHNICIAN_MIGRATION.sql
+-- ====================================================================
+-- 1. UPDATE SERVICEREQUEST TABLE
+-- ====================================================================
 
--- BEGIN Technical_Manager_Test_Data.sql
+-- Step 1: Modify requestDate from DATE to DATETIME with DEFAULT CURRENT_TIMESTAMP
+ALTER TABLE ServiceRequest 
+MODIFY COLUMN requestDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- Step 2: Modify status from VARCHAR to ENUM
+ALTER TABLE ServiceRequest 
+MODIFY COLUMN status ENUM('Pending','Awaiting Approval','Approved','Rejected','Completed','Cancelled') 
+NOT NULL DEFAULT 'Pending';
+
+-- Step 3: Modify requestType from VARCHAR to ENUM
+ALTER TABLE ServiceRequest 
+MODIFY COLUMN requestType ENUM('Service','Warranty','InformationUpdate') 
+NOT NULL DEFAULT 'Service';
+
+-- ====================================================================
+-- 2. UPDATE REQUESTAPPROVAL TABLE
+-- ====================================================================
+
+-- Step 1: Drop the UNIQUE constraint on requestId
+-- First, find the constraint name (it might be auto-generated)
+-- We'll use a more generic approach that works regardless of constraint name
+-- ALTER TABLE RequestApproval DROP INDEX requestId;
+
+-- Step 2: Modify approvedBy to be nullable
+ALTER TABLE RequestApproval 
+MODIFY COLUMN approvedBy INT NULL;
+
+-- Step 3: Modify approvalDate from DATE NOT NULL to DATETIME NULL
+ALTER TABLE RequestApproval 
+MODIFY COLUMN approvalDate DATETIME NULL;
+
+-- Step 4: Modify decision from VARCHAR to ENUM with DEFAULT 'Pending'
+ALTER TABLE RequestApproval 
+MODIFY COLUMN decision ENUM('Pending','Approved','Rejected') DEFAULT 'Pending';
+
+-- ====================================================================
+-- 3. DATA MIGRATION (OPTIONAL)
+-- ====================================================================
+-- If you have existing data, you might want to update it to match new ENUM values
+
+-- Update any existing status values that don't match the new ENUM
+-- (Uncomment and modify as needed based on your existing data)
+
+-- UPDATE ServiceRequest 
+-- SET status = 'Pending' 
+-- WHERE status NOT IN ('Pending','Awaiting Approval','Approved','Rejected','Completed','Cancelled');
+
+-- UPDATE ServiceRequest 
+-- SET requestType = 'Service' 
+-- WHERE requestType NOT IN ('Service','Warranty','InformationUpdate');
+
+-- Update any existing decision values that don't match the new ENUM
+-- UPDATE RequestApproval 
+-- SET decision = 'Pending' 
+-- WHERE decision NOT IN ('Pending','Approved','Rejected');
+
+-- ====================================================================
+-- 4. VERIFICATION QUERIES
+-- ====================================================================
+-- Run these queries to verify the changes were applied correctly
+
+-- Verify ServiceRequest table structure
+-- DESCRIBE ServiceRequest;
+
+-- Verify RequestApproval table structure  
+-- DESCRIBE RequestApproval;
+
+-- Check for any data that might not fit the new constraints
+-- SELECT status, COUNT(*) FROM ServiceRequest GROUP BY status;
+-- SELECT requestType, COUNT(*) FROM ServiceRequest GROUP BY requestType;
+-- SELECT decision, COUNT(*) FROM RequestApproval GROUP BY decision;
+
+-- ====================================================================
+-- NOTES:
+-- ====================================================================
+-- 1. The UNIQUE constraint on RequestApproval.requestId has been removed
+--    This allows multiple approval records for the same request if needed
+-- 2. approvedBy is now nullable to support 'Pending' state
+-- 3. approvalDate is now nullable to support records without approval date
+-- 4. All ENUM fields have appropriate DEFAULT values
+-- 5. requestDate now uses DATETIME for more precise timestamps
+-- ====================================================================
+
 -- ====================================================================
 -- TECHNICAL MANAGER TEST DATA SCRIPT
 -- ====================================================================
@@ -1258,19 +1117,34 @@ CREATE TABLE IF NOT EXISTS task_activity (
 -- ====================================================================
 
 -- Clear existing test data (optional - uncomment if needed)
--- 
--- 
--- 
--- 
--- 
--- 
--- 
--- 
+-- DELETE FROM RequestApproval WHERE approvalId > 0;
+-- DELETE FROM ServiceRequest WHERE requestId > 0;
+-- DELETE FROM ContractEquipment WHERE contractEquipmentId > 0;
+-- DELETE FROM Contract WHERE contractId > 0;
+-- DELETE FROM Equipment WHERE equipmentId > 0;
+-- DELETE FROM AccountRole WHERE accountId > 0;
+-- DELETE FROM Account WHERE accountId > 0;
+-- DELETE FROM Role WHERE roleId > 0;
+
+-- ====================================================================
+-- 1. ROLES AND ACCOUNTS
+-- ====================================================================
+
+-- Insert Roles (matching AccountRoleService.java implementation)
+INSERT IGNORE INTO Role (roleId, roleName) VALUES 
+(1, 'Admin'),
+(2, 'Customer'),
+(3, 'Customer Service Staff'),
+(4, 'Technical Manager'),
+(5, 'Technician');
 
 -- Insert Test Accounts
-INSERT INTO Account (accountId, username, passwordHash, fullName, email, phone, status, createdAt) VALUES 
+INSERT IGNORE INTO Account (accountId, username, passwordHash, fullName, email, phone, status, createdAt) VALUES 
+-- Admin
+(1, 'admin', '$2a$12$jfOF05tnCZRuUQO7SducFulvctczEiSaNFHTne87YSZ3sV14Ortke', 'System Administrator', 'admin@crm.com', '0901000001', 'Active', '2024-01-01 08:00:00'),
 
 -- Technical Managers
+(2, 'techmanager1', '$2a$12$jfOF05tnCZRuUQO7SducFulvctczEiSaNFHTne87YSZ3sV14Ortke', 'Nguyễn Văn Quản', 'techmanager1@crm.com', '0901000002', 'Active', '2024-01-01 08:00:00'),
 (3, 'techmanager2', '$2a$12$jfOF05tnCZRuUQO7SducFulvctczEiSaNFHTne87YSZ3sV14Ortke', 'Trần Thị Hương', 'techmanager2@crm.com', '0901000003', 'Active', '2024-01-01 08:00:00'),
 
 -- Customers
@@ -1289,23 +1163,25 @@ INSERT INTO Account (accountId, username, passwordHash, fullName, email, phone, 
 (12, 'css1', '$2a$12$jfOF05tnCZRuUQO7SducFulvctczEiSaNFHTne87YSZ3sV14Ortke', 'Nguyễn Thị Hỗ Trợ', 'css1@crm.com', '0901000012', 'Active', '2024-01-01 08:00:00');
 
 -- Assign Roles to Accounts (matching corrected role IDs)
-INSERT INTO AccountRole (accountId, roleId) VALUES 
+INSERT IGNORE INTO AccountRole (accountId, roleId) VALUES 
+(1, 1), -- admin -> Admin
+(2, 4), -- techmanager1 -> Technical Manager
 (3, 4), -- techmanager2 -> Technical Manager
 (4, 2), -- customer1 -> Customer
 (5, 2), -- customer2 -> Customer
 (6, 2), -- customer3 -> Customer
 (7, 2), -- customer4 -> Customer
-(8, 6), -- technician1 -> Technician
-(9, 6), -- technician2 -> Technician
-(10, 6), -- technician3 -> Technician
-(11, 6), -- technician4 -> Technician
+(8, 5), -- technician1 -> Technician
+(9, 5), -- technician2 -> Technician
+(10, 5), -- technician3 -> Technician
+(11, 5), -- technician4 -> Technician
 (12, 3); -- css1 -> Customer Service Staff
 
 -- ====================================================================
 -- 2. PRIORITY LEVELS
 -- ====================================================================
 
-INSERT INTO Priority (priorityId, priorityName, priorityLevel, description) VALUES 
+INSERT IGNORE INTO Priority (priorityId, priorityName, priorityLevel, description) VALUES 
 (1, 'Low', 1, 'Không khẩn cấp, có thể xử lý trong vòng 1 tuần'),
 (2, 'Normal', 2, 'Mức độ bình thường, xử lý trong 2-3 ngày'),
 (3, 'High', 3, 'Ưu tiên cao, cần xử lý trong 24 giờ'),
@@ -1316,7 +1192,7 @@ INSERT INTO Priority (priorityId, priorityName, priorityLevel, description) VALU
 -- ====================================================================
 
 -- Equipment
-INSERT INTO Equipment (equipmentId, serialNumber, model, description, installDate, lastUpdatedBy, lastUpdatedDate) VALUES 
+INSERT IGNORE INTO Equipment (equipmentId, serialNumber, model, description, installDate, lastUpdatedBy, lastUpdatedDate) VALUES 
 -- Air Conditioners
 (1, 'AC001-2024', 'Daikin FTKC25UAVMV', 'Máy lạnh 1HP - Phòng khách', '2024-01-15', 1, '2024-01-15'),
 (2, 'AC002-2024', 'Panasonic CU-N9VKH-8', 'Máy lạnh 1.5HP - Phòng ngủ chính', '2024-02-01', 1, '2024-02-01'),
@@ -1336,7 +1212,7 @@ INSERT INTO Equipment (equipmentId, serialNumber, model, description, installDat
 (10, 'HVAC002-2024', 'Trane RTAC', 'Máy lạnh công nghiệp', '2024-03-20', 1, '2024-03-20');
 
 -- Contracts
-INSERT INTO Contract (contractId, customerId, contractDate, contractType, status, details) VALUES 
+INSERT IGNORE INTO Contract (contractId, customerId, contractDate, contractType, status, details) VALUES 
 (1, 4, '2024-01-01', 'Bảo trì', 'Active', 'Hợp đồng bảo trì thiết bị điều hòa - Lê Văn Khách'),
 (2, 5, '2024-02-01', 'Bảo hành', 'Active', 'Hợp đồng bảo hành máy bơm - Phạm Thị Lan'),
 (3, 6, '2024-02-15', 'Bảo trì', 'Active', 'Hợp đồng bảo trì hệ thống điện - Hoàng Văn Minh'),
@@ -1344,7 +1220,7 @@ INSERT INTO Contract (contractId, customerId, contractDate, contractType, status
 (5, 4, '2024-03-10', 'Bảo trì', 'Active', 'Hợp đồng bảo trì mở rộng - Lê Văn Khách');
 
 -- Contract Equipment Relationships
-INSERT INTO ContractEquipment (contractEquipmentId, contractId, equipmentId, startDate, endDate, quantity, price) VALUES 
+INSERT IGNORE INTO ContractEquipment (contractEquipmentId, contractId, equipmentId, startDate, endDate, quantity, price) VALUES 
 -- Contract 1 - Customer 4 (Lê Văn Khách)
 (1, 1, 1, '2024-01-01', '2024-12-31', 1, 5000000),
 (2, 1, 2, '2024-02-01', '2024-12-31', 1, 6000000),
@@ -1369,19 +1245,19 @@ INSERT INTO ContractEquipment (contractEquipmentId, contractId, equipmentId, sta
 -- 4. SERVICE REQUESTS FOR TESTING APPROVAL WORKFLOW
 -- ====================================================================
 
-INSERT INTO ServiceRequest (requestId, contractId, equipmentId, createdBy, description, priorityLevel, requestDate, status, requestType) VALUES 
+INSERT IGNORE INTO ServiceRequest (requestId, contractId, equipmentId, createdBy, description, priorityLevel, requestDate, status, requestType) VALUES 
 
 -- PENDING REQUESTS (for approval testing)
-(1, 1, 1, 4, 'Máy lạnh không mát, tiếng ồn lớn khi hoạt động', 'Urgent', '2024-12-01', 'Awaiting Approval', 'Service'),
-(2, 1, 2, 4, 'Máy lạnh chảy nước, có mùi khó chịu', 'High', '2024-12-02', 'Awaiting Approval', 'Service'),
-(3, 2, 5, 5, 'Máy bơm không hoạt động, có tiếng kêu lạ', 'Normal', '2024-12-03', 'Awaiting Approval', 'Warranty'),
-(4, 3, 7, 6, 'Tủ điện bị nóng, cầu dao tự ngắt', 'Urgent', '2024-12-04', 'Awaiting Approval', 'Service'),
-(5, 2, 6, 5, 'Máy bơm công nghiệp giảm áp suất', 'High', '2024-12-05', 'Awaiting Approval', 'Warranty'),
-(6, 4, 9, 7, 'Hệ thống HVAC không đạt nhiệt độ', 'Normal', '2024-12-06', 'Awaiting Approval', 'Warranty'),
-(7, 3, 8, 6, 'Biến tần báo lỗi E001', 'High', '2024-12-07', 'Awaiting Approval', 'Service'),
-(8, 5, 3, 4, 'Máy lạnh phòng làm việc không khởi động', 'Normal', '2024-12-08', 'Awaiting Approval', 'Service'),
-(9, 4, 10, 7, 'Máy lạnh công nghiệp rò gas', 'Urgent', '2024-12-09', 'Awaiting Approval', 'Warranty'),
-(10, 5, 4, 4, 'Máy lạnh phòng khách có mùi cháy', 'Urgent', '2024-12-10', 'Awaiting Approval', 'Service'),
+(1, 1, 1, 4, 'Máy lạnh không mát, tiếng ồn lớn khi hoạt động', 'Urgent', '2024-12-01', 'Pending', 'Service'),
+(2, 1, 2, 4, 'Máy lạnh chảy nước, có mùi khó chịu', 'High', '2024-12-02', 'Pending', 'Service'),
+(3, 2, 5, 5, 'Máy bơm không hoạt động, có tiếng kêu lạ', 'Normal', '2024-12-03', 'Pending', 'Warranty'),
+(4, 3, 7, 6, 'Tủ điện bị nóng, cầu dao tự ngắt', 'Urgent', '2024-12-04', 'Pending', 'Service'),
+(5, 2, 6, 5, 'Máy bơm công nghiệp giảm áp suất', 'High', '2024-12-05', 'Pending', 'Warranty'),
+(6, 4, 9, 7, 'Hệ thống HVAC không đạt nhiệt độ', 'Normal', '2024-12-06', 'Pending', 'Warranty'),
+(7, 3, 8, 6, 'Biến tần báo lỗi E001', 'High', '2024-12-07', 'Pending', 'Service'),
+(8, 5, 3, 4, 'Máy lạnh phòng làm việc không khởi động', 'Normal', '2024-12-08', 'Pending', 'Service'),
+(9, 4, 10, 7, 'Máy lạnh công nghiệp rò gas', 'Urgent', '2024-12-09', 'Pending', 'Warranty'),
+(10, 5, 4, 4, 'Máy lạnh phòng khách có mùi cháy', 'Urgent', '2024-12-10', 'Pending', 'Service'),
 
 -- APPROVED REQUESTS (for history testing)
 (11, 1, 1, 4, 'Bảo trì định kỳ máy lạnh phòng khách', 'Normal', '2024-11-25', 'Approved', 'Service'),
@@ -1396,16 +1272,16 @@ INSERT INTO ServiceRequest (requestId, contractId, equipmentId, createdBy, descr
 (18, 4, 10, 7, 'Thay thế máy lạnh công nghiệp', 'Low', '2024-11-22', 'Rejected', 'Warranty'),
 
 -- TODAY'S REQUESTS (for dashboard statistics)
-(19, 1, 1, 4, 'Kiểm tra máy lạnh sau sửa chữa', 'Normal', CURDATE(), 'Awaiting Approval', 'Service'),
-(20, 2, 5, 5, 'Máy bơm có tiếng động lạ', 'High', CURDATE(), 'Awaiting Approval', 'Warranty'),
-(21, 3, 7, 6, 'Tủ điện báo cảnh báo', 'Urgent', CURDATE(), 'Awaiting Approval', 'Service'),
-(22, 5, 4, 4, 'Máy lạnh không tự động tắt', 'Normal', CURDATE(), 'Awaiting Approval', 'Service');
+(19, 1, 1, 4, 'Kiểm tra máy lạnh sau sửa chữa', 'Normal', CURDATE(), 'Pending', 'Service'),
+(20, 2, 5, 5, 'Máy bơm có tiếng động lạ', 'High', CURDATE(), 'Pending', 'Warranty'),
+(21, 3, 7, 6, 'Tủ điện báo cảnh báo', 'Urgent', CURDATE(), 'Pending', 'Service'),
+(22, 5, 4, 4, 'Máy lạnh không tự động tắt', 'Normal', CURDATE(), 'Approved', 'Service');
 
 -- ====================================================================
 -- 5. REQUEST APPROVALS (for approved/rejected requests)
 -- ====================================================================
 
-INSERT INTO RequestApproval (approvalId, requestId, approvedBy, approvalDate, decision, note) VALUES 
+INSERT IGNORE INTO RequestApproval (approvalId, requestId, approvedBy, approvalDate, decision, note) VALUES 
 -- Approved requests
 (1, 11, 2, '2024-11-26', 'Approved', 'Đã kiểm tra lịch bảo trì, phê duyệt thực hiện'),
 (2, 12, 2, '2024-11-27', 'Approved', 'Bộ lọc cần thay theo đúng chu kỳ, phê duyệt'),
@@ -1423,29 +1299,29 @@ INSERT INTO RequestApproval (approvalId, requestId, approvedBy, approvalDate, de
 -- 6. MAINTENANCE SCHEDULES (for scheduling testing)
 -- ====================================================================
 
--- INSERT INTO MaintenanceSchedule (scheduleId, requestId, contractId, equipmentId, assignedTo, scheduledDate, scheduleType, recurrenceRule, status, priorityId) VALUES 
+INSERT IGNORE INTO MaintenanceSchedule (scheduleId, requestId, contractId, equipmentId, assignedTo, scheduledDate, scheduleType, recurrenceRule, status, priorityId) VALUES 
 -- Scheduled from approved requests
--- (1, 11, 1, 1, 8, '2024-12-15', 'Request', NULL, 'Scheduled', 2),
--- (2, 12, 2, 5, 9, '2024-12-16', 'Request', NULL, 'Scheduled', 2),
--- (3, 13, 3, 7, 10, '2024-12-17', 'Request', NULL, 'Scheduled', 2),
--- (4, 14, 4, 9, 11, '2024-12-18', 'Request', NULL, 'Scheduled', 2),
--- (5, 15, 1, 2, 8, '2024-12-19', 'Request', NULL, 'Scheduled', 1),
+(1, 11, 1, 1, 8, '2024-12-15', 'Request', NULL, 'Scheduled', 2),
+(2, 12, 2, 5, 9, '2024-12-16', 'Request', NULL, 'Scheduled', 2),
+(3, 13, 3, 7, 10, '2024-12-17', 'Request', NULL, 'Scheduled', 2),
+(4, 14, 4, 9, 11, '2024-12-18', 'Request', NULL, 'Scheduled', 2),
+(5, 15, 1, 2, 8, '2024-12-19', 'Request', NULL, 'Scheduled', 1),
 
 -- Periodic maintenance schedules
--- (6, NULL, 1, 1, 8, '2025-01-15', 'Periodic', 'MONTHLY', 'Scheduled', 2),
--- (7, NULL, 2, 5, 9, '2025-01-20', 'Periodic', 'QUARTERLY', 'Scheduled', 2),
--- (8, NULL, 3, 7, 10, '2025-02-15', 'Periodic', 'MONTHLY', 'Scheduled', 2),
--- (9, NULL, 4, 9, 11, '2025-03-01', 'Periodic', 'QUARTERLY', 'Scheduled', 2),
+(6, NULL, 1, 1, 8, '2025-01-15', 'Periodic', 'MONTHLY', 'Scheduled', 2),
+(7, NULL, 2, 5, 9, '2025-01-20', 'Periodic', 'QUARTERLY', 'Scheduled', 2),
+(8, NULL, 3, 7, 10, '2025-02-15', 'Periodic', 'MONTHLY', 'Scheduled', 2),
+(9, NULL, 4, 9, 11, '2025-03-01', 'Periodic', 'QUARTERLY', 'Scheduled', 2),
 
 -- Completed schedules
--- (10, NULL, 1, 2, 8, '2024-11-15', 'Periodic', 'MONTHLY', 'Completed', 2),
--- (11, NULL, 2, 6, 9, '2024-11-20', 'Periodic', 'QUARTERLY', 'Completed', 2);
+(10, NULL, 1, 2, 8, '2024-11-15', 'Periodic', 'MONTHLY', 'Completed', 2),
+(11, NULL, 2, 6, 9, '2024-11-20', 'Periodic', 'QUARTERLY', 'Completed', 2);
 
 -- ====================================================================
 -- 7. WORK TASKS (for assignment testing)
 -- ====================================================================
 
-INSERT INTO WorkTask (taskId, requestId, scheduleId, technicianId, taskType, taskDetails, startDate, endDate, status) VALUES 
+INSERT IGNORE INTO WorkTask (taskId, requestId, scheduleId, technicianId, taskType, taskDetails, startDate, endDate, status) VALUES 
 -- Tasks from approved requests
 (1, 11, 1, 8, 'Request', 'Bảo trì định kỳ máy lạnh: vệ sinh, kiểm tra gas, thay filter', '2024-12-15', '2024-12-15', 'Assigned'),
 (2, 12, 2, 9, 'Request', 'Thay thế bộ lọc máy bơm và kiểm tra hệ thống', '2024-12-16', '2024-12-16', 'Assigned'),
@@ -1464,7 +1340,7 @@ INSERT INTO WorkTask (taskId, requestId, scheduleId, technicianId, taskType, tas
 -- 8. REPAIR RESULTS (for completed tasks)
 -- ====================================================================
 
-INSERT INTO RepairResult (resultId, taskId, details, completionDate, technicianId, status) VALUES 
+INSERT IGNORE INTO RepairResult (resultId, taskId, details, completionDate, technicianId, status) VALUES 
 (1, 7, 'Đã hoàn thành bảo trì định kỳ. Vệ sinh dàn lạnh, thay filter, kiểm tra gas. Máy hoạt động bình thường.', '2024-11-15', 8, 'Completed'),
 (2, 8, 'Bảo trì máy bơm hoàn tất. Thay dầu, kiểm tra áp suất, vệ sinh bộ lọc. Không phát hiện vấn đề.', '2024-11-20', 9, 'Completed');
 
@@ -1472,7 +1348,7 @@ INSERT INTO RepairResult (resultId, taskId, details, completionDate, technicianI
 -- 9. ACCOUNT PROFILES (optional - for complete user information)
 -- ====================================================================
 
-INSERT INTO AccountProfile (profileId, accountId, address, dateOfBirth, nationalId, verified, extraData) VALUES 
+INSERT IGNORE INTO AccountProfile (profileId, accountId, address, dateOfBirth, nationalId, verified, extraData) VALUES 
 (1, 1, 'Tòa nhà CRM, Quận 1, TP.HCM', '1980-01-01', '001080000001', 1, 'System Administrator'),
 (2, 2, '123 Nguyễn Văn Cừ, Quận 5, TP.HCM', '1985-05-15', '001085051501', 1, 'Technical Manager - Senior'),
 (3, 3, '456 Lê Văn Sỹ, Quận 3, TP.HCM', '1987-08-20', '001087082001', 1, 'Technical Manager - Junior'),
@@ -1534,8 +1410,6 @@ SELECT 'Technical Manager test data has been successfully inserted!' as Status,
        (SELECT COUNT(*) FROM RequestApproval) as TotalApprovals,
        (SELECT COUNT(*) FROM MaintenanceSchedule) as ScheduledMaintenance,
        (SELECT COUNT(*) FROM Account WHERE accountId IN (SELECT accountId FROM AccountRole WHERE roleId = 4)) as TechnicalManagers;
--- END Technical_Manager_Test_Data.sql
-
 
 INSERT INTO Account (
     accountId, username, passwordHash, fullName, email, phone, status

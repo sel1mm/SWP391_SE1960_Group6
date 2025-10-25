@@ -94,9 +94,8 @@ public class ServiceRequestDAO extends MyDAO {
      * Kiểm tra request có thể cancel không (thuộc customer và Pending)
      */
     public boolean canCancelRequest(int requestId, int customerId) {
-        xSql = "SELECT sr.requestId FROM ServiceRequest sr "
-                + "INNER JOIN Contract c ON sr.contractId = c.contractId "
-                + "WHERE sr.requestId = ? AND c.customerId = ? AND sr.status = 'Pending'";
+        xSql = "SELECT requestId FROM ServiceRequest "
+                + "WHERE requestId = ? AND createdBy = ? AND status = 'Pending'";
         try {
             ps = con.prepareStatement(xSql);
             ps.setInt(1, requestId);
@@ -141,9 +140,8 @@ public class ServiceRequestDAO extends MyDAO {
      * Kiểm tra request có thuộc về customer và đang Pending không
      */
     public boolean canUpdateRequest(int requestId, int customerId) {
-        xSql = "SELECT sr.requestId FROM ServiceRequest sr "
-                + "INNER JOIN Contract c ON sr.contractId = c.contractId "
-                + "WHERE sr.requestId = ? AND c.customerId = ? AND sr.status = 'Pending'";
+        xSql = "SELECT requestId FROM ServiceRequest "
+                + "WHERE requestId = ? AND createdBy = ? AND status = 'Pending'";
         try {
             ps = con.prepareStatement(xSql);
             ps.setInt(1, requestId);
@@ -265,8 +263,12 @@ public class ServiceRequestDAO extends MyDAO {
      */
     public List<ServiceRequest> getRequestsByCustomerId(int customerId) {
         List<ServiceRequest> list = new ArrayList<>();
-        xSql = "SELECT sr.* FROM ServiceRequest sr "
-                + "WHERE sr.createdBy = ? "
+        xSql = "SELECT sr.*, e.model as equipmentName "
+                + // ✅ THÊM equipmentName
+                "FROM ServiceRequest sr "
+                + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
+                + // ✅ LEFT JOIN
+                "WHERE sr.createdBy = ? "
                 + "ORDER BY sr.requestId DESC";
         try {
             ps = con.prepareStatement(xSql);
@@ -304,13 +306,17 @@ public class ServiceRequestDAO extends MyDAO {
     }
 
     /**
-     * Tìm kiếm theo keyword (description hoặc requestId) - Sắp xếp cũ nhất trước
+     * Tìm kiếm theo keyword (description hoặc requestId) - Sắp xếp cũ nhất
+     * trước
      */
     public List<ServiceRequest> searchRequests(int customerId, String keyword) {
         List<ServiceRequest> list = new ArrayList<>();
-        xSql = "SELECT sr.* FROM ServiceRequest sr "
-                + "INNER JOIN Contract c ON sr.contractId = c.contractId "
-                + "WHERE c.customerId = ? "
+        xSql = "SELECT sr.*, e.model as equipmentName "
+                + // ✅ THÊM equipmentName
+                "FROM ServiceRequest sr "
+                + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
+                + // ✅ LEFT JOIN
+                "WHERE sr.createdBy = ? "
                 + "AND (sr.description LIKE ? OR CAST(sr.requestId AS CHAR) LIKE ?) "
                 + "ORDER BY sr.requestDate ASC, sr.requestId ASC";
         try {
@@ -335,9 +341,12 @@ public class ServiceRequestDAO extends MyDAO {
      */
     public List<ServiceRequest> filterRequestsByStatus(int customerId, String status) {
         List<ServiceRequest> list = new ArrayList<>();
-        xSql = "SELECT sr.* FROM ServiceRequest sr "
-                + "INNER JOIN Contract c ON sr.contractId = c.contractId "
-                + "WHERE c.customerId = ? AND sr.status = ? "
+        xSql = "SELECT sr.*, e.model as equipmentName "
+                + // ✅ THÊM equipmentName
+                "FROM ServiceRequest sr "
+                + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
+                + // ✅ LEFT JOIN
+                "WHERE sr.createdBy = ? AND sr.status = ? "
                 + "ORDER BY sr.requestDate ASC, sr.requestId ASC";
         try {
             ps = con.prepareStatement(xSql);
@@ -360,9 +369,8 @@ public class ServiceRequestDAO extends MyDAO {
      * Đếm tổng số requests của customer
      */
     public int getTotalRequests(int customerId) {
-        xSql = "SELECT COUNT(*) FROM ServiceRequest sr "
-                + "INNER JOIN Contract c ON sr.contractId = c.contractId "
-                + "WHERE c.customerId = ?";
+        xSql = xSql = "SELECT COUNT(*) FROM ServiceRequest "
+                + "WHERE createdBy = ?";
         return getCount(customerId);
     }
 
@@ -370,9 +378,8 @@ public class ServiceRequestDAO extends MyDAO {
      * Đếm số requests theo status (cho customer cụ thể)
      */
     public int getRequestCountByStatus(int customerId, String status) {
-        xSql = "SELECT COUNT(*) FROM ServiceRequest sr "
-                + "INNER JOIN Contract c ON sr.contractId = c.contractId "
-                + "WHERE c.customerId = ? AND sr.status = ?";
+        xSql = "SELECT COUNT(*) FROM ServiceRequest "
+                + "WHERE createdBy = ? AND status = ?";
         try {
             ps = con.prepareStatement(xSql);
             ps.setInt(1, customerId);
@@ -441,7 +448,7 @@ public class ServiceRequestDAO extends MyDAO {
         sr.setRequestDate(rs.getDate("requestDate"));
         sr.setStatus(rs.getString("status"));
         sr.setRequestType(rs.getString("requestType"));
-        
+
         // Handle assigned_technician_id (can be null)
         try {
             int technicianId = rs.getInt("assigned_technician_id");
@@ -451,50 +458,53 @@ public class ServiceRequestDAO extends MyDAO {
         } catch (SQLException e) {
             // Column might not exist in all queries, ignore
         }
-        
+
         // Handle additional display fields if they exist
         try {
             sr.setCustomerName(rs.getString("customerName"));
         } catch (SQLException e) {
             // Column might not exist in all queries, ignore
         }
-        
+
         try {
             sr.setCustomerEmail(rs.getString("customerEmail"));
         } catch (SQLException e) {
             // Column might not exist in all queries, ignore
         }
-        
+
         try {
             sr.setCustomerPhone(rs.getString("customerPhone"));
         } catch (SQLException e) {
             // Column might not exist in all queries, ignore
         }
-        
+
         try {
-            sr.setEquipmentName(rs.getString("equipmentModel"));
+            String equipmentName = rs.getString("equipmentName");
+            if (equipmentName != null) {
+                sr.setEquipmentName(equipmentName);
+            }
         } catch (SQLException e) {
             // Column might not exist in all queries, ignore
         }
-        
+
         try {
             sr.setSerialNumber(rs.getString("serialNumber"));
         } catch (SQLException e) {
             // Column might not exist in all queries, ignore
         }
-        
+
         try {
             sr.setTechnicianName(rs.getString("technicianName"));
         } catch (SQLException e) {
             // Column might not exist in all queries, ignore
         }
-        
+
         try {
             sr.setDaysPending(rs.getInt("daysPending"));
         } catch (SQLException e) {
             // Column might not exist in all queries, ignore
         }
-        
+
         return sr;
     }
 
@@ -533,7 +543,7 @@ public class ServiceRequestDAO extends MyDAO {
         dto.setCustomerName(rs.getString("customerName"));
         dto.setCustomerEmail(rs.getString("customerEmail"));
         dto.setCustomerPhone(rs.getString("customerPhone"));
-        
+
         // Calculate days pending
         java.util.Date requestDate = rs.getDate("requestDate");
         if (requestDate != null) {
@@ -666,7 +676,9 @@ public class ServiceRequestDAO extends MyDAO {
 
     /**
      * Update service request status (for Technical Manager)
-     * @deprecated Use updateServiceRequestStatusWithResult for better error handling
+     *
+     * @deprecated Use updateServiceRequestStatusWithResult for better error
+     * handling
      */
     @Deprecated
     public boolean updateServiceRequestStatus(int requestId, String newStatus, String managerNotes) {
@@ -688,8 +700,8 @@ public class ServiceRequestDAO extends MyDAO {
     }
 
     /**
-     * Update service request status with technician assignment
-     * Returns detailed result information for better error handling
+     * Update service request status with technician assignment Returns detailed
+     * result information for better error handling
      */
     public dto.ServiceRequestUpdateResult updateServiceRequestStatusWithResult(int requestId, String newStatus, String managerNotes, int managerId, Integer assignedTechnicianId) {
         Connection conn = null;
@@ -698,68 +710,68 @@ public class ServiceRequestDAO extends MyDAO {
         PreparedStatement psCheckTechnician = null;
         PreparedStatement psUpdate = null;
         PreparedStatement psInsert = null;
-        
+
         try {
             conn = con;
             conn.setAutoCommit(false); // Start transaction
-            
+
             // 1. Check if request exists and get current status
             String checkSql = "SELECT status FROM ServiceRequest WHERE requestId = ?";
             psCheck = conn.prepareStatement(checkSql);
             psCheck.setInt(1, requestId);
             ResultSet rs = psCheck.executeQuery();
-            
+
             if (!rs.next()) {
                 conn.rollback();
                 return dto.ServiceRequestUpdateResult.requestNotFound();
             }
-            
+
             String currentStatus = rs.getString("status");
             if (!"Awaiting Approval".equals(currentStatus)) {
                 conn.rollback();
                 return dto.ServiceRequestUpdateResult.alreadyProcessed();
             }
-            
+
             // 2. Check if approval record already exists
             String checkApprovalSql = "SELECT COUNT(*) FROM RequestApproval WHERE requestId = ?";
             psCheckApproval = conn.prepareStatement(checkApprovalSql);
             psCheckApproval.setInt(1, requestId);
             ResultSet rsApproval = psCheckApproval.executeQuery();
-            
+
             if (rsApproval.next() && rsApproval.getInt(1) > 0) {
                 conn.rollback();
                 return dto.ServiceRequestUpdateResult.alreadyProcessed();
             }
-            
+
             // 3. If technician is assigned, verify technician exists and has correct role
             if (assignedTechnicianId != null) {
-                String checkTechnicianSql = "SELECT COUNT(*) FROM Account a " +
-                                          "INNER JOIN AccountRole ar ON a.accountId = ar.accountId " +
-                                          "INNER JOIN Role r ON ar.roleId = r.roleId " +
-                                          "WHERE a.accountId = ? AND r.roleName = 'Technician' AND a.status = 'Active'";
+                String checkTechnicianSql = "SELECT COUNT(*) FROM Account a "
+                        + "INNER JOIN AccountRole ar ON a.accountId = ar.accountId "
+                        + "INNER JOIN Role r ON ar.roleId = r.roleId "
+                        + "WHERE a.accountId = ? AND r.roleName = 'Technician' AND a.status = 'Active'";
                 psCheckTechnician = conn.prepareStatement(checkTechnicianSql);
                 psCheckTechnician.setInt(1, assignedTechnicianId);
                 ResultSet rsTechnician = psCheckTechnician.executeQuery();
-                
+
                 if (!rsTechnician.next() || rsTechnician.getInt(1) == 0) {
                     conn.rollback();
                     return dto.ServiceRequestUpdateResult.technicianNotFound();
                 }
             }
-            
+
             // 4. Update ServiceRequest status
             String updateSql = "UPDATE ServiceRequest SET status = ? WHERE requestId = ? AND status = 'Awaiting Approval'";
-            
+
             psUpdate = conn.prepareStatement(updateSql);
             psUpdate.setString(1, newStatus);
             psUpdate.setInt(2, requestId);
-            
+
             int affectedRows = psUpdate.executeUpdate();
             if (affectedRows == 0) {
                 conn.rollback();
                 return dto.ServiceRequestUpdateResult.alreadyProcessed();
             }
-            
+
             // 5. Insert into RequestApproval table with technician assignment
             String insertApprovalSQL;
             if (assignedTechnicianId != null) {
@@ -767,25 +779,27 @@ public class ServiceRequestDAO extends MyDAO {
             } else {
                 insertApprovalSQL = "INSERT INTO RequestApproval (requestId, approvedBy, approvalDate, decision, note) VALUES (?, ?, NOW(), ?, ?)";
             }
-            
+
             psInsert = conn.prepareStatement(insertApprovalSQL);
             psInsert.setInt(1, requestId);
             psInsert.setInt(2, managerId);
             psInsert.setString(3, newStatus);
             psInsert.setString(4, managerNotes);
-            
+
             if (assignedTechnicianId != null) {
                 psInsert.setInt(5, assignedTechnicianId);
             }
-            
+
             psInsert.executeUpdate();
-            
+
             conn.commit(); // Commit transaction
             return dto.ServiceRequestUpdateResult.success();
-            
+
         } catch (Exception e) {
             try {
-                if (conn != null) conn.rollback();
+                if (conn != null) {
+                    conn.rollback();
+                }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -793,12 +807,24 @@ public class ServiceRequestDAO extends MyDAO {
             return dto.ServiceRequestUpdateResult.databaseError(e);
         } finally {
             try {
-                if (psCheck != null) psCheck.close();
-                if (psCheckApproval != null) psCheckApproval.close();
-                if (psCheckTechnician != null) psCheckTechnician.close();
-                if (psUpdate != null) psUpdate.close();
-                if (psInsert != null) psInsert.close();
-                if (conn != null) conn.setAutoCommit(true);
+                if (psCheck != null) {
+                    psCheck.close();
+                }
+                if (psCheckApproval != null) {
+                    psCheckApproval.close();
+                }
+                if (psCheckTechnician != null) {
+                    psCheckTechnician.close();
+                }
+                if (psUpdate != null) {
+                    psUpdate.close();
+                }
+                if (psInsert != null) {
+                    psInsert.close();
+                }
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -807,7 +833,9 @@ public class ServiceRequestDAO extends MyDAO {
 
     /**
      * Update service request status with technician assignment
-     * @deprecated Use updateServiceRequestStatusWithResult for better error handling
+     *
+     * @deprecated Use updateServiceRequestStatusWithResult for better error
+     * handling
      */
     @Deprecated
     public boolean updateServiceRequestStatus(int requestId, String newStatus, String managerNotes, int managerId, Integer assignedTechnicianId) {
@@ -896,11 +924,12 @@ public class ServiceRequestDAO extends MyDAO {
     }
 
     /**
-     * Get pending requests with enhanced information for Technical Manager dashboard
-     * Shows only requests with status 'Awaiting Approval'
+     * Get pending requests with enhanced information for Technical Manager
+     * dashboard Shows only requests with status 'Awaiting Approval'
      */
     public List<ServiceRequest> getPendingRequestsWithDetails() {
         List<ServiceRequest> list = new ArrayList<>();
+
         xSql = "SELECT sr.*, "
                 + "a.fullName as customerName, a.email as customerEmail, a.phone as customerPhone, "
                 + "e.serialNumber, e.model as equipmentModel, e.description as equipmentDescription, "
@@ -910,13 +939,14 @@ public class ServiceRequestDAO extends MyDAO {
                 + "INNER JOIN Account a ON sr.createdBy = a.accountId "
                 + "INNER JOIN Equipment e ON sr.equipmentId = e.equipmentId "
                 + "INNER JOIN Contract c ON sr.contractId = c.contractId "
-                + "WHERE sr.status = 'Pending' "
+                + "WHERE sr.status = 'Awaiting Approval' "
                 + "ORDER BY "
                 + "CASE sr.priorityLevel "
                 + "    WHEN 'Urgent' THEN 1 "
                 + "    WHEN 'High' THEN 2 "
                 + "    WHEN 'Normal' THEN 3 "
                 + "END, sr.requestDate ASC";
+
         try {
             ps = con.prepareStatement(xSql);
             rs = ps.executeQuery();
@@ -933,7 +963,8 @@ public class ServiceRequestDAO extends MyDAO {
     }
 
     /**
-     * Get pending requests as DetailDTO objects for Technical Manager approval page
+     * Get pending requests as DetailDTO objects for Technical Manager approval
+     * page
      */
     public List<model.ServiceRequestDetailDTO2> getPendingRequestsDetailDTO() {
         List<model.ServiceRequestDetailDTO2> list = new ArrayList<>();
@@ -968,7 +999,8 @@ public class ServiceRequestDAO extends MyDAO {
     }
 
     /**
-     * Search pending requests as DetailDTO objects for Technical Manager approval page
+     * Search pending requests as DetailDTO objects for Technical Manager
+     * approval page
      */
     public List<model.ServiceRequestDetailDTO2> searchPendingRequestsDetailDTO(String keyword) {
         List<model.ServiceRequestDetailDTO2> list = new ArrayList<>();
@@ -1007,11 +1039,12 @@ public class ServiceRequestDAO extends MyDAO {
     }
 
     /**
-     * Filter pending requests as DetailDTO objects for Technical Manager approval page
+     * Filter pending requests as DetailDTO objects for Technical Manager
+     * approval page
      */
     public List<model.ServiceRequestDetailDTO2> filterPendingRequestsDetailDTO(String priority, String urgency) {
         List<model.ServiceRequestDetailDTO2> list = new ArrayList<>();
-        
+
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder.append("SELECT sr.*, ");
         sqlBuilder.append("a.fullName as customerName, a.email as customerEmail, a.phone as customerPhone, ");
@@ -1023,35 +1056,35 @@ public class ServiceRequestDAO extends MyDAO {
         sqlBuilder.append("LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId ");
         sqlBuilder.append("LEFT JOIN Contract c ON sr.contractId = c.contractId ");
         sqlBuilder.append("WHERE sr.status = 'Pending' ");
-        
+
         List<String> conditions = new ArrayList<>();
         List<String> parameters = new ArrayList<>();
-        
+
         if (priority != null && !priority.trim().isEmpty()) {
             conditions.add("sr.priorityLevel = ?");
             parameters.add(priority.trim());
         }
-        
+
         if (urgency != null && !urgency.trim().isEmpty()) {
             conditions.add("sr.priorityLevel = ?");
             parameters.add(urgency.trim());
         }
-        
+
         if (!conditions.isEmpty()) {
             sqlBuilder.append("AND (");
             sqlBuilder.append(String.join(" OR ", conditions));
             sqlBuilder.append(") ");
         }
-        
+
         sqlBuilder.append("ORDER BY ");
         sqlBuilder.append("CASE sr.priorityLevel ");
         sqlBuilder.append("    WHEN 'Urgent' THEN 1 ");
         sqlBuilder.append("    WHEN 'High' THEN 2 ");
         sqlBuilder.append("    WHEN 'Normal' THEN 3 ");
         sqlBuilder.append("END, sr.requestDate ASC");
-        
+
         xSql = sqlBuilder.toString();
-        
+
         try {
             ps = con.prepareStatement(xSql);
             for (int i = 0; i < parameters.size(); i++) {
@@ -1070,7 +1103,6 @@ public class ServiceRequestDAO extends MyDAO {
     }
 
     // ============ SUPPORT STAFF METHODS ============
-
     /**
      * Get requests by status for Support Staff
      */
@@ -1185,7 +1217,7 @@ public class ServiceRequestDAO extends MyDAO {
             ps = con.prepareStatement(xSql);
             ps.setInt(1, technicianId);
             ps.setInt(2, requestId);
-            
+
             int affectedRows = ps.executeUpdate();
             return affectedRows > 0;
         } catch (Exception e) {
@@ -1197,7 +1229,8 @@ public class ServiceRequestDAO extends MyDAO {
     }
 
     /**
-     * Get requests assigned to a specific technician with 'Awaiting Approval' status
+     * Get requests assigned to a specific technician with 'Awaiting Approval'
+     * status
      */
     public List<ServiceRequest> getRequestsAssignedToTechnician(int technicianId) {
         List<ServiceRequest> list = new ArrayList<>();
@@ -1274,7 +1307,7 @@ public class ServiceRequestDAO extends MyDAO {
      */
     public List<ServiceRequest> filterRequestsByStatusAndCriteria(String status, String priority, String urgency) {
         List<ServiceRequest> list = new ArrayList<>();
-        
+
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder.append("SELECT sr.*, ");
         sqlBuilder.append("a.fullName as customerName, a.email as customerEmail, a.phone as customerPhone, ");
@@ -1286,27 +1319,27 @@ public class ServiceRequestDAO extends MyDAO {
         sqlBuilder.append("LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId ");
         sqlBuilder.append("LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId ");
         sqlBuilder.append("WHERE sr.status = ? ");
-        
+
         List<String> conditions = new ArrayList<>();
         List<String> parameters = new ArrayList<>();
         parameters.add(status);
-        
+
         if (priority != null && !priority.trim().isEmpty()) {
             conditions.add("sr.priorityLevel = ?");
             parameters.add(priority);
         }
-        
+
         if (urgency != null && !urgency.trim().isEmpty()) {
             conditions.add("sr.priorityLevel = ?");
             parameters.add(urgency);
         }
-        
+
         if (!conditions.isEmpty()) {
             sqlBuilder.append("AND ").append(String.join(" AND ", conditions)).append(" ");
         }
-        
+
         sqlBuilder.append("ORDER BY sr.priorityLevel DESC, sr.requestDate ASC");
-        
+
         try {
             ps = con.prepareStatement(sqlBuilder.toString());
             for (int i = 0; i < parameters.size(); i++) {

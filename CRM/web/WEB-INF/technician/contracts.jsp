@@ -76,6 +76,7 @@
             <th>Contract ID</th>
             <th>Customer</th>
             <th>Contract Type</th>
+            <th>Equipment</th>
             <th>Status</th>
             <th>Contract Date</th>
             <th>Details</th>
@@ -85,8 +86,8 @@
         <tbody id="contracts-table-body">
         <c:choose>
           <c:when test="${not empty contracts}">
-            <c:forEach var="contractWithCustomer" items="${contracts}" varStatus="st">
-              <c:set var="contract" value="${contractWithCustomer.contract}"/>
+            <c:forEach var="contractWithEquipment" items="${contracts}" varStatus="st">
+              <c:set var="contract" value="${contractWithEquipment.contract}"/>
               <tr>
                 <td>${st.index + 1}</td>
                 <td><strong>#${contract.contractId}</strong></td>
@@ -94,11 +95,29 @@
                   <div class="d-flex align-items-center">
                     <i class="bi bi-person-circle me-2"></i>
                     <div>
-                      <div class="fw-bold">${fn:escapeXml(contractWithCustomer.customerName)}</div>
+                      <div class="fw-bold">${fn:escapeXml(contractWithEquipment.customerName)}</div>
                     </div>
                   </div>
                 </td>
                 <td>${fn:escapeXml(contract.contractType)}</td>
+                <td>
+                  <c:choose>
+                    <c:when test="${contractWithEquipment.equipment != null}">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-gear me-2 text-primary"></i>
+                        <div>
+                          <div class="fw-bold">${fn:escapeXml(contractWithEquipment.equipment.model)}</div>
+                          <small class="text-muted">SN: ${fn:escapeXml(contractWithEquipment.equipment.serialNumber)}</small>
+                        </div>
+                      </div>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="text-muted">
+                        <i class="bi bi-dash-circle me-1"></i>No Equipment
+                      </span>
+                    </c:otherwise>
+                  </c:choose>
+                </td>
                 <td>
                   <c:set var="status" value="${contract.status}"/>
                   <c:choose>
@@ -143,7 +162,7 @@
           </c:when>
           <c:otherwise>
             <tr>
-              <td colspan="8" class="text-center py-4">
+              <td colspan="9" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-file-earmark fs-1 d-block mb-2"></i>
                   <p>No contracts found</p>

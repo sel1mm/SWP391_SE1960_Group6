@@ -392,7 +392,15 @@ public class ChangePasswordServlet extends HttpServlet {
         if (!newPassword.matches(".*\\d.*")) {
             return new ValidationResult(false, "Password must contain at least one number.");
         }
-        
+        if (newPassword.matches(".*\\s.*")) {
+    return new ValidationResult(false, "Password must not contain spaces.");
+}
+
+// ✅ Check that it includes at least one letter and one number (not all symbols)
+// ✅ Check that it includes at least one letter OR one number
+if (!(newPassword.matches(".*[A-Za-z].*") || newPassword.matches(".*\\d.*"))) {
+    return new ValidationResult(false, "Password must include at least one letter or number.");
+}
         // Check for common weak passwords
         if (isCommonPassword(newPassword)) {
             return new ValidationResult(false, "This password is too common. Please choose a stronger password.");

@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -72,16 +74,26 @@
                         </a>
                     </div>
 <form class="row mb-3" method="get" action="${pageContext.request.contextPath}/user/list">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <input type="text" class="form-control" name="keyword" 
                placeholder="Search by username, email or full name..." 
                value="${param.keyword}">
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <select name="status" class="form-select">
             <option value="">All Status</option>
             <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>Active</option>
             <option value="Inactive" ${param.status == 'Inactive' ? 'selected' : ''}>Inactive</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="roleId" class="form-select">
+            <option value="">All Roles</option>
+            <c:forEach var="role" items="${allRoles}">
+                <option value="${role.roleId}" ${param.roleId == role.roleId ? 'selected' : ''}>
+                    ${role.roleName}
+                </option>
+            </c:forEach>
         </select>
     </div>
     <div class="col-md-2">
@@ -123,6 +135,7 @@
                                                     <th>Full Name</th>
                                                     <th>Email</th>
                                                     <th>Phone</th>
+                                                    <th>Roles</th>
                                                     <th>Status</th>
                                                     <th>Actions</th>
                                                 </tr>
@@ -136,6 +149,19 @@
                                                         <td>${user.email}</td>
                                                         <td>${user.phone}</td>
                                                         <td>
+                                                            <c:set var="userRoles" value="${userRolesMap[user.accountId]}" />
+                                                            <c:choose>
+                                                                <c:when test="${not empty userRoles}">
+                                                                    <c:forEach var="role" items="${userRoles}">
+                                                                        <span class="badge bg-info text-dark me-1">${role.roleName}</span>
+                                                                    </c:forEach>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span class="text-muted">No roles</span>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </td>
+                                                        <td>
                                                             <c:choose>
                                                                 <c:when test="${user.status == 'Active'}">
                                                                     <span class="badge bg-success status-badge">Active</span>
@@ -145,38 +171,46 @@
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </td>
-                                     
                                                         <td>
                                                             <div class="btn-group" role="group">
+                                                                <!-- Nút Edit -->
                                                                 <a href="${pageContext.request.contextPath}/user/edit?id=${user.accountId}" 
                                                                    class="btn btn-sm btn-outline-primary" title="Edit">
                                                                     <i class="fas fa-edit"></i>
                                                                 </a>
+
+                                                                <!-- Nút Manage Roles -->
                                                                 <a href="${pageContext.request.contextPath}/user/roles?id=${user.accountId}" 
                                                                    class="btn btn-sm btn-outline-info" title="Manage Roles">
                                                                     <i class="fas fa-user-tag"></i>
                                                                 </a>
 
-    <c:choose>
-    <c:when test="${user.status == 'Active'}">
-        <!-- Hiển thị nút Ban -->
-        <a href="${pageContext.request.contextPath}/user/delete?id=${user.accountId}" 
-           class="btn btn-sm btn-outline-danger" 
-           onclick="return confirm('Are you sure you want to ban this user?')" 
-           title="Ban User">
-            <i class="fas fa-user-slash"></i>
-        </a>
-    </c:when>
-    <c:otherwise>
-        <!-- Hiển thị nút Unban -->
-        <a href="${pageContext.request.contextPath}/user/delete?id=${user.accountId}" 
-           class="btn btn-sm btn-outline-success" 
-           onclick="return confirm('Are you sure you want to unban this user?')" 
-           title="Unban User">
-            <i class="fas fa-user-check"></i>
-        </a>
-    </c:otherwise>
-</c:choose>
+                                                                <c:choose>
+                                                                    <c:when test="${user.accountId ne sessionScope.session_login.accountId}">
+                                                                        <c:choose>
+                                                                            <c:when test="${user.status == 'Active'}">
+                                                                                <a href="${pageContext.request.contextPath}/user/delete?id=${user.accountId}" 
+                                                                                   class="btn btn-sm btn-outline-danger" 
+                                                                                   onclick="return confirm('Are you sure you want to ban this user?')" 
+                                                                                   title="Ban User">
+                                                                                    <i class="fas fa-user-slash"></i>
+                                                                                </a>
+                                                                            </c:when>
+                                                                            <c:otherwise>
+                                                                                <a href="${pageContext.request.contextPath}/user/delete?id=${user.accountId}" 
+                                                                                   class="btn btn-sm btn-outline-success" 
+                                                                                   onclick="return confirm('Are you sure you want to unban this user?')" 
+                                                                                   title="Unban User">
+                                                                                    <i class="fas fa-user-check"></i>
+                                                                                </a>
+                                                                            </c:otherwise>
+                                                                        </c:choose>
+                                                                    </c:when>
+                                                                  
+                                                                </c:choose>
+                                                            </div>
+                                                        </td>
+                                                       
 
 
                                                             </div>

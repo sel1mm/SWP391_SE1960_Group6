@@ -19,17 +19,22 @@
         }
 
         /* Sidebar Styles */
-        .sidebar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 280px;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-        }
+       /* SIDEBAR STYLES */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 260px;
+                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+                padding: 0;
+                transition: all 0.3s ease;
+                z-index: 1000;
+                box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+                display: flex;
+                flex-direction: column;
+            }
+
 
         .sidebar-header {
             padding: 25px 20px;
@@ -708,6 +713,8 @@
                     </li>
                 </ul>
             </div>
+        </div>
+
 
         <!-- Alert Messages từ session -->
         <%
@@ -742,7 +749,7 @@
             <c:choose>
                 <c:when test="${viewMode == 'history'}">
                     <!-- History View Statistics -->
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="stats-card bg-info text-white">
                             <div class="text-center">
                                 <i class="fas fa-list"></i>
@@ -751,7 +758,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="stats-card bg-success text-white">
                             <div class="text-center">
                                 <i class="fas fa-check-circle"></i>
@@ -760,7 +767,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="stats-card bg-danger text-white">
                             <div class="text-center">
                                 <i class="fas fa-times-circle"></i>
@@ -769,15 +776,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="stats-card bg-warning text-dark">
-                            <div class="text-center">
-                                <i class="fas fa-clock"></i>
-                                <h4 class="mt-2">${awaitingApprovalCount}</h4>
-                                <p>Chờ Duyệt</p>
-                            </div>
-                        </div>
-                    </div>
+                   
                 </c:when>
                 <c:otherwise>
                     <!-- Assigned Requests View Statistics -->
@@ -1178,19 +1177,7 @@
                             <small class="form-text text-muted">Các kỹ năng cần thiết để thực hiện yêu cầu này</small>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Chọn Kỹ Thuật Viên <span class="text-danger">*</span></label>
-                            <select class="form-select" name="assignedTechnicianId" id="assignedTechnicianId" required>
-                                <option value="">-- Chọn kỹ thuật viên --</option>
-                                <c:forEach var="technician" items="${technicians}">
-                                    <option value="${technician.accountId}">
-                                        ${technician.fullName} (${technician.username})
-                                        <c:if test="${not empty technician.phone}"> - ${technician.phone}</c:if>
-                                    </option>
-                                </c:forEach>
-                            </select>
-                            <small class="form-text text-muted">Chọn kỹ thuật viên sẽ được phân công thực hiện yêu cầu này</small>
-                        </div>
+                       
 
                         <div class="mb-3">
                             <label class="form-label">Ghi Chú Duyệt</label>

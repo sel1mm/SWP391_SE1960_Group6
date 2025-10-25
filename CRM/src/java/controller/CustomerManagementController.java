@@ -30,38 +30,75 @@ public class CustomerManagementController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         AccountService accountService = new AccountService();
+
         String action = request.getParameter("action");
         String keyword = request.getParameter("searchName");
         String status = request.getParameter("status");
 
-        Response<List<Account>> res;
+        int page = 1;
+        int recordsPerPage = 10;
 
         try {
-            if (("search".equalsIgnoreCase(action))
-                    && ((keyword != null && !keyword.trim().isEmpty())
-                    || (status != null && !status.trim().isEmpty()))) {
-
-                res = accountService.searchCustomerAccounts(keyword != null ? keyword.trim() : "",
-                        status != null ? status.trim() : "");
-            } else {
-                res = accountService.getAllCustomerAccounts();
+            if (request.getParameter("page") != null) {
+                try {
+                    page = Integer.parseInt(request.getParameter("page").trim());
+                    if (page < 1) {
+                        page = 1;
+                    }
+                } catch (NumberFormatException e) {
+                    page = 1;
+                }
             }
 
+            action = (action != null) ? action.trim() : "";
+            keyword = (keyword != null) ? keyword.trim() : "";
+            status = (status != null) ? status.trim() : "";
+
+            Response<List<Account>> res;
+            int totalRecords = 0;
+
+            if ((!keyword.isEmpty()) || (!status.isEmpty())) {
+
+                res = accountService.searchCustomerAccountsPaged(
+                        keyword,
+                        status,
+                        (page - 1) * recordsPerPage,
+                        recordsPerPage
+                );
+
+                totalRecords = accountService.countSearchCustomerAccounts(keyword, status);
+            } else {
+                res = accountService.getCustomerAccountsPaged(
+                        (page - 1) * recordsPerPage,
+                        recordsPerPage
+                );
+                totalRecords = accountService.countAllCustomerAccounts();
+            }
+
+            //Tính tổng số trang
+            int totalPages = (int) Math.ceil((double) totalRecords / recordsPerPage);
+            if (totalPages == 0) {
+                totalPages = 1;
+            }
             if (res.isSuccess()) {
                 request.setAttribute("userList", res.getData());
             } else {
                 request.setAttribute("message", res.getMessage());
             }
 
+            request.setAttribute("currentPageNumber", page);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("searchName", keyword);
+            request.setAttribute("status", status);
+            request.setAttribute("currentPageSection", "users"); // tránh trùng với biến 'currentPage'
+
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("message", "Lỗi khi xử lý dữ liệu: " + e.getMessage());
         }
-
-        request.setAttribute("currentPage", "users");
         request.getRequestDispatcher("customerManagement.jsp").forward(request, response);
-
     }
 
     @Override
@@ -289,10 +326,11 @@ public class CustomerManagementController extends HttpServlet {
                         return;
                     }
 
-                    // Xử lý password (chỉ hash nếu nhập mới)
-                    String hashedPassword = null;
-                    if (password != null && !password.trim().isEmpty()) {
-                        hashedPassword = passwordHasher.hashPassword(password.trim());
+                    if (password != null) {
+                        password = password.trim(); // loại bỏ khoảng trắng đầu/cuối
+                        if (password.isEmpty()) {
+                            password = null; // nếu sau khi trim mà trống thì coi như không nhập
+                        }
                     }
 
                     // Chuyển đổi verified
@@ -308,7 +346,7 @@ public class CustomerManagementController extends HttpServlet {
                     account.setEmail(email);
                     account.setPhone(phone);
                     account.setStatus(status);
-                    account.setPasswordHash(hashedPassword);
+                    account.setPasswordHash(password);
 
                     AccountProfile profile = new AccountProfile();
                     profile.setAccountId(editId);
