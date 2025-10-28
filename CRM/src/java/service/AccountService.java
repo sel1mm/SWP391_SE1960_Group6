@@ -443,6 +443,14 @@ public class AccountService {
  public boolean updateEmail(String email, int accountId) {
         return accountDAO.updateEmail(accountId, email);
     }
+public Response<List<Account>> getAccountsPaged(String keyword, String status, String roleId, int page, int pageSize) {
+    int offset = (page - 1) * pageSize;
+    List<Account> list = accountDAO.getAccountsPaged(keyword, status, roleId, offset, pageSize);
+    return new Response<>(list, true, "Paged list retrieved");
+}
 
+public int countAllAccounts(String keyword, String status, String roleId) {
+    return accountDAO.countAllAccounts(keyword, status, roleId);
+}
 
 }

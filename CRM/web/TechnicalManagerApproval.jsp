@@ -687,9 +687,7 @@
                     <button class="btn btn-outline-primary" onclick="refreshPage()">
                         <i class="fas fa-sync-alt"></i> Làm Mới
                     </button>
-                    <button class="btn btn-outline-info" onclick="exportToExcel()">
-                        <i class="fas fa-download"></i> Xuất Excel
-                    </button>
+                    
                 </div>
             </div>
 
@@ -1177,19 +1175,7 @@
                             <small class="form-text text-muted">Các kỹ năng cần thiết để thực hiện yêu cầu này</small>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Chọn Kỹ Thuật Viên <span class="text-danger">*</span></label>
-                            <select class="form-select" name="assignedTechnicianId" id="assignedTechnicianId" required>
-                                <option value="">-- Chọn kỹ thuật viên --</option>
-                                <c:forEach var="technician" items="${technicians}">
-                                    <option value="${technician.accountId}">
-                                        ${technician.fullName} (${technician.username})
-                                        <c:if test="${not empty technician.phone}"> - ${technician.phone}</c:if>
-                                    </option>
-                                </c:forEach>
-                            </select>
-                            <small class="form-text text-muted">Chọn kỹ thuật viên sẽ được phân công thực hiện yêu cầu này</small>
-                        </div>
+                       
 
                         <div class="mb-3">
                             <label class="form-label">Ghi Chú Duyệt</label>
