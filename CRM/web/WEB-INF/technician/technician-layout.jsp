@@ -40,7 +40,7 @@
                 <i class="bi bi-person-circle me-2"></i> <span>Technician</span>
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                <li><a class="dropdown-item" href="${contextPath}/manageProfile.jsp">Profile</a></li>
+                <li><a class="dropdown-item" href="${contextPath}/manageProfile">Profile</a></li>
                 <li><a class="dropdown-item" href="#">Settings</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="${contextPath}/logout">Logout</a></li>

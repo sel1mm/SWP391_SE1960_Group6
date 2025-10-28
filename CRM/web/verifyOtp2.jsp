@@ -379,7 +379,7 @@
             </c:if>
 
             <!-- OTP Form -->
-            <form id="otpForm" action="verifyOtp" method="post">
+            <form id="otpForm" action="verifyOtp2" method="post">
                 <div class="form-group">
                     <label class="form-label">
                         <i class="fas fa-key"></i>
