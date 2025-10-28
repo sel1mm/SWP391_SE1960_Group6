@@ -1171,10 +1171,10 @@ INSERT IGNORE INTO AccountRole (accountId, roleId) VALUES
 (5, 2), -- customer2 -> Customer
 (6, 2), -- customer3 -> Customer
 (7, 2), -- customer4 -> Customer
-(8, 5), -- technician1 -> Technician
-(9, 5), -- technician2 -> Technician
-(10, 5), -- technician3 -> Technician
-(11, 5), -- technician4 -> Technician
+(8, 6), -- technician1 -> Technician
+(9, 6), -- technician2 -> Technician
+(10, 6), -- technician3 -> Technician
+(11, 6), -- technician4 -> Technician
 (12, 3); -- css1 -> Customer Service Staff
 
 -- ====================================================================
@@ -1248,16 +1248,16 @@ INSERT IGNORE INTO ContractEquipment (contractEquipmentId, contractId, equipment
 INSERT IGNORE INTO ServiceRequest (requestId, contractId, equipmentId, createdBy, description, priorityLevel, requestDate, status, requestType) VALUES 
 
 -- PENDING REQUESTS (for approval testing)
-(1, 1, 1, 4, 'Máy lạnh không mát, tiếng ồn lớn khi hoạt động', 'Urgent', '2024-12-01', 'Pending', 'Service'),
-(2, 1, 2, 4, 'Máy lạnh chảy nước, có mùi khó chịu', 'High', '2024-12-02', 'Pending', 'Service'),
-(3, 2, 5, 5, 'Máy bơm không hoạt động, có tiếng kêu lạ', 'Normal', '2024-12-03', 'Pending', 'Warranty'),
-(4, 3, 7, 6, 'Tủ điện bị nóng, cầu dao tự ngắt', 'Urgent', '2024-12-04', 'Pending', 'Service'),
-(5, 2, 6, 5, 'Máy bơm công nghiệp giảm áp suất', 'High', '2024-12-05', 'Pending', 'Warranty'),
-(6, 4, 9, 7, 'Hệ thống HVAC không đạt nhiệt độ', 'Normal', '2024-12-06', 'Pending', 'Warranty'),
-(7, 3, 8, 6, 'Biến tần báo lỗi E001', 'High', '2024-12-07', 'Pending', 'Service'),
-(8, 5, 3, 4, 'Máy lạnh phòng làm việc không khởi động', 'Normal', '2024-12-08', 'Pending', 'Service'),
-(9, 4, 10, 7, 'Máy lạnh công nghiệp rò gas', 'Urgent', '2024-12-09', 'Pending', 'Warranty'),
-(10, 5, 4, 4, 'Máy lạnh phòng khách có mùi cháy', 'Urgent', '2024-12-10', 'Pending', 'Service'),
+(1, 1, 1, 4, 'Máy lạnh không mát, tiếng ồn lớn khi hoạt động', 'Urgent', '2024-12-01', 'Awaiting Approval', 'Service'),
+(2, 1, 2, 4, 'Máy lạnh chảy nước, có mùi khó chịu', 'High', '2024-12-02', 'Awaiting Approval', 'Service'),
+(3, 2, 5, 5, 'Máy bơm không hoạt động, có tiếng kêu lạ', 'Normal', '2024-12-03', 'Awaiting Approval', 'Warranty'),
+(4, 3, 7, 6, 'Tủ điện bị nóng, cầu dao tự ngắt', 'Urgent', '2024-12-04', 'Awaiting Approval', 'Service'),
+(5, 2, 6, 5, 'Máy bơm công nghiệp giảm áp suất', 'High', '2024-12-05', 'Awaiting Approval', 'Warranty'),
+(6, 4, 9, 7, 'Hệ thống HVAC không đạt nhiệt độ', 'Normal', '2024-12-06', 'Awaiting Approval', 'Warranty'),
+(7, 3, 8, 6, 'Biến tần báo lỗi E001', 'High', '2024-12-07', 'Awaiting Approval', 'Service'),
+(8, 5, 3, 4, 'Máy lạnh phòng làm việc không khởi động', 'Normal', '2024-12-08', 'Awaiting Approval', 'Service'),
+(9, 4, 10, 7, 'Máy lạnh công nghiệp rò gas', 'Urgent', '2024-12-09', 'Awaiting Approval', 'Warranty'),
+(10, 5, 4, 4, 'Máy lạnh phòng khách có mùi cháy', 'Urgent', '2024-12-10', 'Awaiting Approval', 'Service'),
 
 -- APPROVED REQUESTS (for history testing)
 (11, 1, 1, 4, 'Bảo trì định kỳ máy lạnh phòng khách', 'Normal', '2024-11-25', 'Approved', 'Service'),
