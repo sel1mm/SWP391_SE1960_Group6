@@ -11,6 +11,12 @@ import model.WorkAssignment;
 import model.WorkTask;
 import model.RepairReport;
 import model.RepairResult;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -203,55 +209,66 @@ public class ReviewMaintenanceReportServlet extends HttpServlet {
     /**
      * Handle getting detailed report information
      */
-    private void handleGetReportDetails(HttpServletRequest request, HttpServletResponse response) 
-            throws IOException {
-        
-        response.setContentType("application/json");
-        PrintWriter out = response.getWriter();
-        
-        try {
-            int scheduleId = Integer.parseInt(request.getParameter("scheduleId"));
-            
-            // Get schedule details
-            MaintenanceSchedule schedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
-            
-            if (schedule == null) {
-                JsonObject errorResponse = new JsonObject();
-                errorResponse.addProperty("error", "Không tìm thấy lịch bảo trì");
-                out.print(gson.toJson(errorResponse));
-                return;
-            }
-            
-            // Get related service request if exists
-            ServiceRequest serviceRequest = null;
-            if (schedule.getRequestId() > 0) {
-                serviceRequest = serviceRequestDAO.getRequestById(schedule.getRequestId());
-            }
-            
-            // Note: Work assignments are handled separately and not directly linked to maintenance schedules
-            List<WorkAssignment> assignments = new ArrayList<>();
-            
-            // Create response object
-            JsonObject response_obj = new JsonObject();
-            response_obj.add("schedule", gson.toJsonTree(schedule));
-            if (serviceRequest != null) {
-                response_obj.add("serviceRequest", gson.toJsonTree(serviceRequest));
-            }
-            response_obj.add("assignments", gson.toJsonTree(assignments));
-            
-            out.print(gson.toJson(response_obj));
-            
-        } catch (NumberFormatException e) {
+ private void handleGetReportDetails(HttpServletRequest request, HttpServletResponse response) 
+        throws IOException {
+
+    response.setContentType("application/json");
+    PrintWriter out = response.getWriter();
+
+    try {
+        int scheduleId = Integer.parseInt(request.getParameter("scheduleId"));
+
+        // Get schedule details
+        MaintenanceSchedule schedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
+
+        if (schedule == null) {
             JsonObject errorResponse = new JsonObject();
-            errorResponse.addProperty("error", "ID lịch bảo trì không hợp lệ");
+            errorResponse.addProperty("error", "Không tìm thấy lịch bảo trì");
             out.print(gson.toJson(errorResponse));
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error getting report details", e);
-            JsonObject errorResponse = new JsonObject();
-            errorResponse.addProperty("error", "Lỗi cơ sở dữ liệu: " + e.getMessage());
-            out.print(gson.toJson(errorResponse));
+            return;
         }
+
+        // Get related service request if exists
+        ServiceRequest serviceRequest = null;
+        if (schedule.getRequestId() > 0) {
+            serviceRequest = serviceRequestDAO.getRequestById(schedule.getRequestId());
+        }
+
+        // Work assignments (empty for now)
+        List<WorkAssignment> assignments = new ArrayList<>();
+
+        // Khởi tạo Gson có serializer cho LocalDate/LocalDateTime
+        Gson localDateGson = new GsonBuilder()
+                .registerTypeAdapter(LocalDate.class,
+                        (JsonSerializer<LocalDate>) (date, type, context) ->
+                                new JsonPrimitive(date.format(DateTimeFormatter.ISO_LOCAL_DATE)))
+                .registerTypeAdapter(LocalDateTime.class,
+                        (JsonSerializer<LocalDateTime>) (dateTime, type, context) ->
+                                new JsonPrimitive(dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+                .create();
+
+        // Create response object
+        JsonObject response_obj = new JsonObject();
+        response_obj.add("schedule", localDateGson.toJsonTree(schedule));
+        if (serviceRequest != null) {
+            response_obj.add("serviceRequest", localDateGson.toJsonTree(serviceRequest));
+        }
+        response_obj.add("assignments", localDateGson.toJsonTree(assignments));
+
+        out.print(localDateGson.toJson(response_obj));
+
+    } catch (NumberFormatException e) {
+        JsonObject errorResponse = new JsonObject();
+        errorResponse.addProperty("error", "ID lịch bảo trì không hợp lệ");
+        out.print(new Gson().toJson(errorResponse));
+    } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "Error getting report details", e);
+        JsonObject errorResponse = new JsonObject();
+        errorResponse.addProperty("error", "Lỗi cơ sở dữ liệu: " + e.getMessage());
+        out.print(new Gson().toJson(errorResponse));
     }
+}
+
     
     /**
      * Handle approving a maintenance report

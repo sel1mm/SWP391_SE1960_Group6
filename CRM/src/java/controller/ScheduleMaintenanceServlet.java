@@ -13,6 +13,9 @@ import model.ServiceRequest;
 import model.TechnicianWorkload;
 import model.Equipment;
 import model.Contract;
+import com.google.gson.GsonBuilder;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -479,96 +482,126 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
     } 
 
     
-    private void getScheduleDetails(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        PrintWriter out = response.getWriter();
-        Gson gson = new Gson();
-        
-        try {
-            String scheduleIdStr = request.getParameter("scheduleId");
-            
-            // Validate scheduleId parameter
-            if (scheduleIdStr == null || scheduleIdStr.trim().isEmpty()) {
-                JsonObject errorResponse = new JsonObject();
-                errorResponse.addProperty("error", "Thiếu thông tin ID lịch bảo trì!");
-                out.print(gson.toJson(errorResponse));
-                out.flush();
-                return;
-            }
-            
-            int scheduleId = Integer.parseInt(scheduleIdStr.trim());
-            MaintenanceSchedule schedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
-            
-            if (schedule != null) {
-                out.print(gson.toJson(schedule));
-            } else {
-                JsonObject errorResponse = new JsonObject();
-                errorResponse.addProperty("error", "Không tìm thấy lịch bảo trì!");
-                out.print(gson.toJson(errorResponse));
-            }
-            
-        } catch (Exception e) {
-            e.printStackTrace();
+private void getScheduleDetails(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+    PrintWriter out = response.getWriter();
+
+    // ✅ Gson custom để serialize LocalDate / LocalDateTime
+    Gson gson = new GsonBuilder()
+        .registerTypeAdapter(LocalDate.class,
+            (com.google.gson.JsonSerializer<LocalDate>) (date, type, context) ->
+                new com.google.gson.JsonPrimitive(date.format(DateTimeFormatter.ISO_LOCAL_DATE)))
+        .registerTypeAdapter(LocalDateTime.class,
+            (com.google.gson.JsonSerializer<LocalDateTime>) (dateTime, type, context) ->
+                new com.google.gson.JsonPrimitive(dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+        .create();
+
+    try {
+        String scheduleIdStr = request.getParameter("scheduleId");
+
+        // Validate scheduleId parameter
+        if (scheduleIdStr == null || scheduleIdStr.trim().isEmpty()) {
             JsonObject errorResponse = new JsonObject();
-            errorResponse.addProperty("error", "Lỗi hệ thống: " + e.getMessage());
+            errorResponse.addProperty("error", "Thiếu thông tin ID lịch bảo trì!");
+            out.print(gson.toJson(errorResponse));
+            out.flush();
+            return;
+        }
+
+        int scheduleId = Integer.parseInt(scheduleIdStr.trim());
+        MaintenanceSchedule schedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
+
+        if (schedule != null) {
+            out.print(gson.toJson(schedule));
+        } else {
+            JsonObject errorResponse = new JsonObject();
+            errorResponse.addProperty("error", "Không tìm thấy lịch bảo trì!");
             out.print(gson.toJson(errorResponse));
         }
-        
-        out.flush();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JsonObject errorResponse = new JsonObject();
+        errorResponse.addProperty("error", "Lỗi hệ thống: " + e.getMessage());
+        out.print(gson.toJson(errorResponse));
     }
+
+    out.flush();
+}
+
     
-    private void getUpcomingSchedules(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        PrintWriter out = response.getWriter();
-        Gson gson = new Gson();
-        
-        try {
-            String daysStr = request.getParameter("days");
-            
-            // Validate days parameter - use default if not provided
-            int days = 7; // default to 7 days
-            if (daysStr != null && !daysStr.trim().isEmpty()) {
-                days = Integer.parseInt(daysStr.trim());
-            }
-            
-            List<MaintenanceSchedule> upcomingSchedules = maintenanceScheduleDAO.getUpcomingSchedules();
-            out.print(gson.toJson(upcomingSchedules));
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            JsonObject errorResponse = new JsonObject();
-            errorResponse.addProperty("error", "Lỗi hệ thống: " + e.getMessage());
-            out.print(gson.toJson(errorResponse));
+  private void getUpcomingSchedules(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+    PrintWriter out = response.getWriter();
+
+    // ✅ Gson custom để serialize LocalDate / LocalDateTime
+    Gson gson = new GsonBuilder()
+        .registerTypeAdapter(LocalDate.class,
+            (com.google.gson.JsonSerializer<LocalDate>) (date, type, context) ->
+                new com.google.gson.JsonPrimitive(date.format(DateTimeFormatter.ISO_LOCAL_DATE)))
+        .registerTypeAdapter(LocalDateTime.class,
+            (com.google.gson.JsonSerializer<LocalDateTime>) (dateTime, type, context) ->
+                new com.google.gson.JsonPrimitive(dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+        .create();
+
+    try {
+        String daysStr = request.getParameter("days");
+
+        // Validate days parameter - default to 7
+        int days = 7;
+        if (daysStr != null && !daysStr.trim().isEmpty()) {
+            days = Integer.parseInt(daysStr.trim());
         }
-        
-        out.flush();
+
+        List<MaintenanceSchedule> upcomingSchedules = maintenanceScheduleDAO.getUpcomingSchedules();
+        out.print(gson.toJson(upcomingSchedules));
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JsonObject errorResponse = new JsonObject();
+        errorResponse.addProperty("error", "Lỗi hệ thống: " + e.getMessage());
+        out.print(gson.toJson(errorResponse));
     }
+
+    out.flush();
+}
+
     
     private void getOverdueSchedules(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        PrintWriter out = response.getWriter();
-        Gson gson = new Gson();
-        
-        try {
-            List<MaintenanceSchedule> overdueSchedules = maintenanceScheduleDAO.getOverdueSchedules();
-            out.print(gson.toJson(overdueSchedules));
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            JsonObject errorResponse = new JsonObject();
-            errorResponse.addProperty("error", "Lỗi hệ thống: " + e.getMessage());
-            out.print(gson.toJson(errorResponse));
-        }
-        
-        out.flush();
+        throws ServletException, IOException {
+
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+    PrintWriter out = response.getWriter();
+
+    // Gson custom để serialize LocalDate / LocalDateTime
+    Gson gson = new GsonBuilder()
+        .registerTypeAdapter(LocalDate.class,
+            (com.google.gson.JsonSerializer<LocalDate>) (date, type, context) ->
+                new com.google.gson.JsonPrimitive(date.format(DateTimeFormatter.ISO_LOCAL_DATE)))
+        .registerTypeAdapter(LocalDateTime.class,
+            (com.google.gson.JsonSerializer<LocalDateTime>) (dateTime, type, context) ->
+                new com.google.gson.JsonPrimitive(dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+        .create();
+
+    try {
+        List<MaintenanceSchedule> overdueSchedules = maintenanceScheduleDAO.getOverdueSchedules();
+        out.print(gson.toJson(overdueSchedules));
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JsonObject errorResponse = new JsonObject();
+        errorResponse.addProperty("error", "Lỗi hệ thống: " + e.getMessage());
+        out.print(gson.toJson(errorResponse));
     }
+
+    out.flush();
+}
+
 } 
