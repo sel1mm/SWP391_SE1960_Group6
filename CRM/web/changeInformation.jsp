@@ -588,13 +588,38 @@
     </style>
 </head>
 <body>
-    <!-- Dashboard Navigation -->
-    <div class="dashboard-nav">
-        <a href="storekeeper" class="btn-dashboard">
-            <i class="fas fa-arrow-left"></i>
-            Back to Dashboard
-        </a>
-    </div>
+    <!-- Xác định dashboard URL dựa trên role -->
+<c:choose>
+    <c:when test="${sessionScope.session_role == 'admin'}">
+        <c:set var="dashboardUrl" value="admin" />
+    </c:when>
+    <c:when test="${sessionScope.session_role == 'Technical Manager'}">
+        <c:set var="dashboardUrl" value="technicalManagerApproval" />
+    </c:when>
+    <c:when test="${sessionScope.session_role == 'Customer Support Staff'}">
+        <c:set var="dashboardUrl" value="dashboard.jsp" />
+    </c:when>
+    <c:when test="${sessionScope.session_role == 'Storekeeper'}">
+        <c:set var="dashboardUrl" value="storekeeper" />
+    </c:when>
+    <c:when test="${sessionScope.session_role == 'Technician'}">
+        <c:set var="dashboardUrl" value="technician/dashboard" />
+    </c:when>
+    <c:when test="${sessionScope.session_role == 'customer'}">
+        <c:set var="dashboardUrl" value="managerServiceRequest" />
+    </c:when>
+    <c:otherwise>
+        <c:set var="dashboardUrl" value="home.jsp" />
+    </c:otherwise>
+</c:choose>
+
+<!-- Back to Dashboard Button -->
+<div class="dashboard-nav">
+    <a href="${dashboardUrl}" class="btn-dashboard">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+    </a>
+</div>
 
     <div class="container">
         <!-- Header -->
