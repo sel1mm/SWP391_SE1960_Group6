@@ -459,7 +459,19 @@ public class WorkTaskDAO extends MyDAO {
         }
         return false;
     }
-    
+    public List<WorkTask> findByScheduleId(int scheduleId) throws SQLException {
+    List<WorkTask> tasks = new ArrayList<>();
+    String sql = "SELECT * FROM WorkTask WHERE scheduleId = ?";
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, scheduleId);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                tasks.add(mapResultSetToWorkTask(rs));
+            }
+        }
+    }
+    return tasks;
+}
     private void closeResources() {
         try {
             if (rs != null) rs.close();

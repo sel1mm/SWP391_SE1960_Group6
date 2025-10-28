@@ -768,7 +768,8 @@
         {
             "id": "<c:out value='${schedule.scheduleId}' escapeXml='true'/>",
             "title": "<c:out value='${schedule.scheduleType}' escapeXml='true'/> - KTV #<c:out value='${schedule.assignedTo}' escapeXml='true'/>",
-            "start": "<c:out value='${schedule.scheduledDate}' escapeXml='true'/>",
+            "start": "<c:out value='${schedule.scheduledDate}' escapeXml='true'/>", 
+
             "className": "fc-event-<c:out value='${fn:toLowerCase(fn:replace(schedule.status, " ", "-"))}' escapeXml='true'/>",
             "extendedProps": {
                 "scheduleId": <c:out value='${schedule.scheduleId}' default='0'/>,
@@ -946,39 +947,31 @@
             modal.hide();
         }
         
-        function deleteSchedule(scheduleId) {
-            if (confirm('Bạn có chắc chắn muốn xóa lịch bảo trì này?')) {
-                fetch('scheduleMaintenance', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'action=deleteSchedule&scheduleId=' + scheduleId
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast('Xóa lịch bảo trì thành công!', 'success');
-                        // Remove from table
-                        const row = document.querySelector('tr[data-schedule-id="' + scheduleId + '"]');
-                        if (row) {
-                            row.remove();
-                        }
-                        // Remove from calendar
-                        const event = calendar.getEventById(scheduleId);
-                        if (event) {
-                            event.remove();
-                        }
-                    } else {
-                        showToast('Lỗi khi xóa lịch bảo trì: ' + (data.error || 'Unknown error'), 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting schedule:', error);
-                    showToast('Lỗi khi xóa lịch bảo trì!', 'error');
-                });
+  function deleteSchedule(scheduleId) {
+    if (confirm('Bạn có chắc chắn muốn xóa lịch bảo trì này?')) {
+        fetch('scheduleMaintenance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=deleteSchedule&scheduleId=' + scheduleId
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Xóa lịch bảo trì thành công!', 'success');
+                location.reload(); // reload luôn bảng + calendar
+            } else {
+                showToast('Lỗi khi xóa lịch bảo trì: ' + (data.error || 'Unknown error'), 'error');
             }
-        }
+        })
+        .catch(error => {
+            console.error('Error deleting schedule:', error);
+            showToast('Lỗi khi xóa lịch bảo trì!', 'error');
+        });
+    }
+}
+
         
         // Event delegation for schedule action buttons
         document.addEventListener('click', function(e) {
@@ -995,7 +988,7 @@
                     }
                 }
             }
-        });
+        }); 
         
         function showToast(message, type) {
             const toast = document.createElement('div');
