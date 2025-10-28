@@ -1363,4 +1363,372 @@ public class ServiceRequestDAO extends MyDAO {
         return list;
     }
 
+    public List<ServiceRequest> filterRequests(String keyword, String status, String requestType,
+            String priority, String fromDate, String toDate) throws SQLException {
+        List<ServiceRequest> list = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT sr.*, ");
+        sql.append("a.fullName AS customerName, a.email AS customerEmail, a.phone AS customerPhone, ");
+        sql.append("c.contractType, c.status AS contractStatus, ");
+        sql.append("e.model AS equipmentModel, e.serialNumber, e.description AS equipmentDescription, ");
+        sql.append("tech.fullName AS technicianName ");
+        sql.append("FROM ServiceRequest sr ");
+        sql.append("LEFT JOIN Account a ON sr.createdBy = a.accountId ");
+        sql.append("LEFT JOIN Contract c ON sr.contractId = c.contractId ");
+        sql.append("LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId ");
+        sql.append("LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId ");
+        sql.append("LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId ");
+        sql.append("WHERE 1=1 ");
+
+        // dynamic conditions
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (a.fullName LIKE ? OR a.phone LIKE ? OR c.contractId LIKE ? ")
+                    .append("OR e.model LIKE ? OR e.serialNumber LIKE ? OR sr.description LIKE ?) ");
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            sql.append("AND sr.status = ? ");
+        }
+        if (requestType != null && !requestType.trim().isEmpty()) {
+            sql.append("AND sr.requestType = ? ");
+        }
+        if (priority != null && !priority.trim().isEmpty()) {
+            sql.append("AND sr.priorityLevel = ? ");
+        }
+        if (fromDate != null && !fromDate.trim().isEmpty()) {
+            sql.append("AND sr.requestDate >= ? ");
+        }
+        if (toDate != null && !toDate.trim().isEmpty()) {
+            sql.append("AND sr.requestDate <= ? ");
+        }
+
+        sql.append("ORDER BY sr.requestDate DESC");
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            int idx = 1;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String like = "%" + keyword.trim() + "%";
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+            }
+            if (status != null && !status.trim().isEmpty()) {
+                ps.setString(idx++, status.trim());
+            }
+            if (requestType != null && !requestType.trim().isEmpty()) {
+                ps.setString(idx++, requestType.trim());
+            }
+            if (priority != null && !priority.trim().isEmpty()) {
+                ps.setString(idx++, priority.trim());
+            }
+            if (fromDate != null && !fromDate.trim().isEmpty()) {
+                ps.setString(idx++, fromDate.trim());
+            }
+            if (toDate != null && !toDate.trim().isEmpty()) {
+                ps.setString(idx++, toDate.trim());
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ServiceRequest sr = new ServiceRequest();
+                    sr.setRequestId(rs.getInt("requestId"));
+                    sr.setContractId(rs.getInt("contractId"));
+                    sr.setEquipmentId(rs.getInt("equipmentId"));
+                    sr.setCreatedBy(rs.getInt("createdBy"));
+                    sr.setDescription(rs.getString("description"));
+                    sr.setPriorityLevel(rs.getString("priorityLevel"));
+                    sr.setRequestDate(rs.getTimestamp("requestDate"));
+                    sr.setStatus(rs.getString("status"));
+                    sr.setRequestType(rs.getString("requestType"));
+
+                    // joined info
+                    sr.setCustomerName(rs.getString("customerName"));
+                    sr.setCustomerEmail(rs.getString("customerEmail"));
+                    sr.setCustomerPhone(rs.getString("customerPhone"));
+                    sr.setContractType(rs.getString("contractType"));
+                    sr.setContractStatus(rs.getString("contractStatus"));
+                    sr.setEquipmentModel(rs.getString("equipmentModel"));
+                    sr.setEquipmentDescription(rs.getString("equipmentDescription"));
+                    sr.setTechnicianName(rs.getString("technicianName"));
+
+                    list.add(sr);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public List<ServiceRequest> getAllRequests() throws SQLException {
+        List<ServiceRequest> list = new ArrayList<>();
+
+        String sql = "SELECT sr.*, "
+                + "a.fullName AS customerName, a.email AS customerEmail, a.phone AS customerPhone, "
+                + "c.contractType, c.status AS contractStatus, "
+                + "e.model AS equipmentModel, e.serialNumber, e.description AS equipmentDescription, "
+                + "tech.fullName AS technicianName "
+                + "FROM ServiceRequest sr "
+                + "LEFT JOIN Account a ON sr.createdBy = a.accountId "
+                + "LEFT JOIN Contract c ON sr.contractId = c.contractId "
+                + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
+                + "LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId "
+                + "LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId "
+                + "ORDER BY sr.requestDate DESC";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                ServiceRequest sr = new ServiceRequest();
+
+                // Core fields
+                sr.setRequestId(rs.getInt("requestId"));
+                sr.setContractId(rs.getInt("contractId"));
+                sr.setEquipmentId(rs.getInt("equipmentId"));
+                sr.setCreatedBy(rs.getInt("createdBy"));
+                sr.setDescription(rs.getString("description"));
+                sr.setPriorityLevel(rs.getString("priorityLevel"));
+                sr.setRequestDate(rs.getTimestamp("requestDate"));
+                sr.setStatus(rs.getString("status"));
+                sr.setRequestType(rs.getString("requestType"));
+
+                // Joined data
+                sr.setCustomerName(rs.getString("customerName"));
+                sr.setCustomerEmail(rs.getString("customerEmail"));
+                sr.setCustomerPhone(rs.getString("customerPhone"));
+                sr.setContractType(rs.getString("contractType"));
+                sr.setContractStatus(rs.getString("contractStatus"));
+                sr.setEquipmentModel(rs.getString("equipmentModel"));
+                sr.setEquipmentDescription(rs.getString("equipmentDescription"));
+                sr.setSerialNumber(rs.getString("serialNumber"));
+                sr.setTechnicianName(rs.getString("technicianName"));
+
+                list.add(sr);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    // Lấy danh sách Service Request có phân trang
+    public List<ServiceRequest> getAllRequestsPaged(int offset, int limit) throws SQLException {
+        List<ServiceRequest> list = new ArrayList<>();
+
+        String sql = """
+        SELECT sr.*, 
+               a.fullName AS customerName, a.email AS customerEmail, a.phone AS customerPhone,
+               c.contractType, c.status AS contractStatus,
+               e.model AS equipmentModel, e.serialNumber, e.description AS equipmentDescription,
+               tech.fullName AS technicianName
+        FROM ServiceRequest sr
+        LEFT JOIN Account a ON sr.createdBy = a.accountId
+        LEFT JOIN Contract c ON sr.contractId = c.contractId
+        LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId
+        LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId
+        LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId
+        ORDER BY sr.requestDate DESC
+        LIMIT ? OFFSET ?
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            ps.setInt(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ServiceRequest sr = new ServiceRequest();
+                    sr.setRequestId(rs.getInt("requestId"));
+                    sr.setContractId(rs.getInt("contractId"));
+                    sr.setEquipmentId(rs.getInt("equipmentId"));
+                    sr.setCreatedBy(rs.getInt("createdBy"));
+                    sr.setDescription(rs.getString("description"));
+                    sr.setPriorityLevel(rs.getString("priorityLevel"));
+                    sr.setRequestDate(rs.getTimestamp("requestDate"));
+                    sr.setStatus(rs.getString("status"));
+                    sr.setRequestType(rs.getString("requestType"));
+
+                    sr.setCustomerName(rs.getString("customerName"));
+                    sr.setCustomerEmail(rs.getString("customerEmail"));
+                    sr.setCustomerPhone(rs.getString("customerPhone"));
+                    sr.setContractType(rs.getString("contractType"));
+                    sr.setContractStatus(rs.getString("contractStatus"));
+                    sr.setEquipmentModel(rs.getString("equipmentModel"));
+                    sr.setEquipmentDescription(rs.getString("equipmentDescription"));
+                    sr.setSerialNumber(rs.getString("serialNumber"));
+                    sr.setTechnicianName(rs.getString("technicianName"));
+
+                    list.add(sr);
+                }
+            }
+        }
+        return list;
+    }
+
+// Đếm tổng số bản ghi ServiceRequest
+    public int countAllRequests() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM ServiceRequest";
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    public List<ServiceRequest> filterRequestsPaged(String keyword, String status, String requestType,
+            String priority, String fromDate, String toDate,
+            int offset, int limit) throws SQLException {
+        List<ServiceRequest> list = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT sr.*, 
+               a.fullName AS customerName, a.email AS customerEmail, a.phone AS customerPhone,
+               c.contractType, c.status AS contractStatus,
+               e.model AS equipmentModel, e.serialNumber, e.description AS equipmentDescription,
+               tech.fullName AS technicianName
+        FROM ServiceRequest sr
+        LEFT JOIN Account a ON sr.createdBy = a.accountId
+        LEFT JOIN Contract c ON sr.contractId = c.contractId
+        LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId
+        LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId
+        LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId
+        WHERE 1=1
+    """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND (a.fullName LIKE ? OR e.model LIKE ? OR sr.description LIKE ? OR c.contractId LIKE ?)");
+            String like = "%" + keyword + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND sr.status = ?");
+            params.add(status);
+        }
+        if (requestType != null && !requestType.isEmpty()) {
+            sql.append(" AND sr.requestType = ?");
+            params.add(requestType);
+        }
+        if (priority != null && !priority.isEmpty()) {
+            sql.append(" AND sr.priorityLevel = ?");
+            params.add(priority);
+        }
+        if (fromDate != null && !fromDate.isEmpty()) {
+            sql.append(" AND DATE(sr.requestDate) >= ?");
+            params.add(fromDate);
+        }
+        if (toDate != null && !toDate.isEmpty()) {
+            sql.append(" AND DATE(sr.requestDate) <= ?");
+            params.add(toDate);
+        }
+
+        sql.append(" ORDER BY sr.requestDate DESC LIMIT ? OFFSET ?");
+        params.add(limit);
+        params.add(offset);
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ServiceRequest sr = new ServiceRequest();
+                    sr.setRequestId(rs.getInt("requestId"));
+                    sr.setContractId(rs.getInt("contractId"));
+                    sr.setEquipmentId(rs.getInt("equipmentId"));
+                    sr.setCreatedBy(rs.getInt("createdBy"));
+                    sr.setDescription(rs.getString("description"));
+                    sr.setPriorityLevel(rs.getString("priorityLevel"));
+                    sr.setRequestDate(rs.getTimestamp("requestDate"));
+                    sr.setStatus(rs.getString("status"));
+                    sr.setRequestType(rs.getString("requestType"));
+
+                    sr.setCustomerName(rs.getString("customerName"));
+                    sr.setCustomerEmail(rs.getString("customerEmail"));
+                    sr.setCustomerPhone(rs.getString("customerPhone"));
+                    sr.setContractType(rs.getString("contractType"));
+                    sr.setContractStatus(rs.getString("contractStatus"));
+                    sr.setEquipmentModel(rs.getString("equipmentModel"));
+                    sr.setEquipmentDescription(rs.getString("equipmentDescription"));
+                    sr.setSerialNumber(rs.getString("serialNumber"));
+                    sr.setTechnicianName(rs.getString("technicianName"));
+
+                    list.add(sr);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public int countFilteredRequests(String keyword, String status, String requestType,
+            String priority, String fromDate, String toDate) throws SQLException {
+        int total = 0;
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT COUNT(*) 
+        FROM ServiceRequest sr
+        LEFT JOIN Account a ON sr.createdBy = a.accountId
+        LEFT JOIN Contract c ON sr.contractId = c.contractId
+        LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId
+        LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId
+        LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId
+        WHERE 1=1
+    """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND (a.fullName LIKE ? OR e.model LIKE ? OR sr.description LIKE ? OR c.contractId LIKE ?)");
+            String like = "%" + keyword + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND sr.status = ?");
+            params.add(status);
+        }
+        if (requestType != null && !requestType.isEmpty()) {
+            sql.append(" AND sr.requestType = ?");
+            params.add(requestType);
+        }
+        if (priority != null && !priority.isEmpty()) {
+            sql.append(" AND sr.priorityLevel = ?");
+            params.add(priority);
+        }
+        if (fromDate != null && !fromDate.isEmpty()) {
+            sql.append(" AND DATE(sr.requestDate) >= ?");
+            params.add(fromDate);
+        }
+        if (toDate != null && !toDate.isEmpty()) {
+            sql.append(" AND DATE(sr.requestDate) <= ?");
+            params.add(toDate);
+        }
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    total = rs.getInt(1);
+                }
+            }
+        }
+
+        return total;
+    }
+
 }

@@ -154,7 +154,7 @@
                 <div class="col-md-2 sidebar p-4 d-flex flex-column">
                     <div>
                         <h4 class="text-center mb-4">
-                            <i class="fas fa-cogs"></i> Quản lý
+                            <i class="fas fa-cogs"></i> CRM CSS
                         </h4>
                         <nav class="nav flex-column">
                             <c:if test="${sessionScope.session_role eq 'Admin' || sessionScope.session_role eq 'Customer Support Staff'}">
@@ -166,6 +166,18 @@
                             <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
                                 <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="customerManagement">
                                     <i class="fas fa-users me-2"></i> Quản lý khách hàng
+                                </a>
+                            </c:if>
+                            
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="viewCustomerRequest">
+                                    <i class="fas fa-clipboard-list"></i> Quản lý yêu cầu
+                                </a>
+                            </c:if>
+
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a  href="manageProfile" class="nav-link ${currentPage eq 'profile' ? 'fw-bold bg-white text-dark' : ''}">
+                                    <i class="fas fa-user-circle me-2"></i><span> Hồ Sơ</span>
                                 </a>
                             </c:if>
                         </nav>
