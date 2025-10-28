@@ -104,7 +104,7 @@
                 <div class="col-md-2 sidebar p-4 d-flex flex-column">
                     <div>
                         <h4 class="text-center mb-4">
-                            <i class="fas fa-cogs"></i> Quản lý
+                            <i class="fas fa-cogs"></i> CRM CSS
                         </h4>
                         <nav class="nav flex-column">
                             <c:if test="${sessionScope.session_role eq 'Admin' || sessionScope.session_role eq 'Customer Support Staff'}">
@@ -116,6 +116,12 @@
                             <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
                                 <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="customerManagement">
                                     <i class="fas fa-users me-2"></i> Quản lý khách hàng
+                                </a>
+                            </c:if>
+                            
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="viewCustomerRequest">
+                                    <i class="fas fa-clipboard-list"></i> Quản lý yêu cầu
                                 </a>
                             </c:if>
 
@@ -158,6 +164,15 @@
                                             <i class="fas fa-users card-icon text-dark"></i>
                                             <h5>Người dùng</h5>
                                             <p>Quản lý tài khoản.</p>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-4 mb-4">
+                                    <a href="viewCustomerRequest" class="text-decoration-none text-dark">
+                                        <div class="card card-hover text-center p-4">
+                                            <i class="fas fa-clipboard-list card-icon text-dark"></i>
+                                            <h5>Yêu cầu</h5>
+                                            <p>Quản lý yêu cầu.</p>
                                         </div>
                                     </a>
                                 </div>

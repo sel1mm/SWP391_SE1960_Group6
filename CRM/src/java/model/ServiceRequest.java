@@ -31,6 +31,43 @@ public class ServiceRequest {
     private String serialNumber;
     private String technicianName;
     
+    private String contractType;
+
+    public String getContractType() {
+        return contractType;
+    }
+
+    public void setContractType(String contractType) {
+        this.contractType = contractType;
+    }
+
+    public String getContractStatus() {
+        return contractStatus;
+    }
+
+    public void setContractStatus(String contractStatus) {
+        this.contractStatus = contractStatus;
+    }
+
+    public String getEquipmentModel() {
+        return equipmentModel;
+    }
+
+    public void setEquipmentModel(String equipmentModel) {
+        this.equipmentModel = equipmentModel;
+    }
+
+    public String getEquipmentDescription() {
+        return equipmentDescription;
+    }
+
+    public void setEquipmentDescription(String equipmentDescription) {
+        this.equipmentDescription = equipmentDescription;
+    }
+    private String contractStatus;
+    private String equipmentModel;
+    private String equipmentDescription;
+    
     // Constructor mặc định
     public ServiceRequest() {
     }
