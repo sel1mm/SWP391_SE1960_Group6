@@ -485,9 +485,9 @@
                                                 <td>${assignment.estimatedDuration}h</td>
                                                 <td>
                                                     <span class="badge <c:choose>
-                                                        <c:when test='${assignment.priorityLevel == "Critical"}'>bg-danger</c:when>
+                                                        <c:when test='${assignment.priorityLevel == "Urgent"}'>bg-danger</c:when>
                                                         <c:when test='${assignment.priorityLevel == "High"}'>bg-warning</c:when>
-                                                        <c:when test='${assignment.priorityLevel == "Medium"}'>bg-info</c:when>
+                                                        <c:when test='${assignment.priorityLevel == "Normal"}'>bg-info</c:when>
                                                         <c:otherwise>bg-secondary</c:otherwise>
                                                     </c:choose>">
                                                         <c:out value='${assignment.priorityLevel}' escapeXml='true'/>
@@ -538,6 +538,15 @@
             }
         });
 
+function getStatusClass(status) {
+    switch(status) {
+        case 'Completed': return 'bg-success';
+        case 'Assigned': return 'bg-info';
+        default: return 'bg-warning'; // Chờ Xác Nhận hoặc In Progress
+    }
+}
+
+
         // Refresh assignment history
         function refreshAssignmentHistory() {
             fetch('assignWork?action=getAssignmentHistory')
@@ -560,10 +569,13 @@
                             '</span>' +
                             '</td>' +
                             '<td>' +
-                                '<span class="badge ' + (assignment.accepted ? 'bg-success' : 'bg-warning') + '">' +
-                                    (assignment.accepted ? 'Đã Chấp Nhận' : 'Chờ Xác Nhận') +
-                                '</span>' +
-                            '</td>' +
+  '<span class="badge ' + getStatusClass(assignment.status) + '">' +
+      (assignment.status === 'Completed' ? 'Đã Hoàn Thành' :
+       assignment.status === 'Assigned' ? 'Đang Thực Hiện' :
+       'Chờ Xác Nhận') +
+  '</span>' +
+'</td>'
+ +
                             '<td>' +
                                 '<button class="btn btn-sm btn-outline-danger delete-assignment-btn" ' +
                                         'data-assignment-id="' + assignment.assignmentId + '"' +
@@ -594,6 +606,7 @@
                     if (data.success) {
                         refreshAssignmentHistory();
                         showToast('Xóa phân công thành công!', 'success');
+                        location.reload(); 
                     } else {
                         showToast('Lỗi khi xóa phân công: ' + (data.error || 'Unknown error'), 'error');
                     }
@@ -644,6 +657,10 @@
 
         // Auto-refresh every 30 seconds
         setInterval(refreshAssignmentHistory, 30000);
+        document.addEventListener('DOMContentLoaded', function() {
+    refreshAssignmentHistory();
+});
+
     </script>
 </body>
 </html>

@@ -89,7 +89,7 @@
                 <a class="btn btn-secondary" href="${pageContext.request.contextPath}/technician/work-history">
                   <i class="bi bi-clock-history me-2"></i>Work History
                 </a>
-                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/manageProfile.jsp">
+                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/manageProfile">
                   <i class="bi bi-person me-2"></i>My Profile
                 </a>
               </div>

@@ -14,14 +14,14 @@
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             }
 
-            
+
             .sidebar {
                 min-height: 100vh;
                 background-color: #111;
                 color: #fff;
                 display: flex;
                 flex-direction: column;
-                justify-content: space-between; 
+                justify-content: space-between;
                 padding-bottom: 20px;
             }
 
@@ -81,7 +81,7 @@
                 color: #666;
                 margin: 0;
             }
-            
+
             .logout-section .btn-outline-light {
                 border: 1px solid rgba(255,255,255,0.4);
                 color: #fff;
@@ -116,6 +116,12 @@
                             <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
                                 <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="customerManagement">
                                     <i class="fas fa-users me-2"></i> Quản lý khách hàng
+                                </a>
+                            </c:if>
+
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a  href="manageProfile" class="nav-link ${currentPage eq 'profile' ? 'fw-bold bg-white text-dark' : ''}">
+                                    <i class="fas fa-user-circle me-2"></i><span> Hồ Sơ</span>
                                 </a>
                             </c:if>
                         </nav>
@@ -166,20 +172,20 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
-                                    function logout() {
-                                        Swal.fire({
-                                            title: 'Đăng xuất?',
-                                            text: 'Bạn có chắc chắn muốn đăng xuất?',
-                                            icon: 'question',
-                                            showCancelButton: true,
-                                            confirmButtonText: 'Đăng xuất',
-                                            cancelButtonText: 'Hủy'
-                                        }).then(result => {
-                                            if (result.isConfirmed) {
-                                                window.location.href = 'logout';
-                                            }
-                                        });
+                            function logout() {
+                                Swal.fire({
+                                    title: 'Đăng xuất?',
+                                    text: 'Bạn có chắc chắn muốn đăng xuất?',
+                                    icon: 'question',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Đăng xuất',
+                                    cancelButtonText: 'Hủy'
+                                }).then(result => {
+                                    if (result.isConfirmed) {
+                                        window.location.href = 'logout';
                                     }
+                                });
+                            }
         </script>
     </body>
 </html>

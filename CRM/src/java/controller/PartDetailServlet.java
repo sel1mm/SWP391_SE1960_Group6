@@ -37,6 +37,8 @@ public class PartDetailServlet extends HttpServlet {
             throws ServletException, IOException {
         
         HttpSession session = request.getSession();
+        session.removeAttribute("successMessage");
+    session.removeAttribute("errorMessage");
         String action = request.getParameter("action");
         if (action == null) action = "";
 

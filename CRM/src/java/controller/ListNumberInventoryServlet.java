@@ -88,6 +88,8 @@ public class ListNumberInventoryServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
          HttpSession  session = request.getSession();
+          session.removeAttribute("successMessage");
+    session.removeAttribute("errorMessage");
         Account acc = (Account) session.getAttribute("session_login");
         if (acc == null) {
             response.sendRedirect("login");

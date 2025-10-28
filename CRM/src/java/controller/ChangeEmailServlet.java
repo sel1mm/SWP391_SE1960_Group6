@@ -2,6 +2,7 @@ package controller;
 
 import dto.Response;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +18,7 @@ import java.io.IOException;
  * Handles request for changing user's email (via OTP verification)
  * @author Admin
  */
-
+@MultipartConfig
 public class ChangeEmailServlet extends HttpServlet {
 
     private final AccountService accountService = new AccountService();

@@ -211,42 +211,55 @@ public class AssignWorkServlet extends HttpServlet {
         out.flush();
     }
 
-    private void handleGetAssignmentHistory(HttpServletRequest request, HttpServletResponse response, int managerId)
-            throws ServletException, IOException, SQLException {
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        
-        List<WorkAssignment> assignments = workAssignmentDAO.getAssignmentsByManager(managerId);
-        
-        StringBuilder json = new StringBuilder();
-        json.append("[");
-        
-        for (int i = 0; i < assignments.size(); i++) {
-            WorkAssignment assignment = assignments.get(i);
-            if (i > 0) json.append(",");
-            
-            json.append("{");
-            json.append("\"assignmentId\":").append(assignment.getAssignmentId()).append(",");
-            json.append("\"taskId\":").append(assignment.getTaskId()).append(",");
-            json.append("\"assignedTo\":").append(assignment.getAssignedTo()).append(",");
-            json.append("\"assignmentDate\":\"").append(assignment.getAssignmentDate()).append("\",");
-            json.append("\"estimatedDuration\":").append(assignment.getEstimatedDuration()).append(",");
-            json.append("\"requiredSkills\":\"").append(escapeJson(assignment.getRequiredSkills())).append("\",");
-            json.append("\"priority\":\"").append(escapeJson(assignment.getPriority())).append("\",");
-            json.append("\"accepted\":").append(assignment.isAcceptedByTechnician());
-            if (assignment.getAcceptedAt() != null) {
-                json.append(",\"acceptedAt\":\"").append(assignment.getAcceptedAt()).append("\"");
-            }
-            json.append("}");
+private void handleGetAssignmentHistory(HttpServletRequest request, HttpServletResponse response, int managerId)
+        throws ServletException, IOException, SQLException {
+
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+
+    // ✅ Lấy tất cả assignment của manager
+    List<WorkAssignment> assignments = workAssignmentDAO.getAssignmentsByManager(managerId);
+
+    StringBuilder json = new StringBuilder();
+    json.append("[");
+
+    // ✅ Tạo WorkTaskDAO để lấy status từ WorkTask
+    WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+
+    for (int i = 0; i < assignments.size(); i++) {
+        WorkAssignment assignment = assignments.get(i);
+        if (i > 0) json.append(",");
+
+        json.append("{");
+        // 🔹 Các dòng cũ vẫn giữ
+        json.append("\"assignmentId\":").append(assignment.getAssignmentId()).append(",");
+        json.append("\"taskId\":").append(assignment.getTaskId()).append(",");
+        json.append("\"assignedTo\":").append(assignment.getAssignedTo()).append(",");
+        json.append("\"assignmentDate\":\"").append(assignment.getAssignmentDate()).append("\",");
+        json.append("\"estimatedDuration\":").append(assignment.getEstimatedDuration()).append(",");
+        json.append("\"requiredSkills\":\"").append(escapeJson(assignment.getRequiredSkills())).append("\",");
+        json.append("\"priority\":\"").append(escapeJson(assignment.getPriority())).append("\",");
+        json.append("\"accepted\":").append(assignment.isAcceptedByTechnician());
+
+        if (assignment.getAcceptedAt() != null) {
+            json.append(",\"acceptedAt\":\"").append(assignment.getAcceptedAt()).append("\"");
         }
-        
-        json.append("]");
-        
-        PrintWriter out = response.getWriter();
-        out.print(json.toString());
-        out.flush();
+
+        // ✅ Dòng mới thêm: lấy status từ WorkTask để front-end hiển thị
+        WorkTask task = workTaskDAO.findById(assignment.getTaskId()); // thêm
+        json.append(",\"status\":\"").append(escapeJson(task.getStatus())).append("\""); // thêm
+
+        json.append("}");
     }
+
+    json.append("]");
+
+    PrintWriter out = response.getWriter();
+    out.print(json.toString());
+    out.flush();
+}
+
+
 
 private void handleAssignWork(HttpServletRequest request, HttpServletResponse response, int managerId, HttpSession session)
         throws ServletException, IOException, SQLException {
@@ -297,7 +310,7 @@ private void handleAssignWork(HttpServletRequest request, HttpServletResponse re
         task.setTaskDetails("Task generated from approved service request #" + requestId);
         task.setStartDate(LocalDate.now());
         task.setEndDate(LocalDate.now().plusDays(3)); // tạm ví dụ
-        task.setStatus("Pending");
+        task.setStatus("Assigned");
 
         int taskId = workTaskDAO.createWorkTask(task);
         if (taskId <= 0) {
@@ -320,7 +333,7 @@ private void handleAssignWork(HttpServletRequest request, HttpServletResponse re
         int assignmentId = workAssignmentDAO.createWorkAssignment(assignment);
         if (assignmentId > 0) {
             // ✅ Cập nhật workload cho technician
-            technicianWorkloadDAO.incrementActiveTasks(technicianId);
+            
             session.setAttribute("successMessage", "Work assigned successfully to technician");
         } else {
             session.setAttribute("errorMessage", "Failed to assign work. Please try again.");
