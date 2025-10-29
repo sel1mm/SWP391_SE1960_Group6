@@ -1926,3 +1926,4 @@ INSERT INTO PartDetail ( partId, serialNumber, status, location, lastUpdatedBy, 
 ( 3, 'Brake Pad Set #014', 'Available', 'Warehouse A', 1, '2025-10-15'),
 ( 3, 'Brake Pad Set #015', 'Available', 'Warehouse B', 1, '2025-10-15');
 
+alter table MaintenanceSchedule modify scheduledDate datetime not null;
