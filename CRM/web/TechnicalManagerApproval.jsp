@@ -687,9 +687,7 @@
                     <button class="btn btn-outline-primary" onclick="refreshPage()">
                         <i class="fas fa-sync-alt"></i> Làm Mới
                     </button>
-                    <button class="btn btn-outline-info" onclick="exportToExcel()">
-                        <i class="fas fa-download"></i> Xuất Excel
-                    </button>
+                    
                 </div>
             </div>
 

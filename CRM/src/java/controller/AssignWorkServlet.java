@@ -310,7 +310,7 @@ private void handleAssignWork(HttpServletRequest request, HttpServletResponse re
         task.setTaskDetails("Task generated from approved service request #" + requestId);
         task.setStartDate(LocalDate.now());
         task.setEndDate(LocalDate.now().plusDays(3)); // tạm ví dụ
-        task.setStatus("Pending");
+        task.setStatus("Assigned");
 
         int taskId = workTaskDAO.createWorkTask(task);
         if (taskId <= 0) {
