@@ -21,7 +21,7 @@
   <div class="row mb-3 align-items-center">
     <div class="col">
       <h1 class="h4 crm-page-title">Create New Contract</h1>
-      <p class="text-muted">Create a new contract for customer with optional part assignment</p>
+      <p class="text-muted">Create a new contract for customer with required part assignment</p>
     </div>
     <div class="col-auto">
       <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
@@ -89,7 +89,6 @@
                 <option value="">Select Status</option>
                 <option value="Active">Active</option>
                 <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
               </select>
               <div class="invalid-feedback">Please select a status.</div>
             </div>
@@ -98,9 +97,9 @@
         
         <!-- Part Selection -->
         <div class="mb-3">
-          <label for="partId" class="form-label fw-bold">Part for Repair (Optional)</label>
-          <select class="form-select" id="partId" name="partId">
-            <option value="">No Part Assignment</option>
+          <label for="partId" class="form-label fw-bold">Part for Repair <span class="text-danger">*</span></label>
+          <select class="form-select" id="partId" name="partId" required>
+            <option value="">Select a part</option>
             <c:forEach var="part" items="${availableParts}">
               <option value="${part.equipmentId}" 
                       data-model="${fn:escapeXml(part.model)}"
@@ -115,9 +114,10 @@
               </option>
             </c:forEach>
           </select>
+          <div class="invalid-feedback">Please select a part for repair.</div>
           <div class="form-text">
             <i class="bi bi-info-circle me-1"></i>
-            Only available parts from inventory are shown. This is optional.
+            Only available parts from inventory are shown.
           </div>
         </div>
         

@@ -233,7 +233,7 @@ public class TechnicianContractServlet extends HttpServlet {
         String action = req.getParameter("action");
         
         if ("create".equals(action)) {
-            // Handle contract creation with equipment/part validation
+            // Handle contract creation with mandatory part validation
             try {
                 ContractDAO contractDAO = new ContractDAO();
                 
@@ -243,50 +243,44 @@ public class TechnicianContractServlet extends HttpServlet {
                 String description = req.getParameter("description");
                 String contractDate = req.getParameter("contractDate");
                 String status = req.getParameter("status");
+                // Enforce allowed statuses only (Active, Completed). Default to Active if invalid/missing
+                if (status == null || status.trim().isEmpty()) {
+                    status = "Active";
+                } else {
+                    String s = status.trim();
+                    if (!"Active".equals(s) && !"Completed".equals(s)) {
+                        status = "Active";
+                    } else {
+                        status = s;
+                    }
+                }
                 String partIdParam = req.getParameter("partId");
                 
-                // Validate part availability if selected
-                int partId = 0;
-                
-                if (partIdParam != null && !partIdParam.trim().isEmpty()) {
-                    partId = Integer.parseInt(partIdParam);
-                    
-                    if (!contractDAO.isPartAvailable(partId)) {
-                        req.getSession().setAttribute("errorMessage", "Selected part is not available. Please choose another part or contact storekeeper.");
-                        resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
-                        return;
-                    }
+                // Part is mandatory
+                if (partIdParam == null || partIdParam.trim().isEmpty()) {
+                    req.getSession().setAttribute("errorMessage", "Part for repair is required.");
+                    resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
+                    return;
                 }
-                
-                // Create contract with or without part
-                long contractId;
-                if (partId > 0) {
-                    contractId = contractDAO.createContractWithPart(
-                        customerId, 
-                        java.sql.Date.valueOf(contractDate), 
-                        contractType, 
-                        status, 
-                        description,
-                        partId
-                    );
-                } else {
-                    contractId = contractDAO.createContract(
-                        customerId, 
-                        java.sql.Date.valueOf(contractDate), 
-                        contractType, 
-                        status, 
-                        description
-                    );
+                int partId = Integer.parseInt(partIdParam.trim());
+                if (!contractDAO.isPartAvailable(partId)) {
+                    req.getSession().setAttribute("errorMessage", "Selected part is not available. Please choose another part or contact storekeeper.");
+                    resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
+                    return;
                 }
+
+                // Always create contract with part assignment
+                long contractId = contractDAO.createContractWithPart(
+                    customerId,
+                    java.sql.Date.valueOf(contractDate),
+                    contractType,
+                    status,
+                    description,
+                    partId
+                );
                 
                 if (contractId > 0) {
-                    String successMsg;
-                    if (partId > 0) {
-                        successMsg = "Contract created successfully with part assignment ✅";
-                    } else {
-                        successMsg = "Contract created successfully ✅";
-                    }
-                    req.getSession().setAttribute("successMessage", successMsg);
+                    req.getSession().setAttribute("successMessage", "Contract created successfully with part assignment ✅");
                 } else {
                     req.getSession().setAttribute("errorMessage", "Failed to create contract. Please try again.");
                 }
