@@ -29,8 +29,17 @@ public class AccountService {
 
     public Response<Account> checkLogin(String username, String password) {
         Account account = accountDAO.getAccountByUserName(username);
-        if (account != null && "Active".equalsIgnoreCase(account.getStatus()) && passwordHasher.checkPassword(password, account.getPasswordHash())) {
+
+        if (account != null
+                && "Active".equalsIgnoreCase(account.getStatus())
+                && account.getProfile() != null
+                && account.getProfile().isVerified()
+                && passwordHasher.checkPassword(password, account.getPasswordHash())) {
+
             return new Response<>(account, true, MessageConstant.LOGIN_SUCCESS);
+
+        } else if (account != null && account.getProfile() != null && !account.getProfile().isVerified()) {
+            return new Response<>(null, false, "Tài khoản chưa được xác thực. Vui lòng xác thực trước khi đăng nhập.");
         } else {
             return new Response<>(null, false, MessageConstant.LOGIN_FAILED);
         }
@@ -57,7 +66,7 @@ public class AccountService {
 
         String hashedPassword = passwordHasher.hashPassword(request.getPassword());
 
-        boolean account = accountDAO.register(
+        boolean accountCreated = accountDAO.register(
                 request.getUsername(),
                 hashedPassword,
                 request.getEmail(),
@@ -66,7 +75,16 @@ public class AccountService {
                 "Active"
         );
 
-        if (account) {
+        if (accountCreated) {
+            // ✅ Lấy accountId vừa tạo để tạo profile
+            Account newAccount = accountDAO.getAccountByUserName(request.getUsername());
+            if (newAccount != null) {
+                AccountProfile profile = new AccountProfile();
+                profile.setAccountId(newAccount.getAccountId());
+                profile.setVerified(true); // ✅ Mặc định verified = true
+                accountProfileDAO.createProfile(profile);
+            }
+
             int roleId = 2;
             boolean roleAdded = accountRoleDAO.addAccountRole(request.getUsername(), roleId);
 
@@ -132,7 +150,7 @@ public class AccountService {
             return new Response<>(null, false, "Error during search: " + e.getMessage());
         }
     }
-    
+
     public Response<List<Account>> searchAccountsWithRole(String keyword, String status, String roleId) {
         try {
             List<Account> list = accountDAO.searchAccountsWithRole(keyword, status, roleId);
@@ -440,17 +458,19 @@ public class AccountService {
             return 0;
         }
     }
- public boolean updateEmail(String email, int accountId) {
+
+    public boolean updateEmail(String email, int accountId) {
         return accountDAO.updateEmail(accountId, email);
     }
-public Response<List<Account>> getAccountsPaged(String keyword, String status, String roleId, int page, int pageSize) {
-    int offset = (page - 1) * pageSize;
-    List<Account> list = accountDAO.getAccountsPaged(keyword, status, roleId, offset, pageSize);
-    return new Response<>(list, true, "Paged list retrieved");
-}
 
-public int countAllAccounts(String keyword, String status, String roleId) {
-    return accountDAO.countAllAccounts(keyword, status, roleId);
-}
+    public Response<List<Account>> getAccountsPaged(String keyword, String status, String roleId, int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        List<Account> list = accountDAO.getAccountsPaged(keyword, status, roleId, offset, pageSize);
+        return new Response<>(list, true, "Paged list retrieved");
+    }
+
+    public int countAllAccounts(String keyword, String status, String roleId) {
+        return accountDAO.countAllAccounts(keyword, status, roleId);
+    }
 
 }
