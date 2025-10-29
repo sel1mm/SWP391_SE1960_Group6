@@ -17,6 +17,7 @@ public class RepairReport {
     private String quotationStatus;
     private LocalDate repairDate;
     private Integer invoiceDetailId;
+    private String technicianName; // For display purposes (not stored in DB)
 
     // Constructors
     public RepairReport() {}
@@ -62,6 +63,9 @@ public class RepairReport {
 
     public Integer getInvoiceDetailId() { return invoiceDetailId; }
     public void setInvoiceDetailId(Integer invoiceDetailId) { this.invoiceDetailId = invoiceDetailId; }
+
+    public String getTechnicianName() { return technicianName; }
+    public void setTechnicianName(String technicianName) { this.technicianName = technicianName; }
 
     @Override
     public String toString() {

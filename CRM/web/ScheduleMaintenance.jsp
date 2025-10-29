@@ -43,17 +43,22 @@
         }
 
         /* Sidebar Styles */
-        .sidebar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 280px;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-        }
+      /* SIDEBAR STYLES */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 260px;
+                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+                padding: 0;
+                transition: all 0.3s ease;
+                z-index: 1000;
+                box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+                display: flex;
+                flex-direction: column;
+            }
+
 
         .sidebar-header {
             padding: 25px 20px;
@@ -361,7 +366,7 @@
     <!-- Sidebar -->
     <nav class="sidebar">
         <div class="p-4">
-            <h4><i class="fas fa-tools me-2"></i>Technical Manager</h4>
+            <h4 style="color: white;"><i class="fas fa-tools me-2"></i>Technical Manager</h4>
             <hr class="text-white">
         </div>
         <ul class="nav flex-column">
@@ -489,7 +494,7 @@
                                         <option value="">Chọn hợp đồng (tùy chọn)...</option>
                                         <c:forEach var="contract" items="${contractList}">
                                             <option value="${contract.contractId}">
-                                                #${contract.contractId} - ${contract.contractName}
+                                                #${contract.contractId} - ${contract.details}
                                             </option>
                                         </c:forEach>
                                     </select>
@@ -501,7 +506,7 @@
                                         <option value="">Chọn thiết bị (tùy chọn)...</option>
                                         <c:forEach var="equipment" items="${equipmentList}">
                                             <option value="${equipment.equipmentId}">
-                                                ${equipment.equipmentName} - ${equipment.model}
+                                                ${equipment.serialNumber} - ${equipment.model} - ${equipment.description}
                                             </option>
                                         </c:forEach>
                                     </select>
@@ -573,11 +578,7 @@
                     <div class="calendar-container">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5><i class="fas fa-calendar me-2"></i>Lịch Bảo Trì</h5>
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="changeCalendarView('dayGridMonth')">Tháng</button>
-                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="changeCalendarView('timeGridWeek')">Tuần</button>
-                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="changeCalendarView('timeGridDay')">Ngày</button>
-                            </div>
+                           
                         </div>
                         <div id="calendar"></div>
                     </div>
@@ -767,7 +768,8 @@
         {
             "id": "<c:out value='${schedule.scheduleId}' escapeXml='true'/>",
             "title": "<c:out value='${schedule.scheduleType}' escapeXml='true'/> - KTV #<c:out value='${schedule.assignedTo}' escapeXml='true'/>",
-            "start": "<c:out value='${schedule.scheduledDate}' escapeXml='true'/>",
+            "start": "<c:out value='${schedule.scheduledDate}' escapeXml='true'/>", 
+
             "className": "fc-event-<c:out value='${fn:toLowerCase(fn:replace(schedule.status, " ", "-"))}' escapeXml='true'/>",
             "extendedProps": {
                 "scheduleId": <c:out value='${schedule.scheduleId}' default='0'/>,
@@ -945,39 +947,31 @@
             modal.hide();
         }
         
-        function deleteSchedule(scheduleId) {
-            if (confirm('Bạn có chắc chắn muốn xóa lịch bảo trì này?')) {
-                fetch('scheduleMaintenance', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'action=deleteSchedule&scheduleId=' + scheduleId
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast('Xóa lịch bảo trì thành công!', 'success');
-                        // Remove from table
-                        const row = document.querySelector('tr[data-schedule-id="' + scheduleId + '"]');
-                        if (row) {
-                            row.remove();
-                        }
-                        // Remove from calendar
-                        const event = calendar.getEventById(scheduleId);
-                        if (event) {
-                            event.remove();
-                        }
-                    } else {
-                        showToast('Lỗi khi xóa lịch bảo trì: ' + (data.error || 'Unknown error'), 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting schedule:', error);
-                    showToast('Lỗi khi xóa lịch bảo trì!', 'error');
-                });
+  function deleteSchedule(scheduleId) {
+    if (confirm('Bạn có chắc chắn muốn xóa lịch bảo trì này?')) {
+        fetch('scheduleMaintenance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=deleteSchedule&scheduleId=' + scheduleId
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Xóa lịch bảo trì thành công!', 'success');
+                location.reload(); // reload luôn bảng + calendar
+            } else {
+                showToast('Lỗi khi xóa lịch bảo trì: ' + (data.error || 'Unknown error'), 'error');
             }
-        }
+        })
+        .catch(error => {
+            console.error('Error deleting schedule:', error);
+            showToast('Lỗi khi xóa lịch bảo trì!', 'error');
+        });
+    }
+}
+
         
         // Event delegation for schedule action buttons
         document.addEventListener('click', function(e) {
@@ -994,7 +988,7 @@
                     }
                 }
             }
-        });
+        }); 
         
         function showToast(message, type) {
             const toast = document.createElement('div');

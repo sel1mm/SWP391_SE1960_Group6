@@ -40,7 +40,7 @@ public class ChangeInformationServlet extends HttpServlet {
     private AccountDAO accountDAO;
     
     // Avatar upload configuration
-    private static final String UPLOAD_DIR = "uploads/avatars";
+    private static final String UPLOAD_DIR = "D:/Every thing relate to Lam/BTVN/Hoc tap/SWP/app-uploads/avatar";
     private static final String[] ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"};
     private static final long MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
@@ -51,22 +51,23 @@ public class ChangeInformationServlet extends HttpServlet {
         accountDAO = new AccountDAO();
         
         // Create upload directory if it doesn't exist
-        String uploadPath = getServletContext().getRealPath("") + File.separator + UPLOAD_DIR;
-        File uploadDir = new File(uploadPath);
+        File uploadDir = new File(UPLOAD_DIR);
         if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
+            boolean created = uploadDir.mkdirs();
+            if (created) {
+                System.out.println("✅ Created upload directory: " + UPLOAD_DIR);
+            } else {
+                System.err.println("❌ Failed to create upload directory: " + UPLOAD_DIR);
+            }
         }
         System.out.println("✅ ChangeInformationServlet initialized");
-        System.out.println("   Upload directory: " + uploadPath);
+        System.out.println("   Upload directory: " + UPLOAD_DIR);
     }
 
-    /**
-     * Handles the HTTP GET method - Display change information form
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
+        HttpSession session = request.getSession(false);
         response.setContentType("text/html;charset=UTF-8");
 
         try {
@@ -74,8 +75,6 @@ public class ChangeInformationServlet extends HttpServlet {
             System.out.println("========== ChangeInformationServlet GET ==========");
             System.out.println("=".repeat(60));
             
-            HttpSession session = request.getSession();
-       
             if (session == null) {
                 System.err.println("❌ Session is NULL - Redirecting to login");
                 response.sendRedirect("login.jsp");
@@ -94,79 +93,49 @@ public class ChangeInformationServlet extends HttpServlet {
             System.out.println("   - Account ID: " + acc.getAccountId());
             System.out.println("   - Username: " + acc.getUsername());
 
-            // Get current account and profile data
-            System.out.println("\n--- Fetching Account Data ---");
+            // Load account and profile data
             Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
-            System.out.println("Account Response: " + (accountResponse != null ? "Success" : "NULL"));
-            if (accountResponse != null && accountResponse.getData() != null) {
-                Account account = accountResponse.getData();
-                System.out.println("   - Full Name: " + account.getFullName());
-                System.out.println("   - Email: " + account.getEmail());
-                System.out.println("   - Phone: " + account.getPhone());
-            } else {
-                System.err.println("❌ Failed to get account data from database");
-            }
-            
-            System.out.println("\n--- Fetching Profile Data ---");
             AccountProfile accountProfile = profileDAO.getProfileByAccountId(acc.getAccountId());
-            System.out.println("Profile: " + (accountProfile != null ? "Found" : "NULL"));
-            if (accountProfile != null) {
-                System.out.println("   - Profile ID: " + accountProfile.getProfileId());
-                System.out.println("   - Account ID: " + accountProfile.getAccountId());
-                System.out.println("   - Address: " + accountProfile.getAddress());
-                System.out.println("   - National ID: " + accountProfile.getNationalId());
-                System.out.println("   - DOB: " + accountProfile.getDateOfBirth());
-                System.out.println("   - Avatar URL: " + accountProfile.getAvatarUrl());
-                System.out.println("   - Verified: " + accountProfile.isVerified());
-            } else {
-                System.out.println("⚠️ No profile found for this account");
-            }
 
-            // Create a user object to store in session for JSP
-            System.out.println("\n--- Creating UserDTO for JSP ---");
             if (accountResponse != null && accountResponse.getData() != null) {
                 Account account = accountResponse.getData();
                 UserDTO user = new UserDTO();
                 
-                // Data from Account table
                 user.setFullName(account.getFullName());
                 user.setEmail(account.getEmail());
                 user.setPhone(account.getPhone());
                 
-                // Data from AccountProfile table
                 if (accountProfile != null) {
                     user.setAddress(accountProfile.getAddress());
                     user.setNationalId(accountProfile.getNationalId());
                     user.setDob(accountProfile.getDateOfBirth() != null ? 
                         accountProfile.getDateOfBirth().toString() : "");
-                    user.setAvatar(accountProfile.getAvatarUrl());
+                    
+//                     ✅ CHỈ LƯU TÊN FILE, KHÔNG CÓ THÊM "avatar/"
+                    String avatarUrl = accountProfile.getAvatarUrl();
+                    if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                        user.setAvatar(avatarUrl);
+                        System.out.println("   - Avatar filename: " + avatarUrl);
+                    }
                 }
                 
                 session.setAttribute("user", user);
                 System.out.println("✅ UserDTO created and stored in session");
                 System.out.println("   - Full Name: " + user.getFullName());
                 System.out.println("   - Email: " + user.getEmail());
-                System.out.println("   - Phone: " + user.getPhone());
-                System.out.println("   - Address: " + user.getAddress());
+                System.out.println("   - Avatar: " + user.getAvatar());
             }
 
-            System.out.println("\n✅ Forwarding to changeInformation.jsp");
-            System.out.println("=".repeat(60) + "\n");
-            
-            // Forward to JSP
             request.getRequestDispatcher("changeInformation.jsp").forward(request, response);
 
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("\n❌ ERROR in ChangeInformationServlet GET: " + e.getMessage());
-            System.err.println("Stack trace printed above");
-            handleError(request, response, "Unable to load information form: " + e.getMessage());
+            session.setAttribute("errorMessage", "Unable to load information form: " + e.getMessage());
+            response.sendRedirect("storekeeper");
         }
     }
 
-    /**
-     * Handles the HTTP POST method - Process form submission
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -174,7 +143,7 @@ public class ChangeInformationServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
 
-        HttpSession session = request.getSession();
+        HttpSession session = request.getSession(false);
    
         if (session == null) {
             System.err.println("❌ Session is NULL - Redirecting to login");
@@ -193,7 +162,6 @@ public class ChangeInformationServlet extends HttpServlet {
             System.out.println("\n" + "=".repeat(60));
             System.out.println("========== ChangeInformationServlet POST ==========");
             System.out.println("=".repeat(60));
-            System.out.println("Account ID: " + acc.getAccountId());
             
             // Get form parameters
             String fullName = request.getParameter("fullName");
@@ -203,60 +171,50 @@ public class ChangeInformationServlet extends HttpServlet {
             String nationalId = request.getParameter("nationalId");
             String dobString = request.getParameter("dob");
 
-            System.out.println("\n--- Form Parameters Received ---");
-            System.out.println("Full Name: " + fullName);
-            System.out.println("Email: " + email);
-            System.out.println("Phone: " + phone);
-            System.out.println("Address: " + address);
-            System.out.println("National ID: " + nationalId);
-            System.out.println("DOB: " + dobString);
+            System.out.println("📝 Form data received:");
+            System.out.println("   - Full Name: " + fullName);
+            System.out.println("   - Email: " + email);
+            System.out.println("   - Phone: " + phone);
+            System.out.println("   - Address: " + address);
+            System.out.println("   - National ID: " + nationalId);
+            System.out.println("   - DOB: " + dobString);
 
             // Validate input
-            System.out.println("\n--- Validating Input ---");
             String validationError = validateInput(fullName, email, phone, address, nationalId, dobString);
             if (validationError != null) {
-                System.err.println("❌ Validation Failed: " + validationError);
+                System.err.println("❌ Validation error: " + validationError);
                 session.setAttribute("errorMessage", validationError);
                 response.sendRedirect("changeInformation");
                 return;
             }
-            System.out.println("✅ All input validation passed");
 
-            // Convert date string to LocalDate
-            System.out.println("\n--- Parsing Date of Birth ---");
+            // Parse and validate date of birth
             LocalDate dateOfBirth = null;
             try {
                 dateOfBirth = LocalDate.parse(dobString);
-                System.out.println("✅ Date parsed: " + dateOfBirth);
-                
-                // Validate age (must be at least 18 years old)
                 if (!isAtLeast18YearsOld(dateOfBirth)) {
-                    System.err.println("❌ Age validation failed: User is under 18 years old");
                     session.setAttribute("errorMessage", "You must be at least 18 years old.");
                     response.sendRedirect("changeInformation");
                     return;
                 }
-                System.out.println("✅ Age validation passed (18+ years old)");
             } catch (Exception e) {
-                System.err.println("❌ Date parsing failed: " + e.getMessage());
                 session.setAttribute("errorMessage", "Invalid date format.");
                 response.sendRedirect("changeInformation");
                 return;
             }
 
             // Handle avatar upload
-            System.out.println("\n--- Checking Avatar Upload ---");
-            String avatarPath = null;
+            String avatarFileName = null;
             Part avatarPart = request.getPart("avatar");
             if (avatarPart != null && avatarPart.getSize() > 0) {
-                System.out.println("Avatar file detected:");
-                System.out.println("   - File name: " + avatarPart.getSubmittedFileName());
+                System.out.println("📷 Avatar file detected:");
+                System.out.println("   - Submitted file name: " + avatarPart.getSubmittedFileName());
                 System.out.println("   - File size: " + avatarPart.getSize() + " bytes");
                 System.out.println("   - Content type: " + avatarPart.getContentType());
                 
                 try {
-                    avatarPath = handleAvatarUpload(avatarPart, acc.getAccountId());
-                    System.out.println("✅ Avatar uploaded successfully: " + avatarPath);
+                    avatarFileName = handleAvatarUpload(avatarPart, acc.getAccountId());
+                    System.out.println("✅ Avatar uploaded successfully: " + avatarFileName);
                 } catch (Exception e) {
                     System.err.println("❌ Avatar upload error: " + e.getMessage());
                     session.setAttribute("errorMessage", "Avatar upload failed: " + e.getMessage());
@@ -267,139 +225,74 @@ public class ChangeInformationServlet extends HttpServlet {
                 System.out.println("ℹ️ No avatar file uploaded");
             }
 
-            // ===== UPDATE ACCOUNT TABLE =====
-            System.out.println("\n" + "=".repeat(50));
-            System.out.println("========== UPDATE ACCOUNT TABLE ==========");
-            System.out.println("=".repeat(50));
-            
+            // Update Account table (fullName, email, phone)
             Response<Account> accountResponse = accountDAO.getAccountById2(acc.getAccountId());
-            System.out.println("1. Get account by ID: " + acc.getAccountId());
-            System.out.println("   - Response: " + (accountResponse != null ? "Success" : "NULL"));
-            System.out.println("   - Account data: " + (accountResponse != null && accountResponse.getData() != null ? "Found" : "NULL"));
-            
             if (accountResponse != null && accountResponse.getData() != null) {
                 Account account = accountResponse.getData();
                 
-                System.out.println("\n2. Current Account values:");
-                System.out.println("   - Current fullName: " + account.getFullName());
-                System.out.println("   - Current email: " + account.getEmail());
-                System.out.println("   - Current phone: " + account.getPhone());
-
-                // Update Account fields: fullName, email, phone
+                // Store old email for logging
+                String oldEmail = account.getEmail();
+                
                 account.setFullName(fullName);
                 account.setEmail(email);
                 account.setPhone(phone);
-                
-                System.out.println("\n3. New Account values (after set):");
-                System.out.println("   - New fullName: " + account.getFullName());
-                System.out.println("   - New email: " + account.getEmail());
-                System.out.println("   - New phone: " + account.getPhone());
 
-                System.out.println("\n4. Calling accountDAO.updateAccount()...");
                 Response<Account> updateResponse = accountDAO.updateAccount(account);
-                
-                System.out.println("\n5. Update Account Response:");
-                System.out.println("   - Response: " + (updateResponse != null ? "Not NULL" : "NULL"));
-                System.out.println("   - isSuccess: " + (updateResponse != null ? updateResponse.isSuccess() : "N/A"));
-                System.out.println("   - Message: " + (updateResponse != null ? updateResponse.getMessage() : "N/A"));
-                
                 if (updateResponse == null || !updateResponse.isSuccess()) {
-                    System.err.println("❌ FAILED to update Account table!");
+                    System.err.println("❌ Failed to update account information");
                     session.setAttribute("errorMessage", "Failed to update account information.");
                     response.sendRedirect("changeInformation");
                     return;
                 }
-                System.out.println("✅ Account table updated successfully!");
-            } else {
-                System.err.println("❌ Cannot get account from database!");
+                
+                System.out.println("✅ Account updated successfully");
+                if (!oldEmail.equals(email)) {
+                    System.out.println("   - Email changed from: " + oldEmail + " to: " + email);
+                }
+                
+                // Update session_login với thông tin mới
+                acc.setFullName(fullName);
+                acc.setEmail(email);
+                acc.setPhone(phone);
+                session.setAttribute("session_login", acc);
             }
-            System.out.println("=".repeat(50));
 
-            // ===== UPDATE ACCOUNT PROFILE TABLE =====
-            System.out.println("\n" + "=".repeat(50));
-            System.out.println("========== UPDATE ACCOUNT PROFILE TABLE ==========");
-            System.out.println("=".repeat(50));
-            
+            // Update AccountProfile table (address, dob, nationalId, avatar)
             AccountProfile profile = profileDAO.getProfileByAccountId(acc.getAccountId());
-            System.out.println("1. Get profile by accountId: " + acc.getAccountId());
-            System.out.println("   - Profile: " + (profile != null ? "Found" : "NULL (will create new)"));
-            
             boolean isNewProfile = (profile == null);
-            System.out.println("   - Is new profile: " + isNewProfile);
 
             if (isNewProfile) {
+                System.out.println("📋 Creating new profile...");
                 profile = new AccountProfile();
                 profile.setAccountId(acc.getAccountId());
-                System.out.println("   - Created new AccountProfile object");
-                System.out.println("   - Set accountId: " + acc.getAccountId());
             } else {
-                System.out.println("\n2. Current Profile values:");
-                System.out.println("   - Profile ID: " + profile.getProfileId());
-                System.out.println("   - Account ID: " + profile.getAccountId());
-                System.out.println("   - Current address: " + profile.getAddress());
-                System.out.println("   - Current nationalId: " + profile.getNationalId());
-                System.out.println("   - Current dateOfBirth: " + profile.getDateOfBirth());
-                System.out.println("   - Current avatarUrl: " + profile.getAvatarUrl());
-                System.out.println("   - Verified: " + profile.isVerified());
+                System.out.println("📋 Updating existing profile...");
             }
 
-            // Set AccountProfile fields: address, dateOfBirth, avatarUrl, nationalId
-            System.out.println("\n3. Setting new values...");
             profile.setAddress(address);
             profile.setDateOfBirth(dateOfBirth);
             profile.setNationalId(nationalId);
-            System.out.println("   - Address set: " + address);
-            System.out.println("   - DateOfBirth set: " + dateOfBirth);
-            System.out.println("   - NationalId set: " + nationalId);
 
             // Update avatar if new file was uploaded
-            if (avatarPath != null) {
-                System.out.println("\n4. Avatar uploaded:");
-                System.out.println("   - New avatar path: " + avatarPath);
-                profile.setAvatarUrl(avatarPath);
-            } else {
-                System.out.println("\n4. No new avatar uploaded");
-                if (!isNewProfile) {
-                    System.out.println("   - Keeping existing avatar: " + profile.getAvatarUrl());
+            if (avatarFileName != null) {
+                // Delete old avatar file if exists
+                String oldAvatar = profile.getAvatarUrl();
+                if (oldAvatar != null && !oldAvatar.isEmpty()) {
+                    deleteOldAvatar(oldAvatar);
                 }
+                profile.setAvatarUrl(avatarFileName);
+                System.out.println("✅ Avatar filename set in profile: " + avatarFileName);
             }
-            
-            System.out.println("\n5. Final Profile values (before save):");
-            System.out.println("   - Profile ID: " + profile.getProfileId());
-            System.out.println("   - Account ID: " + profile.getAccountId());
-            System.out.println("   - Address: " + profile.getAddress());
-            System.out.println("   - National ID: " + profile.getNationalId());
-            System.out.println("   - Date of Birth: " + profile.getDateOfBirth());
-            System.out.println("   - Avatar URL: " + profile.getAvatarUrl());
 
-            // Save to database - FIX: Only check isNewProfile, not profileId
             boolean success;
             if (isNewProfile) {
-                System.out.println("\n6. Calling profileDAO.insertProfile()...");
-                System.out.println("   - Operation: INSERT");
                 success = profileDAO.insertProfile(profile);
             } else {
-                System.out.println("\n6. Calling profileDAO.updateProfile()...");
-                System.out.println("   - Operation: UPDATE");
-                System.out.println("   - Updating profileId: " + profile.getProfileId());
                 success = profileDAO.updateProfile(profile);
             }
 
-            System.out.println("\n7. Database Operation Result:");
-            System.out.println("   - Operation: " + (isNewProfile ? "INSERT" : "UPDATE"));
-            System.out.println("   - Success: " + success);
-            
-            if (!success) {
-                System.err.println("❌ FAILED to " + (isNewProfile ? "insert" : "update") + " AccountProfile table!");
-            } else {
-                System.out.println("✅ AccountProfile table " + (isNewProfile ? "inserted" : "updated") + " successfully!");
-            }
-            System.out.println("=".repeat(50));
-
             if (success) {
-                System.out.println("\n" + "=".repeat(50));
-                System.out.println("========== FINAL SUCCESS ==========");
-                System.out.println("=".repeat(50));
+                System.out.println("✅ Profile " + (isNewProfile ? "created" : "updated") + " successfully");
                 
                 // Update session with new user data
                 UserDTO user = new UserDTO();
@@ -409,45 +302,30 @@ public class ChangeInformationServlet extends HttpServlet {
                 user.setAddress(address);
                 user.setNationalId(nationalId);
                 user.setDob(dobString);
-                user.setAvatar(profile.getAvatarUrl());
-                session.setAttribute("user", user);
                 
-                System.out.println("✅ Session updated with new user data:");
-                System.out.println("   - Full Name: " + user.getFullName());
-                System.out.println("   - Email: " + user.getEmail());
-                System.out.println("   - Phone: " + user.getPhone());
-                System.out.println("   - Address: " + user.getAddress());
-                System.out.println("   - National ID: " + user.getNationalId());
-                System.out.println("   - DOB: " + user.getDob());
-                System.out.println("   - Avatar: " + user.getAvatar());
-                System.out.println("\n✅ Redirecting to changeInformation with SUCCESS message");
-                System.out.println("=".repeat(50) + "\n");
+                // ✅ CHỈ LƯU TÊN FILE, KHÔNG CÓ THÊM "avatar/"
+                if (avatarFileName != null) {
+                    user.setAvatar(avatarFileName);
+                } else if (profile.getAvatarUrl() != null && !profile.getAvatarUrl().isEmpty()) {
+                    user.setAvatar(profile.getAvatarUrl());
+                }
+                
+                session.setAttribute("user", user);
+                System.out.println("✅ Session updated with new user data");
+                System.out.println("   - Avatar in session: " + user.getAvatar());
 
-                // Success message
                 session.setAttribute("successMessage", "Information updated successfully!");
+                System.out.println("✅ All operations completed successfully");
                 response.sendRedirect("changeInformation");
             } else {
-                System.err.println("\n" + "=".repeat(50));
-                System.err.println("========== FINAL FAILURE ==========");
-                System.err.println("=".repeat(50));
-                System.err.println("❌ Failed to update profile in database");
-                System.err.println("❌ Redirecting to changeInformation with ERROR message");
-                System.err.println("=".repeat(50) + "\n");
-                
+                System.err.println("❌ Failed to " + (isNewProfile ? "create" : "update") + " profile");
                 session.setAttribute("errorMessage", "Failed to update information. Please try again.");
                 response.sendRedirect("changeInformation");
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("\n" + "=".repeat(50));
-            System.err.println("❌ EXCEPTION in ChangeInformationServlet POST");
-            System.err.println("=".repeat(50));
-            System.err.println("Error message: " + e.getMessage());
-            System.err.println("Error class: " + e.getClass().getName());
-            System.err.println("Stack trace printed above");
-            System.err.println("=".repeat(50) + "\n");
-            
+            System.err.println("❌ Unexpected error: " + e.getMessage());
             session.setAttribute("errorMessage", "Unable to update information: " + e.getMessage());
             response.sendRedirect("changeInformation");
         }
@@ -455,55 +333,83 @@ public class ChangeInformationServlet extends HttpServlet {
 
     /**
      * Handle avatar file upload
+     * @return Only the filename (e.g., "avatar_123_1234567890.jpg")
      */
     private String handleAvatarUpload(Part filePart, Integer accountId) throws Exception {
-        System.out.println("\n--- handleAvatarUpload() ---");
+        // Get submitted filename and clean it
+        String submittedFileName = filePart.getSubmittedFileName();
+        if (submittedFileName == null || submittedFileName.isEmpty()) {
+            throw new Exception("No file selected");
+        }
         
-        // Get filename
-        String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-        System.out.println("Original filename: " + fileName);
-        
+        // Security: Get only the filename, remove any path
+        String fileName = Paths.get(submittedFileName).getFileName().toString();
+        System.out.println("   - Original filename: " + fileName);
+
         // Validate file extension
         if (!isValidFileExtension(fileName)) {
-            System.err.println("❌ Invalid file extension: " + fileName);
             throw new Exception("Invalid file type. Only JPG, PNG, and GIF are allowed.");
         }
-        System.out.println("✅ File extension valid");
-        
+
         // Validate file size
         if (filePart.getSize() > MAX_FILE_SIZE) {
-            System.err.println("❌ File size too large: " + filePart.getSize() + " bytes (max: " + MAX_FILE_SIZE + ")");
             throw new Exception("File size exceeds 2MB limit.");
         }
-        System.out.println("✅ File size valid: " + filePart.getSize() + " bytes");
         
-        // Generate unique filename
-        String fileExtension = fileName.substring(fileName.lastIndexOf("."));
-        String newFileName = "avatar_" + accountId + "_" + System.currentTimeMillis() + fileExtension;
-        System.out.println("New filename: " + newFileName);
-        
-        // Get upload path
-        String uploadPath = getServletContext().getRealPath("") + File.separator + UPLOAD_DIR;
-        File uploadDir = new File(uploadPath);
+        // Validate content type
+        String contentType = filePart.getContentType();
+        if (contentType == null || 
+            (!contentType.equals("image/jpeg") && 
+             !contentType.equals("image/png") && 
+             !contentType.equals("image/gif"))) {
+            throw new Exception("Invalid content type: " + contentType);
+        }
+
+        // Generate new unique filename
+        String extension = fileName.substring(fileName.lastIndexOf('.'));
+        String newFileName = "avatar_" + accountId + "_" + System.currentTimeMillis() + extension;
+        System.out.println("   - Generated filename: " + newFileName);
+
+        // Ensure upload directory exists
+        File uploadDir = new File(UPLOAD_DIR);
         if (!uploadDir.exists()) {
             uploadDir.mkdirs();
-            System.out.println("Created upload directory: " + uploadPath);
         }
-        
-        // Save file
-        Path filePath = Paths.get(uploadPath, newFileName);
-        System.out.println("Saving to: " + filePath.toString());
-        
+
+        // Save file to disk
+        Path filePath = Paths.get(UPLOAD_DIR, newFileName);
         try (InputStream fileContent = filePart.getInputStream()) {
             Files.copy(fileContent, filePath, StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("✅ File saved successfully");
+        }
+
+        // Verify file was saved
+        File savedFile = filePath.toFile();
+        if (!savedFile.exists()) {
+            throw new Exception("File was not saved successfully");
         }
         
-        // Return relative path for storing in database
-        String relativePath = UPLOAD_DIR + "/" + newFileName;
-        System.out.println("Relative path for DB: " + relativePath);
+        System.out.println("✅ File saved to: " + filePath.toString());
+        System.out.println("   - File size on disk: " + savedFile.length() + " bytes");
         
-        return relativePath;
+        // Return ONLY the filename
+        return newFileName;
+    }
+
+    /**
+     * Delete old avatar file
+     */
+    private void deleteOldAvatar(String fileName) {
+        try {
+            Path filePath = Paths.get(UPLOAD_DIR, fileName);
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+                System.out.println("🗑️ Old avatar deleted: " + fileName);
+            } else {
+                System.out.println("ℹ️ Old avatar file not found: " + fileName);
+            }
+        } catch (IOException e) {
+            System.err.println("⚠️ Failed to delete old avatar: " + e.getMessage());
+        }
     }
 
     /**
@@ -520,133 +426,81 @@ public class ChangeInformationServlet extends HttpServlet {
     }
 
     /**
-     * Check if date of birth is at least 18 years old
+     * Check if user is at least 18 years old
      */
     private boolean isAtLeast18YearsOld(LocalDate dateOfBirth) {
         LocalDate today = LocalDate.now();
         Period period = Period.between(dateOfBirth, today);
-        int years = period.getYears();
-        System.out.println("Age calculation: " + years + " years old");
-        return years >= 18;
+        return period.getYears() >= 18;
     }
 
     /**
-     * Get account ID from session
-     */
-    private Integer getAccountIdFromSession(HttpSession session) {
-        if (session != null && session.getAttribute("accountId") != null) {
-            return (Integer) session.getAttribute("accountId");
-        }
-        return null;
-    }
-
-    /**
-     * Validate all input parameters
+     * Validate all input fields
      */
     private String validateInput(String fullName, String email, String phone, 
                                  String address, String nationalId, String dob) {
         
-        // Validate full name
-        if (fullName == null || fullName.trim().isEmpty()) {
-            System.out.println("❌ Full name is empty");
-            return "Full name is required.";
-        }
-        if (fullName.trim().length() < 2) {
-            System.out.println("❌ Full name too short: " + fullName.trim().length() + " chars");
+        if (fullName == null || fullName.trim().isEmpty() || fullName.trim().length() < 2) {
             return "Full name must be at least 2 characters.";
         }
-        System.out.println("✅ Full name valid");
         
-        // Validate email
-        if (email == null || email.trim().isEmpty()) {
-            System.out.println("❌ Email is empty");
-            return "Email is required.";
+        if (fullName.trim().length() > 50) {
+            return "Full name must not exceed 50 characters.";
         }
-        if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-            System.out.println("❌ Email format invalid: " + email);
+        
+        if (email == null || email.trim().isEmpty() || !email.matches("^[\\w._%+-]+@[\\w.-]+\\.[A-Za-z]{2,}$")) {
             return "Invalid email format.";
         }
-        System.out.println("✅ Email valid");
         
-        // Validate phone (optional but if provided must be valid)
+        if (email.trim().length() > 100) {
+            return "Email must not exceed 100 characters.";
+        }
+        
+        // Phone is optional, but if provided must be valid
         if (phone != null && !phone.trim().isEmpty()) {
             if (!phone.matches("^[0-9]{10,11}$")) {
-                System.out.println("❌ Phone format invalid: " + phone);
                 return "Phone number must be 10-11 digits.";
             }
-            System.out.println("✅ Phone valid");
-        } else {
-            System.out.println("ℹ️ Phone is empty (optional)");
         }
         
-        // Validate address
-        if (address == null || address.trim().isEmpty()) {
-            System.out.println("❌ Address is empty");
-            return "Address is required.";
-        }
-        if (address.trim().length() < 5) {
-            System.out.println("❌ Address too short: " + address.trim().length() + " chars");
+        if (address == null || address.trim().isEmpty() || address.trim().length() < 5) {
             return "Address must be at least 5 characters.";
         }
-        System.out.println("✅ Address valid");
         
-        // Validate national ID
-        if (nationalId == null || nationalId.trim().isEmpty()) {
-            System.out.println("❌ National ID is empty");
-            return "National ID is required.";
+        if (address.trim().length() > 200) {
+            return "Address must not exceed 200 characters.";
         }
-        if (!nationalId.matches("^[0-9]{9,12}$")) {
-            System.out.println("❌ National ID format invalid: " + nationalId);
+        
+        if (nationalId == null || nationalId.trim().isEmpty() || !nationalId.matches("^[0-9]{9,12}$")) {
             return "National ID must be 9-12 digits.";
         }
-        System.out.println("✅ National ID valid");
         
-        // Validate date of birth
         if (dob == null || dob.trim().isEmpty()) {
-            System.out.println("❌ DOB is empty");
             return "Date of birth is required.";
         }
-        System.out.println("✅ DOB valid");
         
-        return null; // All validations passed
+        return null; // No errors
     }
 
-    /**
-     * Handle error by setting error message and redirecting
-     */
-    private void handleError(HttpServletRequest request, HttpServletResponse response, String message) 
-            throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        session.setAttribute("errorMessage", message);
-        System.err.println("⚠️ Handling error: " + message);
-        response.sendRedirect("changeInformation");
-    }
-
-    /**
-     * Returns a short description of the servlet
-     */
     @Override
     public String getServletInfo() {
         return "Servlet for changing user information with avatar upload support";
     }
     
     /**
-     * Inner class for user data transfer between Servlet and JSP
-     * Maps data from Account and AccountProfile tables
+     * Data Transfer Object for user information
      */
     public static class UserDTO implements java.io.Serializable {
-        // From Account table
+        private static final long serialVersionUID = 1L;
+        
         private String fullName;
         private String email;
         private String phone;
-        
-        // From AccountProfile table
         private String address;
         private String nationalId;
-        private String dob;  // dateOfBirth as String
-        private String avatar;  // avatarUrl
+        private String dob;
+        private String avatar; // CHỈ LƯU TÊN FILE
 
-        // Getters and Setters
         public String getFullName() { return fullName; }
         public void setFullName(String fullName) { this.fullName = fullName; }
         

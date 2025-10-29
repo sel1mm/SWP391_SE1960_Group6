@@ -29,7 +29,7 @@ public class ChangePasswordServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
     // Password requirements constants
-    private static final int MIN_PASSWORD_LENGTH = 8;
+    private static final int MIN_PASSWORD_LENGTH = 6;
     private static final int MAX_PASSWORD_LENGTH = 128;
     
     // Session attribute names
@@ -379,20 +379,24 @@ public class ChangePasswordServlet extends HttpServlet {
         }
         
         // Check for uppercase letter
-        if (!newPassword.matches(".*[A-Z].*")) {
-            return new ValidationResult(false, "Password must contain at least one uppercase letter.");
-        }
+      
         
         // Check for lowercase letter
-        if (!newPassword.matches(".*[a-z].*")) {
-            return new ValidationResult(false, "Password must contain at least one lowercase letter.");
-        }
+
         
         // Check for digit
         if (!newPassword.matches(".*\\d.*")) {
             return new ValidationResult(false, "Password must contain at least one number.");
         }
-        
+        if (newPassword.matches(".*\\s.*")) {
+    return new ValidationResult(false, "Password must not contain spaces.");
+}
+
+// ✅ Check that it includes at least one letter and one number (not all symbols)
+// ✅ Check that it includes at least one letter OR one number
+if (!(newPassword.matches(".*[A-Za-z].*") || newPassword.matches(".*\\d.*"))) {
+    return new ValidationResult(false, "Password must include at least one letter or number.");
+}
         // Check for common weak passwords
         if (isCommonPassword(newPassword)) {
             return new ValidationResult(false, "This password is too common. Please choose a stronger password.");

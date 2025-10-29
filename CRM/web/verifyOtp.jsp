@@ -163,7 +163,7 @@
         </style>
     </head>
     <body>
-        <a href="home" class="brand-logo">
+        <a href="home.jsp" class="brand-logo">
             <i class="fas fa-laptop"></i>CRMS
         </a>
 
@@ -178,8 +178,7 @@
                     <i class="fas fa-exclamation-triangle"></i> ${error}
                 </div>
             </c:if>
-
-            <form method="post" action="verifyOtp">
+            <form action="${pageContext.request.contextPath}/verifyOtp" method="post">
                 <div class="form-group">
                     <label for="otp" class="form-label-modern">
                         <i></i> Mã OTP
@@ -206,7 +205,7 @@
                 </button>
             </form>
 
-            <form method="post" action="resendOtp" id="resendForm">
+            <form method="post" action="${pageContext.request.contextPath}/resendOtp" id="resendForm">
                 <button type="submit" class="btn btn-resend" id="resendBtn" disabled>
                     <i class="fas fa-paper-plane"></i> Gửi lại OTP (<span id="countdown">60</span>s)
                 </button>

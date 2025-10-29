@@ -77,10 +77,10 @@ public class TechnicianTaskServlet extends HttpServlet {
             int pageSize = Math.min(parseInt(req.getParameter("pageSize"), 10), 100);
             
             WorkTaskDAO taskDAO = new WorkTaskDAO();
-            List<WorkTask> tasks = taskDAO.findByTechnicianId(technicianId, searchQuery, statusFilter, page, pageSize);
-            int totalTasks = taskDAO.getTaskCountForTechnician(technicianId, statusFilter);
+            List<WorkTaskDAO.WorkTaskWithCustomer> tasksWithCustomer = taskDAO.findByTechnicianIdWithCustomer(technicianId, searchQuery, statusFilter, page, pageSize);
+            int totalTasks = taskDAO.getTaskCountForTechnicianWithCustomer(technicianId, statusFilter);
             
-            req.setAttribute("tasks", tasks);
+            req.setAttribute("tasksWithCustomer", tasksWithCustomer);
             req.setAttribute("totalTasks", totalTasks);
             req.setAttribute("currentPage", page);
             req.setAttribute("pageSize", pageSize);

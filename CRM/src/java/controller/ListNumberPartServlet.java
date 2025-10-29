@@ -29,6 +29,8 @@ public class ListNumberPartServlet extends HttpServlet {
         
         // Kiểm tra đăng nhập
         HttpSession session = request.getSession();
+        session.removeAttribute("successMessage");
+    session.removeAttribute("errorMessage");
         Account acc = (Account) session.getAttribute("session_login");
         if (acc == null) {
             response.sendRedirect("login");
@@ -49,7 +51,8 @@ public class ListNumberPartServlet extends HttpServlet {
         
         HttpSession session = request.getSession();
         Account acc = (Account) session.getAttribute("session_login");
-        
+        session.removeAttribute("successMessage");
+    session.removeAttribute("errorMessage");
         // Kiểm tra đăng nhập
         if (acc == null) {
             response.sendRedirect("login");

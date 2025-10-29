@@ -17,18 +17,15 @@
 <div class="container-fluid">
   <div class="row">
     <aside class="col-12 col-md-3 col-lg-2 p-0 crm-sidebar">
-      <div class="d-flex flex-column p-3 nav-compact">
-        <div class="d-flex align-items-center mb-3">
-          <i class="bi bi-tools me-2"></i>
-          <strong>Technician</strong>
-        </div>
+      <div class="d-flex flex-column p-4">
+        <h4 class="text-center mb-4 text-white"><i class="bi bi-tools"></i> Technician</h4>
         <ul class="nav nav-pills flex-column mb-auto">
-          <li class="nav-item"><a href="${contextPath}/technician/dashboard" class="nav-link text-dark ${activePage == 'dashboard' ? 'active' : ''}"><i class="bi bi-grid me-2"></i>Dashboard</a></li>
-          <li><a href="${contextPath}/technician/tasks" class="nav-link text-dark ${activePage == 'tasks' ? 'active' : ''}"><i class="bi bi-list-task me-2"></i>My Tasks</a></li>
-          <li><a href="${contextPath}/technician/reports" class="nav-link text-dark ${activePage == 'reports' ? 'active' : ''}"><i class="bi bi-clipboard-plus me-2"></i>Repair Reports</a></li>
-          <li><a href="${contextPath}/technician/contracts" class="nav-link text-dark ${activePage == 'contracts' ? 'active' : ''}"><i class="bi bi-file-earmark-text me-2"></i>Contracts</a></li>
-          <li><a href="${contextPath}/technician/contracts?action=equipment" class="nav-link text-dark ${activePage == 'equipment' ? 'active' : ''}"><i class="bi bi-gear me-2"></i>Equipment</a></li>
-          <li><a href="${contextPath}/technician/work-history" class="nav-link text-dark ${activePage == 'work' ? 'active' : ''}"><i class="bi bi-clock-history me-2"></i>Work History</a></li>
+          <li class="nav-item"><a href="${contextPath}/technician/dashboard" class="nav-link ${activePage == 'dashboard' ? 'active' : ''}"><i class="bi bi-grid me-2"></i>Dashboard</a></li>
+          <li><a href="${contextPath}/technician/tasks" class="nav-link ${activePage == 'tasks' ? 'active' : ''}"><i class="bi bi-list-task me-2"></i>My Tasks</a></li>
+          <li><a href="${contextPath}/technician/reports" class="nav-link ${activePage == 'reports' ? 'active' : ''}"><i class="bi bi-clipboard-plus me-2"></i>Repair Reports</a></li>
+          <li><a href="${contextPath}/technician/contracts" class="nav-link ${activePage == 'contracts' ? 'active' : ''}"><i class="bi bi-file-earmark-text me-2"></i>Contracts</a></li>
+          <li><a href="${contextPath}/technician/contracts?action=equipment" class="nav-link ${activePage == 'equipment' ? 'active' : ''}"><i class="bi bi-gear me-2"></i>Equipment</a></li>
+          <li><a href="${contextPath}/technician/work-history" class="nav-link ${activePage == 'work' ? 'active' : ''}"><i class="bi bi-clock-history me-2"></i>Work History</a></li>
         </ul>
       </div>
     </aside>
@@ -43,7 +40,7 @@
                 <i class="bi bi-person-circle me-2"></i> <span>Technician</span>
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                <li><a class="dropdown-item" href="${contextPath}/manageProfile.jsp">Profile</a></li>
+                <li><a class="dropdown-item" href="${contextPath}/manageProfile">Profile</a></li>
                 <li><a class="dropdown-item" href="#">Settings</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="${contextPath}/logout">Logout</a></li>

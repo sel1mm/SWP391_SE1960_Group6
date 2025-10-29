@@ -89,4 +89,8 @@ public class AccountRoleService {
     public Response<Boolean> removeAllRolesFromAccount(int accountId) {
         return accountRoleDAO.removeAllRolesFromAccount(accountId);
     }
+    
+    public Response<java.util.Map<Integer, List<model.Role>>> getRolesForAccounts(List<Integer> accountIds) {
+        return accountRoleDAO.getRolesForAccounts(accountIds);
+    }
 }

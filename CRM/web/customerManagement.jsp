@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%> 
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html>
     <head>
@@ -16,6 +17,10 @@
                 min-height: 100vh;
                 background-color: #111;
                 color: #fff;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between; 
+                padding-bottom: 20px;
             }
 
             .sidebar h4 {
@@ -127,6 +132,18 @@
                 border-color: #28a745;
             }
 
+            .logout-section .btn-outline-light {
+                border: 1px solid rgba(255,255,255,0.4);
+                color: #fff;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            }
+
+            .logout-section .btn-outline-light:hover {
+                background-color: #fff;
+                color: #000;
+                border-color: #fff;
+            }
 
         </style>
     </head>
@@ -134,20 +151,46 @@
         <div class="container-fluid">
             <div class="row">
                 <!-- Sidebar -->
-                <div class="col-md-2 sidebar p-4">
-                    <h4 class="text-center mb-4"><i class="fas fa-cogs"></i> Quản lý</h4>
-                    <nav class="nav flex-column">
-                        <c:if test="${sessionScope.session_role eq 'Admin' || sessionScope.session_role eq 'Customer Support Staff'}">
-                            <a class="nav-link ${currentPage eq 'dashboard' ? 'fw-bold bg-white text-dark' : ''}" href="dashboard.jsp">
-                                <i class="fas fa-tachometer-alt me-2"></i> Trang chủ
+                <div class="col-md-2 sidebar p-4 d-flex flex-column">
+                    <div>
+                        <h4 class="text-center mb-4">
+                            <i class="fas fa-cogs"></i> CRM CSS
+                        </h4>
+                        <nav class="nav flex-column">
+                            <c:if test="${sessionScope.session_role eq 'Admin' || sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a class="nav-link ${currentPage eq 'dashboard' ? 'fw-bold bg-white text-dark' : ''}" href="dashboard.jsp">
+                                    <i class="fas fa-palette me-2"></i> Trang chủ
+                                </a>
                             </c:if>
+
                             <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
                                 <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="customerManagement">
                                     <i class="fas fa-users me-2"></i> Quản lý khách hàng
                                 </a>
                             </c:if>
-                    </nav>
+                            
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="viewCustomerRequest">
+                                    <i class="fas fa-clipboard-list"></i> Quản lý yêu cầu
+                                </a>
+                            </c:if>
+
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a  href="manageProfile" class="nav-link ${currentPage eq 'profile' ? 'fw-bold bg-white text-dark' : ''}">
+                                    <i class="fas fa-user-circle me-2"></i><span> Hồ Sơ</span>
+                                </a>
+                            </c:if>
+                        </nav>
+                    </div>
+
+                    <div class="mt-auto logout-section text-center">
+                        <hr style="border-color: rgba(255,255,255,0.2);">
+                        <button class="btn btn-outline-light w-100" onclick="logout()" style="border-radius: 10px;">
+                            <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                        </button>
+                    </div>
                 </div>
+
 
                 <div class="col-md-10 main-content p-4">
                     <c:if test="${not empty sessionScope.message}">
@@ -162,9 +205,6 @@
                         <h2><i class="fas fa-users text-dark"></i> Quản Lý Khách Hàng</h2>
                         <div class="d-flex align-items-center">
                             <span class="me-3">Xin chào, <strong>${sessionScope.session_login.username}</strong></span>
-                            <button class="btn btn-outline-dark" onclick="logout()">
-                                <i class="fas fa-sign-out-alt"></i> Đăng Xuất
-                            </button>
                         </div>
                     </div>
 
@@ -305,6 +345,94 @@
                                 </table>
                             </div>
                         </div>
+
+                        <c:if test="${totalPages >= 1}">
+                            <nav aria-label="Page navigation" class="mt-4">
+                                <ul class="pagination justify-content-center">
+
+                                    <!-- Nút TRƯỚC -->
+                                    <li class="page-item ${currentPageNumber <= 1 ? 'disabled' : ''}">
+                                        <c:choose>
+                                            <c:when test="${currentPageNumber > 1}">
+                                                <c:url var="prevUrl" value="customerManagement">
+                                                    <c:param name="page" value="${currentPageNumber - 1}" />
+                                                    <c:param name="action" value="search" />
+                                                    <c:if test="${not empty param.searchName}">
+                                                        <c:param name="searchName" value="${fn:trim(param.searchName)}" />
+                                                    </c:if>
+                                                    <c:if test="${not empty param.status}">
+                                                        <c:param name="status" value="${fn:trim(param.status)}" />
+                                                    </c:if>
+                                                </c:url>
+                                                <a class="page-link" href="${prevUrl}">
+                                                    <i class="fas fa-chevron-left"></i> Trước
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="page-link"><i class="fas fa-chevron-left"></i> Trước</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </li>
+
+                                    <!-- Các trang -->
+                                    <c:forEach var="i" begin="1" end="${totalPages}">
+                                        <li class="page-item ${i == currentPageNumber ? 'active' : ''}">
+                                            <c:choose>
+                                                <c:when test="${i != currentPageNumber}">
+                                                    <c:url var="pageUrl" value="customerManagement">
+                                                        <c:param name="page" value="${i}" />
+                                                        <c:param name="action" value="search" />
+                                                        <c:if test="${not empty param.searchName}">
+                                                            <c:param name="searchName" value="${fn:trim(param.searchName)}" />
+                                                        </c:if>
+                                                        <c:if test="${not empty param.status}">
+                                                            <c:param name="status" value="${fn:trim(param.status)}" />
+                                                        </c:if>
+                                                    </c:url>
+                                                    <a class="page-link" href="${pageUrl}">${i}</a>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="page-link">${i}</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </li>
+                                    </c:forEach>
+
+                                    <!-- Nút TIẾP -->
+                                    <li class="page-item ${currentPageNumber >= totalPages ? 'disabled' : ''}">
+                                        <c:choose>
+                                            <c:when test="${currentPageNumber < totalPages}">
+                                                <c:url var="nextUrl" value="customerManagement">
+                                                    <c:param name="page" value="${currentPageNumber + 1}" />
+                                                    <c:param name="action" value="search" />
+                                                    <c:if test="${not empty param.searchName}">
+                                                        <c:param name="searchName" value="${fn:trim(param.searchName)}" />
+                                                    </c:if>
+                                                    <c:if test="${not empty param.status}">
+                                                        <c:param name="status" value="${fn:trim(param.status)}" />
+                                                    </c:if>
+                                                </c:url>
+                                                <a class="page-link" href="${nextUrl}">
+                                                    Tiếp <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="page-link">Tiếp <i class="fas fa-chevron-right"></i></span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                    </li>
+                                </ul>
+                            </nav>
+
+                            <!-- Thông tin trang -->
+                            <div class="text-center text-muted mb-3">
+                                <small>
+                                    Trang <strong>${currentPageNumber}</strong> / <strong>${totalPages}</strong> |
+                                    Hiển thị <strong>${fn:length(userList)}</strong> người dùng
+                                </small>
+                            </div>
+                        </c:if>
+
                     </div>
 
 
@@ -436,6 +564,7 @@
             </div>
         </form>
     </div>
+    
 </div>
                   
 

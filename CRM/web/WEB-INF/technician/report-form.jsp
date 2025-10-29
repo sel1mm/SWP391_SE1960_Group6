@@ -68,11 +68,45 @@
             <c:if test="${not empty report}">
               <input type="hidden" name="reportId" value="${report.reportId}">
             </c:if>
-            <input type="hidden" name="requestId" value="${not empty report ? report.requestId : (requestId != null ? requestId : '')}">
+            <c:choose>
+              <c:when test="${not empty report}">
+                <!-- Edit mode: show existing request ID as readonly -->
+                <input type="hidden" name="requestId" value="${report.requestId}">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="requestIdDisplay" class="form-label fw-bold">Request ID</label>
+                      <input type="text" class="form-control" id="requestIdDisplay" 
+                             value="<c:choose><c:when test='${report.requestId != null}'>#${report.requestId}</c:when><c:otherwise>General Report</c:otherwise></c:choose>" readonly>
+                    </div>
+                  </div>
+              </c:when>
+              <c:otherwise>
+                <!-- Create mode: show dropdown for assigned tasks -->
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="requestId" class="form-label fw-bold">Select Task <span class="text-danger">*</span></label>
+                      <select class="form-select" id="requestId" name="requestId" required>
+                        <option value="">-- Select a task to report on --</option>
+                        <c:forEach var="task" items="${assignedTasks}">
+                          <option value="${task.requestId}" 
+                                  <c:if test="${requestId != null && requestId == task.requestId}">selected</c:if>>
+                            #${task.requestId} - ${task.taskType} (${task.status})
+                          </option>
+                        </c:forEach>
+                      </select>
+                      <div class="form-text">Only tasks assigned to you and not completed are shown</div>
+                      <div class="invalid-feedback" id="requestIdError"></div>
+                    </div>
+                  </div>
+              </c:otherwise>
+            </c:choose>
             
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
+<<<<<<< HEAD
                   <label for="requestIdDisplay" class="form-label fw-bold">Request ID</label>
                   <input type="text" class="form-control" id="requestIdDisplay" 
                          value="<c:choose><c:when test='${not empty report}'><c:choose><c:when test='${report.requestId != null}'>#${report.requestId}</c:when><c:otherwise>General Report</c:otherwise></c:choose></c:when><c:otherwise><c:choose><c:when test='${requestId != null}'>#${requestId}</c:when><c:otherwise>General Report</c:otherwise></c:choose></c:otherwise></c:choose>" readonly>
@@ -80,6 +114,8 @@
               </div>
               <div class="col-md-6">
                 <div class="mb-3">
+=======
+>>>>>>> main
                   <label for="quotationStatus" class="form-label fw-bold">Quotation Status</label>
                   <input type="text" class="form-control" id="quotationStatus" 
                          value="${not empty report ? report.quotationStatus : 'Pending'}" readonly>
@@ -190,6 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const diagnosisField = document.getElementById('diagnosis');
     const estimatedCostField = document.getElementById('estimatedCost');
     const repairDateField = document.getElementById('repairDate');
+    const requestIdField = document.getElementById('requestId');
     
     // Character counters
     function updateCharCount(field, counterId) {
@@ -217,6 +254,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Clear previous validation
         clearValidation();
+        
+        // Validate request ID (only for create mode)
+        if (requestIdField) {
+            const requestIdValidation = validateRequestId(requestIdField.value);
+            if (!requestIdValidation.isValid) {
+                showFieldError(requestIdField, 'requestIdError', requestIdValidation.error);
+                isValid = false;
+                if (!firstError) firstError = requestIdValidation.error;
+            }
+        }
         
         // Validate details
         const detailsValidation = validateDetails(detailsField.value);
@@ -314,6 +361,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Validation functions matching server-side rules
+    function validateRequestId(value) {
+        if (!value || !value.trim()) {
+            return { isValid: false, error: 'Please select a task to report on' };
+        }
+        return { isValid: true };
+    }
+    
     function validateDetails(value) {
         if (!value || !value.trim()) {
             return { isValid: false, error: 'Details is required' };
@@ -406,7 +460,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function getExampleText(errorMessage) {
-        if (errorMessage.includes('Details')) {
+        if (errorMessage.includes('task') || errorMessage.includes('select')) {
+            return '<strong>Example:</strong> Select a task from the dropdown list';
+        } else if (errorMessage.includes('Details')) {
             return '<strong>Example:</strong> Equipment malfunction, replaced faulty component';
         } else if (errorMessage.includes('Diagnosis')) {
             return '<strong>Example:</strong> Motor overheating due to worn bearings';

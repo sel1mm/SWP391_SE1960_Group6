@@ -89,7 +89,7 @@
                 <a class="btn btn-secondary" href="${pageContext.request.contextPath}/technician/work-history">
                   <i class="bi bi-clock-history me-2"></i>Work History
                 </a>
-                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/manageProfile.jsp">
+                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/manageProfile">
                   <i class="bi bi-person me-2"></i>My Profile
                 </a>
               </div>
@@ -101,32 +101,6 @@
     
     <div class="col-lg-4">
       <div class="card crm-card-shadow">
-        <div class="card-header">
-          <h5 class="mb-0">System Status</h5>
-        </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <span>Database Connection</span>
-              <span class="badge bg-success">Active</span>
-            </div>
-          </div>
-          <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <span>System Status</span>
-              <span class="badge bg-success">Online</span>
-            </div>
-          </div>
-          <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <span>Last Login</span>
-              <small class="text-muted">Just now</small>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card crm-card-shadow mt-3">
         <div class="card-header">
           <h5 class="mb-0">Help & Support</h5>
         </div>

@@ -20,20 +20,71 @@
 
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: #f5f7fa;
+            background: linear-gradient(135deg, #1a1d23 0%, #2d3748 50%, #1a1d23 100%);
             min-height: 100vh;
             padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(33, 37, 41, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(33, 37, 41, 0.2) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* Back to Dashboard Button - moved to header */
+        .btn-dashboard {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-dashboard:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-3px);
+        }
+
+        .btn-dashboard i {
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-dashboard:hover i {
+            transform: translateX(-3px);
         }
 
         .profile-container {
             background: white;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             max-width: 1100px;
             width: 100%;
             margin: 0 auto;
             overflow: hidden;
             animation: slideUp 0.6s ease-out;
+            position: relative;
+            z-index: 1;
         }
 
         @keyframes slideUp {
@@ -47,14 +98,12 @@
             }
         }
 
-
         /* Header Section */
         .profile-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #212529 0%, #343a40 100%);
             padding: 40px;
             color: white;
         }
-
 
         .header-content {
             display: flex;
@@ -116,15 +165,15 @@
         }
 
         .info-item:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            border-color: #212529;
+            box-shadow: 0 4px 12px rgba(33, 37, 41, 0.15);
             transform: translateY(-2px);
         }
 
         .info-icon {
             width: 42px;
             height: 42px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #212529 0%, #343a40 100%);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -173,7 +222,7 @@
             width: 160px;
             height: 160px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #212529 0%, #343a40 100%);
             border: 5px solid white;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             display: flex;
@@ -186,7 +235,6 @@
             overflow: hidden;
         }
 
-        /* ✅ THÊM - CSS cho avatar image */
         .avatar-preview img {
             width: 100%;
             height: 100%;
@@ -254,24 +302,24 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #212529 0%, #343a40 100%);
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px rgba(33, 37, 41, 0.4);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+            box-shadow: 0 6px 20px rgba(33, 37, 41, 0.5);
         }
 
         .btn-secondary {
             background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
+            color: #212529;
+            border: 2px solid #212529;
         }
 
         .btn-secondary:hover {
-            background: #667eea;
+            background: #212529;
             color: white;
             transform: translateY(-2px);
         }
@@ -301,7 +349,7 @@
         .stat-value {
             font-size: 24px;
             font-weight: 700;
-            color: #667eea;
+            color: #212529;
             margin-bottom: 4px;
         }
 
@@ -346,10 +394,48 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+
+            .btn-dashboard {
+                padding: 10px 18px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
 <body>
+ <!-- Xác định dashboard URL dựa trên role -->
+<c:choose>
+    <c:when test="${sessionScope.session_role == 'admin'}">
+        <c:set var="dashboardUrl" value="admin" />
+    </c:when>
+    <c:when test="${sessionScope.session_role == 'Technical Manager'}">
+        <c:set var="dashboardUrl" value="technicalManagerApproval" />
+    </c:when>
+    <c:when test="${sessionScope.session_role == 'Customer Support Staff'}">
+        <c:set var="dashboardUrl" value="dashboard.jsp" />
+    </c:when>
+    <c:when test="${sessionScope.session_role == 'Storekeeper'}">
+        <c:set var="dashboardUrl" value="storekeeper" />
+    </c:when>
+    <c:when test="${sessionScope.session_role == 'Technician'}">
+        <c:set var="dashboardUrl" value="technician/dashboard" />
+    </c:when>
+    <c:when test="${sessionScope.session_role == 'customer'}">
+        <c:set var="dashboardUrl" value="managerServiceRequest" />
+    </c:when>
+    <c:otherwise>
+        <c:set var="dashboardUrl" value="home.jsp" />
+    </c:otherwise>
+</c:choose>
+
+<!-- Back to Dashboard Button -->
+<div class="dashboard-nav">
+    <a href="${dashboardUrl}" class="btn-dashboard">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+    </a>
+</div>
+
     <div class="profile-container">
         <!-- Header -->
         <div class="profile-header">
@@ -489,7 +575,6 @@
                             </div>
                         </div>
 
-
                         <div class="info-item">
                             <div class="info-icon">
                                 <i class="fas fa-calendar"></i>
@@ -511,15 +596,13 @@
                     </div>
                 </div>
 
-
                 <!-- Right Side - Avatar & Actions -->
                 <div class="avatar-section">
                     <div class="avatar-wrapper">
                         <div class="avatar-preview">
-                            <!-- ✅ SỬA - Hiển thị ảnh avatar hoặc chữ cái đầu -->
                             <c:choose>
                                 <c:when test="${not empty accountProfile and not empty accountProfile.avatarUrl}">
-                                    <img src="${accountProfile.avatarUrl}" alt="Avatar">
+                                    <img src="${pageContext.request.contextPath}/avatar/${accountProfile.avatarUrl}" alt="Avatar">
                                 </c:when>
                                 <c:otherwise>
                                     <c:choose>

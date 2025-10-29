@@ -420,37 +420,62 @@
     <body>
         <!-- Navigation -->
         <nav class="navbar">
-    <div class="nav-container">
-        <div class="logo">CRM System</div>
-        <div class="nav-links">
-            <a href="index.jsp">Trang chủ</a>
-            <a href="#features">Tính năng</a>
-            <a href="#contact">Liên hệ</a>
+            <div class="nav-container">
+                <div class="logo">CRM System</div>
+                <div class="nav-links">
+                    <a href="index.jsp">Trang chủ</a>
+                    <a href="#features">Tính năng</a>
+                    <a href="#contact">Liên hệ</a>
 
-            <% 
-                model.Account acc = (model.Account) session.getAttribute("session_login");
-                if (acc == null) { 
-            %>
-                <!-- Nếu chưa đăng nhập -->
-                <a href="login" class="btn-login">Đăng nhập</a>
-            <% 
-                } else { 
-            %>
-                <!-- Nếu đã đăng nhập -->
-                <a href="#" style="color: white; font-size: 15px; text-decoration: none;">
-                    👋 Xin chào, <strong><%= acc.getUsername() %></strong>
-                </a>
-                <a href="logout" 
-                   class="btn-login" 
-                   style="background: rgba(255,255,255,0.2); text-decoration: none;">
-                    Đăng xuất
-                </a>
-            <% 
-                } 
-            %>
-        </div>
-    </div>
-</nav>
+                    <% 
+    model.Account acc = (model.Account) session.getAttribute("session_login");
+    if (acc == null) { 
+                    %>
+                    <a href="login" class="btn-login">Đăng nhập</a>
+                    <% 
+                        } else { 
+                            // ✅ Lấy role từ session thay vì từ Account
+                            String userRole = (String) session.getAttribute("session_role");
+                            String dashboardLink = "#";
+
+                            // Xác định link Dashboard theo role
+                            if ("admin".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "admin.jsp";
+                            } else if ("Technical Manager".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "technicalManagerApproval";
+                            } else if ("Customer Support Staff".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "dashboard.jsp";
+                            } else if ("Storekeeper".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "storekeeper";
+                            } else if ("Technician".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "technician/dashboard";
+                            } else if ("customer".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "managerServiceRequest";
+                            } else {
+                                dashboardLink = "home.jsp";
+                            }
+                    %>
+                    <!-- Nếu đã đăng nhập -->
+                    <a href="#" style="color: white; font-size: 15px; text-decoration: none;">
+                        👋 Xin chào, <strong><%= acc.getUsername() %></strong>
+                    </a>
+
+                    <!-- Nút Dashboard -->
+                    <a href="<%= dashboardLink %>" class="btn-login" style="background: rgba(255,255,255,0.2); text-decoration: none;">
+                        📊 Dashboard
+                    </a>
+
+                    <!-- Nút Đăng xuất -->
+                    <a href="logout" class="btn-login" style="background: rgba(255,255,255,0.2); text-decoration: none;">
+                        Đăng xuất
+                    </a>
+                    <% 
+                        } 
+                    %>
+
+                </div>
+            </div>
+        </nav>
 
 
         <!-- Hero Section -->

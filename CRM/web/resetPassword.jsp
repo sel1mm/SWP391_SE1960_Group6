@@ -138,7 +138,7 @@
         </style>
     </head>
     <body>
-        <a href="home" class="brand-logo">
+        <a href="home.jsp" class="brand-logo">
             <i class="fas fa-laptop"></i>CRMS
         </a>
 

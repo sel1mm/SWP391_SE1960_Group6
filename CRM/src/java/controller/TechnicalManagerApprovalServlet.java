@@ -164,133 +164,193 @@ public class TechnicalManagerApprovalServlet extends HttpServlet {
     /**
      * Handle history view functionality for technical managers
      */
-    private void handleHistory(HttpServletRequest request, HttpServletResponse response, int managerId)
-            throws ServletException, IOException, SQLException {
+  private void handleHistory(HttpServletRequest request, HttpServletResponse response, int managerId)
+        throws ServletException, IOException, SQLException {
 
-        // Get all requests history for technical managers
-        List<ServiceRequest> requests = serviceRequestDAO.getAllRequestsHistory();
+    // Lấy tất cả yêu cầu lịch sử
+    List<ServiceRequest> allRequests = serviceRequestDAO.getAllRequestsHistory();
 
-        // Get statistics
-        int totalRequests = requests.size();
-        int approvedCount = (int) requests.stream().filter(req -> "Approved".equals(req.getStatus())).count();
-        int rejectedCount = (int) requests.stream().filter(req -> "Rejected".equals(req.getStatus())).count();
-        int pendingCount = (int) requests.stream().filter(req -> "Pending".equals(req.getStatus())).count();
-        int awaitingApprovalCount = (int) requests.stream().filter(req -> "Awaiting Approval".equals(req.getStatus())).count();
+    // ❌ Loại bỏ các yêu cầu có trạng thái "Awaiting Approval"
+    List<ServiceRequest> requests = allRequests.stream()
+            .filter(req -> !"Awaiting Approval".equalsIgnoreCase(req.getStatus()))
+            .collect(Collectors.toList());
 
-        // Set attributes for JSP
-        request.setAttribute("requests", requests);
-        request.setAttribute("totalRequests", totalRequests);
-        request.setAttribute("approvedCount", approvedCount);
-        request.setAttribute("rejectedCount", rejectedCount);
-        request.setAttribute("pendingCount", pendingCount);
-        request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
-        request.setAttribute("viewMode", "history");
+    // Tính thống kê
+    int totalRequests = requests.size();
+    int approvedCount = (int) requests.stream().filter(req -> "Approved".equals(req.getStatus())).count();
+    int rejectedCount = (int) requests.stream().filter(req -> "Rejected".equals(req.getStatus())).count();
+    int pendingCount = (int) requests.stream().filter(req -> "Pending".equals(req.getStatus())).count();
 
-        request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
-    }
+    // ✅ KHÔNG cần đếm awaitingApprovalCount ở đây nữa
+    // int awaitingApprovalCount = ...
+
+    // Set attribute cho JSP
+    request.setAttribute("requests", requests);
+    request.setAttribute("totalCount", totalRequests);
+    request.setAttribute("approvedCount", approvedCount);
+    request.setAttribute("rejectedCount", rejectedCount);
+    request.setAttribute("pendingCount", pendingCount);
+    request.setAttribute("viewMode", "history");
+
+    request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
+}
+
 
     /**
      * Handle search functionality for requests with status >= 'Awaiting Approval'
      */
-    private void handleSearch(HttpServletRequest request, HttpServletResponse response, int managerId)
-            throws ServletException, IOException, SQLException {
+ private void handleSearch(HttpServletRequest request, HttpServletResponse response, int managerId)
+        throws ServletException, IOException, SQLException {
 
-        String keyword = request.getParameter("keyword");
+    String keyword = request.getParameter("keyword");
+    String viewMode = request.getParameter("viewMode");
 
-        if (keyword == null || keyword.trim().isEmpty()) {
+    if (keyword == null || keyword.trim().isEmpty()) {
+        if ("history".equalsIgnoreCase(viewMode)) {
+            handleHistory(request, response, managerId);
+        } else {
             displayAssignedRequests(request, response, managerId);
-            return;
         }
+        return;
+    }
 
-        // Get all requests with status >= 'Awaiting Approval' and filter by keyword
-        List<ServiceRequest> allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
-        List<ServiceRequest> requests = new ArrayList<>();
-        
-        // Filter by keyword (description, requestId, or customer name if available)
-        String keywordLower = keyword.trim().toLowerCase();
-        for (ServiceRequest req : allRequests) {
-            if (req.getDescription().toLowerCase().contains(keywordLower) ||
-                String.valueOf(req.getRequestId()).contains(keyword.trim()) ||
-                (req.getCustomerName() != null && req.getCustomerName().toLowerCase().contains(keywordLower))) {
-                requests.add(req);
-            }
+    // Lấy dữ liệu tương ứng với trang hiện tại
+    List<ServiceRequest> allRequests;
+    if ("history".equalsIgnoreCase(viewMode)) {
+        allRequests = serviceRequestDAO.getAllRequestsHistory();
+    } else {
+        allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
+    }
+
+    List<ServiceRequest> requests = new ArrayList<>();
+
+    String keywordLower = keyword.trim().toLowerCase();
+    for (ServiceRequest req : allRequests) {
+        if (req.getDescription().toLowerCase().contains(keywordLower)
+                || String.valueOf(req.getRequestId()).contains(keyword.trim())
+                || (req.getCustomerName() != null && req.getCustomerName().toLowerCase().contains(keywordLower))) {
+            requests.add(req);
         }
+    }
 
-        // Get statistics
+    // 🟢 Nếu đang ở trang lịch sử → đếm theo status trong danh sách lịch sử
+    if ("history".equalsIgnoreCase(viewMode)) {
+        int totalRequests = requests.size();
+        int approvedCount = (int) requests.stream().filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
+        int rejectedCount = (int) requests.stream().filter(r -> "Rejected".equalsIgnoreCase(r.getStatus())).count();
+        int pendingCount = (int) requests.stream().filter(r -> "Pending".equalsIgnoreCase(r.getStatus())).count();
+        int awaitingApprovalCount = (int) requests.stream().filter(r -> "Awaiting Approval".equalsIgnoreCase(r.getStatus())).count();
+
+        request.setAttribute("totalCount", totalRequests);
+        request.setAttribute("approvedCount", approvedCount);
+        request.setAttribute("rejectedCount", rejectedCount);
+        request.setAttribute("pendingCount", pendingCount);
+        request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
+
+    } else {
+        // 🟢 Nếu ở trang chính → dùng các hàm đếm trong DAO
         int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
         int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
         int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
         int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
 
-        request.setAttribute("requests", requests);
         request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
         request.setAttribute("urgentCount", urgentCount);
         request.setAttribute("todayCount", todayCount);
         request.setAttribute("approvedToday", approvedToday);
-        request.setAttribute("keyword", keyword);
-        request.setAttribute("searchMode", true);
-        request.setAttribute("viewMode", "assigned");
-
-        request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
     }
+
+    request.setAttribute("requests", requests);
+    request.setAttribute("keyword", keyword);
+    request.setAttribute("searchMode", true);
+    request.setAttribute("viewMode", viewMode);
+
+    request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
+}
+
+
 
     /**
      * Handle filter functionality for requests with status >= 'Awaiting Approval'
      */
-    private void handleFilter(HttpServletRequest request, HttpServletResponse response, int managerId)
-            throws ServletException, IOException, SQLException {
+  private void handleFilter(HttpServletRequest request, HttpServletResponse response, int managerId)
+        throws ServletException, IOException, SQLException {
 
-        String priority = request.getParameter("priority");
-        String urgency = request.getParameter("urgency");
+    String priority = request.getParameter("priority");
+    String urgency = request.getParameter("urgency");
+    String viewMode = request.getParameter("viewMode");
 
-        // Get all requests with status >= 'Awaiting Approval'
-        List<ServiceRequest> allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
-        List<ServiceRequest> requests = new ArrayList<>();
+    // Lấy danh sách theo trang hiện tại
+    List<ServiceRequest> allRequests;
+    if ("history".equalsIgnoreCase(viewMode)) {
+        allRequests = serviceRequestDAO.getAllRequestsHistory();
+    } else {
+        allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
+    }
 
-        // Apply client-side filtering
-        for (ServiceRequest req : allRequests) {
-            boolean matchesPriority = (priority == null || priority.trim().isEmpty() || 
-                                     priority.equals(req.getPriorityLevel()));
-            
-            boolean matchesUrgency = true;
-            if (urgency != null && !urgency.trim().isEmpty()) {
-                int daysPending = req.getDaysPending();
-                switch (urgency) {
-                    case "Urgent":
-                        matchesUrgency = daysPending >= 7;
-                        break;
-                    case "High":
-                        matchesUrgency = daysPending >= 3;
-                        break;
-                    case "Normal":
-                        matchesUrgency = daysPending < 3;
-                        break;
-                }
-            }
-            
-            if (matchesPriority && matchesUrgency) {
-                requests.add(req);
+    List<ServiceRequest> requests = new ArrayList<>();
+
+    // Lọc theo priority và urgency
+    for (ServiceRequest req : allRequests) {
+        boolean matchesPriority = (priority == null || priority.trim().isEmpty() ||
+                priority.equalsIgnoreCase(req.getPriorityLevel()));
+
+        boolean matchesUrgency = true;
+        if (urgency != null && !urgency.trim().isEmpty()) {
+            int daysPending = req.getDaysPending();
+            switch (urgency) {
+                case "Urgent":
+                    matchesUrgency = daysPending >= 7;
+                    break;
+                case "High":
+                    matchesUrgency = daysPending >= 3 &&  daysPending <=7;
+                    break;
+                case "Normal":
+                    matchesUrgency = daysPending < 3;
+                    break;
             }
         }
 
-        // Get statistics
+        if (matchesPriority && matchesUrgency) {
+            requests.add(req);
+        }
+    }
+
+    // --- Thống kê ---
+    if ("history".equalsIgnoreCase(viewMode)) {
+        int totalRequests = requests.size();
+        int approvedCount = (int) requests.stream().filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
+        int rejectedCount = (int) requests.stream().filter(r -> "Rejected".equalsIgnoreCase(r.getStatus())).count();
+        int pendingCount = (int) requests.stream().filter(r -> "Pending".equalsIgnoreCase(r.getStatus())).count();
+        int awaitingApprovalCount = (int) requests.stream().filter(r -> "Awaiting Approval".equalsIgnoreCase(r.getStatus())).count();
+
+        request.setAttribute("totalCount", totalRequests);
+        request.setAttribute("approvedCount", approvedCount);
+        request.setAttribute("rejectedCount", rejectedCount);
+        request.setAttribute("pendingCount", pendingCount);
+        request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
+    } else {
         int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
         int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
         int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
         int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
 
-        request.setAttribute("requests", requests);
         request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
         request.setAttribute("urgentCount", urgentCount);
         request.setAttribute("todayCount", todayCount);
         request.setAttribute("approvedToday", approvedToday);
-        request.setAttribute("filterPriority", priority);
-        request.setAttribute("filterUrgency", urgency);
-        request.setAttribute("filterMode", true);
-        request.setAttribute("viewMode", "assigned");
-
-        request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
     }
+
+    // --- Set attribute chung ---
+    request.setAttribute("requests", requests);
+    request.setAttribute("filterPriority", priority);
+    request.setAttribute("filterUrgency", urgency);
+    request.setAttribute("filterMode", true);
+    request.setAttribute("viewMode", viewMode);
+
+    request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
+}
+
 
     /**
      * Handle request approval

@@ -1,3 +1,40 @@
+/* Technician Sidebar - Black Design (matching Customer module) */
+.crm-sidebar {
+  min-height: 100vh;
+  background-color: #111;
+  color: #fff;
+}
+
+.crm-sidebar h6 {
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.crm-sidebar .nav-link {
+  color: #ccc;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-bottom: 5px;
+  transition: all 0.3s ease;
+}
+
+.crm-sidebar .nav-link:hover {
+  background-color: #fff;
+  color: #000;
+  font-weight: 600;
+}
+
+.crm-sidebar .nav-link.active {
+  background-color: #fff;
+  color: #000;
+  font-weight: 600;
+}
+
+.crm-sidebar .nav-link i {
+  margin-right: 8px;
+}
+
 /* Technician specific styles: feature cards, animations, responsive tweaks */
 .tech-features-grid {
   display: grid;
@@ -27,9 +64,6 @@
 .tech-card p { margin: 0; color: #6c757d; }
 
 .tech-section-title { font-weight: 700; }
-.nav-compact .nav-link { transition: background-color .15s ease, color .15s ease, padding-left .15s ease; }
-.nav-compact .nav-link:hover { background: rgba(13,110,253,.06); padding-left: 18px; }
-.nav-compact .nav-link.active { background: rgba(13,110,253,.12); color: #0d6efd !important; }
 
 .page-fade-enter { opacity: .0; transform: translateY(4px); }
 .page-fade-enter-active { opacity: 1; transform: none; transition: all .2s ease; }

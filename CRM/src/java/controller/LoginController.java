@@ -96,8 +96,10 @@ public class LoginController extends HttpServlet {
             } else if ("Technician".equals(userRole)) {
                 response.sendRedirect("technician/dashboard");
 
-            } else {
+            } else if ("customer".equals(userRole)) {
                 response.sendRedirect("managerServiceRequest");
+            } else {
+                response.sendRedirect("home.jsp");
             }
         } else {
             request.setAttribute("error", MessageConstant.LOGIN_FAILED);

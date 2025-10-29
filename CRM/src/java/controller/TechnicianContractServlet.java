@@ -4,6 +4,7 @@ import dal.ContractDAO;
 import dal.EquipmentDAO;
 import model.Contract;
 import model.Equipment;
+import model.EquipmentWithStatus;
 import model.ContractEquipment;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -12,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,8 +47,15 @@ public class TechnicianContractServlet extends HttpServlet {
             
             if ("create".equals(action)) {
                 // Show contract creation form
-                List<ContractDAO.Customer> customers = contractDAO.getAllCustomers();
+                System.out.println("🔍 TechnicianContractServlet: Creating contract form...");
+                List<ContractDAO.Customer> customers = contractDAO.getCustomersAssignedToTechnician(sessionId);
+                System.out.println("📊 Found " + customers.size() + " customers assigned to technician");
+                
+                List<EquipmentWithStatus> availableParts = contractDAO.getAvailableParts();
+                System.out.println("📊 Found " + availableParts.size() + " available parts");
+                
                 req.setAttribute("customers", customers);
+                req.setAttribute("availableParts", availableParts);
                 req.setAttribute("pageTitle", "Create Contract");
                 req.setAttribute("contentView", "/WEB-INF/technician/contract-form.jsp");
                 req.setAttribute("activePage", "contracts");
@@ -59,17 +68,10 @@ public class TechnicianContractServlet extends HttpServlet {
             } else if ("contractDetail".equals(action) && contractIdParam != null) {
                 // Show contract detail with equipment
                 int contractId = Integer.parseInt(contractIdParam);
-                Contract contract = contractDAO.getContractById(contractId);
+                ContractDAO.ContractWithEquipment contractWithEquipment = contractDAO.getContractWithEquipment(contractId);
                 
-                if (contract != null) {
-                    String customerName = contractDAO.getCustomerNameByContractId(contractId);
-                    List<Equipment> equipmentList = equipmentDAO.findByContractId(contractId);
-                    List<ContractEquipment> contractEquipmentList = equipmentDAO.findContractEquipmentByContractId(contractId);
-                    
-                    req.setAttribute("contract", contract);
-                    req.setAttribute("customerName", customerName);
-                    req.setAttribute("equipmentList", equipmentList);
-                    req.setAttribute("contractEquipmentList", contractEquipmentList);
+                if (contractWithEquipment != null) {
+                    req.setAttribute("contractWithEquipment", contractWithEquipment);
                     req.setAttribute("pageTitle", "Contract Detail");
                     req.setAttribute("contentView", "/WEB-INF/technician/contract-detail.jsp");
                     req.setAttribute("activePage", "contracts");
@@ -124,7 +126,21 @@ public class TechnicianContractServlet extends HttpServlet {
             List<ContractDAO.ContractWithCustomer> contracts = contractDAO.searchContracts(searchQuery, statusFilter, page, pageSize);
             int totalContracts = contractDAO.getContractCount(searchQuery, statusFilter);
             
-            req.setAttribute("contracts", contracts);
+            // Convert ContractWithCustomer to ContractWithEquipment for each contract
+            List<ContractDAO.ContractWithEquipment> contractsWithEquipment = new ArrayList<>();
+            for (ContractDAO.ContractWithCustomer contractWithCustomer : contracts) {
+                ContractDAO.ContractWithEquipment contractWithEquipment = contractDAO.getContractWithEquipment(contractWithCustomer.contract.getContractId());
+                if (contractWithEquipment == null) {
+                    // Create a ContractWithEquipment without equipment if none exists
+                    contractWithEquipment = new ContractDAO.ContractWithEquipment();
+                    contractWithEquipment.contract = contractWithCustomer.contract;
+                    contractWithEquipment.customerName = contractWithCustomer.customerName;
+                    contractWithEquipment.equipment = null;
+                }
+                contractsWithEquipment.add(contractWithEquipment);
+            }
+            
+            req.setAttribute("contracts", contractsWithEquipment);
             req.setAttribute("totalContracts", totalContracts);
             req.setAttribute("currentPage", page);
             req.setAttribute("pageSize", pageSize);
@@ -149,20 +165,38 @@ public class TechnicianContractServlet extends HttpServlet {
             int pageSize = Math.min(parseInt(req.getParameter("pageSize"), 10), 100);
             
             EquipmentDAO equipmentDAO = new EquipmentDAO();
-            List<Equipment> equipmentList = equipmentDAO.searchEquipment(searchQuery, page, pageSize);
-            int totalEquipment = equipmentDAO.getEquipmentCount(searchQuery);
             
-            req.setAttribute("equipmentList", equipmentList);
+            // Get equipment with status information from inventory
+            List<EquipmentWithStatus> equipmentWithStatusList = equipmentDAO.getEquipmentWithStatus();
+            
+            // Apply search filter if provided
+            if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+                equipmentWithStatusList = equipmentWithStatusList.stream()
+                    .filter(e -> e.getModel().toLowerCase().contains(searchQuery.toLowerCase()) ||
+                               e.getDescription().toLowerCase().contains(searchQuery.toLowerCase()) ||
+                               e.getSerialNumber().toLowerCase().contains(searchQuery.toLowerCase()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            // Apply pagination
+            int totalEquipment = equipmentWithStatusList.size();
+            int startIndex = (page - 1) * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, totalEquipment);
+            
+            List<EquipmentWithStatus> paginatedList = equipmentWithStatusList.subList(startIndex, endIndex);
+            
+            req.setAttribute("equipmentList", paginatedList);
             req.setAttribute("totalEquipment", totalEquipment);
             req.setAttribute("currentPage", page);
             req.setAttribute("pageSize", pageSize);
             req.setAttribute("totalPages", (int) Math.ceil((double) totalEquipment / pageSize));
-            req.setAttribute("pageTitle", "Equipment");
+            req.setAttribute("searchQuery", searchQuery);
+            req.setAttribute("pageTitle", "Equipment Inventory");
             req.setAttribute("contentView", "/WEB-INF/technician/equipment.jsp");
             req.setAttribute("activePage", "equipment");
             req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
             
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new ServletException("Database error: " + e.getMessage(), e);
         }
     }
@@ -199,7 +233,7 @@ public class TechnicianContractServlet extends HttpServlet {
         String action = req.getParameter("action");
         
         if ("create".equals(action)) {
-            // Handle contract creation
+            // Handle contract creation with mandatory part validation
             try {
                 ContractDAO contractDAO = new ContractDAO();
                 
@@ -209,18 +243,44 @@ public class TechnicianContractServlet extends HttpServlet {
                 String description = req.getParameter("description");
                 String contractDate = req.getParameter("contractDate");
                 String status = req.getParameter("status");
+                // Enforce allowed statuses only (Active, Completed). Default to Active if invalid/missing
+                if (status == null || status.trim().isEmpty()) {
+                    status = "Active";
+                } else {
+                    String s = status.trim();
+                    if (!"Active".equals(s) && !"Completed".equals(s)) {
+                        status = "Active";
+                    } else {
+                        status = s;
+                    }
+                }
+                String partIdParam = req.getParameter("partId");
                 
-                // Create contract using DAO method
-                long contractId = contractDAO.createContract(
-                    customerId, 
-                    java.sql.Date.valueOf(contractDate), 
-                    contractType, 
-                    status, 
-                    description
+                // Part is mandatory
+                if (partIdParam == null || partIdParam.trim().isEmpty()) {
+                    req.getSession().setAttribute("errorMessage", "Part for repair is required.");
+                    resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
+                    return;
+                }
+                int partId = Integer.parseInt(partIdParam.trim());
+                if (!contractDAO.isPartAvailable(partId)) {
+                    req.getSession().setAttribute("errorMessage", "Selected part is not available. Please choose another part or contact storekeeper.");
+                    resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
+                    return;
+                }
+
+                // Always create contract with part assignment
+                long contractId = contractDAO.createContractWithPart(
+                    customerId,
+                    java.sql.Date.valueOf(contractDate),
+                    contractType,
+                    status,
+                    description,
+                    partId
                 );
                 
                 if (contractId > 0) {
-                    req.getSession().setAttribute("successMessage", "Contract created successfully ✅");
+                    req.getSession().setAttribute("successMessage", "Contract created successfully with part assignment ✅");
                 } else {
                     req.getSession().setAttribute("errorMessage", "Failed to create contract. Please try again.");
                 }
