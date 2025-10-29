@@ -40,7 +40,8 @@ public class WorkTaskDAO extends MyDAO {
             params.add(statusFilter.trim());
         }
         
-        sql.append(" ORDER BY wt.startDate ASC LIMIT ? OFFSET ?");
+        // Work History: order by taskId DESC
+        sql.append(" ORDER BY wt.taskId ASC LIMIT ? OFFSET ?");
         params.add(pageSize);
         params.add((page - 1) * pageSize);
         
@@ -90,7 +91,8 @@ public class WorkTaskDAO extends MyDAO {
             params.add(statusFilter.trim());
         }
         
-        sql.append(" ORDER BY wt.startDate ASC LIMIT ? OFFSET ?");
+        // Technician Tasks list: closest date first using endDate, then startDate (DESC)
+        sql.append(" ORDER BY COALESCE(wt.endDate, wt.startDate) DESC LIMIT ? OFFSET ?");
         params.add(pageSize);
         params.add((page - 1) * pageSize);
         
