@@ -55,6 +55,9 @@ public class VerifyOtpServlet extends HttpServlet {
         }
 
         if (otp.equals(inputOtp)) {
+            session.removeAttribute("otp");
+            session.removeAttribute("otpTime");
+            session.removeAttribute("otpPurpose");
             if ("register".equals(purpose)) {
                 RegisterRequest pendingRegister = (RegisterRequest) session.getAttribute("pendingRegister");
                 if (pendingRegister != null) {
