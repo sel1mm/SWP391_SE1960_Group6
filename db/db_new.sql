@@ -1134,12 +1134,12 @@ MODIFY COLUMN decision ENUM('Pending','Approved','Rejected') DEFAULT 'Pending';
 
 -- BINHPQ: bo insert ignore vao role vi DB da co 6 roles theo id 1-6
 
---INSERT IGNORE INTO Role (roleId, roleName) VALUES 
---(1, 'Admin'),
---(2, 'Customer'),
---(3, 'Customer Service Staff'),
---(4, 'Technical Manager'),
---(5, 'Technician');
+-- INSERT IGNORE INTO Role (roleId, roleName) VALUES 
+-- (1, 'Admin'),
+-- (2, 'Customer'),
+-- (3, 'Customer Service Staff'),
+-- (4, 'Technical Manager'),
+-- (5, 'Technician');
 
 -- Insert Test Accounts
 INSERT IGNORE INTO Account (accountId, username, passwordHash, fullName, email, phone, status, createdAt) VALUES 
@@ -1251,16 +1251,16 @@ INSERT IGNORE INTO ContractEquipment (contractEquipmentId, contractId, equipment
 INSERT IGNORE INTO ServiceRequest (requestId, contractId, equipmentId, createdBy, description, priorityLevel, requestDate, status, requestType) VALUES 
 
 -- PENDING REQUESTS (for approval testing)
-(1, 1, 1, 4, 'Máy lạnh không mát, tiếng ồn lớn khi hoạt động', 'Urgent', '2024-12-01', 'Pending', 'Service'),
-(2, 1, 2, 4, 'Máy lạnh chảy nước, có mùi khó chịu', 'High', '2024-12-02', 'Pending', 'Service'),
-(3, 2, 5, 5, 'Máy bơm không hoạt động, có tiếng kêu lạ', 'Normal', '2024-12-03', 'Pending', 'Warranty'),
-(4, 3, 7, 6, 'Tủ điện bị nóng, cầu dao tự ngắt', 'Urgent', '2024-12-04', 'Pending', 'Service'),
-(5, 2, 6, 5, 'Máy bơm công nghiệp giảm áp suất', 'High', '2024-12-05', 'Pending', 'Warranty'),
-(6, 4, 9, 7, 'Hệ thống HVAC không đạt nhiệt độ', 'Normal', '2024-12-06', 'Pending', 'Warranty'),
-(7, 3, 8, 6, 'Biến tần báo lỗi E001', 'High', '2024-12-07', 'Pending', 'Service'),
-(8, 5, 3, 4, 'Máy lạnh phòng làm việc không khởi động', 'Normal', '2024-12-08', 'Pending', 'Service'),
-(9, 4, 10, 7, 'Máy lạnh công nghiệp rò gas', 'Urgent', '2024-12-09', 'Pending', 'Warranty'),
-(10, 5, 4, 4, 'Máy lạnh phòng khách có mùi cháy', 'Urgent', '2024-12-10', 'Pending', 'Service'),
+(1, 1, 1, 4, 'Máy lạnh không mát, tiếng ồn lớn khi hoạt động', 'Urgent', '2024-12-01', 'Awaiting Approval', 'Service'),
+(2, 1, 2, 4, 'Máy lạnh chảy nước, có mùi khó chịu', 'High', '2024-12-02', 'Awaiting Approval', 'Service'),
+(3, 2, 5, 5, 'Máy bơm không hoạt động, có tiếng kêu lạ', 'Normal', '2024-12-03', 'Awaiting Approval', 'Warranty'),
+(4, 3, 7, 6, 'Tủ điện bị nóng, cầu dao tự ngắt', 'Urgent', '2024-12-04', 'Awaiting Approval', 'Service'),
+(5, 2, 6, 5, 'Máy bơm công nghiệp giảm áp suất', 'High', '2024-12-05', 'Awaiting Approval', 'Warranty'),
+(6, 4, 9, 7, 'Hệ thống HVAC không đạt nhiệt độ', 'Normal', '2024-12-06','Awaiting Approval', 'Warranty'),
+(7, 3, 8, 6, 'Biến tần báo lỗi E001', 'High', '2024-12-07', 'Awaiting Approval', 'Service'),
+(8, 5, 3, 4, 'Máy lạnh phòng làm việc không khởi động', 'Normal', '2024-12-08', 'Awaiting Approval', 'Service'),
+(9, 4, 10, 7, 'Máy lạnh công nghiệp rò gas', 'Urgent', '2024-12-09', 'Awaiting Approval', 'Warranty'),
+(10, 5, 4, 4, 'Máy lạnh phòng khách có mùi cháy', 'Urgent', '2024-12-10', 'Awaiting Approval', 'Service'),
 
 -- APPROVED REQUESTS (for history testing)
 (11, 1, 1, 4, 'Bảo trì định kỳ máy lạnh phòng khách', 'Normal', '2024-11-25', 'Approved', 'Service'),
@@ -1275,10 +1275,10 @@ INSERT IGNORE INTO ServiceRequest (requestId, contractId, equipmentId, createdBy
 (18, 4, 10, 7, 'Thay thế máy lạnh công nghiệp', 'Low', '2024-11-22', 'Rejected', 'Warranty'),
 
 -- TODAY'S REQUESTS (for dashboard statistics)
-(19, 1, 1, 4, 'Kiểm tra máy lạnh sau sửa chữa', 'Normal', CURDATE(), 'Pending', 'Service'),
-(20, 2, 5, 5, 'Máy bơm có tiếng động lạ', 'High', CURDATE(), 'Pending', 'Warranty'),
-(21, 3, 7, 6, 'Tủ điện báo cảnh báo', 'Urgent', CURDATE(), 'Pending', 'Service'),
-(22, 5, 4, 4, 'Máy lạnh không tự động tắt', 'Normal', CURDATE(), 'Approved', 'Service');
+(19, 1, 1, 4, 'Kiểm tra máy lạnh sau sửa chữa', 'Normal', CURDATE(), 'Awaiting Approval', 'Service'),
+(20, 2, 5, 5, 'Máy bơm có tiếng động lạ', 'High', CURDATE(), 'Awaiting Approval', 'Warranty'),
+(21, 3, 7, 6, 'Tủ điện báo cảnh báo', 'Urgent', CURDATE(), 'Awaiting Approval', 'Service'),
+(22, 5, 4, 4, 'Máy lạnh không tự động tắt', 'Normal', CURDATE(), 'Awaiting Approval', 'Service');
 
 -- ====================================================================
 -- 5. REQUEST APPROVALS (for approved/rejected requests)
@@ -1332,11 +1332,9 @@ INSERT IGNORE INTO WorkTask (taskId, requestId, scheduleId, technicianId, taskTy
 (4, 14, 4, 11, 'Request', 'Bảo trì HVAC: vệ sinh dàn lạnh, kiểm tra hệ thống điều khiển', '2024-12-18', '2024-12-18', 'Assigned'),
 
 -- Scheduled maintenance tasks
-(5, NULL, 6, 8, 'Scheduled', 'Bảo trì định kỳ hàng tháng máy lạnh', '2025-01-15', '2025-01-15', 'Assigned'),
 (6, NULL, 7, 9, 'Scheduled', 'Bảo trì định kỳ hàng quý máy bơm', '2025-01-20', '2025-01-20', 'Assigned'),
 
 -- Completed tasks
-(7, NULL, 10, 8, 'Scheduled', 'Bảo trì định kỳ tháng 11', '2024-11-15', '2024-11-15', 'Completed'),
 (8, NULL, 11, 9, 'Scheduled', 'Bảo trì quý 4/2024', '2024-11-20', '2024-11-20', 'Completed');
 
 -- ====================================================================
@@ -1927,3 +1925,221 @@ INSERT INTO PartDetail ( partId, serialNumber, status, location, lastUpdatedBy, 
 ( 3, 'Brake Pad Set #015', 'Available', 'Warehouse B', 1, '2025-10-15');
 
 alter table MaintenanceSchedule modify scheduledDate datetime not null;
+
+-- TECHNICIAN MODULE DEMO SEED (Technician accountId = 8)
+-- Creates 10 requests from real customers (4..7), approved by manager (2),
+-- scheduled and tasked for technician 8 with logical dates.
+-- Id ranges: 201..210 to avoid collision.
+
+START TRANSACTION;
+
+-- 1) Service Requests (initially Pending)
+INSERT IGNORE INTO ServiceRequest
+(requestId, contractId, equipmentId, createdBy, description, priorityLevel, requestDate, status, requestType)
+VALUES
+-- Past (to be completed)
+(201, 1, 1, 4, 'Bảo trì máy lạnh phòng khách: vệ sinh và kiểm tra gas.', 'High',    DATE_SUB(CURDATE(), INTERVAL 30 DAY), 'Awaiting Approval', 'Service'),
+(202, 2, 5, 5, 'Máy bơm nước kêu to khi chạy, kiểm tra ổ bi.',           'Normal',  DATE_SUB(CURDATE(), INTERVAL 27 DAY), 'Awaiting Approval', 'Warranty'),
+(203, 3, 7, 6, 'Tủ điện báo nhiệt cao, kiểm tra kết nối.',               'High',    DATE_SUB(CURDATE(), INTERVAL 22 DAY), 'Awaiting Approval', 'Service'),
+(204, 4, 9, 7, 'HVAC không đạt nhiệt độ cài đặt, kiểm tra gas.',         'Urgent',  DATE_SUB(CURDATE(), INTERVAL 18 DAY), 'Awaiting Approval', 'Service'),
+(205, 5, 4, 4, 'Máy lạnh phòng ngủ mùi lạ, kiểm tra lọc.',               'Normal',  DATE_SUB(CURDATE(), INTERVAL 14 DAY), 'Awaiting Approval', 'Service'),
+(206, 2, 6, 5, 'Máy bơm rò nước, kiểm tra phớt.',                        'High',    DATE_SUB(CURDATE(), INTERVAL 11 DAY), 'Awaiting Approval', 'Warranty'),
+-- Today/nearby (active work)
+(207, 3, 8, 6, 'Kiểm tra cảnh báo biến tần.',                             'Normal',  DATE_SUB(CURDATE(), INTERVAL 1 DAY), 'Awaiting Approval', 'Service'),
+-- Future (scheduled)
+(208, 1, 2, 4, 'Bảo trì định kỳ máy lạnh phòng ngủ.',                     'Low',     CURDATE(),                               'Awaiting Approval', 'Service'),
+(209, 4, 10, 7, 'Kiểm tra HVAC định kỳ quý.',                             'Normal',  CURDATE(),                               'Awaiting Approval', 'Service'),
+(210, 5, 3, 4, 'Bảo trì mở rộng, vệ sinh và đo áp suất.',                 'High',    CURDATE(),                               'Awaiting Approval', 'Service');
+
+-- 2) Approvals by Technical Manager (accountId=2), assigning technician 8
+INSERT IGNORE INTO RequestApproval
+(approvalId, requestId, approvedBy, approvalDate, decision, note, estimatedEffort, assignedTechnicianId)
+VALUES
+(201, 201, 2, DATE_SUB(CURDATE(), INTERVAL 29 DAY), 'Approved', 'Xử lý trong ngày.', 2.0, 8),
+(202, 202, 2, DATE_SUB(CURDATE(), INTERVAL 26 DAY), 'Approved', 'Chẩn đoán tiếng ồn.', 2.0, 8),
+(203, 203, 2, DATE_SUB(CURDATE(), INTERVAL 21 DAY), 'Approved', 'Kiểm tra nhiệt và siết lại.', 2.5, 8),
+(204, 204, 2, DATE_SUB(CURDATE(), INTERVAL 17 DAY), 'Approved', 'Ưu tiên cao.', 3.0, 8),
+(205, 205, 2, DATE_SUB(CURDATE(), INTERVAL 13 DAY), 'Approved', 'Vệ sinh lọc và test mùi.', 1.5, 8),
+(206, 206, 2, DATE_SUB(CURDATE(), INTERVAL 10 DAY), 'Approved', 'Kiểm tra phớt và rò rỉ.', 2.0, 8),
+(207, 207, 2, DATE_SUB(CURDATE(), INTERVAL 0 DAY),  'Approved', 'Xử lý cảnh báo.', 1.5, 8),
+(208, 208, 2, DATE_ADD(CURDATE(), INTERVAL 0 DAY),  'Approved', 'Lịch định kỳ.', 2.0, 8),
+(209, 209, 2, DATE_ADD(CURDATE(), INTERVAL 0 DAY),  'Approved', 'Lịch quý.', 2.5, 8),
+(210, 210, 2, DATE_ADD(CURDATE(), INTERVAL 0 DAY),  'Approved', 'Bảo trì mở rộng.', 3.0, 8);
+
+-- Reflect approval in ServiceRequest
+UPDATE ServiceRequest SET status = 'Approved' WHERE requestId BETWEEN 201 AND 210;
+
+-- 3) Maintenance Schedules for technician 8
+-- Past -> Completed, Today -> In progress/Assigned, Future -> Scheduled
+INSERT IGNORE INTO MaintenanceSchedule
+(scheduleId, requestId, contractId, equipmentId, assignedTo, scheduledDate, scheduleType, recurrenceRule, status, priorityId, createdBy, estimatedDuration)
+VALUES
+-- Past completed (spread out)
+(201, 201, 1, 1, 8, DATE_SUB(CURDATE(), INTERVAL 28 DAY), 'Request', NULL, 'Completed', 3, 2, 2.0),
+(202, 202, 2, 5, 8, DATE_SUB(CURDATE(), INTERVAL 25 DAY), 'Request', NULL, 'Completed', 2, 2, 2.0),
+(203, 203, 3, 7, 8, DATE_SUB(CURDATE(), INTERVAL 20 DAY), 'Request', NULL, 'Completed', 3, 2, 2.5),
+(204, 204, 4, 9, 8, DATE_SUB(CURDATE(), INTERVAL 16 DAY), 'Request', NULL, 'Completed', 4, 2, 3.0),
+(205, 205, 5, 4, 8, DATE_SUB(CURDATE(), INTERVAL 12 DAY), 'Request', NULL, 'Completed', 2, 2, 1.5),
+(206, 206, 2, 6, 8, DATE_SUB(CURDATE(), INTERVAL 9 DAY),  'Request', NULL, 'Completed', 3, 2, 2.0),
+-- Today/near-term
+(207, 207, 3, 8, 8, CURDATE(),                           'Request', NULL, 'Scheduled', 2, 2, 1.5),
+-- Future scheduled
+(208, 208, 1, 2, 8, DATE_ADD(CURDATE(), INTERVAL 3 DAY),  'Request', NULL, 'Scheduled', 1, 2, 2.0),
+(209, 209, 4, 10,8, DATE_ADD(CURDATE(), INTERVAL 7 DAY),  'Request', NULL, 'Scheduled', 2, 2, 2.5),
+(210, 210, 5, 3, 8, DATE_ADD(CURDATE(), INTERVAL 14 DAY), 'Request', NULL, 'Scheduled', 3, 2, 3.0);
+
+-- 4) Work Tasks for technician 8
+INSERT IGNORE INTO WorkTask
+(taskId, requestId, scheduleId, technicianId, taskType, taskDetails, startDate, endDate, status)
+VALUES
+-- Past completed (endDate same day)
+(201, 201, 201, 8, 'Request', 'Vệ sinh dàn lạnh, bổ sung gas nếu cần.', DATE_SUB(CURDATE(), INTERVAL 28 DAY), DATE_SUB(CURDATE(), INTERVAL 28 DAY), 'Completed'),
+(202, 202, 202, 8, 'Request', 'Kiểm tra ổ bi, cân chỉnh, test tiếng ồn.', DATE_SUB(CURDATE(), INTERVAL 25 DAY), DATE_SUB(CURDATE(), INTERVAL 25 DAY), 'Completed'),
+(203, 203, 203, 8, 'Request', 'Siết lại đầu nối, kiểm tra nhiệt độ tủ điện.', DATE_SUB(CURDATE(), INTERVAL 20 DAY), DATE_SUB(CURDATE(), INTERVAL 20 DAY), 'Completed'),
+(204, 204, 204, 8, 'Request', 'Kiểm tra rò rỉ gas, hiệu chỉnh hệ thống.', DATE_SUB(CURDATE(), INTERVAL 16 DAY), DATE_SUB(CURDATE(), INTERVAL 16 DAY), 'Completed'),
+(205, 205, 205, 8, 'Request', 'Vệ sinh lọc gió, khử mùi, test vận hành.', DATE_SUB(CURDATE(), INTERVAL 12 DAY), DATE_SUB(CURDATE(), INTERVAL 12 DAY), 'Completed'),
+(206, 206, 206, 8, 'Request', 'Thay phớt bơm, test rò rỉ sau thay.', DATE_SUB(CURDATE(), INTERVAL 9 DAY), DATE_SUB(CURDATE(), INTERVAL 9 DAY), 'Completed'),
+-- Today / near-term (active)
+(207, 207, 207, 8, 'Request', 'Xử lý cảnh báo biến tần, kiểm tra nhật ký lỗi.', CURDATE(), NULL, 'Assigned'),
+-- Future (scheduled)
+(208, 208, 208, 8, 'Request', 'Bảo trì định kỳ máy lạnh phòng ngủ.', NULL, NULL, 'Assigned'),
+(209, 209, 209, 8, 'Request', 'Bảo trì định kỳ hệ thống HVAC.', NULL, NULL, 'Assigned'),
+(210, 210, 210, 8, 'Request', 'Bảo trì mở rộng, kiểm tra tổng thể.', NULL, NULL, 'Assigned');
+
+-- 5) Repair Results for completed tasks (show history quality)
+INSERT IGNORE INTO RepairResult
+(resultId, taskId, details, completionDate, technicianId, status)
+VALUES
+(201, 201, 'Vệ sinh và kiểm tra gas hoàn tất, hoạt động bình thường.', DATE_SUB(CURDATE(), INTERVAL 28 DAY), 8, 'Completed'),
+(202, 202, 'Ổ bi đã được xử lý, tiếng ồn giảm, test đạt.', DATE_SUB(CURDATE(), INTERVAL 25 DAY), 8, 'Completed'),
+(203, 203, 'Nhiệt độ tủ điện ổn định sau khi siết lại.', DATE_SUB(CURDATE(), INTERVAL 20 DAY), 8, 'Completed'),
+(204, 204, 'Không phát hiện rò rỉ, hiệu chỉnh cấu hình HVAC.', DATE_SUB(CURDATE(), INTERVAL 16 DAY), 8, 'Completed'),
+(205, 205, 'Đã khử mùi và vệ sinh lọc, cảm giác mùi hết.', DATE_SUB(CURDATE(), INTERVAL 12 DAY), 8, 'Completed'),
+(206, 206, 'Thay phớt thành công, không còn rò nước.', DATE_SUB(CURDATE(), INTERVAL 9 DAY), 8, 'Completed');
+
+COMMIT;
+
+-- Optional quick checks (read-only)
+-- SELECT wt.taskId, wt.status, sr.createdBy AS customerId, ms.contractId, ms.equipmentId
+-- FROM WorkTask wt
+-- JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId
+-- JOIN ServiceRequest sr ON wt.requestId = sr.requestId
+-- WHERE wt.technicianId = 8 AND wt.taskId BETWEEN 201 AND 210
+-- ORDER BY wt.taskId;
+
+
+-- TECHNICIAN REPAIR REPORTS SEED (Technician 8) – safe to append to db_new.sql
+-- Uses existing ServiceRequest ids: 201..210
+-- reportId range: 9201..9210 to avoid collisions
+
+START TRANSACTION;
+
+INSERT IGNORE INTO RepairReport
+(reportId, requestId, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate, invoiceDetailId)
+VALUES
+-- Past completed jobs (match earlier scheduled/completed timeline)
+(9201, 201, 8,
+ 'Vệ sinh dàn lạnh, kiểm tra áp suất gas, siết lại đầu nối.',
+ 'Bụi bẩn và thiếu bảo dưỡng định kỳ làm giảm hiệu suất.',
+ 450000.00, 'Approved', DATE_SUB(CURDATE(), INTERVAL 28 DAY), NULL),
+
+(9202, 202, 8,
+ 'Kiểm tra tiếng ồn máy bơm, cân chỉnh và bôi trơn ổ bi.',
+ 'Mòn ổ bi dẫn đến rung và tiếng ồn cao.',
+ 520000.00, 'Approved', DATE_SUB(CURDATE(), INTERVAL 25 DAY), NULL),
+
+(9203, 203, 8,
+ 'Kiểm tra tủ điện, siết lại đầu cos, đo nhiệt các điểm tiếp xúc.',
+ 'Tiếp xúc lỏng làm tăng nhiệt cục bộ.',
+ 380000.00, 'Approved', DATE_SUB(CURDATE(), INTERVAL 20 DAY), NULL),
+
+(9204, 204, 8,
+ 'Kiểm tra rò rỉ và hiệu chỉnh cấu hình HVAC, test vận hành.',
+ 'Cài đặt điều khiển chưa tối ưu, không phát hiện rò rỉ.',
+ 650000.00, 'Approved', DATE_SUB(CURDATE(), INTERVAL 16 DAY), NULL),
+
+(9205, 205, 8,
+ 'Vệ sinh lọc gió, khử mùi, kiểm tra cảm biến nhiệt.',
+ 'Lọc bẩn gây mùi, cảm biến hoạt động bình thường.',
+ 300000.00, 'Approved', DATE_SUB(CURDATE(), INTERVAL 12 DAY), NULL),
+
+(9206, 206, 8,
+ 'Thay phớt bơm, kiểm tra rò sau thay, test áp vận hành.',
+ 'Phớt cũ chai cứng gây rò nước.',
+ 570000.00, 'Approved', DATE_SUB(CURDATE(), INTERVAL 9 DAY), NULL),
+
+-- Today / near-term (work ongoing) – keep repairDate NULL
+(9207, 207, 8,
+ 'Kiểm tra cảnh báo biến tần, đọc nhật ký lỗi, kiểm tra tải.',
+ 'Cảnh báo do quá tải ngắn hạn, cần theo dõi thêm.',
+ 0.00, 'Pending', NULL, NULL),
+
+-- Future scheduled – planning report placeholders (optional drafts)
+(9208, 208, 8,
+ 'Bảo trì định kỳ máy lạnh phòng ngủ: vệ sinh, kiểm tra gas.',
+ 'Dự kiến vệ sinh và hiệu chỉnh nhẹ.',
+ 0.00, 'Pending', NULL, NULL),
+
+(9209, 209, 8,
+ 'Bảo trì định kỳ hệ thống HVAC: kiểm tra trao đổi nhiệt, cảm biến.',
+ 'Dự kiến hiệu chỉnh thông số điều khiển.',
+ 0.00, 'Pending', NULL, NULL),
+
+(9210, 210, 8,
+ 'Bảo trì mở rộng: kiểm tra tổng thể, đo áp suất, vệ sinh hệ thống.',
+ 'Dự kiến thay lọc và tối ưu cấu hình.',
+ 0.00, 'Pending', NULL, NULL);
+
+COMMIT;
+
+-- Optional quick check:
+-- SELECT rr.reportId, rr.requestId, rr.technicianId, rr.quotationStatus, rr.repairDate
+-- FROM RepairReport rr
+-- WHERE rr.reportId BETWEEN 9201 AND 9210
+-- ORDER BY rr.reportId;
+
+START TRANSACTION;
+
+UPDATE RepairReport rr
+LEFT JOIN WorkTask wt 
+  ON wt.requestId = rr.requestId AND wt.technicianId = rr.technicianId
+LEFT JOIN MaintenanceSchedule ms 
+  ON ms.requestId = rr.requestId AND ms.assignedTo = rr.technicianId
+LEFT JOIN ServiceRequest sr 
+  ON sr.requestId = rr.requestId
+SET rr.repairDate = COALESCE(
+    wt.endDate,
+    wt.startDate,
+    ms.scheduledDate,
+    DATE(sr.requestDate),
+    CURDATE()
+)
+WHERE rr.reportId IN (9308, 9302, 9301, 9210, 9209, 9208, 9207)
+  AND rr.repairDate IS NULL;
+
+COMMIT;
+
+START TRANSACTION;
+
+-- 1) For tasks 208..210: set startDate from MaintenanceSchedule.scheduledDate if missing
+UPDATE WorkTask wt
+JOIN MaintenanceSchedule ms ON ms.scheduleId = wt.scheduleId
+SET wt.startDate = ms.scheduledDate
+WHERE wt.taskId IN (208,209,210)
+  AND wt.startDate IS NULL;
+
+-- 2) For task 207: if startDate is missing (safety), set it from schedule or request date or today
+UPDATE WorkTask wt
+LEFT JOIN MaintenanceSchedule ms ON ms.scheduleId = wt.scheduleId
+LEFT JOIN ServiceRequest sr ON sr.requestId = wt.requestId
+SET wt.startDate = COALESCE(wt.startDate, ms.scheduledDate, DATE(sr.requestDate), CURDATE())
+WHERE wt.taskId = 207
+  AND wt.startDate IS NULL;
+
+-- 3) For any Assigned tasks among 207..210: ensure endDate stays NULL (clean future/active tasks)
+UPDATE WorkTask
+SET endDate = NULL
+WHERE taskId IN (207,208,209,210)
+  AND status = 'Assigned';
+
+COMMIT;
