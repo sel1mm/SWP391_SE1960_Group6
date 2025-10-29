@@ -50,7 +50,6 @@
             <option value="Pending" ${param.status == 'Pending' ? 'selected' : ''}>Pending</option>
             <option value="Approved" ${param.status == 'Approved' ? 'selected' : ''}>Approved</option>
             <option value="Rejected" ${param.status == 'Rejected' ? 'selected' : ''}>Rejected</option>
-            <option value="In Review" ${param.status == 'In Review' ? 'selected' : ''}>In Review</option>
           </select>
         </div>
         <div class="col-6 col-md-3 text-end">

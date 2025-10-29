@@ -28,12 +28,10 @@
         <div class="col-6 col-md-3">
           <select class="form-select" name="status">
             <option value="">All Statuses</option>
-            <option value="Pending" ${statusFilter == 'Pending' ? 'selected' : ''}>Pending</option>
             <option value="Assigned" ${statusFilter == 'Assigned' ? 'selected' : ''}>Assigned</option>
             <option value="In Progress" ${statusFilter == 'In Progress' ? 'selected' : ''}>In Progress</option>
             <option value="Completed" ${statusFilter == 'Completed' ? 'selected' : ''}>Completed</option>
-            <option value="On Hold" ${statusFilter == 'On Hold' ? 'selected' : ''}>On Hold</option>
-            <option value="Cancelled" ${statusFilter == 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+            <option value="Failed" ${statusFilter == 'Failed' ? 'selected' : ''}>Failed</option>
           </select>
         </div>
         <div class="col-6 col-md-3 text-end">
