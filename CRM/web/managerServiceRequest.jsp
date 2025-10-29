@@ -725,7 +725,7 @@
                         <span>Yêu Cầu Dịch Vụ</span>
                         <span class="badge bg-warning">${pendingCount}</span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/contracts" class="menu-item">
+                    <a href="${pageContext.request.contextPath}/managerContracts" class="menu-item">
                         <i class="fas fa-file-contract"></i>
                         <span>Hợp Đồng</span>
                     </a>
