@@ -655,43 +655,52 @@ body {
                 </table>
 
                 <!-- FORM POPUP -->
-                <div class="form-overlay" id="partDetailFormOverlay">
-                    <div class="form-container">
-                        <h2 id="partDetailFormTitle">Add New Part Detail</h2>
-                        <form action="partDetail" method="POST" id="partDetailForm">
-                            <input type="hidden" name="action" id="partDetailAction" value="add">
-                            <input type="hidden" name="partDetailId" id="partDetailId">
+             <div class="form-overlay" id="partDetailFormOverlay">
+    <div class="form-container">
+        <h2 id="partDetailFormTitle">Add New Part Detail</h2>
+        <form action="partDetail" method="POST" id="partDetailForm" onsubmit="return validatePartDetailForm()">
+            <input type="hidden" name="action" id="partDetailAction" value="add">
+            <input type="hidden" name="partDetailId" id="partDetailId">
+            <input type="hidden" name="oldStatus" id="oldStatus">
 
-                            <label>Part ID *</label>
-                            <input type="number" name="partId" id="partId" required>
+            <label>Part ID *</label>
+            <input type="number" name="partId" id="partId" required min="1">
 
-                            <label>Serial Number *</label>
-                            <input type="text" name="serialNumber" id="serialNumber" required maxlength="30">
+            <label>Serial Number * (Format: AAA-XXX-YYYY)</label>
+            <input type="text" name="serialNumber" id="serialNumber" required 
+                   maxlength="13" placeholder="VD: SNK-001-2024"
+                   pattern="[A-Z]{3}-\d{3}-\d{4}"
+                   title="Format: AAA-XXX-YYYY (VD: SNK-001-2024)">
+            <small style="color: #666; font-size: 12px;">Ví dụ: SNK-001-2024, PRD-123-2025</small>
 
-                            <label>Status *</label>
-                            <select name="status" id="status" required>
-                                <option value="Available">Available</option>
-                                <option value="InUse">In Use</option>
-                                <option value="Faulty">Faulty</option>
-                                <option value="Retired">Retired</option>
-                            </select>
+            <label>Status *</label>
+            <select name="status" id="status" required>
+                <option value="InUse">In Use</option>
+                <option value="Faulty">Faulty</option>
+                <option value="Retired">Retired</option>
+                <option value="Available">Available</option>
+            </select>
+            <small id="statusWarning" style="color: #dc3545; font-size: 12px; display: none;">
+                ⚠️ Lưu ý: Sau khi chuyển sang In Use, không thể thay đổi trạng thái nữa!
+            </small>
 
-                            <label>Location *</label>
-                            <input type="text" name="location" id="location" required>
+            <label>Location * (Tối thiểu 5 ký tự)</label>
+            <input type="text" name="location" id="location" required 
+                   minlength="5" maxlength="50" placeholder="Nhập vị trí (ít nhất 5 ký tự)">
 
-                            <p id="partDetailFormMessage"></p>
+            <p id="partDetailFormMessage"></p>
 
-                            <div class="form-buttons">
-                                <button type="submit" class="btn-save">
-                                    <i class="fas fa-save"></i> Save
-                                </button>
-                                <button type="button" class="btn-cancel" onclick="closePartDetailForm()">
-                                    <i class="fas fa-times"></i> Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+            <div class="form-buttons">
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button type="button" class="btn-cancel" onclick="closePartDetailForm()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
                 <!-- Pagination -->
                 <div class="pagination">
@@ -706,168 +715,335 @@ body {
             </div>
         </div>
 
-        <script>
-            function openPartDetailForm(mode, partDetailId = '', partId = '', serialNumber = '', status = 'Available', location = '') {
-                const overlay = document.getElementById("partDetailFormOverlay");
-                const title = document.getElementById("partDetailFormTitle");
-                const actionInput = document.getElementById("partDetailAction");
+      <script>
+    // ========== FORM FUNCTIONS ==========
+    function openPartDetailForm(mode, partDetailId = '', partId = '', serialNumber = '', status = 'InUse', location = '') {
+        const overlay = document.getElementById("partDetailFormOverlay");
+        const title = document.getElementById("partDetailFormTitle");
+        const actionInput = document.getElementById("partDetailAction");
+        const formMessage = document.getElementById("partDetailFormMessage");
+        const statusSelect = document.getElementById("status");
+        const statusWarning = document.getElementById("statusWarning");
 
-                overlay.style.display = "flex";
-                document.getElementById("partDetailFormMessage").textContent = "";
+        overlay.style.display = "flex";
+        formMessage.textContent = "";
+        formMessage.style.color = "#dc3545";
+        statusWarning.style.display = "none";
 
-                if (mode === "new") {
-                    title.textContent = "Add New Part Detail";
-                    actionInput.value = "add";
-                    document.getElementById("partDetailId").value = "";
-                    document.getElementById("partId").value = "";
-                    document.getElementById("serialNumber").value = "";
-                    document.getElementById("status").value = "Available";
-                    document.getElementById("location").value = "";
-                } else {
-                    title.textContent = "Edit Part Detail";
-                    actionInput.value = "edit";
-                    document.getElementById("partDetailId").value = partDetailId;
-                    document.getElementById("partId").value = partId;
-                    document.getElementById("serialNumber").value = serialNumber;
-                    document.getElementById("status").value = status;
-                    document.getElementById("location").value = location;
-                }
+        if (mode === "new") {
+            title.textContent = "Add New Part Detail";
+            actionInput.value = "add";
+            document.getElementById("partDetailId").value = "";
+            document.getElementById("partId").value = "";
+            document.getElementById("serialNumber").value = "";
+            document.getElementById("location").value = "";
+            document.getElementById("oldStatus").value = "";
+            
+            // Ẩn option Available khi tạo mới
+            statusSelect.innerHTML = `
+                
+                <option value="Faulty">Faulty</option>
+                <option value="Retired">Retired</option>
+            <option value="Available">Available</option>
+            `;
+            statusSelect.value = "Available";
+            statusSelect.disabled = false;
+            
+        } else {
+            title.textContent = "Edit Part Detail";
+            actionInput.value = "edit";
+            document.getElementById("partDetailId").value = partDetailId;
+            document.getElementById("partId").value = partId;
+            document.getElementById("serialNumber").value = serialNumber;
+            document.getElementById("location").value = location;
+            document.getElementById("oldStatus").value = status;
+            
+            // Nếu status hiện tại là Use - KHÓA không cho sửa
+            if (status === 'InUse') {
+                statusSelect.innerHTML = `<option value="InUse">InUse (Locked)</option>`;
+                statusSelect.value = "InUse";
+                statusSelect.disabled = true;
+                
+                formMessage.textContent = "⚠️ Trạng thái InUse không thể thay đổi!";
+                formMessage.style.color = "#dc3545";
+                
+                // Disable tất cả các trường khi status = Available
+                document.getElementById("partId").disabled = true;
+                document.getElementById("serialNumber").disabled = true;
+                document.getElementById("location").disabled = true;
+                
+            } else {
+                // Hiển thị tất cả options bao gồm Available
+                statusSelect.innerHTML = `
+                    
+                    <option value="Faulty">Faulty</option>
+                    <option value="Retired">Retired</option>
+                    <option value="Available">Available</option>
+                `;
+                statusSelect.value = status;
+                statusSelect.disabled = false;
+                
+                // Enable lại các trường
+                document.getElementById("partId").disabled = false;
+                document.getElementById("serialNumber").disabled = false;
+                document.getElementById("location").disabled = false;
             }
+        }
+    }
 
-            function closePartDetailForm() {
-                document.getElementById("partDetailFormOverlay").style.display = "none";
+    function closePartDetailForm() {
+        document.getElementById("partDetailFormOverlay").style.display = "none";
+        document.getElementById("partDetailFormMessage").textContent = "";
+        document.getElementById("statusWarning").style.display = "none";
+    }
+
+    function validatePartDetailForm() {
+        const serialNumber = document.getElementById("serialNumber").value.trim();
+        const status = document.getElementById("status").value;
+        const location = document.getElementById("location").value.trim();
+        const oldStatus = document.getElementById("oldStatus").value;
+        const formMessage = document.getElementById("partDetailFormMessage");
+        
+        formMessage.textContent = "";
+        formMessage.style.color = "#dc3545";
+        
+        // Validate Serial Number format: AAA-XXX-YYYY
+        const serialPattern = /^[A-Z]{3}-\d{3}-\d{4}$/;
+        if (!serialPattern.test(serialNumber)) {
+            formMessage.textContent = "❌ Serial Number phải theo định dạng: AAA-XXX-YYYY (VD: SNK-001-2024)";
+            return false;
+        }
+        
+        // Validate Location (min 5 chars)
+        if (location.length < 5) {
+            formMessage.textContent = "❌ Location phải có ít nhất 5 ký tự!";
+            return false;
+        }
+        
+        if (location.length > 50) {
+            formMessage.textContent = "❌ Location không được vượt quá 50 ký tự!";
+            return false;
+        }
+        
+        // Kiểm tra nếu đang ở chế độ edit và status cũ là Available
+        if (oldStatus === 'InUse') {
+            formMessage.textContent = "❌ Không thể chỉnh sửa Part Detail có trạng thái InUse!";
+            return false;
+        }
+        
+        // Cảnh báo khi chuyển sang Available
+        if (status === 'InUse' && oldStatus !== 'InUse') {
+            const confirmed = confirm("⚠️ CẢNH BÁO: Sau khi chuyển sang trạng thái InUse, bạn sẽ KHÔNG thể thay đổi lại!\n\nBạn có chắc chắn muốn tiếp tục?");
+            if (!confirmed) {
+                return false;
             }
+        }
+        
+        return true;
+    }
 
-            function confirmDelete(partDetailId) {
-                if (confirm("Bạn có chắc muốn xóa PartDetailId = " + partDetailId + " ?")) {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = 'partDetail';
+    // ========== DELETE FUNCTION ==========
+    function confirmDelete(partDetailId) {
+        if (confirm("Bạn có chắc muốn xóa PartDetailId = " + partDetailId + " ?")) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'partDetail';
 
-                    const actionInput = document.createElement('input');
-                    actionInput.type = 'hidden';
-                    actionInput.name = 'action';
-                    actionInput.value = 'delete';
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'delete';
 
-                    const idInput = document.createElement('input');
-                    idInput.type = 'hidden';
-                    idInput.name = 'partDetailId';
-                    idInput.value = partDetailId;
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'partDetailId';
+            idInput.value = partDetailId;
 
-                    form.appendChild(actionInput);
-                    form.appendChild(idInput);
-                    document.body.appendChild(form);
-                    form.submit();
-                }
+            form.appendChild(actionInput);
+            form.appendChild(idInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // ========== PAGINATION VARIABLES ==========
+    let currentPage = 1;
+    const rowsPerPage = 10;
+
+    // ========== TABLE RENDERING ==========
+    function renderPartDetailTable() {
+        const tableBody = document.querySelector(".inventory-table tbody");
+        if (!tableBody) return;
+
+        const keyword = document.querySelector(".search-input").value.toLowerCase();
+        const rows = Array.from(tableBody.rows);
+
+        const filteredRows = rows.filter(row => {
+            return Array.from(row.cells).slice(0, 7)
+                    .some(td => td.innerText.toLowerCase().includes(keyword));
+        });
+
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        if (filteredRows.length === 0) {
+            rows.forEach(row => row.style.display = "none");
+            return;
+        }
+
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        rows.forEach(row => row.style.display = "none");
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        filteredRows.slice(start, end).forEach(row => row.style.display = "");
+
+        renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+        const pagination = document.querySelector(".pagination");
+        if (!pagination) return;
+        pagination.innerHTML = "";
+
+        function createBtn(text, onClick, active = false) {
+            const btn = document.createElement("a");
+            btn.href = "#";
+            btn.textContent = text;
+            if (active) btn.classList.add("active");
+            btn.onclick = e => {
+                e.preventDefault();
+                onClick();
+            };
+            return btn;
+        }
+
+        pagination.appendChild(createBtn("« First", () => {
+            currentPage = 1;
+            renderPartDetailTable();
+        }));
+        
+        pagination.appendChild(createBtn("‹ Prev", () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPartDetailTable();
             }
+        }));
 
-            document.getElementById("partDetailFormOverlay").addEventListener('click', function (e) {
+        let start = Math.max(currentPage - 2, 1);
+        let end = Math.min(start + 4, totalPages);
+        for (let i = start; i <= end; i++) {
+            pagination.appendChild(createBtn(i, () => {
+                currentPage = i;
+                renderPartDetailTable();
+            }, i === currentPage));
+        }
+
+        pagination.appendChild(createBtn("Next ›", () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderPartDetailTable();
+            }
+        }));
+        
+        pagination.appendChild(createBtn("Last »", () => {
+            currentPage = totalPages;
+            renderPartDetailTable();
+        }));
+    }
+
+    // ========== EVENT LISTENERS ==========
+    document.addEventListener("DOMContentLoaded", function() {
+        // Initialize table on page load
+        renderPartDetailTable();
+
+        // Search input listener
+        const searchInput = document.querySelector(".search-input");
+        if (searchInput) {
+            searchInput.addEventListener("input", () => {
+                currentPage = 1;
+                renderPartDetailTable();
+            });
+        }
+
+        // Form overlay click to close
+        const formOverlay = document.getElementById("partDetailFormOverlay");
+        if (formOverlay) {
+            formOverlay.addEventListener('click', function (e) {
                 if (e.target === this) {
                     closePartDetailForm();
                 }
             });
+        }
 
-            let currentPage = 1;
-            const rowsPerPage = 10;
-
-            function renderPartDetailTable() {
-                const tableBody = document.querySelector(".inventory-table tbody");
-                if (!tableBody) return;
-
-                const keyword = document.querySelector(".search-input").value.toLowerCase();
-                const rows = Array.from(tableBody.rows);
-
-                const filteredRows = rows.filter(row => {
-                    return Array.from(row.cells).slice(0, 7)
-                            .some(td => td.innerText.toLowerCase().includes(keyword));
-                });
-
-                const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-                if (filteredRows.length === 0) {
-                    rows.forEach(row => row.style.display = "none");
-                    return;
-                }
-
-                if (currentPage > totalPages) currentPage = totalPages;
-                if (currentPage < 1) currentPage = 1;
-
-                rows.forEach(row => row.style.display = "none");
-                const start = (currentPage - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-                filteredRows.slice(start, end).forEach(row => row.style.display = "");
-
-                renderPagination(totalPages);
-            }
-
-            function renderPagination(totalPages) {
-                const pagination = document.querySelector(".pagination");
-                if (!pagination) return;
-                pagination.innerHTML = "";
-
-                function createBtn(text, onClick, active = false) {
-                    const btn = document.createElement("a");
-                    btn.href = "#";
-                    btn.textContent = text;
-                    if (active) btn.classList.add("active");
-                    btn.onclick = e => {
-                        e.preventDefault();
-                        onClick();
-                    };
-                    return btn;
-                }
-
-                pagination.appendChild(createBtn("« First", () => {
-                    currentPage = 1;
-                    renderPartDetailTable();
-                }));
-                pagination.appendChild(createBtn("‹ Prev", () => {
-                    if (currentPage > 1) {
-                        currentPage--;
-                        renderPartDetailTable();
-                    }
-                }));
-
-                let start = Math.max(currentPage - 2, 1);
-                let end = Math.min(start + 4, totalPages);
-                for (let i = start; i <= end; i++) {
-                    pagination.appendChild(createBtn(i, () => {
-                        currentPage = i;
-                        renderPartDetailTable();
-                    }, i === currentPage));
-                }
-
-                pagination.appendChild(createBtn("Next ›", () => {
-                    if (currentPage < totalPages) {
-                        currentPage++;
-                        renderPartDetailTable();
-                    }
-                }));
-                pagination.appendChild(createBtn("Last »", () => {
-                    currentPage = totalPages;
-                    renderPartDetailTable();
-                }));
-            }
-
-            document.querySelector(".search-input").addEventListener("input", () => {
-                currentPage = 1;
-                renderPartDetailTable();
-            });
-
-            document.addEventListener("DOMContentLoaded", renderPartDetailTable);
-            
-            document.addEventListener("DOMContentLoaded", function() {
-                const messages = document.querySelectorAll(".success-message, .error-message");
+        // Real-time validation for Serial Number
+        const serialInput = document.getElementById("serialNumber");
+        if (serialInput) {
+            serialInput.addEventListener("input", function() {
+                const value = this.value.toUpperCase();
+                this.value = value;
                 
-                messages.forEach(function(msg) {
-                    setTimeout(function() {
-                        msg.classList.add("message-fade-out");
-                        setTimeout(function() {
-                            msg.style.display = "none";
-                        }, 500);
-                    }, 5000);
-                });
+                const formMessage = document.getElementById("partDetailFormMessage");
+                const pattern = /^[A-Z]{3}-\d{3}-\d{4}$/;
+                
+                if (value.length === 0) {
+                    formMessage.textContent = "";
+                } else if (pattern.test(value)) {
+                    formMessage.textContent = "✓ Serial Number hợp lệ";
+                    formMessage.style.color = "#28a745";
+                } else {
+                    formMessage.textContent = "⚠️ Format: AAA-XXX-YYYY (VD: SNK-001-2024)";
+                    formMessage.style.color = "#ff9800";
+                }
             });
-        </script>
+        }
+
+        // Real-time validation for Location
+        const locationInput = document.getElementById("location");
+        if (locationInput) {
+            locationInput.addEventListener("input", function() {
+                const length = this.value.length;
+                const formMessage = document.getElementById("partDetailFormMessage");
+                
+                if (length === 0) {
+                    formMessage.textContent = "";
+                } else if (length < 5) {
+                    formMessage.textContent = `⚠️ Location: Còn thiếu ${5 - length} ký tự`;
+                    formMessage.style.color = "#ff9800";
+                } else if (length > 50) {
+                    formMessage.textContent = `❌ Location: Vượt quá ${length - 50} ký tự`;
+                    formMessage.style.color = "#dc3545";
+                } else {
+                    formMessage.textContent = `✓ Location: ${length}/50 ký tự`;
+                    formMessage.style.color = "#28a745";
+                }
+            });
+        }
+
+        // Warning when selecting Available status
+        const statusSelect = document.getElementById("status");
+        const statusWarning = document.getElementById("statusWarning");
+        if (statusSelect && statusWarning) {
+            statusSelect.addEventListener("change", function() {
+                if (this.value === "Available") {
+                    statusWarning.style.display = "block";
+                } else {
+                    statusWarning.style.display = "none";
+                }
+            });
+        }
+
+        // Auto-hide success/error messages after 5 seconds
+        const messages = document.querySelectorAll(".success-message, .error-message");
+        messages.forEach(function(msg) {
+            setTimeout(function() {
+                msg.classList.add("message-fade-out");
+                setTimeout(function() {
+                    msg.style.display = "none";
+                }, 500);
+            }, 5000);
+        });
+    });
+</script>
         <%
             // Xóa message sau khi đã hiển thị
             session.removeAttribute("successMessage");

@@ -640,35 +640,41 @@ body {
                 </table>
 
                 <!-- Form Popup -->
-                <div class="form-overlay" id="formOverlay">
-                    <div class="form-container">
-                        <h2 id="formTitle">Add New Part</h2>
-                        <form action="numberPart" method="POST" id="partForm">
-                            <input type="hidden" name="action" id="actionInput" value="add">
-                            <input type="hidden" name="partId" id="partId">
+            <div class="form-overlay" id="formOverlay">
+    <div class="form-container">
+        <h2 id="formTitle">Add New Part</h2>
+        <form action="numberPart" method="POST" id="partForm" onsubmit="return validateForm()">
+            <input type="hidden" name="action" id="actionInput" value="add">
+            <input type="hidden" name="partId" id="partId">
 
-                            <label>Part Name *</label>
-                            <input type="text" name="partName" id="partName" required maxlength="30">
+            <label>Part Name * (Tối thiểu 3 ký tự)</label>
+            <input type="text" name="partName" id="partName" required 
+                   minlength="3" maxlength="30"
+                   placeholder="Nhập tên part (ít nhất 3 ký tự)">
 
-                            <label>Description *</label>
-                            <input type="text" name="description" id="partDescription" required maxlength="100">
+            <label>Description * (10-100 ký tự)</label>
+            <input type="text" name="description" id="partDescription" required 
+                   minlength="10" maxlength="100"
+                   placeholder="Nhập mô tả (10-100 ký tự)">
 
-                            <label>Unit Price *</label>
-                            <input type="number" name="unitPrice" id="partPrice" step="0.01" required>
+            <label>Unit Price *</label>
+            <input type="number" name="unitPrice" id="partPrice" 
+                   step="0.01" required min="0.01" max="9999999.99"
+                   placeholder="Nhập giá (0 < giá < 10,000,000)">
 
-                            <p id="formMessage"></p>
+            <p id="formMessage"></p>
 
-                            <div class="form-buttons">
-                                <button type="submit" class="btn-save">
-                                    <i class="fas fa-save"></i> Save
-                                </button>
-                                <button type="button" class="btn-cancel" onclick="closeForm()">
-                                    <i class="fas fa-times"></i> Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+            <div class="form-buttons">
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button type="button" class="btn-cancel" onclick="closeForm()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
                 <!-- Pagination -->
                 <div class="pagination">
@@ -682,167 +688,269 @@ body {
                 </div>
             </div>
         </div>
+         <script>
+    // ========== FORM FUNCTIONS ==========
+    function openForm(mode, partId = '', partName = '', description = '', unitPrice = '') {
+        const overlay = document.getElementById("formOverlay");
+        const title = document.getElementById("formTitle");
+        const actionInput = document.getElementById("actionInput");
+        const formMessage = document.getElementById("formMessage");
 
-        <script>
-            function openForm(mode, partId = '', partName = '', description = '', unitPrice = '') {
-                const overlay = document.getElementById("formOverlay");
-                const title = document.getElementById("formTitle");
-                const actionInput = document.getElementById("actionInput");
+        overlay.style.display = "flex";
+        formMessage.textContent = "";
+        formMessage.style.color = "#dc3545";
 
-                overlay.style.display = "flex";
-                document.getElementById("formMessage").textContent = "";
+        if (mode === "new") {
+            title.textContent = "Add New Part";
+            actionInput.value = "add";
+            document.getElementById("partId").value = "";
+            document.getElementById("partName").value = "";
+            document.getElementById("partDescription").value = "";
+            document.getElementById("partPrice").value = "";
+        } else {
+            title.textContent = "Edit Part";
+            actionInput.value = "edit";
+            document.getElementById("partId").value = partId;
+            document.getElementById("partName").value = partName;
+            document.getElementById("partDescription").value = description;
+            document.getElementById("partPrice").value = unitPrice;
+        }
+    }
 
-                if (mode === "new") {
-                    title.textContent = "Add New Part";
-                    actionInput.value = "add";
-                    document.getElementById("partId").value = "";
-                    document.getElementById("partName").value = "";
-                    document.getElementById("partDescription").value = "";
-                    document.getElementById("partPrice").value = "";
-                } else {
-                    title.textContent = "Edit Part";
-                    actionInput.value = "edit";
-                    document.getElementById("partId").value = partId;
-                    document.getElementById("partName").value = partName;
-                    document.getElementById("partDescription").value = description;
-                    document.getElementById("partPrice").value = unitPrice;
-                }
+    function closeForm() {
+        document.getElementById("formOverlay").style.display = "none";
+        document.getElementById("formMessage").textContent = "";
+    }
+
+    function validateForm() {
+        const partName = document.getElementById("partName").value.trim();
+        const description = document.getElementById("partDescription").value.trim();
+        const unitPrice = parseFloat(document.getElementById("partPrice").value);
+        const formMessage = document.getElementById("formMessage");
+        
+        formMessage.textContent = "";
+        formMessage.style.color = "#dc3545";
+        
+        // Validate Part Name (min 3, max 30)
+        if (partName.length < 3) {
+            formMessage.textContent = "❌ Tên Part phải có ít nhất 3 ký tự!";
+            return false;
+        }
+        
+        if (partName.length > 30) {
+            formMessage.textContent = "❌ Tên Part không được vượt quá 30 ký tự!";
+            return false;
+        }
+        
+        // Validate Description (min 10, max 100)
+        if (description.length < 10) {
+            formMessage.textContent = "❌ Mô tả phải có ít nhất 10 ký tự!";
+            return false;
+        }
+        
+        if (description.length > 100) {
+            formMessage.textContent = "❌ Mô tả không được vượt quá 100 ký tự!";
+            return false;
+        }
+        
+        // Validate Unit Price (0 < price < 10,000,000)
+        if (isNaN(unitPrice) || unitPrice <= 0 || unitPrice >= 10000000) {
+            formMessage.textContent = "❌ Giá phải lớn hơn 0 và nhỏ hơn 10,000,000!";
+            return false;
+        }
+        
+        return true;
+    }
+
+    // ========== DELETE FUNCTION ==========
+    function confirmDelete(partId) {
+        if (confirm("Bạn có chắc muốn xóa Part ID = " + partId + " ?")) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'numberPart';
+
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'delete';
+
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'partId';
+            idInput.value = partId;
+
+            form.appendChild(actionInput);
+            form.appendChild(idInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // ========== PAGINATION VARIABLES ==========
+    let currentPage = 1;
+    const rowsPerPage = 10;
+
+    // ========== TABLE RENDERING ==========
+    function renderTable() {
+        const tableBody = document.querySelector(".inventory-table tbody");
+        if (!tableBody) return;
+
+        const keyword = document.querySelector(".search-input").value.toLowerCase();
+        const rows = Array.from(tableBody.rows);
+
+        const filteredRows = rows.filter(row => {
+            return Array.from(row.cells).slice(0, 6)
+                    .some(td => td.innerText.toLowerCase().includes(keyword));
+        });
+
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        if (filteredRows.length === 0) {
+            rows.forEach(row => row.style.display = "none");
+            return;
+        }
+
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        rows.forEach(row => row.style.display = "none");
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        filteredRows.slice(start, end).forEach(row => row.style.display = "");
+
+        renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+        const pagination = document.querySelector(".pagination");
+        if (!pagination) return;
+        pagination.innerHTML = "";
+
+        function createBtn(text, onClick, active = false) {
+            const btn = document.createElement("a");
+            btn.href = "#";
+            btn.textContent = text;
+            if (active) btn.classList.add("active");
+            btn.onclick = e => {
+                e.preventDefault();
+                onClick();
+            };
+            return btn;
+        }
+
+        pagination.appendChild(createBtn("« First", () => {
+            currentPage = 1;
+            renderTable();
+        }));
+        
+        pagination.appendChild(createBtn("‹ Prev", () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
             }
+        }));
 
-            function closeForm() {
-                document.getElementById("formOverlay").style.display = "none";
+        let start = Math.max(currentPage - 2, 1);
+        let end = Math.min(start + 4, totalPages);
+        for (let i = start; i <= end; i++) {
+            pagination.appendChild(createBtn(i, () => {
+                currentPage = i;
+                renderTable();
+            }, i === currentPage));
+        }
+
+        pagination.appendChild(createBtn("Next ›", () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
             }
+        }));
+        
+        pagination.appendChild(createBtn("Last »", () => {
+            currentPage = totalPages;
+            renderTable();
+        }));
+    }
 
-            function confirmDelete(partId) {
-                if (confirm("Bạn có chắc muốn xóa Part ID = " + partId + " ?")) {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = 'numberPart';
+    // ========== EVENT LISTENERS ==========
+    document.addEventListener("DOMContentLoaded", function() {
+        // Initialize table on page load
+        renderTable();
 
-                    const actionInput = document.createElement('input');
-                    actionInput.type = 'hidden';
-                    actionInput.name = 'action';
-                    actionInput.value = 'delete';
+        // Search input listener
+        const searchInput = document.querySelector(".search-input");
+        if (searchInput) {
+            searchInput.addEventListener("input", () => {
+                currentPage = 1;
+                renderTable();
+            });
+        }
 
-                    const idInput = document.createElement('input');
-                    idInput.type = 'hidden';
-                    idInput.name = 'partId';
-                    idInput.value = partId;
-
-                    form.appendChild(actionInput);
-                    form.appendChild(idInput);
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            }
-
-            document.getElementById("formOverlay").addEventListener('click', function (e) {
+        // Form overlay click to close
+        const formOverlay = document.getElementById("formOverlay");
+        if (formOverlay) {
+            formOverlay.addEventListener('click', function (e) {
                 if (e.target === this) {
                     closeForm();
                 }
             });
+        }
 
-            let currentPage = 1;
-            const rowsPerPage = 10;
-
-            function renderTable() {
-                const tableBody = document.querySelector(".inventory-table tbody");
-                if (!tableBody) return;
-
-                const keyword = document.querySelector(".search-input").value.toLowerCase();
-                const rows = Array.from(tableBody.rows);
-
-                const filteredRows = rows.filter(row => {
-                    return Array.from(row.cells).slice(0, 6)
-                            .some(td => td.innerText.toLowerCase().includes(keyword));
-                });
-
-                const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-                if (filteredRows.length === 0) {
-                    rows.forEach(row => row.style.display = "none");
-                    return;
-                }
-
-                if (currentPage > totalPages) currentPage = totalPages;
-                if (currentPage < 1) currentPage = 1;
-
-                rows.forEach(row => row.style.display = "none");
-                const start = (currentPage - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-                filteredRows.slice(start, end).forEach(row => row.style.display = "");
-
-                renderPagination(totalPages);
-            }
-
-            function renderPagination(totalPages) {
-                const pagination = document.querySelector(".pagination");
-                if (!pagination) return;
-                pagination.innerHTML = "";
-
-                function createBtn(text, onClick, active = false) {
-                    const btn = document.createElement("a");
-                    btn.href = "#";
-                    btn.textContent = text;
-                    if (active) btn.classList.add("active");
-                    btn.onclick = e => {
-                        e.preventDefault();
-                        onClick();
-                    };
-                    return btn;
-                }
-
-                pagination.appendChild(createBtn("« First", () => {
-                    currentPage = 1;
-                    renderTable();
-                }));
-                pagination.appendChild(createBtn("‹ Prev", () => {
-                    if (currentPage > 1) {
-                        currentPage--;
-                        renderTable();
-                    }
-                }));
-
-                let start = Math.max(currentPage - 2, 1);
-                let end = Math.min(start + 4, totalPages);
-                for (let i = start; i <= end; i++) {
-                    pagination.appendChild(createBtn(i, () => {
-                        currentPage = i;
-                        renderTable();
-                    }, i === currentPage));
-                }
-
-                pagination.appendChild(createBtn("Next ›", () => {
-                    if (currentPage < totalPages) {
-                        currentPage++;
-                        renderTable();
-                    }
-                }));
-                pagination.appendChild(createBtn("Last »", () => {
-                    currentPage = totalPages;
-                    renderTable();
-                }));
-            }
-
-            document.querySelector(".search-input").addEventListener("input", () => {
-                currentPage = 1;
-                renderTable();
-            });
-
-            document.addEventListener("DOMContentLoaded", renderTable);
-            document.addEventListener("DOMContentLoaded", function() {
-                const messages = document.querySelectorAll(".success-message, .error-message");
+        // Real-time character counter for Part Name
+        const partNameInput = document.getElementById("partName");
+        if (partNameInput) {
+            partNameInput.addEventListener("input", function() {
+                const length = this.value.length;
+                const formMessage = document.getElementById("formMessage");
                 
-                messages.forEach(function(msg) {
-                    setTimeout(function() {
-                        msg.classList.add("message-fade-out");
-                        setTimeout(function() {
-                            msg.style.display = "none";
-                        }, 500);
-                    }, 5000);
-                });
+                if (length === 0) {
+                    formMessage.textContent = "";
+                } else if (length < 3) {
+                    formMessage.textContent = `⚠️ Tên Part: Còn thiếu ${3 - length} ký tự`;
+                    formMessage.style.color = "#ff9800";
+                } else if (length > 30) {
+                    formMessage.textContent = `❌ Tên Part: Vượt quá ${length - 30} ký tự`;
+                    formMessage.style.color = "#dc3545";
+                } else {
+                    formMessage.textContent = `✓ Tên Part: ${length}/30 ký tự`;
+                    formMessage.style.color = "#28a745";
+                }
             });
-            
-        </script>
+        }
+
+        // Real-time character counter for Description
+        const descriptionInput = document.getElementById("partDescription");
+        if (descriptionInput) {
+            descriptionInput.addEventListener("input", function() {
+                const length = this.value.length;
+                const formMessage = document.getElementById("formMessage");
+                
+                if (length === 0) {
+                    formMessage.textContent = "";
+                } else if (length < 10) {
+                    formMessage.textContent = `⚠️ Mô tả: Còn thiếu ${10 - length} ký tự`;
+                    formMessage.style.color = "#ff9800";
+                } else if (length > 100) {
+                    formMessage.textContent = `❌ Mô tả: Vượt quá ${length - 100} ký tự`;
+                    formMessage.style.color = "#dc3545";
+                } else {
+                    formMessage.textContent = `✓ Mô tả: ${length}/100 ký tự`;
+                    formMessage.style.color = "#28a745";
+                }
+            });
+        }
+
+        // Auto-hide success/error messages after 5 seconds
+        const messages = document.querySelectorAll(".success-message, .error-message");
+        messages.forEach(function(msg) {
+            setTimeout(function() {
+                msg.classList.add("message-fade-out");
+                setTimeout(function() {
+                    msg.style.display = "none";
+                }, 500);
+            }, 5000);
+        });
+    });
+</script>
         <%
             // Xóa message sau khi đã hiển thị
             session.removeAttribute("successMessage");

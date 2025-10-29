@@ -67,7 +67,7 @@ public class ChangeInformationServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-HttpSession session = request.getSession(false);
+        HttpSession session = request.getSession(false);
         response.setContentType("text/html;charset=UTF-8");
 
         try {
@@ -75,8 +75,6 @@ HttpSession session = request.getSession(false);
             System.out.println("========== ChangeInformationServlet GET ==========");
             System.out.println("=".repeat(60));
             
-            
-       
             if (session == null) {
                 System.err.println("❌ Session is NULL - Redirecting to login");
                 response.sendRedirect("login.jsp");
@@ -85,7 +83,7 @@ HttpSession session = request.getSession(false);
             System.out.println("✅ Session exists: " + session.getId());
 
             Account acc = (Account) session.getAttribute("session_login");
-            if (acc == null || acc.getAccountId() == -1 || acc.getAccountId() == -1) {
+            if (acc == null || acc.getAccountId() == -1) {
                 System.err.println("❌ Account not found in session or invalid - Redirecting to login");
                 response.sendRedirect("login.jsp");
                 return;
@@ -113,9 +111,11 @@ HttpSession session = request.getSession(false);
                     user.setDob(accountProfile.getDateOfBirth() != null ? 
                         accountProfile.getDateOfBirth().toString() : "");
                     
+//                     ✅ CHỈ LƯU TÊN FILE, KHÔNG CÓ THÊM "avatar/"
                     String avatarUrl = accountProfile.getAvatarUrl();
                     if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                        user.setAvatar("avatar/" + avatarUrl);
+                        user.setAvatar(avatarUrl);
+                        System.out.println("   - Avatar filename: " + avatarUrl);
                     }
                 }
                 
@@ -123,6 +123,7 @@ HttpSession session = request.getSession(false);
                 System.out.println("✅ UserDTO created and stored in session");
                 System.out.println("   - Full Name: " + user.getFullName());
                 System.out.println("   - Email: " + user.getEmail());
+                System.out.println("   - Avatar: " + user.getAvatar());
             }
 
             request.getRequestDispatcher("changeInformation.jsp").forward(request, response);
@@ -151,7 +152,7 @@ HttpSession session = request.getSession(false);
         }
 
         Account acc = (Account) session.getAttribute("session_login");
-        if (acc == null || acc.getAccountId() == -1 || acc.getAccountId() == -1) {
+        if (acc == null || acc.getAccountId() == -1) {
             System.err.println("❌ Account not found in session - Redirecting to login");
             response.sendRedirect("login.jsp");
             return;
@@ -207,8 +208,9 @@ HttpSession session = request.getSession(false);
             Part avatarPart = request.getPart("avatar");
             if (avatarPart != null && avatarPart.getSize() > 0) {
                 System.out.println("📷 Avatar file detected:");
-                System.out.println("   - File name: " + avatarPart.getSubmittedFileName());
+                System.out.println("   - Submitted file name: " + avatarPart.getSubmittedFileName());
                 System.out.println("   - File size: " + avatarPart.getSize() + " bytes");
+                System.out.println("   - Content type: " + avatarPart.getContentType());
                 
                 try {
                     avatarFileName = handleAvatarUpload(avatarPart, acc.getAccountId());
@@ -219,6 +221,8 @@ HttpSession session = request.getSession(false);
                     response.sendRedirect("changeInformation");
                     return;
                 }
+            } else {
+                System.out.println("ℹ️ No avatar file uploaded");
             }
 
             // Update Account table (fullName, email, phone)
@@ -277,6 +281,7 @@ HttpSession session = request.getSession(false);
                     deleteOldAvatar(oldAvatar);
                 }
                 profile.setAvatarUrl(avatarFileName);
+                System.out.println("✅ Avatar filename set in profile: " + avatarFileName);
             }
 
             boolean success;
@@ -298,10 +303,16 @@ HttpSession session = request.getSession(false);
                 user.setNationalId(nationalId);
                 user.setDob(dobString);
                 
-                if (profile.getAvatarUrl() != null && !profile.getAvatarUrl().isEmpty()) {
-                    user.setAvatar("avatar/" + profile.getAvatarUrl());
+                // ✅ CHỈ LƯU TÊN FILE, KHÔNG CÓ THÊM "avatar/"
+                if (avatarFileName != null) {
+                    user.setAvatar(avatarFileName);
+                } else if (profile.getAvatarUrl() != null && !profile.getAvatarUrl().isEmpty()) {
+                    user.setAvatar(profile.getAvatarUrl());
                 }
+                
                 session.setAttribute("user", user);
+                System.out.println("✅ Session updated with new user data");
+                System.out.println("   - Avatar in session: " + user.getAvatar());
 
                 session.setAttribute("successMessage", "Information updated successfully!");
                 System.out.println("✅ All operations completed successfully");
@@ -322,32 +333,65 @@ HttpSession session = request.getSession(false);
 
     /**
      * Handle avatar file upload
+     * @return Only the filename (e.g., "avatar_123_1234567890.jpg")
      */
     private String handleAvatarUpload(Part filePart, Integer accountId) throws Exception {
-        String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+        // Get submitted filename and clean it
+        String submittedFileName = filePart.getSubmittedFileName();
+        if (submittedFileName == null || submittedFileName.isEmpty()) {
+            throw new Exception("No file selected");
+        }
+        
+        // Security: Get only the filename, remove any path
+        String fileName = Paths.get(submittedFileName).getFileName().toString();
+        System.out.println("   - Original filename: " + fileName);
 
+        // Validate file extension
         if (!isValidFileExtension(fileName)) {
             throw new Exception("Invalid file type. Only JPG, PNG, and GIF are allowed.");
         }
 
+        // Validate file size
         if (filePart.getSize() > MAX_FILE_SIZE) {
             throw new Exception("File size exceeds 2MB limit.");
         }
+        
+        // Validate content type
+        String contentType = filePart.getContentType();
+        if (contentType == null || 
+            (!contentType.equals("image/jpeg") && 
+             !contentType.equals("image/png") && 
+             !contentType.equals("image/gif"))) {
+            throw new Exception("Invalid content type: " + contentType);
+        }
 
+        // Generate new unique filename
         String extension = fileName.substring(fileName.lastIndexOf('.'));
         String newFileName = "avatar_" + accountId + "_" + System.currentTimeMillis() + extension;
+        System.out.println("   - Generated filename: " + newFileName);
 
+        // Ensure upload directory exists
         File uploadDir = new File(UPLOAD_DIR);
         if (!uploadDir.exists()) {
             uploadDir.mkdirs();
         }
 
+        // Save file to disk
         Path filePath = Paths.get(UPLOAD_DIR, newFileName);
         try (InputStream fileContent = filePart.getInputStream()) {
             Files.copy(fileContent, filePath, StandardCopyOption.REPLACE_EXISTING);
         }
 
+        // Verify file was saved
+        File savedFile = filePath.toFile();
+        if (!savedFile.exists()) {
+            throw new Exception("File was not saved successfully");
+        }
+        
         System.out.println("✅ File saved to: " + filePath.toString());
+        System.out.println("   - File size on disk: " + savedFile.length() + " bytes");
+        
+        // Return ONLY the filename
         return newFileName;
     }
 
@@ -360,6 +404,8 @@ HttpSession session = request.getSession(false);
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
                 System.out.println("🗑️ Old avatar deleted: " + fileName);
+            } else {
+                System.out.println("ℹ️ Old avatar file not found: " + fileName);
             }
         } catch (IOException e) {
             System.err.println("⚠️ Failed to delete old avatar: " + e.getMessage());
@@ -453,7 +499,7 @@ HttpSession session = request.getSession(false);
         private String address;
         private String nationalId;
         private String dob;
-        private String avatar;
+        private String avatar; // CHỈ LƯU TÊN FILE
 
         public String getFullName() { return fullName; }
         public void setFullName(String fullName) { this.fullName = fullName; }
