@@ -89,7 +89,7 @@
             <c:forEach var="contractWithEquipment" items="${contracts}" varStatus="st">
               <c:set var="contract" value="${contractWithEquipment.contract}"/>
               <tr>
-                <td>${st.index + 1}</td>
+                <td>${(currentPage - 1) * pageSize + st.index + 1}</td>
                 <td><strong>#${contract.contractId}</strong></td>
                 <td>
                   <div class="d-flex align-items-center">

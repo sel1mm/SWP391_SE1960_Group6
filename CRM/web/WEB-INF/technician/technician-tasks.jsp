@@ -77,7 +77,7 @@
           <c:when test="${not empty tasksWithCustomer}">
             <c:forEach var="taskWithCustomer" items="${tasksWithCustomer}" varStatus="st">
               <tr>
-                <td>${st.index + 1}</td>
+                <td>${(currentPage - 1) * pageSize + st.index + 1}</td>
                 <td><strong>#${taskWithCustomer.task.taskId}</strong></td>
                 <td>
                   <c:choose>

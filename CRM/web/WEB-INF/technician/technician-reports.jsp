@@ -86,7 +86,7 @@
           <c:when test="${not empty reportsWithCustomer}">
             <c:forEach var="reportWithCustomer" items="${reportsWithCustomer}" varStatus="st">
               <tr>
-                <td>${st.index + 1}</td>
+                <td>${(currentPage - 1) * pageSize + st.index + 1}</td>
                 <td><strong>#${reportWithCustomer.report.reportId}</strong></td>
                 <td>
                   <div class="fw-bold">${fn:escapeXml(reportWithCustomer.customerName)}</div>

@@ -102,32 +102,6 @@
     <div class="col-lg-4">
       <div class="card crm-card-shadow">
         <div class="card-header">
-          <h5 class="mb-0">System Status</h5>
-        </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <span>Database Connection</span>
-              <span class="badge bg-success">Active</span>
-            </div>
-          </div>
-          <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <span>System Status</span>
-              <span class="badge bg-success">Online</span>
-            </div>
-          </div>
-          <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <span>Last Login</span>
-              <small class="text-muted">Just now</small>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card crm-card-shadow mt-3">
-        <div class="card-header">
           <h5 class="mb-0">Help & Support</h5>
         </div>
         <div class="card-body">

@@ -83,7 +83,7 @@
           <c:when test="${not empty equipmentList}">
             <c:forEach var="equipment" items="${equipmentList}" varStatus="st">
               <tr>
-                <td>${st.index + 1}</td>
+                <td>${(currentPage - 1) * pageSize + st.index + 1}</td>
                 <td><strong>#${equipment.equipmentId}</strong></td>
                 <td>
                   <code class="text-primary">${fn:escapeXml(equipment.serialNumber)}</code>

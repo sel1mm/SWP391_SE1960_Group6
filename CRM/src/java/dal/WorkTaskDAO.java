@@ -409,13 +409,13 @@ public class WorkTaskDAO extends MyDAO {
 //    }
     
     /**
-     * Get assigned tasks for technician that are not completed (for report creation)
+     * Get assigned tasks for technician that are not completed or cancelled (for report creation)
      */
     public List<WorkTask> getAssignedTasksForReport(int technicianId) throws SQLException {
         List<WorkTask> tasks = new ArrayList<>();
         xSql = "SELECT wt.taskId, wt.requestId, wt.scheduleId, wt.technicianId, " +
                "wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status " +
-               "FROM WorkTask wt WHERE wt.technicianId = ? AND wt.status != 'Completed' " +
+               "FROM WorkTask wt WHERE wt.technicianId = ? AND wt.status NOT IN ('Completed', 'Cancelled') " +
                "ORDER BY wt.startDate ASC";
         
         ps = con.prepareStatement(xSql);
