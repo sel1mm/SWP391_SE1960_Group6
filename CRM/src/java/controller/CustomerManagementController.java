@@ -1,5 +1,9 @@
 package controller;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 import dal.AccountProfileDAO;
 import dto.RegisterRequest;
 import dto.Response;
@@ -9,8 +13,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.PrintWriter;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import model.Account;
 import model.AccountProfile;
 import service.AccountService;
@@ -98,6 +106,71 @@ public class CustomerManagementController extends HttpServlet {
             e.printStackTrace();
             request.setAttribute("message", "Lỗi khi xử lý dữ liệu: " + e.getMessage());
         }
+
+        // ✅ API: Lấy thông tin người dùng (Account + Profile) theo email hoặc ID
+        if ("getById".equals(action)) {
+            response.setContentType("application/json;charset=UTF-8");
+            String idParam = request.getParameter("userId");
+            String emailParam = request.getParameter("email");
+
+            try {
+                Account account = null;
+                AccountProfile profile = null;
+
+                // ✅ Lấy theo ID nếu có
+                if (idParam != null && idParam.matches("\\d+")) {
+                    int userId = Integer.parseInt(idParam);
+                    Response<Account> res = accountService.getAccountById(userId);
+                    if (res.isSuccess() && res.getData() != null) {
+                        account = res.getData();
+                        profile = accountService.getProfileById(userId);
+                    }
+                } // ✅ Hoặc lấy theo email nếu có
+                else if (emailParam != null && !emailParam.trim().isEmpty()) {
+                    Response<Account> res = accountService.getAccountByEmailResponse(emailParam.trim());
+                    if (res.isSuccess() && res.getData() != null) {
+                        account = res.getData();
+                        profile = accountService.getProfileById(account.getAccountId());
+                    }
+                }
+
+                // ✅ Cấu hình Gson an toàn (hỗ trợ LocalDate + LocalDateTime)
+                Gson gson = new GsonBuilder()
+                        .registerTypeAdapter(LocalDate.class,
+                                (JsonSerializer<LocalDate>) (src, typeOfSrc, context)
+                                -> src == null ? null : new JsonPrimitive(src.toString()))
+                        .registerTypeAdapter(LocalDateTime.class,
+                                (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context)
+                                -> src == null ? null : new JsonPrimitive(src.toString()))
+                        .serializeNulls()
+                        .setPrettyPrinting()
+                        .create();
+
+                PrintWriter out = response.getWriter();
+
+                // ✅ Gửi JSON phản hồi
+                if (account != null) {
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("success", true);
+                    result.put("account", account);
+                    result.put("profile", profile);
+
+                    out.print(gson.toJson(result));
+                } else {
+                    out.print("{\"success\":false,\"message\":\"Không tìm thấy tài khoản\"}");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                // ⚠️ Escape lỗi JSON
+                String safeMsg = e.getMessage() != null
+                        ? e.getMessage().replace("\"", "\\\"")
+                        : "Không xác định";
+                response.getWriter().print("{\"success\":false,\"message\":\"Lỗi hệ thống: " + safeMsg + "\"}");
+            }
+            return; // ⚠️ Dừng hẳn, không forward JSP
+        }
+
         request.getRequestDispatcher("customerManagement.jsp").forward(request, response);
     }
 
@@ -264,6 +337,7 @@ public class CustomerManagementController extends HttpServlet {
                     String nationalId = request.getParameter("nationalId");
                     String verifiedStr = request.getParameter("verified");
                     String extraData = request.getParameter("extraData");
+                    
 
                     // Validate định dạng cơ bản
                     if (fullName == null || !fullName.matches(FULLNAME_REGEX)

@@ -883,4 +883,49 @@ public class ContractDAO extends MyDAO {
         return list;
     }
 
+    public Integer getContractIdByEquipmentAndCustomer(int equipmentId, int customerId) throws SQLException {
+        String sql = "SELECT c.contractId "
+                + "FROM Contract c "
+                + "JOIN ContractEquipment ce ON c.contractId = ce.contractId "
+                + "WHERE ce.equipmentId = ? AND c.customerId = ? "
+                + "ORDER BY c.contractId DESC LIMIT 1";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, equipmentId);
+            ps.setInt(2, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("contractId");
+                }
+            }
+        }
+        return null;
+    }
+
+    public String getContractType(int contractId) throws SQLException {
+        String sql = "SELECT contractType FROM Contract WHERE contractId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("contractType");
+                }
+            }
+        }
+        return null;
+    }
+
+    public String getContractStatus(int contractId) throws SQLException {
+        String sql = "SELECT status FROM Contract WHERE contractId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("status");
+                }
+            }
+        }
+        return null;
+    }
+
 }

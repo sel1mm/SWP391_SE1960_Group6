@@ -340,4 +340,66 @@ public class EquipmentDAO extends DBContext {
         return list;
     }
 
+    
+        /**
+     * Check if equipmentId exists and is active
+     */
+    public boolean isValidEquipment(int equipmentId) {
+        String sql = "SELECT COUNT(*) FROM Equipment WHERE equipmentId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, equipmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error in isValidEquipment: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Get all equipment owned by a customer (not via Contract)
+     * — Optional helper if you later want to load equipment directly by customerId
+     */
+    public List<Equipment> getEquipmentByCustomer(int customerId) {
+        List<Equipment> list = new ArrayList<>();
+        String sql = "SELECT e.equipmentId, e.serialNumber, e.model, e.description, "
+                   + "       e.installDate, e.lastUpdatedBy, e.lastUpdatedDate "
+                   + "FROM Equipment e "
+                   + "WHERE e.customerId = ? "
+                   + "ORDER BY e.equipmentId DESC";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Equipment e = new Equipment();
+                    e.setEquipmentId(rs.getInt("equipmentId"));
+                    e.setSerialNumber(rs.getString("serialNumber"));
+                    e.setModel(rs.getString("model"));
+                    e.setDescription(rs.getString("description"));
+
+                    Date installDate = rs.getDate("installDate");
+                    if (installDate != null) {
+                        e.setInstallDate(installDate.toLocalDate());
+                    }
+
+                    e.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
+
+                    Date lastUpdatedDate = rs.getDate("lastUpdatedDate");
+                    if (lastUpdatedDate != null) {
+                        e.setLastUpdatedDate(lastUpdatedDate.toLocalDate());
+                    }
+
+                    list.add(e);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error in getEquipmentByCustomer: " + e.getMessage());
+        }
+        return list;
+    }
+
 }

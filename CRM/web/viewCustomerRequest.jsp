@@ -45,6 +45,12 @@
             background-color: #000;
             color: #fff;
         }
+        
+        .error-message {
+            display: none;
+            color: red;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 
@@ -243,43 +249,55 @@
                                         </td>
                                         <td>
                                             <div class="btn-group">
-                                                <!-- Nếu loại yêu cầu là Service hoặc Warranty -->
-                                                <c:if test="${req.requestType eq 'Service' or req.requestType eq 'Warranty'}">
-                                                    <!-- Luôn có nút xem chi tiết -->
+                                                <!-- Nếu trạng thái là Completed, Canceled hoặc Rejected -->
+                                                <c:if test="${req.status eq 'Completed' or req.status eq 'Canceled' or req.status eq 'Rejected'}">
                                                     <button class="btn btn-sm btn-outline-dark" title="Xem chi tiết"
                                                             onclick="viewDetails('${req.requestId}')">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
+                                                </c:if>
 
-                                                    <!-- Nếu trạng thái là Pending thì có thêm nút Chuyển tiếp -->
-                                                    <c:if test="${req.status eq 'Pending'}">
-                                                        <button class="btn btn-sm btn-outline-primary" title="Chuyển tiếp"
-                                                                onclick="forwardRequest('${req.requestId}')">
-                                                            <i class="fas fa-share"></i>
+                                                <!-- Ngược lại, hiển thị theo loại yêu cầu -->
+                                                <c:if test="${req.status ne 'Completed' and req.status ne 'Canceled' and req.status ne 'Rejected'}">
+                                                    <!-- Nếu loại yêu cầu là Service hoặc Warranty -->
+                                                    <c:if test="${req.requestType eq 'Service' or req.requestType eq 'Warranty'}">
+                                                        <!-- Luôn có nút xem chi tiết -->
+                                                        <button class="btn btn-sm btn-outline-dark" title="Xem chi tiết"
+                                                                onclick="viewDetails('${req.requestId}')">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+
+                                                        <!-- Nếu trạng thái là Pending thì có thêm nút Chuyển tiếp -->
+                                                        <c:if test="${req.status eq 'Pending'}">
+                                                            <button class="btn btn-sm btn-outline-primary" title="Chuyển tiếp"
+                                                                    onclick="forwardRequest('${req.requestId}')">
+                                                                <i class="fas fa-share"></i>
+                                                            </button>
+                                                        </c:if>
+                                                    </c:if>
+
+                                                    <!-- Nếu loại yêu cầu là InformationUpdate -->
+                                                    <c:if test="${req.requestType eq 'InformationUpdate'}">
+                                                        <!-- Luôn có nút xem chi tiết -->
+                                                        <button class="btn btn-sm btn-outline-dark" title="Xem chi tiết"
+                                                                onclick="viewDetails('${req.requestId}')">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+
+                                                        <!-- Nút sửa thông tin khách hàng -->
+                                                        <button class="btn btn-sm btn-outline-success" title="Sửa thông tin khách hàng"
+                                                                onclick="editCustomerInfo('${req.requestId}')">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+
+                                                        <!-- Nút hủy yêu cầu -->
+                                                        <button class="btn btn-sm btn-outline-danger" title="Hủy yêu cầu"
+                                                                onclick="cancelRequest('${req.requestId}')">
+                                                            <i class="fas fa-times"></i>
                                                         </button>
                                                     </c:if>
                                                 </c:if>
 
-                                                <!-- Nếu loại yêu cầu là InformationUpdate -->
-                                                <c:if test="${req.requestType eq 'InformationUpdate'}">
-                                                    <!-- Luôn có nút chi tiết -->
-                                                    <button class="btn btn-sm btn-outline-dark" title="Xem chi tiết"
-                                                            onclick="viewDetails('${req.requestId}')">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-
-                                                    <!-- Nút sửa thông tin khách hàng -->
-                                                    <button class="btn btn-sm btn-outline-success" title="Sửa thông tin khách hàng"
-                                                            onclick="editCustomerInfo('${req.requestId}')">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-
-                                                    <!-- Nút hủy yêu cầu -->
-                                                    <button class="btn btn-sm btn-outline-danger" title="Hủy yêu cầu"
-                                                            onclick="cancelRequest('${req.requestId}')">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </c:if>
                                             </div>
                                         </td>
                                     </tr>
@@ -354,7 +372,7 @@
 <!-- Modal: Create Service Request -->
 <div class="modal fade" id="createRequestModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <form method="post" action="createServiceRequest">
+        <form method="post" id="createRequestForm" action="createServiceRequest">
             <div class="modal-content">
                 <div class="modal-header bg-dark text-white">
                     <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i> Tạo Yêu Cầu Dịch Vụ</h5>
@@ -362,7 +380,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <h6 class="fw-bold mb-3">1️⃣ Thông tin khách hàng</h6>
+                    <h6 class="fw-bold mb-3">Thông tin khách hàng</h6>
                     <div class="mb-3">
                         <label>Khách hàng <span class="text-danger">*</span></label>
                         <select name="customerId" id="customerSelect" class="form-select" required>
@@ -373,29 +391,22 @@
                         </select>
                     </div>
 
-                    <h6 class="fw-bold mb-3">2️⃣ Hợp đồng liên quan</h6>
-                    <div class="mb-3">
-                        <label>Hợp đồng <span class="text-danger">*</span></label>
-                        <select name="contractId" id="contractSelect" class="form-select" required>
-                            <option value="">-- Chọn hợp đồng --</option>
-                            <c:forEach var="ct" items="${contractList}">
-                                <option value="${ct.contractId}">#${ct.contractId} - ${ct.contractType} (${ct.status})</option>
-                            </c:forEach>
-                        </select>
-                    </div>
-
-                    <h6 class="fw-bold mb-3">3️⃣ Thiết bị</h6>
+                    <h6 class="fw-bold mb-3">Thiết bị liên quan</h6>
                     <div class="mb-3">
                         <label>Thiết bị <span class="text-danger">*</span></label>
-                        <select name="equipmentId" id="equipmentSelect" class="form-select" required>
-                            <option value="">-- Chọn thiết bị --</option>
-                            <c:forEach var="equip" items="${equipmentList}">
-                                <option value="${equip.equipmentId}">${equip.model} (${equip.serialNumber})</option>
-                            </c:forEach>
-                        </select>
+                        <!-- Dropdown multiple -->
+                        <div class="dropdown w-100">
+                            <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="equipmentDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                -- Chọn thiết bị --
+                            </button>
+                            <ul class="dropdown-menu w-100" id="equipmentDropdownList">
+                                <!-- Thiết bị sẽ được đổ bằng JS -->
+                            </ul>
+                        </div>
+                        <input type="hidden" name="equipmentIds" id="equipmentIds"> <!-- lưu danh sách ID được chọn -->
                     </div>
 
-                    <h6 class="fw-bold mb-3">4️⃣ Loại yêu cầu</h6>
+                    <h6 class="fw-bold mb-3">Loại yêu cầu</h6>
                     <div class="mb-3">
                         <select name="requestType" class="form-select" required>
                             <option value="Service">Service</option>
@@ -403,7 +414,7 @@
                         </select>
                     </div>
 
-                    <h6 class="fw-bold mb-3">5️⃣ Mức độ ưu tiên</h6>
+                    <h6 class="fw-bold mb-3">Mức độ ưu tiên</h6>
                     <div class="mb-3">
                         <select name="priorityLevel" class="form-select" required>
                             <option value="Normal">Normal</option>
@@ -412,7 +423,7 @@
                         </select>
                     </div>
 
-                    <h6 class="fw-bold mb-3">6️⃣ Mô tả yêu cầu</h6>
+                    <h6 class="fw-bold mb-3">Mô tả yêu cầu</h6>
                     <div class="mb-3">
                         <textarea name="description" class="form-control" rows="3"
                                   placeholder="Mô tả chi tiết vấn đề khách hàng gặp phải..." required></textarea>
@@ -467,6 +478,145 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Modal Sửa -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form id="editUserForm" method="post" action="viewCustomerRequest">
+            <input type="hidden" name="action" value="edit"/>
+            <input type="hidden" name="id" id="editId"/>
+            <input type="hidden" name="requestId" id="editRequestId"/>
+
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Sửa Thông Tin Người Dùng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- STEP 1 -->
+                    <div id="step1">
+                        <h6 class="fw-bold mb-3">Thông tin tài khoản</h6>
+
+                        <div class="mb-3">
+                            <label>Tên đăng nhập</label>
+                            <input type="text" id="editUsername" name="username" class="form-control" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Họ và tên <span class="text-danger">*</span></label>
+                            <input type="text" id="editFullName" name="fullName" class="form-control" required maxlength="50"
+                                   pattern="^[A-Za-zÀ-ỹ\s]{2,50}$"
+                                   title="Chỉ gồm chữ cái và khoảng trắng (2–50 ký tự).">
+                            <div id="editFullNameError" class="error-message">Họ tên không hợp lệ</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Email <span class="text-danger">*</span></label>
+                            <input type="email" id="editEmail" name="email" class="form-control" required maxlength="100"
+                                   pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                                   title="Email không hợp lệ. Ví dụ: example@gmail.com">
+                            <div id="editEmailError" class="error-message">Email không hợp lệ</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Số điện thoại <span class="text-danger">*</span></label>
+                            <input type="tel" id="editPhone" name="phone" class="form-control" required maxlength="10"
+                                   pattern="(03|05|07|08|09)[0-9]{8}"
+                                   title="Phải bắt đầu bằng 03, 05, 07, 08, 09 và có 10 chữ số.">
+                            <div id="editPhoneError" class="error-message">Số điện thoại không hợp lệ</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Trạng thái <span class="text-danger">*</span></label>
+                            <select id="editStatus" name="status" class="form-select" required
+                                    title="Vui lòng chọn trạng thái hoạt động.">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Mật khẩu mới</label>
+                            <input type="password" id="editPassword" name="password" class="form-control"
+                                   minlength="6" maxlength="30"
+                                   pattern="^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$"
+                                   title="Mật khẩu 6–30 ký tự, không chứa khoảng trắng.">
+                            <div id="editPasswordError" class="error-message">Mật khẩu không hợp lệ</div>
+                            <small class="text-muted">Để trống nếu không muốn thay đổi</small>
+                        </div>
+
+                        <!-- Confirm password (ẩn mặc định) -->
+                        <div class="mb-3 d-none" id="editConfirmPasswordGroup">
+                            <label>Xác nhận mật khẩu mới</label>
+                            <input type="password" id="editConfirmPassword" class="form-control" minlength="6" maxlength="30">
+                            <div id="editConfirmPasswordError" class="error-message">Mật khẩu không trùng khớp</div>
+                        </div>
+
+
+                    </div>
+
+                    <!-- STEP 2 -->
+                    <div id="step2" class="d-none">
+                        <h6 class="fw-bold mb-3">Thông tin hồ sơ</h6>
+
+                        <div class="mb-3">
+                            <label>Địa chỉ</label>
+                            <input type="text" id="editAddress" name="address" class="form-control" maxlength="100">
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Ngày sinh</label>
+                            <input type="date" id="editDateOfBirth" name="dateOfBirth" class="form-control"
+                                   max="9999-12-31"
+                                   title="Ngày sinh không được ở tương lai.">
+                            <div id="editDobError" class="error-message">Ngày sinh không hợp lệ</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Ảnh đại diện (URL)</label>
+                            <input type="url" id="editAvatarUrl" name="avatarUrl" class="form-control"
+                                   maxlength="200"
+                                   pattern="^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))$"
+                                   title="URL ảnh phải bắt đầu bằng http hoặc https và kết thúc bằng đuôi ảnh (.jpg, .png, .gif, v.v.)">
+                            <div id="editAvatarError" class="error-message">URL ảnh đại diện không hợp lệ</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>CCCD/CMND</label>
+                            <input type="text" id="editNationalId" name="nationalId" class="form-control"
+                                   minlength="9" maxlength="12"
+                                   pattern="^[0-9]{9,12}$"
+                                   title="CCCD/CMND chỉ gồm số, dài từ 9–12 ký tự.">
+                            <div id="editNationalIdError" class="error-message">CCCD/CMND không hợp lệ</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Xác thực tài khoản <span class="text-danger">*</span></label>
+                            <select id="editVerified" name="verified" class="form-select" required
+                                    title="Vui lòng chọn trạng thái xác thực.">
+                                <option value="">-- Chọn trạng thái --</option>
+                                <option value="0">Chưa xác thực</option>
+                                <option value="1">Đã xác thực</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Ghi chú thêm</label>
+                            <textarea id="editExtraData" name="extraData" class="form-control" rows="2" maxlength="100"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" id="prevStep" class="btn btn-secondary d-none">← Quay lại</button>
+                    <button type="button" id="nextStep" class="btn btn-dark">Tiếp →</button>
+                    <button type="submit" id="submitBtn" class="btn btn-dark d-none">Cập nhật</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -542,9 +692,33 @@ function forwardRequest(id) {
         confirmButtonText: 'Chuyển tiếp',
         cancelButtonText: 'Hủy',
         confirmButtonColor: '#000'
-    }).then(result => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
-            window.location.href = 'forwardRequest?requestId=' + id;
+            try {
+                const res = await fetch(
+    'updateRequestStatus?requestId=' + id + '&status=' + encodeURIComponent('Awaiting Approval'),
+    { method: 'GET' }
+);
+
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: 'Yêu cầu đã được chuyển tiếp.',
+                    confirmButtonColor: '#000'
+                }).then(() => window.location.reload());
+
+            } catch (err) {
+                console.error('❌ Lỗi khi cập nhật trạng thái:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Thất bại!',
+                    text: 'Không thể cập nhật trạng thái yêu cầu.',
+                    confirmButtonColor: '#000'
+                });
+            }
         }
     });
 }
@@ -552,61 +726,418 @@ function forwardRequest(id) {
 function cancelRequest(id) {
     Swal.fire({
         title: 'Hủy yêu cầu?',
-        text: 'Bạn có chắc chắn muốn hủy yêu cầu #' + id + '?',
+        text: `Bạn có chắc chắn muốn hủy yêu cầu #${id}?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Hủy yêu cầu',
         cancelButtonText: 'Quay lại',
         confirmButtonColor: '#d33'
-    }).then(result => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
-            window.location.href = 'cancelRequest?requestId=' + id;
+            try {
+                const res = await fetch(
+    'updateRequestStatus?requestId=' + id + '&status=' + encodeURIComponent('Rejected'),
+    { method: 'GET' }
+);
+
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: 'Yêu cầu đã bị hủy.',
+                    confirmButtonColor: '#000'
+                }).then(() => window.location.reload());
+
+            } catch (err) {
+                console.error('❌ Lỗi khi cập nhật trạng thái:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Thất bại!',
+                    text: 'Không thể cập nhật trạng thái yêu cầu.',
+                    confirmButtonColor: '#000'
+                });
+            }
         }
     });
 }
 
 
+
+async function editCustomerInfo(requestId) {
+    console.log("🟩 RequestID nhận được:", requestId);
+
+    const rows = document.querySelectorAll("tr[data-requestid]");
+    let row = null;
+    rows.forEach(r => {
+        if (String(r.dataset.requestid).trim() === String(requestId).trim()) {
+            row = r;
+        }
+    });
+
+    if (!row) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Không tìm thấy yêu cầu',
+            text: 'Không thể xác định thông tin khách hàng để sửa.',
+            confirmButtonColor: '#000'
+        });
+        return;
+    }
+
+    const email = row.dataset.customeremail;
+    console.log("📩 Email khách hàng:", email);
+
+    try {
+        const res = await fetch("customerManagement?action=getById&email=" + encodeURIComponent(email));
+        if (!res.ok) throw new Error("Không thể tải thông tin khách hàng từ server");
+
+        const data = await res.json();
+        console.log("📦 Dữ liệu khách hàng trả về:", data);
+
+        const account = data.account;
+        const profile = data.profile || {};
+
+        // ✅ Đổ dữ liệu account
+        document.getElementById("editId").value = account.accountId;
+        document.getElementById("editUsername").value = account.username;
+        document.getElementById("editFullName").value = account.fullName;
+        document.getElementById("editEmail").value = account.email;
+        document.getElementById("editPhone").value = account.phone;
+        document.getElementById("editStatus").value = account.status || "Active";
+        document.getElementById("editPassword").value = "";
+        document.getElementById("editConfirmPassword").value = "";
+        document.getElementById("editConfirmPasswordGroup").classList.add("d-none");
+        document.getElementById("editRequestId").value = requestId;
+
+        // ✅ Đổ dữ liệu profile
+        if (document.getElementById("editAddress"))
+            document.getElementById("editAddress").value = profile.address || "";
+
+        if (document.getElementById("editNationalId"))
+            document.getElementById("editNationalId").value = profile.nationalId || "";
+
+        if (document.getElementById("editDateOfBirth"))
+            document.getElementById("editDateOfBirth").value = profile.dateOfBirth || "";
+
+        if (document.getElementById("editVerified"))
+            document.getElementById("editVerified").value = profile.verified ? "1" : "0";
+
+        if (document.getElementById("editExtraData"))
+            document.getElementById("editExtraData").value = profile.extraData || "";
+        
+        document.querySelectorAll("#editUserForm .error-message").forEach(el => el.style.display = "none");
+
+        // ✅ Hiển thị modal
+        const modal = new bootstrap.Modal(document.getElementById("editUserModal"));
+        modal.show();
+
+    } catch (err) {
+        console.error("❌ Lỗi khi tải dữ liệu khách hàng:", err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Không thể tải dữ liệu',
+            text: err.message,
+            confirmButtonColor: '#000'
+        });
+    }
+}
+
+
 document.addEventListener("change", function (e) {
-    // Bắt sự kiện change cho phần tử có id = "customerSelect" (dù nằm trong modal)
     if (e.target && e.target.id === "customerSelect") {
         const customerId = e.target.value;
         console.log("Selected customerId:", customerId);
+        if (!customerId) return;
 
-        if (!customerId) {
-            console.warn("⚠️ customerId trống, bỏ qua fetch.");
-            return;
-        }
-
-        // Gọi servlet (dùng encodeURIComponent để tránh lỗi ký tự)
-        const url = `${pageContext.request.contextPath}/loadContractsAndEquipment?customerId=\${encodeURIComponent(customerId)}`;
+const ctx = window.location.pathname.split("/")[1]; 
+const url = "/" + ctx + "/loadContractsAndEquipment?customerId=" + encodeURIComponent(customerId);
         console.log("🔗 Fetch URL:", url);
 
         fetch(url)
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                return res.json();
-            })
+            .then(res => res.json())
             .then(data => {
-                console.log("✅ Data trả về từ servlet:", data);
+                console.log("✅ Data thiết bị:", data);
+                const dropdownList = document.getElementById("equipmentDropdownList");
+                dropdownList.innerHTML = "";
 
-                const contractSelect = document.getElementById("contractSelect");
-                const equipmentSelect = document.getElementById("equipmentSelect");
-
-                // Reset danh sách trước khi đổ mới
-                contractSelect.innerHTML = '<option value="">-- Chọn hợp đồng --</option>';
-                equipmentSelect.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
-
-                // Đổ danh sách hợp đồng
-                data.contracts.forEach(ct => {
-                    contractSelect.innerHTML += `<option value="${ct.contractId}">#${ct.contractId} - ${ct.contractType} (${ct.status})</option>`;
-                });
-
-                data.equipment.forEach(eq => {
-                    equipmentSelect.innerHTML += `<option value="\${eq.equipmentId}">\${eq.model} (\${eq.serialNumber})</option>`;
-                });
+                if (data.equipment && data.equipment.length > 0) {
+                    data.equipment.forEach(eq => {
+                        const li = document.createElement("li");
+                        li.innerHTML =
+                            '<div class="form-check px-3">' +
+                                '<input class="form-check-input equipment-checkbox" ' +
+                                       'type="checkbox" ' +
+                                       'value="' + eq.equipmentId + '" ' +
+                                       'id="equip-' + eq.equipmentId + '">' +
+                                '<label class="form-check-label" for="equip-' + eq.equipmentId + '">' +
+                                    eq.model + ' (' + eq.serialNumber + ')' +
+                                '</label>' +
+                            '</div>';
+                        dropdownList.appendChild(li);
+                    });
+                } else {
+                    dropdownList.innerHTML = "<li class='px-3 text-muted'>Không có thiết bị nào.</li>";
+                }
             })
-            .catch(err => console.error("❌ Lỗi load hợp đồng/thiết bị:", err));
+            .catch(err => console.error("❌ Lỗi load thiết bị:", err));
     }
+});
+
+
+document.addEventListener("change", function (e) {
+    if (e.target.classList.contains("equipment-checkbox")) {
+        const selected = Array.from(document.querySelectorAll(".equipment-checkbox:checked"))
+            .map(cb => cb.value);
+        document.getElementById("equipmentIds").value = selected.join(",");
+
+        const dropdownBtn = document.getElementById("equipmentDropdown");
+        dropdownBtn.textContent = selected.length > 0
+            ? `Đã chọn ${selected.length} thiết bị`
+            : "-- Chọn thiết bị --";
+    }
+});
+
+
+// ✅ Khi mở modal, ẩn toàn bộ thông báo lỗi
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("✅ DOM loaded, khởi tạo các listener validate...");
+
+    const editForm = document.getElementById("editUserForm");
+    const step1 = document.getElementById("step1");
+    const step2 = document.getElementById("step2");
+    const nextBtn = document.getElementById("nextStep");
+    const prevBtn = document.getElementById("prevStep");
+    const submitBtn = document.getElementById("submitBtn");
+
+    /* ========== Ẩn/hiện confirm password ========== */
+    const editPassword = document.getElementById("editPassword");
+    const confirmGroup = document.getElementById("editConfirmPasswordGroup");
+    if (editPassword) {
+        editPassword.addEventListener("input", function () {
+            if (this.value.trim() !== "") confirmGroup.classList.remove("d-none");
+            else {
+                confirmGroup.classList.add("d-none");
+                document.getElementById("editConfirmPassword").value = "";
+            }
+        });
+    }
+
+    /* ========== Hàm kiểm tra mật khẩu khớp ========== */
+    function checkEditPasswordMatch() {
+        const pass = document.getElementById("editPassword").value.trim();
+        const confirm = document.getElementById("editConfirmPassword").value.trim();
+        const error = document.getElementById("editConfirmPasswordError");
+        if (pass !== "" && pass !== confirm) {
+            error.textContent = "Mật khẩu xác nhận không trùng khớp.";
+            error.style.display = "block";
+            return false;
+        } else {
+            error.style.display = "none";
+            return true;
+        }
+    }
+
+    /* ========== Validate Step 1 ========== */
+    function validateStep1() {
+    let valid = true;
+    const fullName = document.getElementById("editFullName");
+    const email = document.getElementById("editEmail");
+    const phone = document.getElementById("editPhone");
+    const password = document.getElementById("editPassword");
+    const confirmPassword = document.getElementById("editConfirmPassword");
+
+    const namePattern = /^[A-Za-zÀ-ỹ\s]{2,50}$/;
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
+    const passwordPattern = /^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$/;
+
+    // Họ tên
+    if (!namePattern.test(fullName.value.trim())) {
+        document.getElementById("editFullNameError").style.display = "block";
+        valid = false;
+    } else document.getElementById("editFullNameError").style.display = "none";
+
+    // Email
+    if (!emailPattern.test(email.value.trim())) {
+        document.getElementById("editEmailError").style.display = "block";
+        valid = false;
+    } else document.getElementById("editEmailError").style.display = "none";
+
+    // Số điện thoại
+    if (!phonePattern.test(phone.value.trim())) {
+        document.getElementById("editPhoneError").style.display = "block";
+        valid = false;
+    } else document.getElementById("editPhoneError").style.display = "none";
+
+    // Mật khẩu
+    if (password.value.trim() !== "") {
+        if (!passwordPattern.test(password.value.trim())) {
+            document.getElementById("editPasswordError").textContent = "Mật khẩu không hợp lệ (6–30 ký tự, không chứa khoảng trắng)";
+            document.getElementById("editPasswordError").style.display = "block";
+            valid = false;
+        } else {
+            document.getElementById("editPasswordError").style.display = "none";
+        }
+
+        // Xác nhận mật khẩu
+        if (!checkEditPasswordMatch()) valid = false;
+    } else {
+        document.getElementById("editPasswordError").style.display = "none";
+        document.getElementById("editConfirmPasswordError").style.display = "none";
+    }
+
+    return valid;
+}
+
+
+    /* ========== Validate Step 2 ========== */
+    function validateStep2() {
+        let valid = true;
+        const nationalId = document.getElementById("editNationalId").value.trim();
+        const nationalIdPattern = /^[0-9]{9,12}$/;
+        if (nationalId && !nationalIdPattern.test(nationalId)) {
+            document.getElementById("editNationalIdError").style.display = "block";
+            valid = false;
+        } else document.getElementById("editNationalIdError").style.display = "none";
+        return valid;
+    }
+
+    /* ========== Nút Tiếp → ========== */
+    nextBtn.addEventListener("click", function () {
+        if (validateStep1()) {
+            step1.classList.add("d-none");
+            step2.classList.remove("d-none");
+            nextBtn.classList.add("d-none");
+            prevBtn.classList.remove("d-none");
+            submitBtn.classList.remove("d-none");
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Thông tin chưa hợp lệ!',
+                text: 'Vui lòng kiểm tra lại trước khi tiếp tục.',
+                confirmButtonColor: '#000'
+            });
+        }
+    });
+
+    /* ========== Nút Quay lại ← ========== */
+    prevBtn.addEventListener("click", function () {
+        step2.classList.add("d-none");
+        step1.classList.remove("d-none");
+        nextBtn.classList.remove("d-none");
+        prevBtn.classList.add("d-none");
+        submitBtn.classList.add("d-none");
+    });
+
+    /* ========== Nút Gửi form ========== */
+    editForm.addEventListener("submit", function (e) {
+        if (!validateStep1() || !validateStep2()) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Thông tin chưa hợp lệ!',
+                text: 'Vui lòng kiểm tra lại trước khi cập nhật!',
+                confirmButtonColor: '#000'
+            });
+        }
+    });
+});
+
+// Sau khi submit form thành công, cập nhật trạng thái request
+document.getElementById("editUserForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    try {
+        // ✅ Context path JSP sẽ render đúng (ví dụ: /MyCRMSystem)
+        const res = await fetch(`${pageContext.request.contextPath}/viewCustomerRequest`, {
+    method: "POST",
+    body: formData
+});
+
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+
+        if (result.success) {
+            Swal.fire({
+                icon: "success",
+                title: "Thành công!",
+                text: result.message,
+                confirmButtonColor: "#000"
+            }).then(() => window.location.reload());
+        } else {
+            Swal.fire({
+                icon: "error",
+                title: "Thất bại!",
+                text: result.message,
+                confirmButtonColor: "#000"
+            });
+        }
+    } catch (err) {
+        console.error("❌ Lỗi khi gửi request:", err);
+        Swal.fire({
+            icon: "error",
+            title: "Thất bại!",
+            text: "Không thể gửi dữ liệu đến server!",
+            confirmButtonColor: "#000"
+        });
+    }
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("createRequestForm");
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault(); // ❌ chặn form reload
+        const formData = new FormData(this);
+
+        try {
+            // Gửi form qua servlet
+            const res = await fetch("createServiceRequest", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await res.json();
+            console.log("✅ Kết quả trả về:", result);
+
+            if (result.success) {
+                // ✅ Hiện thông báo thành công ngay
+                Swal.fire({
+                    icon: "success",
+                    title: "Thành công!",
+                    text: result.message,
+                    confirmButtonColor: "#000"
+                }).then(() => {
+                    // Đóng modal + refresh list
+                    const modal = bootstrap.Modal.getInstance(document.getElementById("createRequestModal"));
+                    modal.hide();
+                    window.location.reload();
+                });
+            } else {
+                // ❌ Hiện thông báo lỗi
+                Swal.fire({
+                    icon: "error",
+                    title: "Thất bại!",
+                    text: result.message,
+                    confirmButtonColor: "#000"
+                });
+            }
+
+        } catch (err) {
+            console.error("❌ Lỗi khi gửi yêu cầu:", err);
+            Swal.fire({
+                icon: "error",
+                title: "Lỗi!",
+                text: "Không thể gửi yêu cầu. Vui lòng thử lại.",
+                confirmButtonColor: "#000"
+            });
+        }
+    });
 });
 
 </script>

@@ -162,8 +162,8 @@
                                     <a href="customerManagement" class="text-decoration-none text-dark">
                                         <div class="card card-hover text-center p-4">
                                             <i class="fas fa-users card-icon text-dark"></i>
-                                            <h5>Người dùng</h5>
-                                            <p>Quản lý tài khoản.</p>
+                                            <h5>Khách hàng</h5>
+                                            <p>Quản lý tài khoản khách hàng.</p>
                                         </div>
                                     </a>
                                 </div>
