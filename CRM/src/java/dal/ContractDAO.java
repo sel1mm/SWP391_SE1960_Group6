@@ -850,6 +850,22 @@ public class ContractDAO extends MyDAO {
             return price;
         }
     }
+     public Integer getContractEquipmentIdByContractAndEquipment(int contractId, int equipmentId) {
+        String sql = "SELECT contractEquipmentId FROM ContractEquipment WHERE contractId = ? AND equipmentId = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+            ps.setInt(2, equipmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int id = rs.getInt("contractEquipmentId");
+                    if (id > 0) return id;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error getting ContractEquipmentId: " + e.getMessage());
+        }
+        return null;
+    }
 
     /**
      * Get all contracts belonging to a specific customer
