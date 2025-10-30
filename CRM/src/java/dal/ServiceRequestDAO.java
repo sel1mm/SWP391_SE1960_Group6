@@ -1731,6 +1731,7 @@ public class ServiceRequestDAO extends MyDAO {
         return total;
     }
 
+
     public void updateStatus(int requestId, String status) throws SQLException {
         String sql = "UPDATE ServiceRequest SET status = ? WHERE requestId = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -1738,6 +1739,58 @@ public class ServiceRequestDAO extends MyDAO {
             ps.setInt(2, requestId);
             ps.executeUpdate();
         }
+    }
+
+    /**
+     * Search service requests by equipment name and description only
+     */
+
+    /**
+     * Search service requests by equipment name and description only
+     * @param keyword
+     */
+
+    /**
+     * Search service requests by equipment name and description only
+     * @param customerId
+     * @param keyword
+     */
+
+    /**
+     * Search service requests by equipment name and description only
+     * @param customerId
+     * @param keyword
+     * @return
+     */
+    public List<ServiceRequest> searchRequestsByEquipmentAndDescription(int customerId, String keyword) {
+        List<ServiceRequest> list = new ArrayList<>();
+
+        String sql = "SELECT sr.*, e.model as equipmentName "
+                + "FROM ServiceRequest sr "
+                + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
+                + "WHERE sr.createdBy = ? "
+                + "AND (e.model LIKE ? OR sr.description LIKE ?) "
+                + "ORDER BY sr.requestDate DESC";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            String searchPattern = "%" + keyword + "%";
+            ps.setString(2, searchPattern);
+            ps.setString(3, searchPattern);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ServiceRequest sr = mapResultSetToServiceRequest(rs);
+                    list.add(sr);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error searching requests: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return list;
+
     }
 
 }
