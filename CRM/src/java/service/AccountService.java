@@ -472,5 +472,79 @@ public class AccountService {
     public int countAllAccounts(String keyword, String status, String roleId) {
         return accountDAO.countAllAccounts(keyword, status, roleId);
     }
+    
+        // ✅ Lấy tài khoản theo email (trả về Response)
+    public Response<Account> getAccountByEmailResponse(String email) {
+        try {
+            if (email == null || email.trim().isEmpty()) {
+                return new Response<>(null, false, "Email không hợp lệ");
+            }
+
+            Account account = accountDAO.getAccountByEmail(email);
+            if (account != null) {
+                // Gắn profile nếu có
+                AccountProfile profile = accountProfileDAO.getProfileByAccountId(account.getAccountId());
+                account.setProfile(profile);
+                return new Response<>(account, true, "Lấy thông tin tài khoản thành công");
+            } else {
+                return new Response<>(null, false, "Không tìm thấy tài khoản với email này");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response<>(null, false, "Lỗi khi lấy thông tin tài khoản theo email: " + e.getMessage());
+        }
+    }
+
+    // ✅ Lấy tài khoản theo ID (gắn luôn profile cho tiện)
+    public Response<Account> getAccountWithProfileById(int accountId) {
+        try {
+            Response<Account> res = accountDAO.getAccountById2(accountId);
+            if (res.isSuccess() && res.getData() != null) {
+                Account account = res.getData();
+                AccountProfile profile = accountProfileDAO.getProfileByAccountId(account.getAccountId());
+                account.setProfile(profile);
+                return new Response<>(account, true, "Lấy thông tin tài khoản thành công");
+            } else {
+                return new Response<>(null, false, "Không tìm thấy tài khoản với ID này");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response<>(null, false, "Lỗi khi lấy thông tin tài khoản: " + e.getMessage());
+        }
+    }
+
+    // ✅ Lấy profile theo accountId
+    public AccountProfile getProfileById(int accountId) {
+        try {
+            return accountProfileDAO.getProfileByAccountId(accountId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // ✅ Trả về JSON-friendly object (Account + Profile) để tránh lỗi Gson LocalDateTime
+    public String getAccountWithProfileAsJson(Account account, AccountProfile profile) {
+        try {
+            com.google.gson.Gson gson = new com.google.gson.GsonBuilder()
+                    .registerTypeAdapter(java.time.LocalDate.class,
+                            (com.google.gson.JsonSerializer<java.time.LocalDate>) (date, type, context) ->
+                                    new com.google.gson.JsonPrimitive(date.toString()))
+                    .registerTypeAdapter(java.time.LocalDateTime.class,
+                            (com.google.gson.JsonSerializer<java.time.LocalDateTime>) (date, type, context) ->
+                                    new com.google.gson.JsonPrimitive(date.toString()))
+                    .create();
+
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            data.put("account", account);
+            data.put("profile", profile);
+            return gson.toJson(data);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "{\"success\":false,\"message\":\"Lỗi khi chuyển đổi JSON: " + e.getMessage() + "\"}";
+        }
+    }
+
 
 }

@@ -290,6 +290,26 @@
                                                 </td>
                                                 <td class="actions">
                                                     <div class="btn-group">
+                                                        <!-- Nút xem chi tiết -->
+                                                        <button class="btn btn-sm btn-outline-info"
+                                                                onclick="openViewModal(
+                                                                '${acc.username}',
+                                                                '${acc.fullName}',
+                                                                '${acc.email}',
+                                                                '${acc.phone}',
+                                                                '${acc.status}',
+                                                                '${empty acc.profile.address ? "" : acc.profile.address}',
+                                                                '${empty acc.profile.dateOfBirth ? "" : acc.profile.dateOfBirth}',
+                                                                '${empty acc.profile.avatarUrl ? "" : acc.profile.avatarUrl}',
+                                                                '${empty acc.profile.nationalId ? "" : acc.profile.nationalId}',
+                                                                '${acc.profile.verified ? 1 : 0}',
+                                                                '${empty acc.profile.extraData ? "" : acc.profile.extraData}'
+                                                            )"
+                                                                title="Xem chi tiết">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+
+                                                        
                                                         <button class="btn btn-sm btn-outline-dark"
                                                             onclick="openEditModal(
                                                                 ${acc.accountId},
@@ -441,6 +461,38 @@
                         <input type="hidden" name="action" value="delete"/>
                         <input type="hidden" name="id" id="deleteUserId"/>
                     </form>
+                    
+                    <!-- Modal Xem Chi Tiết -->
+<div class="modal fade" id="viewUserModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title">Chi Tiết Người Dùng</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-4 text-center">
+            <img id="viewAvatar" src="" class="img-fluid rounded-circle mb-3" style="max-width:150px; border:2px solid #ccc;">
+            <h5 id="viewFullName"></h5>
+            <span id="viewStatus" class="badge bg-secondary"></span>
+          </div>
+          <div class="col-md-8">
+            <p><strong>Username:</strong> <span id="viewUsername"></span></p>
+            <p><strong>Email:</strong> <span id="viewEmail"></span></p>
+            <p><strong>Số điện thoại:</strong> <span id="viewPhone"></span></p>
+            <p><strong>Địa chỉ:</strong> <span id="viewAddress"></span></p>
+            <p><strong>Ngày sinh:</strong> <span id="viewDateOfBirth"></span></p>
+            <p><strong>CCCD/CMND:</strong> <span id="viewNationalId"></span></p>
+            <p><strong>Xác thực:</strong> <span id="viewVerified"></span></p>
+            <p><strong>Ghi chú thêm:</strong> <span id="viewExtraData"></span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
                   <!-- Modal thêm -->
 <div class="modal fade" id="addUserModal" tabindex="-1">
@@ -498,6 +550,13 @@
 
                             <div id="addPasswordError" class="error-message">Mật khẩu tối thiểu 6 ký tự</div>
                         </div>
+                        
+                        <div class="mb-3">
+                            <label>Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                            <input type="password" id="addConfirmPassword" class="form-control" required minlength="6" maxlength="30" required>
+                            <div id="addConfirmPasswordError" class="error-message">Mật khẩu không trùng khớp</div>
+                        </div>
+
                     </div>
 
                     <!-- STEP 2 -->
@@ -633,6 +692,15 @@
                             <div id="editPasswordError" class="error-message">Mật khẩu không hợp lệ</div>
                             <small class="text-muted">Để trống nếu không muốn thay đổi</small>
                         </div>
+
+                        <!-- Confirm password (ẩn mặc định) -->
+                        <div class="mb-3 d-none" id="editConfirmPasswordGroup">
+                            <label>Xác nhận mật khẩu mới</label>
+                            <input type="password" id="editConfirmPassword" class="form-control" minlength="6" maxlength="30">
+                            <div id="editConfirmPasswordError" class="error-message">Mật khẩu không trùng khớp</div>
+                        </div>
+
+
                     </div>
 
                     <!-- STEP 2 -->
@@ -742,7 +810,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         addForm.addEventListener("submit", function (e) {
-            let valid = validateAddStep1() && validateAddStep2();
+            let valid = validateAddStep1() && validateAddStep2() && checkAddPasswordMatch();
             if (!valid) {
                 e.preventDefault();
                 Swal.fire({
@@ -772,46 +840,66 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // STEP 1 - ACCOUNT INFO
     function validateAddStep1() {
-        let valid = true;
-        const username = document.getElementById("addUsername");
-        const fullName = document.getElementById("addFullName");
-        const email = document.getElementById("addEmail");
-        const phone = document.getElementById("addPhone");
-        const password = document.getElementById("addPassword");
+    let valid = true;
+    const username = document.getElementById("addUsername");
+    const fullName = document.getElementById("addFullName");
+    const email = document.getElementById("addEmail");
+    const phone = document.getElementById("addPhone");
+    const password = document.getElementById("addPassword");
+    const confirmPassword = document.getElementById("addConfirmPassword");
 
-        const usernamePattern = /^[A-Za-z0-9]+$/;
-        const fullNamePattern = /^[A-Za-zÀ-ỹ\s]{2,50}$/;
-        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        const phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
-        const passwordPattern = /^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$/;
+    const usernamePattern = /^[A-Za-z0-9]+$/;
+    const fullNamePattern = /^[A-Za-zÀ-ỹ\s]{2,50}$/;
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
+    const passwordPattern = /^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$/;
 
-        if (!usernamePattern.test(username.value.trim()) || username.value.trim().length === 0) {
-            document.getElementById("addUsernameError").style.display = "block";
-            valid = false;
-        } else document.getElementById("addUsernameError").style.display = "none";
+    // Username
+    if (!usernamePattern.test(username.value.trim()) || username.value.trim().length === 0) {
+        document.getElementById("addUsernameError").style.display = "block";
+        valid = false;
+    } else document.getElementById("addUsernameError").style.display = "none";
 
-        if (!fullNamePattern.test(fullName.value.trim())) {
-            document.getElementById("addFullNameError").style.display = "block";
-            valid = false;
-        } else document.getElementById("addFullNameError").style.display = "none";
+    // Full name
+    if (!fullNamePattern.test(fullName.value.trim())) {
+        document.getElementById("addFullNameError").style.display = "block";
+        valid = false;
+    } else document.getElementById("addFullNameError").style.display = "none";
 
-        if (!emailPattern.test(email.value.trim())) {
-            document.getElementById("addEmailError").style.display = "block";
-            valid = false;
-        } else document.getElementById("addEmailError").style.display = "none";
+    // Email
+    if (!emailPattern.test(email.value.trim())) {
+        document.getElementById("addEmailError").style.display = "block";
+        valid = false;
+    } else document.getElementById("addEmailError").style.display = "none";
 
-        if (!phonePattern.test(phone.value.trim())) {
-            document.getElementById("addPhoneError").style.display = "block";
-            valid = false;
-        } else document.getElementById("addPhoneError").style.display = "none";
+    // Phone
+    if (!phonePattern.test(phone.value.trim())) {
+        document.getElementById("addPhoneError").style.display = "block";
+        valid = false;
+    } else document.getElementById("addPhoneError").style.display = "none";
 
-        if (!passwordPattern.test(password.value.trim())) {
-            document.getElementById("addPasswordError").style.display = "block";
-            valid = false;
-        } else document.getElementById("addPasswordError").style.display = "none";
+    // Password
+    if (!passwordPattern.test(password.value.trim())) {
+        document.getElementById("addPasswordError").style.display = "block";
+        valid = false;
+    } else document.getElementById("addPasswordError").style.display = "none";
 
-        return valid;
+    // ✅ Confirm password — bắt buộc nhập và phải trùng
+    if (confirmPassword.value.trim() === "") {
+        document.getElementById("addConfirmPasswordError").textContent = "Vui lòng nhập lại mật khẩu để xác nhận.";
+        document.getElementById("addConfirmPasswordError").style.display = "block";
+        valid = false;
+    } else if (confirmPassword.value.trim() !== password.value.trim()) {
+        document.getElementById("addConfirmPasswordError").textContent = "Mật khẩu xác nhận không trùng khớp.";
+        document.getElementById("addConfirmPasswordError").style.display = "block";
+        valid = false;
+    } else {
+        document.getElementById("addConfirmPasswordError").style.display = "none";
     }
+
+    return valid;
+}
+
 
     // STEP 2 - PROFILE INFO
     function validateAddStep2() {
@@ -867,6 +955,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
         return valid;
     }
+    
+    // Kiểm tra xác nhận mật khẩu - ADD
+function checkAddPasswordMatch() {
+    const pass = document.getElementById("addPassword").value.trim();
+    const confirm = document.getElementById("addConfirmPassword").value.trim();
+    const error = document.getElementById("addConfirmPasswordError");
+
+    if (pass !== confirm) {
+        error.style.display = "block";
+        return false;
+    } else {
+        error.style.display = "none";
+        return true;
+    }
+}
+
+// Kiểm tra xác nhận mật khẩu - EDIT
+function checkEditPasswordMatch() {
+    const pass = document.getElementById("editPassword").value.trim();
+    const confirm = document.getElementById("editConfirmPassword").value.trim();
+    const error = document.getElementById("editConfirmPasswordError");
+
+    if (pass !== "" && pass !== confirm) {
+        error.style.display = "block";
+        return false;
+    } else {
+        error.style.display = "none";
+        return true;
+    }
+}
 
     // ========== VALIDATE FORM SỬA NGƯỜI DÙNG ==========
     const step1 = document.getElementById("step1");
@@ -903,7 +1021,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         editForm.addEventListener("submit", function (e) {
-            let valid = validateStep1() && validateStep2();
+            let valid = validateStep1() && validateStep2() && checkEditPasswordMatch();
             if (!valid) {
                 e.preventDefault();
                 Swal.fire({
@@ -924,39 +1042,66 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // STEP 1 - EDIT
         function validateStep1() {
-            let valid = true;
-            const fullName = document.getElementById("editFullName");
-            const email = document.getElementById("editEmail");
-            const phone = document.getElementById("editPhone");
-            const password = document.getElementById("editPassword");
+    let valid = true;
+    const fullName = document.getElementById("editFullName");
+    const email = document.getElementById("editEmail");
+    const phone = document.getElementById("editPhone");
+    const password = document.getElementById("editPassword");
+    const confirmPassword = document.getElementById("editConfirmPassword");
 
-            const fullNamePattern = /^[A-Za-zÀ-ỹ\s]{2,50}$/;
-            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            const phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
-            const passwordPattern = /^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$/;
+    const fullNamePattern = /^[A-Za-zÀ-ỹ\s]{2,50}$/;
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
+    const passwordPattern = /^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$/;
 
-            if (!fullNamePattern.test(fullName.value.trim())) {
-                document.getElementById("editFullNameError").style.display = "block";
-                valid = false;
-            } else document.getElementById("editFullNameError").style.display = "none";
+    // Họ tên
+    if (!fullNamePattern.test(fullName.value.trim())) {
+        document.getElementById("editFullNameError").style.display = "block";
+        valid = false;
+    } else document.getElementById("editFullNameError").style.display = "none";
 
-            if (!emailPattern.test(email.value.trim())) {
-                document.getElementById("editEmailError").style.display = "block";
-                valid = false;
-            } else document.getElementById("editEmailError").style.display = "none";
+    // Email
+    if (!emailPattern.test(email.value.trim())) {
+        document.getElementById("editEmailError").style.display = "block";
+        valid = false;
+    } else document.getElementById("editEmailError").style.display = "none";
 
-            if (!phonePattern.test(phone.value.trim())) {
-                document.getElementById("editPhoneError").style.display = "block";
-                valid = false;
-            } else document.getElementById("editPhoneError").style.display = "none";
+    // SĐT
+    if (!phonePattern.test(phone.value.trim())) {
+        document.getElementById("editPhoneError").style.display = "block";
+        valid = false;
+    } else document.getElementById("editPhoneError").style.display = "none";
 
-            if (password.value.trim() !== "" && !passwordPattern.test(password.value.trim())) {
-                document.getElementById("editPasswordError").style.display = "block";
-                valid = false;
-            } else document.getElementById("editPasswordError").style.display = "none";
-
-            return valid;
+    // Mật khẩu mới
+    if (password.value.trim() !== "") {
+        if (!passwordPattern.test(password.value.trim())) {
+            document.getElementById("editPasswordError").style.display = "block";
+            valid = false;
+        } else {
+            document.getElementById("editPasswordError").style.display = "none";
         }
+
+        // ✅ Kiểm tra xác nhận mật khẩu
+        if (confirmPassword.value.trim() === "") {
+            document.getElementById("editConfirmPasswordError").textContent = "Vui lòng xác nhận mật khẩu mới.";
+            document.getElementById("editConfirmPasswordError").style.display = "block";
+            valid = false;
+        } else if (confirmPassword.value.trim() !== password.value.trim()) {
+            document.getElementById("editConfirmPasswordError").textContent = "Mật khẩu xác nhận không trùng khớp.";
+            document.getElementById("editConfirmPasswordError").style.display = "block";
+            valid = false;
+        } else {
+            document.getElementById("editConfirmPasswordError").style.display = "none";
+        }
+    } else {
+        // Nếu không nhập mật khẩu thì ẩn mọi lỗi confirm
+        document.getElementById("editPasswordError").style.display = "none";
+        document.getElementById("editConfirmPasswordError").style.display = "none";
+    }
+
+    return valid;
+}
+
 
         // STEP 2 - EDIT
         function validateStep2() {
@@ -1080,6 +1225,39 @@ function openEditModal(id, username, fullName, email, phone, status, address, da
 
     new bootstrap.Modal(document.getElementById("editUserModal")).show();
 }
+
+function openViewModal(username, fullName, email, phone, status, address, dob, avatar, nationalId, verified, extraData) {
+    document.getElementById("viewUsername").textContent = username;
+    document.getElementById("viewFullName").textContent = fullName;
+    document.getElementById("viewEmail").textContent = email;
+    document.getElementById("viewPhone").textContent = phone;
+    document.getElementById("viewAddress").textContent = address || "—";
+    document.getElementById("viewDateOfBirth").textContent = dob || "—";
+    document.getElementById("viewNationalId").textContent = nationalId || "—";
+    document.getElementById("viewVerified").textContent = verified === "1" ? "Đã xác thực" : "Chưa xác thực";
+    document.getElementById("viewExtraData").textContent = extraData || "—";
+    document.getElementById("viewStatus").textContent = status;
+    document.getElementById("viewStatus").className = "badge " + (status === "Active" ? "bg-success" : "bg-secondary");
+    document.getElementById("viewAvatar").src = avatar || "https://via.placeholder.com/150";
+
+    new bootstrap.Modal(document.getElementById("viewUserModal")).show();
+}
+
+// Hiện ô "Xác nhận mật khẩu" khi người dùng nhập vào "Mật khẩu mới"
+document.getElementById("editPassword").addEventListener("input", function () {
+    const confirmGroup = document.getElementById("editConfirmPasswordGroup");
+    const confirmInput = document.getElementById("editConfirmPassword");
+
+    if (this.value.trim() !== "") {
+        confirmGroup.classList.remove("d-none"); // Hiện ô xác nhận
+        confirmInput.required = true;
+    } else {
+        confirmGroup.classList.add("d-none");    // Ẩn nếu mật khẩu rỗng
+        confirmInput.value = "";
+        confirmInput.required = false;
+        document.getElementById("editConfirmPasswordError").style.display = "none";
+    }
+});
 </script>
     </body>
 </html>

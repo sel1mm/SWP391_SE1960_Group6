@@ -1731,4 +1731,13 @@ public class ServiceRequestDAO extends MyDAO {
         return total;
     }
 
+    public void updateStatus(int requestId, String status) throws SQLException {
+        String sql = "UPDATE ServiceRequest SET status = ? WHERE requestId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, requestId);
+            ps.executeUpdate();
+        }
+    }
+
 }
