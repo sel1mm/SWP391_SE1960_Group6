@@ -99,14 +99,14 @@
         <servlet-name>VerifyOtp2Servlet</servlet-name>
         <servlet-class>controller.VerifyOtp2Servlet</servlet-class>
     </servlet>
-    <servlet>
-        <servlet-name>managerContractsServlet</servlet-name>
-        <servlet-class>controller.managerContractsServlet</servlet-class>
-    </servlet>
-<!--    <servlet>
+
+
+    <!--    <servlet>
         <servlet-name>ViewCustomerRequest</servlet-name>
         <servlet-class>controller.ViewCustomerRequest</servlet-class>
     </servlet>-->
+
+
     <servlet-mapping>
         <servlet-name>LoginController</servlet-name>
         <url-pattern>/login</url-pattern>
@@ -254,12 +254,19 @@
         <url-pattern>/verifyOtp2</url-pattern>
     </servlet-mapping>
 
+
+    <servlet>
+        <servlet-name>EquipmentServlet</servlet-name>
+        <servlet-class>controller.EquipmentServlet</servlet-class>
+    </servlet>
+
     <servlet-mapping>
-        <servlet-name>managerContractsServlet</servlet-name>
-        <url-pattern>/managerContractsServlet</url-pattern>
+        <servlet-name>EquipmentServlet</servlet-name>
+        <url-pattern>/equipment</url-pattern>
     </servlet-mapping>
 
-<!--    <servlet-mapping>
+
+    <!--    <servlet-mapping>
         <servlet-name>ViewCustomerRequest</servlet-name>
         <url-pattern>/viewCustomerRequest</url-pattern>
     </servlet-mapping>-->
