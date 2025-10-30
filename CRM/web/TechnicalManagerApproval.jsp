@@ -26,7 +26,7 @@
                 left: 0;
                 height: 100vh;
                 width: 260px;
-                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+                background: #000000;
                 padding: 0;
                 transition: all 0.3s ease;
                 z-index: 1000;
@@ -818,28 +818,44 @@
             </c:choose>
         </div>
 
-        <!-- Search & Filter Bar -->
-        <div class="search-filter-bar">
-            <form action="${pageContext.request.contextPath}/technicalManagerApproval" method="get" class="row g-3">
-                <input type="hidden" name="viewMode" value="${viewMode}">
-                <input type="hidden" name="technicianId" value="${technicianId}">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <input type="text" class="form-control" name="keyword"
-                               placeholder="Tìm kiếm theo mô tả, khách hàng..." value="${keyword}">
-                        <button class="btn btn-primary" type="submit" name="action" value="search">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
+       <!-- Search & Filter Bar - THAY THẾ PHẦN NÀY -->
+<div class="search-filter-bar">
+    <form action="${pageContext.request.contextPath}/technicalManagerApproval" method="get" class="row g-3">
+        <input type="hidden" name="viewMode" value="${viewMode}">
+        
+        <div class="col-md-4">
+            <div class="input-group">
+                <input type="text" class="form-control" name="keyword"
+                       placeholder="Tìm kiếm theo mô tả, khách hàng..." value="${keyword}">
+                <button class="btn btn-primary" type="submit" name="action" value="search">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <select class="form-select" name="priority" id="filterPriority">
+                <option value="">-- Tất Cả Mức Độ --</option>
+                <option value="Urgent" ${filterPriority == 'Urgent' ? 'selected' : ''}>Khẩn Cấp</option>
+                <option value="High" ${filterPriority == 'High' ? 'selected' : ''}>Cao</option>
+                <option value="Normal" ${filterPriority == 'Normal' ? 'selected' : ''}>Bình Thường</option>
+            </select>
+        </div>
+        
+        <!-- Hiển thị bộ lọc khác nhau tùy theo trang -->
+        <c:choose>
+            <c:when test="${viewMode == 'history'}">
+                <!-- Bộ lọc cho trang Lịch Sử - Theo Trạng Thái -->
                 <div class="col-md-3">
-                    <select class="form-select" name="priority" id="filterPriority">
-                        <option value="">-- Tất Cả Mức Độ --</option>
-                        <option value="Urgent" ${filterPriority == 'Urgent' ? 'selected' : ''}>Khẩn Cấp</option>
-                        <option value="High" ${filterPriority == 'High' ? 'selected' : ''}>Cao</option>
-                        <option value="Normal" ${filterPriority == 'Normal' ? 'selected' : ''}>Bình Thường</option>
+                    <select class="form-select" name="statusFilter" id="filterStatus">
+                        <option value="">-- Tất Cả Trạng Thái --</option>
+                        <option value="Approved" ${statusFilter == 'Approved' ? 'selected' : ''}>Đã Duyệt</option>
+                        <option value="Rejected" ${statusFilter == 'Rejected' ? 'selected' : ''}>Đã Từ Chối</option>
                     </select>
                 </div>
+            </c:when>
+            <c:otherwise>
+                <!-- Bộ lọc cho trang Chính - Theo Tình Trạng Khẩn -->
                 <div class="col-md-3">
                     <select class="form-select" name="urgency" id="filterUrgency">
                         <option value="">-- Tình Trạng Khẩn --</option>
@@ -848,20 +864,25 @@
                         <option value="Normal" ${filterUrgency == 'Normal' ? 'selected' : ''}>Bình Thường</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" name="action" value="filter" class="btn btn-info w-100">
-                        <i class="fas fa-filter"></i> Lọc
-                    </button>
-                </div>
-            </form>
-            <c:if test="${searchMode || filterMode}">
-                <div class="mt-3">
-                    <a href="${pageContext.request.contextPath}/technicalManagerApproval?viewMode=${viewMode}&technicianId=${technicianId}" class="btn btn-sm btn-secondary">
-                        <i class="fas fa-times"></i> Xóa Bộ Lọc
-                    </a>
-                </div>
-            </c:if>
+            </c:otherwise>
+        </c:choose>
+        
+        <div class="col-md-2">
+            <button type="submit" name="action" value="filter" class="btn btn-info w-100">
+                <i class="fas fa-filter"></i> Lọc
+            </button>
         </div>
+    </form>
+    
+    <c:if test="${searchMode || filterMode}">
+        <div class="mt-3">
+            <a href="${pageContext.request.contextPath}/technicalManagerApproval?${viewMode == 'history' ? 'action=history' : ''}" 
+               class="btn btn-sm btn-secondary">
+                <i class="fas fa-times"></i> Xóa Bộ Lọc
+            </a>
+        </div>
+    </c:if>
+</div>
 
         <!-- Requests Table -->
         <div class="table-container">
@@ -1004,6 +1025,13 @@
                                                         title="Chi Tiết">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
+                                                                        <c:if test="${request.status == 'Approved'}">
+                    <a href="${pageContext.request.contextPath}/assignWork?requestId=${request.requestId}&priority=${request.priorityLevel}"
+                       class="btn btn-sm btn-success"
+                       title="Phân Công Công Việc">
+                        <i class="fas fa-user-plus"></i>
+                    </a>
+                </c:if>
                                             </c:when>
                                             <c:when test="${request.status == 'Awaiting Approval'}">
                                                 <button class="btn btn-sm btn-success request-action-btn"
@@ -1061,6 +1089,112 @@
                         </c:if>
                     </tbody>
                 </table>
+                
+   <!-- Pagination -->
+<c:if test="${totalPages > 1}">
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <div class="text-muted">
+            Hiển thị ${(currentPage - 1) * 10 + 1} -
+            ${currentPage * 10 > totalRecords ? totalRecords : currentPage * 10}
+            trong tổng số ${totalRecords} yêu cầu
+        </div>
+
+        <!-- ====== Tạo base URL giữ lại các filter ====== -->
+        <c:set var="baseUrl" value="" />
+        <c:if test="${not empty viewMode}">
+            <c:set var="baseUrl" value="${baseUrl}&viewMode=${viewMode}" />
+        </c:if>
+        <c:if test="${not empty keyword}">
+            <c:set var="baseUrl" value="${baseUrl}&keyword=${keyword}" />
+        </c:if>
+        <c:if test="${not empty filterPriority}">
+            <c:set var="baseUrl" value="${baseUrl}&priority=${filterPriority}" />
+        </c:if>
+        <c:if test="${not empty filterUrgency}">
+            <c:set var="baseUrl" value="${baseUrl}&urgency=${filterUrgency}" />
+        </c:if>
+        <c:if test="${not empty statusFilter}">
+            <c:set var="baseUrl" value="${baseUrl}&statusFilter=${statusFilter}" />
+        </c:if>
+
+        <!-- ====== Action gốc tùy theo viewMode ====== -->
+        <c:choose>
+            <c:when test="${viewMode == 'assigned'}">
+                <c:set var="paginationAction"
+                       value="${pageContext.request.contextPath}/technicalManagerApproval?action=assigned" />
+            </c:when>
+            <c:when test="${viewMode == 'history'}">
+                <c:set var="paginationAction"
+                       value="${pageContext.request.contextPath}/technicalManagerApproval?action=history" />
+            </c:when>
+            <c:otherwise>
+                <!-- fallback nếu không có viewMode -->
+                <c:set var="paginationAction"
+                       value="${pageContext.request.contextPath}/technicalManagerApproval" />
+            </c:otherwise>
+        </c:choose>
+
+        <!-- ====== PHÂN TRANG ====== -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination mb-0">
+
+                <!-- First Page -->
+                <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                    <a class="page-link"
+                       href="${paginationAction}${baseUrl}&page=1"
+                       aria-label="First">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+
+                <!-- Previous Page -->
+                <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                    <a class="page-link"
+                       href="${paginationAction}${baseUrl}&page=${currentPage - 1}"
+                       aria-label="Previous">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+
+                <!-- Page Numbers -->
+                <c:set var="startPage"
+                       value="${currentPage - 2 < 1 ? 1 : currentPage - 2}" />
+                <c:set var="endPage"
+                       value="${currentPage + 2 > totalPages ? totalPages : currentPage + 2}" />
+
+                <c:forEach begin="${startPage}" end="${endPage}" var="i">
+                    <li class="page-item ${currentPage == i ? 'active' : ''}">
+                        <a class="page-link"
+                           href="${paginationAction}${baseUrl}&page=${i}">
+                            ${i}
+                        </a>
+                    </li>
+                </c:forEach>
+
+                <!-- Next Page -->
+                <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                    <a class="page-link"
+                       href="${paginationAction}${baseUrl}&page=${currentPage + 1}"
+                       aria-label="Next">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+
+                <!-- Last Page -->
+                <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                    <a class="page-link"
+                       href="${paginationAction}${baseUrl}&page=${totalPages}"
+                       aria-label="Last">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+    </div>
+</c:if>
+
+
 </div>
             </div>
         </div>
