@@ -10,6 +10,7 @@
         <title>CRM Dashboard - Manager Service Request</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <style>
             * {
                 margin: 0;
@@ -1039,7 +1040,7 @@
                                             </c:if>
                                         </td>
                                     </tr>
-                                </c:forEach>f
+                                </c:forEach>
                                 <c:if test="${empty requests}">
                                     <tr>
                                         <td colspan="6" class="text-center py-4">
@@ -1241,74 +1242,130 @@
             </div>
         </div>
 
-        <!-- ========== MODAL TẠO YÊU CẦU MỚI ========== -->
+        <!-- ========== MODAL TẠO YÊU CẦU MỚI for service request ========== -->
+
         <div class="modal fade" id="createModal" tabindex="-1">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post" id="createForm" onsubmit="return validateCreateForm(event)">
                         <input type="hidden" name="action" value="CreateServiceRequest">
                         <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title"><i class="fas fa-plus"></i> Tạo Yêu Cầu Dịch Vụ Mới</h5>
+                            <h5 class="modal-title">
+                                <i class="fas fa-plus-circle"></i> Tạo Yêu Cầu Hỗ Trợ Mới
+                            </h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <!-- LOẠI ĐƠN -->
+                            <!-- Loại Hỗ Trợ -->
                             <div class="mb-3">
-                                <label class="form-label">Loại Hỗ Trợ <span class="text-danger">*</span></label>
-                                <select class="form-select" name="supportType" id="supportType" onchange="toggleFields()" required>
-                                    <option value="" selected disabled>Chọn loại hỗ trợ bạn cần</option>
-                                    <option value="account">🔐 Hỗ trợ về tài khoản</option>
-                                    <option value="equipment">🔧 Hỗ trợ về thiết bị</option>
+                                <label class="form-label">
+                                    <i class="fas fa-question-circle"></i> Loại Hỗ Trợ 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" name="supportType" id="supportType" required onchange="toggleFields()">
+                                    <option value="">-- Chọn loại hỗ trợ --</option>
+                                    <option value="equipment">🔧 Hỗ Trợ Thiết Bị</option>
+                                    <option value="account">👤 Hỗ Trợ Tài Khoản / Thông Tin</option>
                                 </select>
-                                <small class="form-text text-muted">Chọn loại hỗ trợ bạn cần</small>
+                                <small class="form-text text-muted">
+                                    Chọn "Hỗ trợ thiết bị" nếu bạn gặp vấn đề với thiết bị, hoặc "Hỗ trợ tài khoản" nếu cần thay đổi thông tin cá nhân.
+                                </small>
                             </div>
 
-                            <!-- MÃ HỢP ĐỒNG -->
-                            <div class="mb-3" id="contractIdField" style="display: none;">
-                                <label class="form-label">Mã Hợp Đồng <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="contractId" id="contractId" placeholder="Nhập mã hợp đồng của bạn" min="1">
-                                <small class="form-text text-muted">Nhập mã hợp đồng đã ký với công ty</small>
+                            <!-- Chọn Thiết Bị (dropdown với checkbox) -->
+                            <div class="mb-3" id="equipmentSelectField" style="display:none;">
+                                <label class="form-label">
+                                    <i class="fas fa-tools"></i> Chọn Thiết Bị 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" 
+                                            type="button" 
+                                            id="equipmentDropdown" 
+                                            data-bs-toggle="dropdown" 
+                                            data-bs-auto-close="outside"
+                                            aria-expanded="false">
+                                        <i class="fas fa-list"></i> Chọn thiết bị cần hỗ trợ
+                                    </button>
+                                    <ul class="dropdown-menu w-100 p-3" 
+                                        aria-labelledby="equipmentDropdown" 
+                                        style="max-height: 300px; overflow-y: auto;">
+                                        <c:choose>
+                                            <c:when test="${not empty sessionScope.customerEquipmentList}">
+                                                <c:forEach var="equipment" items="${sessionScope.customerEquipmentList}" varStatus="status">
+                                                    <li class="mb-2">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input equipment-checkbox" 
+                                                                   type="checkbox" 
+                                                                   name="equipmentIds" 
+                                                                   value="${equipment.equipmentId}"
+                                                                   id="equipment_${status.index}"
+                                                                   data-contract="${equipment.contractId}"
+                                                                   onchange="updateSelectedEquipment()">
+                                                            <label class="form-check-label" for="equipment_${status.index}">
+                                                                <strong><c:out value="${equipment.model}"/></strong><br>
+                                                                <small class="text-muted">
+                                                                    Serial: <c:out value="${equipment.serialNumber}"/> | 
+                                                                    Hợp đồng: HD<c:out value="${String.format('%03d', equipment.contractId)}"/>
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </li>
+                                                </c:forEach>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <li class="text-center text-muted py-3">
+                                                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                                                    <p>Bạn chưa có thiết bị nào</p>
+                                                </li>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </ul>
+                                </div>
+                                <div id="selectedEquipmentDisplay" class="mt-2"></div>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Bạn có thể chọn nhiều thiết bị cùng lúc
+                                </small>
                             </div>
 
-                            <!-- MÃ THIẾT BỊ -->
-                            <div class="mb-3" id="equipmentIdField" style="display: none;">
-                                <label class="form-label">Mã Thiết Bị <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="equipmentId" id="equipmentId" placeholder="Nhập mã thiết bị cần bảo trì" min="1">
-                                <small class="form-text text-muted">Nhập mã thiết bị cần yêu cầu dịch vụ</small>
-                            </div>
-
-                            <!-- MỨC ĐỘ ƯU TIÊN -->
-                            <div class="mb-3" id="priorityField" style="display: none;">
-                                <label class="form-label">Mức Độ Ưu Tiên <span class="text-danger">*</span></label>
+                            <!-- Mức Độ Ưu Tiên -->
+                            <div class="mb-3" id="priorityField" style="display:none;">
+                                <label class="form-label">
+                                    <i class="fas fa-exclamation-circle"></i> Mức Độ Ưu Tiên 
+                                    <span class="text-danger">*</span>
+                                </label>
                                 <select class="form-select" name="priorityLevel" id="priorityLevel">
-                                    <option value="Normal" selected>Bình Thường</option>
-                                    <option value="High">Cao</option>
-                                    <option value="Urgent">Khẩn Cấp</option>
+                                    <option value="Normal">⚪ Bình Thường</option>
+                                    <option value="High">🟡 Cao</option>
+                                    <option value="Urgent">🔴 Khẩn Cấp</option>
                                 </select>
-                                <small class="form-text text-muted">Chọn mức độ ưu tiên phù hợp với tình trạng thiết bị</small>
                             </div>
 
-                            <!-- MÔ TẢ VẤN ĐỀ -->
-                            <div class="mb-3" id="descriptionField" style="display: none;">
-                                <label class="form-label">Mô Tả Vấn Đề <span class="text-danger">*</span></label>
-                                <textarea class="form-control" 
-                                          name="description" 
-                                          id="description" 
-                                          rows="5" 
-                                          placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải..." 
+                            <!-- Mô Tả -->
+                            <div class="mb-3" id="descriptionField" style="display:none;">
+                                <label class="form-label">
+                                    <i class="fas fa-comment-dots"></i> Mô Tả Vấn Đề 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" name="description" id="description" rows="5" 
+                                          placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải..."
                                           maxlength="1000"
                                           oninput="updateCharCount()"></textarea>
                                 <div class="d-flex justify-content-between align-items-center mt-1">
                                     <small class="form-text text-muted">
-                                        Tối thiểu 10 ký tự, tối đa 1000 ký tự.
+                                        <i class="fas fa-info-circle"></i> Tối thiểu 10 ký tự, tối đa 1000 ký tự
                                     </small>
                                     <span id="charCount" class="text-muted" style="font-size: 0.875rem;">0/1000</span>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Gửi Yêu Cầu</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times"></i> Hủy
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Gửi Yêu Cầu
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -1514,63 +1571,73 @@
                         }
 
                         // ========== TOGGLE FIELDS FUNCTION ==========
+                        // ========== TOGGLE FIELDS FUNCTION ==========
                         function toggleFields() {
                             const supportType = document.getElementById('supportType').value;
-                            const contractField = document.getElementById('contractIdField');
-                            const equipmentField = document.getElementById('equipmentIdField');
+                            const equipmentSelectField = document.getElementById('equipmentSelectField');
                             const priorityField = document.getElementById('priorityField');
                             const descriptionField = document.getElementById('descriptionField');
 
-                            const contractInput = document.getElementById('contractId');
-                            const equipmentInput = document.getElementById('equipmentId');
                             const priorityInput = document.getElementById('priorityLevel');
                             const descriptionInput = document.getElementById('description');
 
                             if (supportType === 'equipment') {
-                                contractField.style.display = 'block';
-                                equipmentField.style.display = 'block';
+                                equipmentSelectField.style.display = 'block';
                                 priorityField.style.display = 'block';
                                 descriptionField.style.display = 'block';
 
-                                contractInput.setAttribute('required', 'required');
-                                equipmentInput.setAttribute('required', 'required');
                                 priorityInput.setAttribute('required', 'required');
                                 descriptionInput.setAttribute('required', 'required');
 
                                 updateCharCount();
                             } else if (supportType === 'account') {
-                                contractField.style.display = 'none';
-                                equipmentField.style.display = 'none';
+                                equipmentSelectField.style.display = 'none';
                                 priorityField.style.display = 'block';
                                 descriptionField.style.display = 'block';
 
-                                contractInput.removeAttribute('required');
-                                equipmentInput.removeAttribute('required');
-                                contractInput.value = '';
-                                equipmentInput.value = '';
+                                // Clear all equipment selections
+                                document.querySelectorAll('.equipment-checkbox').forEach(cb => cb.checked = false);
+                                updateSelectedEquipment();
+
                                 priorityInput.setAttribute('required', 'required');
                                 descriptionInput.setAttribute('required', 'required');
 
                                 updateCharCount();
                             } else {
-                                contractField.style.display = 'none';
-                                equipmentField.style.display = 'none';
+                                equipmentSelectField.style.display = 'none';
                                 priorityField.style.display = 'none';
                                 descriptionField.style.display = 'none';
 
-                                contractInput.removeAttribute('required');
-                                equipmentInput.removeAttribute('required');
                                 priorityInput.removeAttribute('required');
                                 descriptionInput.removeAttribute('required');
                             }
                         }
 
-                        // ========== VALIDATION FUNCTIONS ==========
+// ========== UPDATE SELECTED EQUIPMENT DISPLAY ==========
+                        function updateSelectedEquipment() {
+                            const checkboxes = document.querySelectorAll('.equipment-checkbox:checked');
+                            const display = document.getElementById('selectedEquipmentDisplay');
+
+                            if (checkboxes.length === 0) {
+                                display.innerHTML = '';
+                                return;
+                            }
+
+                            let html = '<div class="alert alert-info mb-0"><strong>Đã chọn ' + checkboxes.length + ' thiết bị:</strong><ul class="mb-0 mt-2">';
+                            checkboxes.forEach(cb => {
+                                const label = document.querySelector('label[for="' + cb.id + '"]');
+                                const equipmentName = label.querySelector('strong').textContent;
+                                html += '<li>' + equipmentName + '</li>';
+                            });
+                            html += '</ul></div>';
+
+                            display.innerHTML = html;
+                        }
+
+// ========== VALIDATION FUNCTION ==========
                         function validateCreateForm(event) {
                             const supportType = document.getElementById('supportType').value;
                             const description = document.getElementById('description').value.trim();
-                            const contractId = document.getElementById('contractId').value;
-                            const equipmentId = document.getElementById('equipmentId').value;
 
                             if (!supportType) {
                                 event.preventDefault();
@@ -1593,39 +1660,13 @@
                             }
 
                             if (supportType === 'equipment') {
-                                if (!contractId || contractId <= 0) {
+                                const selectedEquipment = document.querySelectorAll('.equipment-checkbox:checked');
+
+                                if (selectedEquipment.length === 0) {
                                     event.preventDefault();
-                                    showToast('Vui lòng nhập mã hợp đồng hợp lệ!', 'error');
-                                    document.getElementById('contractId').focus();
+                                    showToast('Vui lòng chọn ít nhất một thiết bị!', 'error');
                                     return false;
                                 }
-
-                                if (!equipmentId || equipmentId <= 0) {
-                                    event.preventDefault();
-                                    showToast('Vui lòng nhập mã thiết bị hợp lệ!', 'error');
-                                    document.getElementById('equipmentId').focus();
-                                    return false;
-                                }
-                            }
-
-                            return true;
-                        }
-
-                        function validateEditForm(event) {
-                            const description = document.getElementById('editDescription').value.trim();
-
-                            if (description.length < 10) {
-                                event.preventDefault();
-                                showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
-                                document.getElementById('editDescription').focus();
-                                return false;
-                            }
-
-                            if (description.length > 1000) {
-                                event.preventDefault();
-                                showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
-                                document.getElementById('editDescription').focus();
-                                return false;
                             }
 
                             return true;
@@ -1838,6 +1879,63 @@
                                 }
                             });
                         });
+
         </script>
-    </body>
+    </script>
+
+    <!-- ========== ✅ FLASH MESSAGE HANDLER ✅ ========== -->
+    <c:if test="${not empty sessionScope.success}">
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: '${sessionScope.success}',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true,
+                timerProgressBar: true
+            });
+        </script>
+        <% session.removeAttribute("success"); %>
+    </c:if>
+
+    <c:if test="${not empty sessionScope.error}">
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi!',
+                text: '${sessionScope.error}',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true,
+                timerProgressBar: true
+            });
+        </script>
+        <% session.removeAttribute("error"); %>
+    </c:if>
+
+    <c:if test="${not empty sessionScope.warning}">
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cảnh báo!',
+                text: '${sessionScope.warning}',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true,
+                timerProgressBar: true
+            });
+        </script>
+        <% session.removeAttribute("warning"); %>
+    </c:if>
+    <!-- ========== KẾT THÚC ========== -->
+
+</body>
+
+</html>
+</body>
+
 </html>

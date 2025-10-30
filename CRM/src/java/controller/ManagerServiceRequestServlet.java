@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import dal.EquipmentDAO;
+import model.Equipment;
 
 @WebServlet(name = "ManagerServiceRequestServlet", urlPatterns = {"/managerServiceRequest"})
 public class ManagerServiceRequestServlet extends HttpServlet {
@@ -43,6 +45,35 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             session.setAttribute("targetUrl", targetUrl);
             response.sendRedirect(request.getContextPath() + "/login");
             return;
+        }
+
+        // ✅ LOAD EQUIPMENT LIST FOR DROPDOWN
+        try {
+            EquipmentDAO equipmentDAO = new EquipmentDAO();
+            List<EquipmentWithContract> equipmentList = new ArrayList<>();
+
+            List<Equipment> allEquipment = equipmentDAO.getEquipmentByCustomerContracts(customerId);
+            for (Equipment eq : allEquipment) {
+                EquipmentWithContract ewc = new EquipmentWithContract();
+                ewc.setEquipmentId(eq.getEquipmentId());
+                ewc.setModel(eq.getModel());
+                ewc.setSerialNumber(eq.getSerialNumber());
+
+                // Get contract ID
+                String contractIdStr = equipmentDAO.getContractIdForEquipment(eq.getEquipmentId(), customerId);
+                if (contractIdStr != null && contractIdStr.startsWith("HD")) {
+                    ewc.setContractId(Integer.parseInt(contractIdStr.substring(2)));
+                }
+
+                equipmentList.add(ewc);
+            }
+
+            session.setAttribute("customerEquipmentList", equipmentList);
+            System.out.println("✅ Loaded " + equipmentList.size() + " equipment for dropdown");
+
+        } catch (Exception e) {
+            System.out.println("❌ Error loading equipment list: " + e.getMessage());
+            e.printStackTrace();
         }
 
         String action = request.getParameter("action");
@@ -80,6 +111,47 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             handleUpdateRequest(request, response);
         } else if ("CancelServiceRequest".equals(action)) {
             handleCancelRequest(request, response);
+        }
+    }
+
+    // ✅ INNER CLASS FOR EQUIPMENT DROPDOWN
+    public static class EquipmentWithContract {
+
+        private int equipmentId;
+        private String model;
+        private String serialNumber;
+        private int contractId;
+
+        public int getEquipmentId() {
+            return equipmentId;
+        }
+
+        public void setEquipmentId(int equipmentId) {
+            this.equipmentId = equipmentId;
+        }
+
+        public String getModel() {
+            return model;
+        }
+
+        public void setModel(String model) {
+            this.model = model;
+        }
+
+        public String getSerialNumber() {
+            return serialNumber;
+        }
+
+        public void setSerialNumber(String serialNumber) {
+            this.serialNumber = serialNumber;
+        }
+
+        public int getContractId() {
+            return contractId;
+        }
+
+        public void setContractId(int contractId) {
+            this.contractId = contractId;
         }
     }
 
@@ -152,7 +224,8 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         int currentPage = getPageNumber(request);
         int offset = (currentPage - 1) * PAGE_SIZE;
 
-        List<ServiceRequest> allRequests = serviceRequestDAO.searchRequests(customerId, keyword.trim());
+        // ✅ TÌM KIẾM CHỈ THEO EQUIPMENT NAME VÀ DESCRIPTION
+        List<ServiceRequest> allRequests = serviceRequestDAO.searchRequestsByEquipmentAndDescription(customerId, keyword.trim());
 
         int totalRecords = allRequests.size();
         int totalPages = (int) Math.ceil((double) totalRecords / PAGE_SIZE);
@@ -251,20 +324,11 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             return;
         }
 
-        // ✅ LẤY LOẠI HỖ TRỢ
         String supportType = request.getParameter("supportType");
-
-        // ✅ Validate supportType trước
-        if (supportType == null || supportType.trim().isEmpty()) {
-            session.setAttribute("error", "Vui lòng chọn loại hỗ trợ!");
-            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
-            return;
-        }
-
         String description = request.getParameter("description");
         String priorityLevel = request.getParameter("priorityLevel");
 
-        // ✅ Validate description
+        // ✅ VALIDATE CHUNG
         if (description == null || description.trim().isEmpty()) {
             session.setAttribute("error", "Vui lòng nhập mô tả vấn đề!");
             response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
@@ -276,129 +340,180 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
             return;
         }
+
         if (description.trim().length() > 1000) {
             session.setAttribute("error", "Mô tả vấn đề không được vượt quá 1000 ký tự!");
             response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
             return;
         }
 
-        // ✅ Validate và set default priority
         if (priorityLevel == null || priorityLevel.trim().isEmpty()) {
             priorityLevel = "Normal";
-        } else {
-            priorityLevel = priorityLevel.trim();
-            if (!priorityLevel.equals("Normal") && !priorityLevel.equals("High") && !priorityLevel.equals("Urgent")) {
-                session.setAttribute("error", "Mức độ ưu tiên không hợp lệ!");
-                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
-                return;
-            }
         }
 
-        // ✅ Tạo object ServiceRequest
-        ServiceRequest newRequest = new ServiceRequest();
-        newRequest.setCreatedBy(customerId);
-
-        newRequest.setDescription(description.trim());
-        newRequest.setPriorityLevel(priorityLevel);
-        newRequest.setRequestDate(new Date());
-        newRequest.setStatus("Pending");
-
-        // ✅ DEBUG LOG
         System.out.println("========== CREATE SERVICE REQUEST ==========");
         System.out.println("Support Type: " + supportType);
         System.out.println("Customer ID: " + customerId);
-        System.out.println("Description: " + description);
-        System.out.println("Priority: " + priorityLevel);
 
-        // ✅ XỬ LÝ THEO LOẠI HỖ TRỢ
+        // ========== XỬ LÝ HỖ TRỢ THIẾT BỊ ==========
         if ("equipment".equals(supportType)) {
-            // XỬ LÝ HỖ TRỢ THIẾT BỊ
-            String contractIdStr = request.getParameter("contractId");
-            String equipmentIdStr = request.getParameter("equipmentId");
 
-            if (contractIdStr == null || contractIdStr.trim().isEmpty()) {
-                session.setAttribute("error", "Vui lòng nhập mã hợp đồng!");
+            // ✅ KIỂM TRA: Form 1 (nhiều thiết bị) hay Form 2 (1 thiết bị)?
+            String singleEquipmentId = request.getParameter("equipmentId"); // Form 2
+            String[] multipleEquipmentIds = request.getParameterValues("equipmentIds"); // Form 1
+
+            if (singleEquipmentId != null && !singleEquipmentId.trim().isEmpty()) {
+                // ========== FORM 2: TẠO ĐƠN TỪ TRANG THIẾT BỊ (1 thiết bị) ==========
+                System.out.println("✅ Processing SINGLE equipment from Equipment Management page");
+
+                try {
+                    int equipmentId = Integer.parseInt(singleEquipmentId.trim());
+                    String contractIdStr = request.getParameter("contractId");
+
+                    if (contractIdStr == null || contractIdStr.trim().isEmpty()) {
+                        session.setAttribute("error", "Không tìm thấy thông tin hợp đồng!");
+
+                        // ✅ QUAY LẠI TRANG TRƯỚC
+                        String referer = request.getHeader("Referer");
+                        response.sendRedirect(referer != null ? referer : request.getContextPath() + "/managerServiceRequest");
+                        return;
+                    }
+
+                    int contractId = Integer.parseInt(contractIdStr.trim());
+
+                    ServiceRequest newRequest = new ServiceRequest();
+                    newRequest.setContractId(contractId);
+                    newRequest.setEquipmentId(equipmentId);
+                    newRequest.setCreatedBy(customerId);
+                    newRequest.setDescription(description.trim());
+                    newRequest.setPriorityLevel(priorityLevel);
+                    newRequest.setRequestDate(new Date());
+                    newRequest.setStatus("Pending");
+                    newRequest.setRequestType("Service");
+
+                    int result = serviceRequestDAO.createServiceRequest(newRequest);
+
+                    if (result > 0) {
+                        session.setAttribute("success", "✅ Yêu cầu hỗ trợ thiết bị đã được gửi thành công!");
+                        System.out.println("✅ Created service request for equipment " + equipmentId);
+                    } else {
+                        session.setAttribute("error", "❌ Có lỗi khi tạo yêu cầu. Vui lòng thử lại!");
+                        System.out.println("❌ Failed to create request for equipment " + equipmentId);
+                    }
+
+                } catch (NumberFormatException e) {
+                    session.setAttribute("error", "Thông tin thiết bị không hợp lệ!");
+                    System.out.println("❌ Invalid equipment ID: " + e.getMessage());
+                } catch (Exception e) {
+                    session.setAttribute("error", "Có lỗi xảy ra: " + e.getMessage());
+                    System.out.println("❌ Error creating request: " + e.getMessage());
+                    e.printStackTrace();
+                }
+
+                // ✅ QUAY LẠI TRANG TRƯỚC (hoặc fallback về trang yêu cầu)
+                String referer = request.getHeader("Referer");
+                if (referer != null && !referer.isEmpty()) {
+                    response.sendRedirect(referer);
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+                }
+                return;
+            } else if (multipleEquipmentIds != null && multipleEquipmentIds.length > 0) {
+                // ========== FORM 1: TẠO NHIỀU ĐƠN TỪ TRANG YÊU CẦU (nhiều thiết bị) ==========
+                System.out.println("✅ Processing MULTIPLE equipment from Service Request page");
+                System.out.println("Selected " + multipleEquipmentIds.length + " equipment(s)");
+
+                int successCount = 0;
+                int failCount = 0;
+
+                for (String equipmentIdStr : multipleEquipmentIds) {
+                    try {
+                        int equipmentId = Integer.parseInt(equipmentIdStr);
+
+                        // Get contract ID for this equipment
+                        EquipmentDAO equipmentDAO = new EquipmentDAO();
+                        String contractIdStr = equipmentDAO.getContractIdForEquipment(equipmentId, customerId);
+
+                        if (contractIdStr == null || !contractIdStr.startsWith("HD")) {
+                            System.out.println("❌ No valid contract for equipment " + equipmentId);
+                            failCount++;
+                            continue;
+                        }
+
+                        int contractId = Integer.parseInt(contractIdStr.substring(2));
+
+                        ServiceRequest newRequest = new ServiceRequest();
+                        newRequest.setContractId(contractId);
+                        newRequest.setEquipmentId(equipmentId);
+                        newRequest.setCreatedBy(customerId);
+                        newRequest.setDescription(description.trim());
+                        newRequest.setPriorityLevel(priorityLevel);
+                        newRequest.setRequestDate(new Date());
+                        newRequest.setStatus("Pending");
+                        newRequest.setRequestType("Service");
+
+                        int result = serviceRequestDAO.createServiceRequest(newRequest);
+
+                        if (result > 0) {
+                            successCount++;
+                            System.out.println("✅ Created request for equipment " + equipmentId);
+                        } else {
+                            failCount++;
+                            System.out.println("❌ Failed to create request for equipment " + equipmentId);
+                        }
+
+                    } catch (Exception e) {
+                        failCount++;
+                        System.out.println("❌ Error processing equipment " + equipmentIdStr + ": " + e.getMessage());
+                    }
+                }
+
+                if (successCount > 0) {
+                    session.setAttribute("success", "✅ Đã tạo thành công " + successCount + " yêu cầu hỗ trợ!");
+                }
+                if (failCount > 0) {
+                    session.setAttribute("error", "⚠️ Có " + failCount + " yêu cầu không thể tạo. Vui lòng kiểm tra lại!");
+                }
+
+                // ✅ REDIRECT VỀ TRANG YÊU CẦU
+                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+                return;
+
+            } else {
+                // ❌ KHÔNG CÓ THIẾT BỊ NÀO ĐƯỢC CHỌN
+                session.setAttribute("error", "Vui lòng chọn ít nhất một thiết bị!");
                 response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
                 return;
             }
-
-            if (equipmentIdStr == null || equipmentIdStr.trim().isEmpty()) {
-                session.setAttribute("error", "Vui lòng nhập mã thiết bị!");
-                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
-                return;
-            }
-
-            int contractId, equipmentId;
-            try {
-                contractId = Integer.parseInt(contractIdStr.trim());
-                equipmentId = Integer.parseInt(equipmentIdStr.trim());
-            } catch (NumberFormatException e) {
-                session.setAttribute("error", "Mã hợp đồng và mã thiết bị phải là số nguyên!");
-                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
-                return;
-            }
-
-            if (contractId <= 0 || equipmentId <= 0) {
-                session.setAttribute("error", "Mã hợp đồng và mã thiết bị phải là số dương!");
-                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
-                return;
-            }
-
-            if (!serviceRequestDAO.isValidContract(contractId, customerId)) {
-                session.setAttribute("error", "Mã hợp đồng không tồn tại hoặc không thuộc về bạn!");
-                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
-                return;
-            }
-
-            if (!serviceRequestDAO.isValidEquipment(equipmentId)) {
-                session.setAttribute("error", "Mã thiết bị không tồn tại!");
-                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
-                return;
-            }
-
-            if (!serviceRequestDAO.isEquipmentInContract(contractId, equipmentId)) {
-                session.setAttribute("error", "Thiết bị này không thuộc hợp đồng bạn đã chọn!");
-                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
-                return;
-            }
-
-            newRequest.setContractId(contractId);
-            newRequest.setEquipmentId(equipmentId);
-            newRequest.setRequestType("Service");
-
-            System.out.println("Contract ID: " + contractId);
-            System.out.println("Equipment ID: " + equipmentId);
-
-        } else if ("account".equals(supportType)) {
-            // ✅ XỬ LÝ HỖ TRỢ TÀI KHOẢN - SET NULL
+        } // ========== XỬ LÝ HỖ TRỢ TÀI KHOẢN ==========
+        else if ("account".equals(supportType)) {
+            ServiceRequest newRequest = new ServiceRequest();
             newRequest.setContractId(null);
             newRequest.setEquipmentId(null);
+            newRequest.setCreatedBy(customerId);
+            newRequest.setDescription(description.trim());
+            newRequest.setPriorityLevel(priorityLevel);
+            newRequest.setRequestDate(new Date());
+            newRequest.setStatus("Pending");
             newRequest.setRequestType("InformationUpdate");
 
-            System.out.println("Contract ID: NULL");
-            System.out.println("Equipment ID: NULL");
+            int result = serviceRequestDAO.createServiceRequest(newRequest);
 
-        } else {
+            if (result > 0) {
+                session.setAttribute("success", "✅ Tạo yêu cầu hỗ trợ tài khoản thành công!");
+            } else {
+                session.setAttribute("error", "❌ Có lỗi xảy ra khi tạo yêu cầu. Vui lòng thử lại!");
+            }
+
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        } // ❌ SUPPORTTYPE KHÔNG HỢP LỆ
+        else {
             session.setAttribute("error", "Loại hỗ trợ không hợp lệ!");
             response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
             return;
         }
 
-        System.out.println("Request Type: " + newRequest.getRequestType());
-        System.out.println("============================================");
-
-        // ✅ GỌI DAO ĐỂ LƯU VÀO DATABASE
-        int newRequestId = serviceRequestDAO.createServiceRequest(newRequest);
-
-        System.out.println("🔍 Result from DAO: " + newRequestId);
-
-        if (newRequestId > 0) {
-            session.setAttribute("success", "Tạo đơn thành công");
-        } else {
-            session.setAttribute("error", "Đã có lỗi xảy ra phía máy chủ khi tạo yêu cầu. Vui lòng thử lại!");
-        }
-
-        response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
     }
 
     private void handleUpdateRequest(HttpServletRequest request, HttpServletResponse response)

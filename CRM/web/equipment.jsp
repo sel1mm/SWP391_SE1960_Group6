@@ -10,6 +10,8 @@
         <title>CRM Dashboard - Quản Lý Thiết Bị</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <style>
             * {
                 margin: 0;
@@ -655,6 +657,34 @@
             <div id="toastContainer"></div>
 
             <div class="content-wrapper">
+                <!-- ========== ✅ THÊM ĐOẠN NÀY ✅ ========== -->
+                <%
+                    String errorMsg = (String) session.getAttribute("error");
+                    String successMsg = (String) session.getAttribute("success");
+                %>
+
+                <% if (errorMsg != null || successMsg != null) { %>
+                <script>
+                    window.addEventListener('load', function () {
+                    <% if (errorMsg != null) { 
+                            session.removeAttribute("error");
+                    %>
+                        setTimeout(function () {
+                            showToast('<%= errorMsg.replace("'", "\\'").replace("\"", "\\\"") %>', 'error');
+                        }, 100);
+                    <% } %>
+
+                    <% if (successMsg != null) { 
+                            session.removeAttribute("success");
+                    %>
+                        setTimeout(function () {
+                            showToast('<%= successMsg.replace("'", "\\'").replace("\"", "\\\"") %>', 'success');
+                        }, 100);
+                    <% } %>
+                    });
+                </script>
+                <% } %>
+                <!-- ========== KẾT THÚC ========== -->
                 <!-- THỐNG KÊ - 4 Ô -->
                 <div class="row">
                     <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
@@ -946,7 +976,7 @@
             </div>
         </div>
 
-        <!-- MODAL CREATE SERVICE REQUEST -->
+        <!-- MODAL CREATE SERVICE REQUEST for Equipment -->
         <div class="modal fade" id="createRequestModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -1036,6 +1066,7 @@
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
+
                 // ========== TOAST NOTIFICATION ==========
                 let currentToastTimeout = null;
 
@@ -1110,7 +1141,7 @@
                     }
                 }
 
-// ========== VIEW EQUIPMENT ==========
+                // ========== VIEW EQUIPMENT ==========
                 function viewEquipment(button) {
                     const model = button.getAttribute('data-model');
                     const serial = button.getAttribute('data-serial');
@@ -1142,7 +1173,7 @@
                     new bootstrap.Modal(document.getElementById('viewModal')).show();
                 }
 
-// ========== CREATE REQUEST ==========
+                // ========== CREATE REQUEST ==========
                 function createRequest(button) {
                     const equipmentId = button.getAttribute('data-id');
                     const contractId = button.getAttribute('data-contract');
@@ -1161,7 +1192,7 @@
                     new bootstrap.Modal(document.getElementById('createRequestModal')).show();
                 }
 
-                 // ========== EVENT LISTENERS ==========
+                // ========== EVENT LISTENERS ==========
                 document.addEventListener('DOMContentLoaded', function () {
                     const descriptionTextarea = document.getElementById('requestDescription');
                     if (descriptionTextarea) {
@@ -1178,5 +1209,6 @@
                     }
                 });
         </script>
+
     </body>
 </html>

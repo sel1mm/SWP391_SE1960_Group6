@@ -5,7 +5,9 @@ import model.EquipmentWithStatus;
 import model.ContractEquipment;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DAO for Equipment operations. Modified to use Storekeeper's
@@ -13,6 +15,7 @@ import java.util.List;
  */
 public class EquipmentDAO extends DBContext {
 
+    // ==================== CODE GỐC - GIỮ NGUYÊN 100% ====================
     /**
      * Get all equipment from inventory (using Part/PartDetail system)
      */
@@ -274,24 +277,18 @@ public class EquipmentDAO extends DBContext {
     }
 
     /**
-     * Find equipment by contract ID (for backward compatibility) Note: This
-     * method may need to be adapted based on how contracts relate to parts
+     * Find equipment by contract ID (for backward compatibility)
      */
     public List<Equipment> findByContractId(int contractId) throws SQLException {
         List<Equipment> equipmentList = new ArrayList<>();
-        // For now, return all equipment since contract-equipment relationship 
-        // needs to be defined based on business requirements
         return getAllEquipment();
     }
 
     /**
-     * Find contract-equipment relationships by contract ID (for backward
-     * compatibility)
+     * Find contract-equipment relationships by contract ID
      */
     public List<ContractEquipment> findContractEquipmentByContractId(int contractId) throws SQLException {
         List<ContractEquipment> contractEquipmentList = new ArrayList<>();
-        // This would need to be implemented based on how contracts relate to parts
-        // For now, return empty list
         return contractEquipmentList;
     }
 
@@ -400,6 +397,127 @@ public class EquipmentDAO extends DBContext {
             System.out.println("❌ Error in getEquipmentByCustomer: " + e.getMessage());
         }
         return list;
+    }
+
+
+    // ==================== PHẦN BỔ SUNG CHO CUSTOMER EQUIPMENT VIEW ====================
+    /**
+     * Get equipment statistics by customer Returns: total, active, repair,
+     * maintenance counts
+     */
+    public Map<String, Integer> getEquipmentStatsByCustomer(int customerId) {
+        Map<String, Integer> stats = new HashMap<>();
+
+        // Khởi tạo giá trị mặc định
+        stats.put("total", 0);
+        stats.put("active", 0);
+        stats.put("repair", 0);
+        stats.put("maintenance", 0);
+
+        try {
+            List<Equipment> allEquipment = getEquipmentByCustomerContracts(customerId);
+            int total = allEquipment.size();
+            int repair = 0;
+            int maintenance = 0;
+
+            for (Equipment eq : allEquipment) {
+                String status = getEquipmentStatus(eq.getEquipmentId());
+                if ("Repair".equals(status)) {
+                    repair++;
+                } else if ("Maintenance".equals(status)) {
+                    maintenance++;
+                }
+            }
+
+            int active = total - repair - maintenance;
+            if (active < 0) {
+                active = 0;
+            }
+
+            stats.put("total", total);
+            stats.put("active", active);
+            stats.put("repair", repair);
+            stats.put("maintenance", maintenance);
+
+        } catch (SQLException e) {
+            System.out.println("❌ Error in getEquipmentStatsByCustomer: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return stats;
+    }
+
+    /**
+     * Get status for a specific equipment Returns: "Active", "Repair", or
+     * "Maintenance"
+     */
+    public String getEquipmentStatus(int equipmentId) {
+        // Check for active service request (Repair)
+        String repairSql = "SELECT COUNT(*) as cnt FROM ServiceRequest "
+                + "WHERE equipmentId = ? "
+                + "  AND status IN ('Pending', 'Awaiting Approval', 'Approved')";
+
+        try (PreparedStatement ps = connection.prepareStatement(repairSql)) {
+            ps.setInt(1, equipmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt("cnt") > 0) {
+                    return "Repair";
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error checking repair status: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        // Check for scheduled maintenance
+        String maintenanceSql = "SELECT COUNT(*) as cnt FROM MaintenanceSchedule "
+                + "WHERE equipmentId = ? "
+                + "  AND status = 'Scheduled' "
+                + "  AND scheduledDate >= CURDATE()";
+
+        try (PreparedStatement ps = connection.prepareStatement(maintenanceSql)) {
+            ps.setInt(1, equipmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt("cnt") > 0) {
+                    return "Maintenance";
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error checking maintenance status: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return "Active";
+    }
+
+    /**
+     * Get contract ID for an equipment belonging to a customer Returns
+     * formatted contract ID (e.g., "HD001")
+     */
+    public String getContractIdForEquipment(int equipmentId, int customerId) {
+        String sql = "SELECT c.contractId FROM Contract c "
+                + "JOIN ContractEquipment ce ON c.contractId = ce.contractId "
+                + "WHERE ce.equipmentId = ? "
+                + "  AND c.customerId = ? "
+                + "  AND c.status = 'Active' "
+                + "ORDER BY c.contractDate DESC "
+                + "LIMIT 1";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, equipmentId);
+            ps.setInt(2, customerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int contractId = rs.getInt("contractId");
+                    return "HD" + String.format("%03d", contractId);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error getting contract ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return "N/A";
     }
 
 }
