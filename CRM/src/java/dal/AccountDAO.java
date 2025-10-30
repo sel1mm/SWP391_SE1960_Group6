@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import model.AccountProfile;
 
@@ -68,18 +69,18 @@ public class AccountDAO extends MyDAO {
         }
         return list;
     }
-    
+
     public List<Account> searchAccountsWithRole(String keyword, String status, String roleId) {
         List<Account> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT DISTINCT a.* FROM Account a "
+                "SELECT DISTINCT a.* FROM Account a "
         );
-        
+
         // Add JOIN if roleId filter is provided
         if (roleId != null && !roleId.trim().isEmpty()) {
             sql.append("INNER JOIN AccountRole ar ON a.accountId = ar.accountId ");
         }
-        
+
         sql.append("WHERE 1=1 ");
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -91,7 +92,7 @@ public class AccountDAO extends MyDAO {
         if (roleId != null && !roleId.trim().isEmpty()) {
             sql.append("AND ar.roleId = ? ");
         }
-        
+
         sql.append("ORDER BY a.accountId");
 
         try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
@@ -390,11 +391,20 @@ public class AccountDAO extends MyDAO {
     }
 
     public Account getAccountByUserName(String username) {
-        String sql = "SELECT * FROM Account WHERE username = ?";
+        String sql = "SELECT a.*, p.profileId, p.address, p.dateOfBirth, p.avatarUrl, "
+                + "p.nationalId, p.verified, p.extraData "
+                + "FROM Account a "
+                + "LEFT JOIN AccountProfile p ON a.accountId = p.accountId "
+                + "WHERE a.username = ?";
+
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
         try {
             ps = con.prepareStatement(sql);
             ps.setString(1, username);
             rs = ps.executeQuery();
+
             if (rs.next()) {
                 LocalDateTime createdAt = null;
                 LocalDateTime updatedAt = null;
@@ -406,7 +416,8 @@ public class AccountDAO extends MyDAO {
                     updatedAt = rs.getTimestamp("updatedAt").toLocalDateTime();
                 }
 
-                return new Account(
+                // --- Khởi tạo Account ---
+                Account account = new Account(
                         rs.getInt("accountId"),
                         rs.getString("username"),
                         rs.getString("passwordHash"),
@@ -417,7 +428,32 @@ public class AccountDAO extends MyDAO {
                         createdAt,
                         updatedAt
                 );
+
+                // --- Nếu có dữ liệu profile thì gắn vào Account ---
+                int profileId = rs.getInt("profileId");
+                if (profileId > 0) {
+                    AccountProfile profile = new AccountProfile();
+                    profile.setProfileId(profileId);
+                    profile.setAccountId(rs.getInt("accountId"));
+                    profile.setAddress(rs.getString("address"));
+
+                    // Xử lý LocalDate
+                    java.sql.Date dob = rs.getDate("dateOfBirth");
+                    if (dob != null) {
+                        profile.setDateOfBirth(dob.toLocalDate());
+                    }
+
+                    profile.setAvatarUrl(rs.getString("avatarUrl"));
+                    profile.setNationalId(rs.getString("nationalId"));
+                    profile.setVerified(rs.getBoolean("verified"));
+                    profile.setExtraData(rs.getString("extraData"));
+
+                    account.setProfile(profile);
+                }
+
+                return account;
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -1270,9 +1306,6 @@ public class AccountDAO extends MyDAO {
         return 0;
     }
 
-
-
-
 //public Response<Boolean> isPhoneExistsExcludingId(String phone, int accountId) {
 //    String sql = "SELECT COUNT(*) as count FROM Account WHERE phone = ? AND accountId <> ?";
 //    try {
@@ -1290,125 +1323,129 @@ public class AccountDAO extends MyDAO {
 //    }
 //    return new Response<>(false, false, "Failed to check phone");
 //}
-public boolean updateEmail(int accountId, String newEmail) {
-    String sql = "UPDATE Account SET email = ?, updatedAt = ? WHERE accountId = ?";
-    PreparedStatement ps = null;
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setString(1, newEmail);
-        ps.setTimestamp(2, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
-        ps.setInt(3, accountId);
-
-
-        int affectedRows = ps.executeUpdate();
-        return affectedRows > 0; // true nếu update thành công
-    } catch (Exception e) {
-        e.printStackTrace();
-        return false;
-    } finally {
+    public boolean updateEmail(int accountId, String newEmail) {
+        String sql = "UPDATE Account SET email = ?, updatedAt = ? WHERE accountId = ?";
+        PreparedStatement ps = null;
         try {
-            if (ps != null) ps.close();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+            ps = con.prepareStatement(sql);
+            ps.setString(1, newEmail);
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+            ps.setInt(3, accountId);
+
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0; // true nếu update thành công
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (ps != null) {
+                    ps.close();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
     }
-}
 // Đếm tổng số user (có thể có điều kiện search/filter)
-public int countAllAccounts(String keyword, String status, String roleId) {
-    StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT a.accountId) FROM Account a ");
-    if (roleId != null && !roleId.trim().isEmpty()) {
-        sql.append("JOIN AccountRole ar ON a.accountId = ar.accountId ");
-    }
-    sql.append("WHERE 1=1 ");
-    if (keyword != null && !keyword.trim().isEmpty()) {
-        sql.append("AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ?) ");
-    }
-    if (status != null && !status.trim().isEmpty()) {
-        sql.append("AND a.status = ? ");
-    }
-    if (roleId != null && !roleId.trim().isEmpty()) {
-        sql.append("AND ar.roleId = ? ");
-    }
 
-    try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
-        int idx = 1;
+    public int countAllAccounts(String keyword, String status, String roleId) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT a.accountId) FROM Account a ");
+        if (roleId != null && !roleId.trim().isEmpty()) {
+            sql.append("JOIN AccountRole ar ON a.accountId = ar.accountId ");
+        }
+        sql.append("WHERE 1=1 ");
         if (keyword != null && !keyword.trim().isEmpty()) {
-            String like = "%" + keyword.trim() + "%";
-            ps.setString(idx++, like);
-            ps.setString(idx++, like);
-            ps.setString(idx++, like);
+            sql.append("AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ?) ");
         }
         if (status != null && !status.trim().isEmpty()) {
-            ps.setString(idx++, status);
+            sql.append("AND a.status = ? ");
         }
         if (roleId != null && !roleId.trim().isEmpty()) {
-            ps.setInt(idx++, Integer.parseInt(roleId));
+            sql.append("AND ar.roleId = ? ");
         }
 
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) return rs.getInt(1);
+        try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
+            int idx = 1;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String like = "%" + keyword.trim() + "%";
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+            }
+            if (status != null && !status.trim().isEmpty()) {
+                ps.setString(idx++, status);
+            }
+            if (roleId != null && !roleId.trim().isEmpty()) {
+                ps.setInt(idx++, Integer.parseInt(roleId));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
+        return 0;
     }
-    return 0;
-}
 
 // Lấy danh sách user có phân trang
-public List<Account> getAccountsPaged(String keyword, String status, String roleId, int offset, int limit) {
-    List<Account> list = new ArrayList<>();
-    StringBuilder sql = new StringBuilder(
-        "SELECT DISTINCT a.* FROM Account a "
-    );
-    if (roleId != null && !roleId.trim().isEmpty()) {
-        sql.append("JOIN AccountRole ar ON a.accountId = ar.accountId ");
-    }
-    sql.append("WHERE 1=1 ");
-    if (keyword != null && !keyword.trim().isEmpty()) {
-        sql.append("AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ?) ");
-    }
-    if (status != null && !status.trim().isEmpty()) {
-        sql.append("AND a.status = ? ");
-    }
-    if (roleId != null && !roleId.trim().isEmpty()) {
-        sql.append("AND ar.roleId = ? ");
-    }
-    sql.append("ORDER BY a.accountId LIMIT ? OFFSET ?");
-
-    try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
-        int idx = 1;
+    public List<Account> getAccountsPaged(String keyword, String status, String roleId, int offset, int limit) {
+        List<Account> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+                "SELECT DISTINCT a.* FROM Account a "
+        );
+        if (roleId != null && !roleId.trim().isEmpty()) {
+            sql.append("JOIN AccountRole ar ON a.accountId = ar.accountId ");
+        }
+        sql.append("WHERE 1=1 ");
         if (keyword != null && !keyword.trim().isEmpty()) {
-            String like = "%" + keyword.trim() + "%";
-            ps.setString(idx++, like);
-            ps.setString(idx++, like);
-            ps.setString(idx++, like);
+            sql.append("AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ?) ");
         }
         if (status != null && !status.trim().isEmpty()) {
-            ps.setString(idx++, status);
+            sql.append("AND a.status = ? ");
         }
         if (roleId != null && !roleId.trim().isEmpty()) {
-            ps.setInt(idx++, Integer.parseInt(roleId));
+            sql.append("AND ar.roleId = ? ");
         }
-        ps.setInt(idx++, limit);
-        ps.setInt(idx, offset);
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            Account a = new Account(
-                rs.getInt("accountId"),
-                rs.getString("username"),
-                rs.getString("passwordHash"),
-                rs.getString("fullName"),
-                rs.getString("email"),
-                rs.getString("phone"),
-                rs.getString("status"),
-                rs.getTimestamp("createdAt") != null ? rs.getTimestamp("createdAt").toLocalDateTime() : null,
-                rs.getTimestamp("updatedAt") != null ? rs.getTimestamp("updatedAt").toLocalDateTime() : null
-            );
-            list.add(a);
+        sql.append("ORDER BY a.accountId LIMIT ? OFFSET ?");
+
+        try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
+            int idx = 1;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String like = "%" + keyword.trim() + "%";
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+            }
+            if (status != null && !status.trim().isEmpty()) {
+                ps.setString(idx++, status);
+            }
+            if (roleId != null && !roleId.trim().isEmpty()) {
+                ps.setInt(idx++, Integer.parseInt(roleId));
+            }
+            ps.setInt(idx++, limit);
+            ps.setInt(idx, offset);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Account a = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        rs.getTimestamp("createdAt") != null ? rs.getTimestamp("createdAt").toLocalDateTime() : null,
+                        rs.getTimestamp("updatedAt") != null ? rs.getTimestamp("updatedAt").toLocalDateTime() : null
+                );
+                list.add(a);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
+        return list;
     }
-    return list;
-}
 }

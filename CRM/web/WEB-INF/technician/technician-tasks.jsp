@@ -37,12 +37,10 @@
         <div class="col-6 col-md-3">
           <select class="form-select" name="status">
             <option value="">All Statuses</option>
-            <option value="Pending" ${param.status == 'Pending' ? 'selected' : ''}>Pending</option>
             <option value="Assigned" ${param.status == 'Assigned' ? 'selected' : ''}>Assigned</option>
             <option value="In Progress" ${param.status == 'In Progress' ? 'selected' : ''}>In Progress</option>
             <option value="Completed" ${param.status == 'Completed' ? 'selected' : ''}>Completed</option>
-            <option value="On Hold" ${param.status == 'On Hold' ? 'selected' : ''}>On Hold</option>
-            <option value="Cancelled" ${param.status == 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+            <option value="Failed" ${param.status == 'Failed' ? 'selected' : ''}>Failed</option>
           </select>
         </div>
         <div class="col-6 col-md-3 text-end">
@@ -77,7 +75,7 @@
           <c:when test="${not empty tasksWithCustomer}">
             <c:forEach var="taskWithCustomer" items="${tasksWithCustomer}" varStatus="st">
               <tr>
-                <td>${st.index + 1}</td>
+                <td>${(currentPage - 1) * pageSize + st.index + 1}</td>
                 <td><strong>#${taskWithCustomer.task.taskId}</strong></td>
                 <td>
                   <c:choose>
@@ -99,9 +97,6 @@
                 <td>
                   <c:set var="status" value="${taskWithCustomer.task.status}"/>
                   <c:choose>
-                    <c:when test="${status == 'Pending'}">
-                      <span class="badge bg-warning" data-task-status-badge="${taskWithCustomer.task.taskId}">Pending</span>
-                    </c:when>
                     <c:when test="${status == 'Assigned'}">
                       <span class="badge bg-info" data-task-status-badge="${taskWithCustomer.task.taskId}">Assigned</span>
                     </c:when>
@@ -111,11 +106,8 @@
                     <c:when test="${status == 'Completed'}">
                       <span class="badge bg-success" data-task-status-badge="${taskWithCustomer.task.taskId}">Completed</span>
                     </c:when>
-                    <c:when test="${status == 'On Hold'}">
-                      <span class="badge bg-secondary" data-task-status-badge="${taskWithCustomer.task.taskId}">On Hold</span>
-                    </c:when>
-                    <c:when test="${status == 'Cancelled'}">
-                      <span class="badge bg-danger" data-task-status-badge="${taskWithCustomer.task.taskId}">Cancelled</span>
+                    <c:when test="${status == 'Failed'}">
+                      <span class="badge bg-danger" data-task-status-badge="${taskWithCustomer.task.taskId}">Failed</span>
                     </c:when>
                     <c:otherwise>
                       <span class="badge bg-dark" data-task-status-badge="${taskWithCustomer.task.taskId}">${taskWithCustomer.task.status}</span>
@@ -216,11 +208,10 @@
             <label for="statusSelect" class="form-label">New Status</label>
             <select class="form-select" name="status" id="statusSelect" required>
               <option value="">Select Status</option>
-              <option value="Pending">Pending</option>
+              <option value="Assigned">Assigned</option>
               <option value="In Progress">In Progress</option>
               <option value="Completed">Completed</option>
-              <option value="On Hold">On Hold</option>
-              <option value="Cancelled">Cancelled</option>
+              <option value="Failed">Failed</option>
             </select>
           </div>
         </div>

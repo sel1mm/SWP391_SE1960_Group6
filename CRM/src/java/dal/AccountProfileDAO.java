@@ -199,4 +199,16 @@ public class AccountProfileDAO extends MyDAO {
         }
     }
 
+    public boolean createProfile(AccountProfile profile) {
+        String sql = "INSERT INTO AccountProfile (accountId, verified) VALUES (?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, profile.getAccountId());
+            ps.setBoolean(2, profile.isVerified());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 }

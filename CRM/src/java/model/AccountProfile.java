@@ -61,10 +61,18 @@ public class AccountProfile {
     public void setAddress(String address) {
         this.address = address;
     }
+   
 
     public LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
+    public String getAvatarUrl(String contextPath) {
+        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+            return contextPath + "/avatar/" + avatarUrl;
+        }
+        return null;
+    }
+   
 
     public void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
@@ -78,6 +86,9 @@ public class AccountProfile {
         this.avatarUrl = avatarUrl;
     }
 
+    
+
+    
     public String getNationalId() {
         return nationalId;
     }

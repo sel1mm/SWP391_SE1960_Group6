@@ -825,6 +825,10 @@ updateRequirement('req-char', hasChar);
             </c:if>
             });
         </script>
-
+        <%
+            // Xóa message sau khi đã hiển thị
+            session.removeAttribute("successMessage");
+            session.removeAttribute("errorMessage");
+        %>
     </body>
 </html>

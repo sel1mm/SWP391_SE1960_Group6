@@ -70,7 +70,7 @@ public class EquipmentDAO extends DBContext {
                 + "    p.unitPrice "
                 + "FROM PartDetail pd "
                 + "JOIN Part p ON pd.partId = p.partId "
-                + "ORDER BY pd.partDetailId DESC";
+                + "ORDER BY pd.lastUpdatedDate DESC, pd.partDetailId DESC";
 
         try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
@@ -194,7 +194,7 @@ public class EquipmentDAO extends DBContext {
             params.add(searchPattern);
         }
 
-        sql.append(" ORDER BY pd.partDetailId DESC LIMIT ? OFFSET ?");
+        sql.append(" ORDER BY pd.lastUpdatedDate DESC, pd.partDetailId DESC LIMIT ? OFFSET ?");
         params.add(pageSize);
         params.add((page - 1) * pageSize);
 

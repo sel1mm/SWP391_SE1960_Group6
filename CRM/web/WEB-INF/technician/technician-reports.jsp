@@ -50,7 +50,6 @@
             <option value="Pending" ${param.status == 'Pending' ? 'selected' : ''}>Pending</option>
             <option value="Approved" ${param.status == 'Approved' ? 'selected' : ''}>Approved</option>
             <option value="Rejected" ${param.status == 'Rejected' ? 'selected' : ''}>Rejected</option>
-            <option value="In Review" ${param.status == 'In Review' ? 'selected' : ''}>In Review</option>
           </select>
         </div>
         <div class="col-6 col-md-3 text-end">
@@ -86,7 +85,7 @@
           <c:when test="${not empty reportsWithCustomer}">
             <c:forEach var="reportWithCustomer" items="${reportsWithCustomer}" varStatus="st">
               <tr>
-                <td>${st.index + 1}</td>
+                <td>${(currentPage - 1) * pageSize + st.index + 1}</td>
                 <td><strong>#${reportWithCustomer.report.reportId}</strong></td>
                 <td>
                   <div class="fw-bold">${fn:escapeXml(reportWithCustomer.customerName)}</div>
