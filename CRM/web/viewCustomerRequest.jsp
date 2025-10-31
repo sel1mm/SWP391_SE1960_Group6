@@ -58,26 +58,51 @@
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-md-2 sidebar p-4 d-flex flex-column">
-            <div>
-                <h4 class="text-center mb-4">
-                    <i class="fas fa-cogs"></i> CRM CSS
-                </h4>
-                <nav class="nav flex-column">
-                    <a class="nav-link" href="dashboard.jsp"><i class="fas fa-palette me-2"></i> Trang chủ</a>
-                    <a class="nav-link" href="customerManagement"><i class="fas fa-users me-2"></i> Quản lý khách hàng</a>
-                    <a class="nav-link fw-bold bg-white text-dark" href="viewCustomerRequest"><i class="fas fa-clipboard-list"></i> Quản lý yêu cầu</a>
-                    <a class="nav-link" href="manageProfile"><i class="fas fa-user-circle me-2"></i> Hồ Sơ</a>
-                </nav>
-            </div>
+                <div class="col-md-2 sidebar p-4 d-flex flex-column">
+                    <div>
+                        <h4 class="text-center mb-4">
+                            <i class="fas fa-cogs"></i> CRM CSS
+                        </h4>
+                        <nav class="nav flex-column">
+                            <c:if test="${sessionScope.session_role eq 'Admin' || sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a class="nav-link ${currentPage eq 'dashboard' ? 'fw-bold bg-white text-dark' : ''}" href="dashboard.jsp">
+                                    <i class="fas fa-palette me-2"></i> Trang chủ
+                                </a>
+                            </c:if>
 
-            <div class="mt-auto logout-section text-center">
-                <hr style="border-color: rgba(255,255,255,0.2);">
-                <button class="btn btn-outline-light w-100" onclick="logout()">
-                    <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
-                </button>
-            </div>
-        </div>
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="customerManagement">
+                                    <i class="fas fa-users me-2"></i> Quản lý khách hàng
+                                </a>
+                            </c:if>
+                            
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="viewCustomerContracts">
+                                    <i class="fas fa-file-contract me-2"></i> Quản lý hợp đồng
+                                </a>
+                            </c:if>
+                            
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="viewCustomerRequest">
+                                    <i class="fas fa-clipboard-list"></i> Quản lý yêu cầu
+                                </a>
+                            </c:if>
+
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a  href="manageProfile" class="nav-link ${currentPage eq 'profile' ? 'fw-bold bg-white text-dark' : ''}">
+                                    <i class="fas fa-user-circle me-2"></i><span> Hồ Sơ</span>
+                                </a>
+                            </c:if>
+                        </nav>
+                    </div>
+
+                    <div class="mt-auto logout-section text-center">
+                        <hr style="border-color: rgba(255,255,255,0.2);">
+                        <button class="btn btn-outline-light w-100" onclick="logout()" style="border-radius: 10px;">
+                            <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                        </button>
+                    </div>
+                </div>
 
         <!-- Main Content -->
         <div class="col-md-10 main-content p-4">
@@ -396,14 +421,28 @@
                         <label>Thiết bị <span class="text-danger">*</span></label>
                         <!-- Dropdown multiple -->
                         <div class="dropdown w-100">
-                            <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="equipmentDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                -- Chọn thiết bị --
+                            <button class="btn btn-outline-dark dropdown-toggle w-100 text-start" 
+                                    type="button" 
+                                    id="equipmentDropdown" 
+                                    data-bs-toggle="dropdown" 
+                                    data-bs-auto-close="outside"
+                                    aria-expanded="false">
+                                <i class="fas fa-list"></i> -- Chọn thiết bị --
                             </button>
-                            <ul class="dropdown-menu w-100" id="equipmentDropdownList">
+                            <ul class="dropdown-menu w-100 p-2" 
+                                id="equipmentDropdownList"
+                                style="max-height: 300px; overflow-y: auto;">
                                 <!-- Thiết bị sẽ được đổ bằng JS -->
                             </ul>
                         </div>
-                        <input type="hidden" name="equipmentIds" id="equipmentIds"> <!-- lưu danh sách ID được chọn -->
+
+                        <!-- ✅ Phần hiển thị thiết bị đã chọn -->
+                        <div id="selectedEquipmentDisplay" class="mt-3"></div>
+
+                        <input type="hidden" name="equipmentIds" id="equipmentIds">
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Bạn có thể chọn nhiều thiết bị cùng lúc
+                        </small>
                     </div>
 
                     <h6 class="fw-bold mb-3">Loại yêu cầu</h6>
@@ -425,7 +464,7 @@
 
                     <h6 class="fw-bold mb-3">Mô tả yêu cầu</h6>
                     <div class="mb-3">
-                        <textarea name="description" class="form-control" rows="3"
+                        <textarea name="description" class="form-control" rows="3" maxlength="1000"
                                   placeholder="Mô tả chi tiết vấn đề khách hàng gặp phải..." required></textarea>
                     </div>
                 </div>
@@ -877,6 +916,7 @@ const url = "/" + ctx + "/loadContractsAndEquipment?customerId=" + encodeURIComp
                             '</div>';
                         dropdownList.appendChild(li);
                     });
+                     updateSelectedEquipment();
                 } else {
                     dropdownList.innerHTML = "<li class='px-3 text-muted'>Không có thiết bị nào.</li>";
                 }
@@ -886,16 +926,56 @@ const url = "/" + ctx + "/loadContractsAndEquipment?customerId=" + encodeURIComp
 });
 
 
+// Lắng nghe khi chọn/bỏ chọn checkbox thiết bị
 document.addEventListener("change", function (e) {
     if (e.target.classList.contains("equipment-checkbox")) {
-        const selected = Array.from(document.querySelectorAll(".equipment-checkbox:checked"))
-            .map(cb => cb.value);
-        document.getElementById("equipmentIds").value = selected.join(",");
+        updateSelectedEquipment();
+    }
+});
 
-        const dropdownBtn = document.getElementById("equipmentDropdown");
-        dropdownBtn.textContent = selected.length > 0
-            ? `Đã chọn ${selected.length} thiết bị`
-            : "-- Chọn thiết bị --";
+// ✅ Hàm cập nhật hiển thị thiết bị đã chọn
+function updateSelectedEquipment() {
+    const checkboxes = document.querySelectorAll('.equipment-checkbox:checked');
+    const display = document.getElementById('selectedEquipmentDisplay');
+    const dropdownBtn = document.getElementById('equipmentDropdown');
+    
+    // Lấy danh sách ID đã chọn
+    const selected = Array.from(checkboxes).map(cb => cb.value);
+    document.getElementById('equipmentIds').value = selected.join(',');
+    
+    // Cập nhật text button dropdown
+    if (selected.length > 0) {
+        dropdownBtn.innerHTML = `<i class="fas fa-check-circle text-success"></i> Đã chọn ${selected.length} thiết bị`;
+    } else {
+        dropdownBtn.innerHTML = '<i class="fas fa-list"></i> -- Chọn thiết bị --';
+    }
+    
+    // Hiển thị danh sách thiết bị đã chọn
+    if (checkboxes.length === 0) {
+        display.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="alert alert-info mb-0">' +
+               '<strong><i class="fas fa-tools"></i> Đã chọn ' + checkboxes.length + ' thiết bị:</strong>' +
+               '<ul class="mb-0 mt-2 ps-3">';
+    
+    checkboxes.forEach(cb => {
+        const label = document.querySelector('label[for="' + cb.id + '"]');
+        if (label) {
+            const equipmentText = label.textContent.trim();
+            html += '<li>' + equipmentText + '</li>';
+        }
+    });
+    
+    html += '</ul></div>';
+    display.innerHTML = html;
+}
+
+// ✅ Cập nhật listener khi chọn thiết bị
+document.addEventListener("change", function (e) {
+    if (e.target.classList.contains("equipment-checkbox")) {
+        updateSelectedEquipment();
     }
 });
 

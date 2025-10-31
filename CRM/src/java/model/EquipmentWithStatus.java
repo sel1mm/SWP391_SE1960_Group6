@@ -1,5 +1,6 @@
 package model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -10,6 +11,11 @@ public class EquipmentWithStatus extends Equipment {
     private String status;
     private String location;
     private double unitPrice;
+    
+    // ✅ Thêm các thuộc tính liên quan đến hợp đồng (ContractEquipment)
+    private LocalDate startDate;    // ngày bắt đầu trong hợp đồng
+    private LocalDate endDate;      // ngày kết thúc trong hợp đồng
+    private BigDecimal price;       // giá thiết bị trong hợp đồng
 
     public EquipmentWithStatus() {
         super();
@@ -34,6 +40,31 @@ public class EquipmentWithStatus extends Equipment {
 
     public double getUnitPrice() { return unitPrice; }
     public void setUnitPrice(double unitPrice) { this.unitPrice = unitPrice; }
+    
+    
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
 
     @Override
     public String toString() {
