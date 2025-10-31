@@ -120,7 +120,7 @@
                       ${taskWithCustomer.task.startDate}
                     </c:when>
                     <c:otherwise>
-                      <span class="text-muted">Not set</span>
+                      <span class="text-muted">Not yet</span>
                     </c:otherwise>
                   </c:choose>
                 </td>

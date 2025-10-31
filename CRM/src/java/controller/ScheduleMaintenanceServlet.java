@@ -263,7 +263,7 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
             task.setTaskDetails("Bảo trì " + scheduleType + 
                                 (equipmentId != null ? " thiết bị #" + equipmentId : ""));
             task.setStartDate(scheduledDate);
-            task.setEndDate(scheduledDate);             // chỉ 1 ngày
+            // endDate intentionally left null until completion
             task.setStatus("Assigned");
 
             int taskId = workTaskDAO.createWorkTask(task);
