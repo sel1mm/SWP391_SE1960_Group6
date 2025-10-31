@@ -520,4 +520,40 @@ public class EquipmentDAO extends DBContext {
         return "N/A";
     }
 
+    public List<EquipmentWithStatus> getEquipmentByContractId(int contractId) {
+    List<EquipmentWithStatus> list = new ArrayList<>();
+    String sql = """
+        SELECT e.equipmentId, e.serialNumber, e.model, e.description, e.installDate,
+               ce.startDate, ce.endDate, ce.price
+        FROM ContractEquipment ce
+        JOIN Equipment e ON ce.equipmentId = e.equipmentId
+        WHERE ce.contractId = ?
+    """;
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setInt(1, contractId);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            EquipmentWithStatus eq = new EquipmentWithStatus();
+            eq.setEquipmentId(rs.getInt("equipmentId"));
+            eq.setSerialNumber(rs.getString("serialNumber"));
+            eq.setModel(rs.getString("model"));
+            eq.setDescription(rs.getString("description"));
+            eq.setInstallDate(rs.getDate("installDate") != null 
+    ? rs.getDate("installDate").toLocalDate() 
+    : null);
+eq.setStartDate(rs.getDate("startDate") != null 
+    ? rs.getDate("startDate").toLocalDate() 
+    : null);
+eq.setEndDate(rs.getDate("endDate") != null 
+    ? rs.getDate("endDate").toLocalDate() 
+    : null);
+            eq.setPrice(rs.getBigDecimal("price"));
+            list.add(eq);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return list;
+}
+    
 }

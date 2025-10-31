@@ -2143,3 +2143,276 @@ WHERE taskId IN (207,208,209,210)
   AND status = 'Assigned';
 
 COMMIT;
+
+
+DELIMITER //
+
+CREATE TRIGGER trg_UpdateWorkloadOnTaskAssign
+AFTER INSERT ON WorkTask
+FOR EACH ROW
+BEGIN
+    DECLARE workload_points INT DEFAULT 1;
+    DECLARE task_priority VARCHAR(20);
+    
+    -- Lấy priority từ WorkAssignment (nếu có)
+    SELECT wa.priority INTO task_priority
+    FROM WorkAssignment wa
+    WHERE wa.taskId = NEW.taskId
+    LIMIT 1;
+    
+    -- Tính workload points dựa trên priority
+    IF task_priority = 'Urgent' THEN
+        SET workload_points = 3;
+    ELSEIF task_priority = 'High' THEN
+        SET workload_points = 2;
+    ELSE
+        SET workload_points = 1;  -- Normal, Low
+    END IF;
+    
+    -- Cập nhật workload
+    INSERT INTO TechnicianWorkload (technicianId, currentActiveTasks, maxConcurrentTasks, lastAssignedDate, lastUpdated)
+    VALUES (NEW.technicianId, workload_points, 5, NOW(), NOW())
+    ON DUPLICATE KEY UPDATE 
+        currentActiveTasks = currentActiveTasks + workload_points,
+        lastAssignedDate = NOW(),
+        lastUpdated = NOW();
+END//
+
+-- ✅ Tạo lại trigger GIẢM workload theo priority
+CREATE TRIGGER trg_UpdateWorkloadOnTaskComplete
+AFTER UPDATE ON WorkTask
+FOR EACH ROW
+BEGIN
+    DECLARE workload_points INT DEFAULT 1;
+    DECLARE task_priority VARCHAR(20);
+    
+    -- Chỉ chạy khi status chuyển sang Completed
+    IF NEW.status = 'Completed' AND OLD.status != 'Completed' THEN
+        
+        -- Lấy priority từ WorkAssignment (nếu có)
+        SELECT wa.priority INTO task_priority
+        FROM WorkAssignment wa
+        WHERE wa.taskId = NEW.taskId
+        LIMIT 1;
+        
+        -- Tính workload points dựa trên priority
+        IF task_priority = 'Urgent' THEN
+            SET workload_points = 3;
+        ELSEIF task_priority = 'High' THEN
+            SET workload_points = 2;
+        ELSE
+            SET workload_points = 1;  -- Normal, Low
+        END IF;
+        
+        -- Giảm workload và tăng completed count
+        UPDATE TechnicianWorkload
+        SET currentActiveTasks = GREATEST(0, currentActiveTasks - workload_points),
+            totalCompletedTasks = totalCompletedTasks + 1,
+            lastUpdated = NOW()
+        WHERE technicianId = NEW.technicianId;
+        
+    END IF;
+END//
+
+DELIMITER ;
+
+-- Đồng bộ status của bảng maintenanceschedule với bảng work task
+DELIMITER //
+
+CREATE TRIGGER trg_UpdateScheduleStatusOnTaskComplete
+AFTER UPDATE ON WorkTask
+FOR EACH ROW
+BEGIN
+    -- Khi WorkTask completed, update MaintenanceSchedule tương ứng
+    IF NEW.status = 'Completed' AND OLD.status != 'Completed' AND NEW.scheduleId IS NOT NULL THEN
+        UPDATE MaintenanceSchedule
+        SET status = 'Completed'
+        WHERE scheduleId = NEW.scheduleId;
+    END IF;
+    
+    -- Khi WorkTask in progress, update MaintenanceSchedule
+    IF NEW.status = 'In Progress' AND OLD.status != 'In Progress' AND NEW.scheduleId IS NOT NULL THEN
+        UPDATE MaintenanceSchedule
+        SET status = 'In Progress'
+        WHERE scheduleId = NEW.scheduleId;
+    END IF;
+END//
+
+DELIMITER ;
+
+START TRANSACTION;
+
+CREATE TABLE IF NOT EXISTS ContractEquipment_backup AS 
+SELECT * FROM ContractEquipment 
+WHERE contractId IN (1, 5, 9, 13) AND equipmentId IN (1,2,3,4);
+
+CREATE TABLE IF NOT EXISTS Equipment_backup AS 
+SELECT * FROM Equipment WHERE equipmentId IN (1,2,3,4);
+
+
+
+
+-- Xóa equipment 1 trong contract 9 (giữ lại contract 1)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 1 AND contractId = 9;
+
+-- Xóa equipment 2 trong contract 9 (giữ lại contract 1)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 2 AND contractId = 9;
+
+-- Xóa equipment 4 trong contract 13 (giữ lại contract 5)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 4 AND contractId = 13;
+
+--- Xoa trung lap customer2
+SET SQL_SAFE_UPDATES = 0;
+
+START TRANSACTION;
+
+-- Backup dữ liệu trước khi xóa cho Customer2
+CREATE TABLE IF NOT EXISTS ContractEquipment_customer2_backup AS 
+SELECT * FROM ContractEquipment 
+WHERE contractId IN (2, 6, 10, 14) AND equipmentId IN (3, 5, 6);
+
+CREATE TABLE IF NOT EXISTS Equipment_customer2_backup AS 
+SELECT * FROM Equipment WHERE equipmentId IN (3, 5, 6);
+
+-- CUSTOMER 2 (Phạm Thị Lan - customerId = 5)
+-- Xóa equipment 3 trong contract 14 (giữ lại contract 10)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 3 AND contractId = 14;
+
+-- Xóa equipment 5 trong contract 6 (giữ lại contract 2)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 5 AND contractId = 6;
+
+-- Xóa equipment 6 trong contract 6 (giữ lại contract 2)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 6 AND contractId = 6;
+
+-- Kiểm tra lại kết quả sau khi xóa
+SELECT 
+    c.customerId,
+    a.fullName as customerName,
+    e.equipmentId,
+    e.serialNumber,
+    e.model,
+    c.contractId,
+    COUNT(*) OVER (PARTITION BY c.customerId, e.serialNumber) as duplicate_count
+FROM Equipment e
+JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId
+JOIN Contract c ON ce.contractId = c.contractId
+JOIN Account a ON c.customerId = a.accountId
+WHERE c.customerId = 5
+ORDER BY e.serialNumber, e.equipmentId;
+
+-- Nếu kết quả OK, commit
+COMMIT;
+-- Nếu có vấn đề: ROLLBACK;
+
+SET SQL_SAFE_UPDATES = 1;
+
+---- 
+
+
+--- xoa trung lap customer3 
+
+
+SET SQL_SAFE_UPDATES = 0;
+
+START TRANSACTION;
+
+-- Backup dữ liệu trước khi xóa cho Customer3
+CREATE TABLE IF NOT EXISTS ContractEquipment_customer3_backup AS 
+SELECT * FROM ContractEquipment 
+WHERE contractId IN (3, 7, 11, 15) AND equipmentId IN (2, 5, 7, 8);
+
+CREATE TABLE IF NOT EXISTS Equipment_customer3_backup AS 
+SELECT * FROM Equipment WHERE equipmentId IN (2, 5, 7, 8);
+
+-- CUSTOMER 3 (Hoàng Văn Minh - customerId = 6)
+-- Xóa equipment 7 trong contract 7 (giữ lại contract 3)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 7 AND contractId = 7;
+
+-- Xóa equipment 7 trong contract 15 (giữ lại contract 3)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 7 AND contractId = 15;
+
+-- Xóa equipment 8 trong contract 7 (giữ lại contract 3)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 8 AND contractId = 7;
+
+-- Kiểm tra lại kết quả sau khi xóa
+SELECT 
+    c.customerId,
+    a.fullName as customerName,
+    e.equipmentId,
+    e.serialNumber,
+    e.model,
+    c.contractId,
+    COUNT(*) OVER (PARTITION BY c.customerId, e.serialNumber) as duplicate_count
+FROM Equipment e
+JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId
+JOIN Contract c ON ce.contractId = c.contractId
+JOIN Account a ON c.customerId = a.accountId
+WHERE c.customerId = 6
+ORDER BY e.serialNumber, e.equipmentId;
+
+-- Nếu kết quả OK, commit
+COMMIT;
+-- Nếu có vấn đề: ROLLBACK;
+
+SET SQL_SAFE_UPDATES = 1;
+
+--- Xoa trung lap customer4
+
+
+SET SQL_SAFE_UPDATES = 0;
+
+START TRANSACTION;
+
+-- Backup dữ liệu trước khi xóa cho Customer4
+CREATE TABLE IF NOT EXISTS ContractEquipment_customer4_backup AS 
+SELECT * FROM ContractEquipment 
+WHERE contractId IN (4, 8, 12) AND equipmentId IN (9, 10);
+
+CREATE TABLE IF NOT EXISTS Equipment_customer4_backup AS 
+SELECT * FROM Equipment WHERE equipmentId IN (9, 10);
+
+-- CUSTOMER 4 (Vũ Thị Hoa - customerId = 7)
+-- Xóa equipment 9 trong contract 8 (giữ lại contract 4)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 9 AND contractId = 8;
+
+-- Xóa equipment 9 trong contract 12 (giữ lại contract 4)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 9 AND contractId = 12;
+
+-- Xóa equipment 10 trong contract 8 (giữ lại contract 4)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 10 AND contractId = 8;
+
+-- Kiểm tra lại kết quả sau khi xóa
+SELECT 
+    c.customerId,
+    a.fullName as customerName,
+    e.equipmentId,
+    e.serialNumber,
+    e.model,
+    c.contractId,
+    COUNT(*) OVER (PARTITION BY c.customerId, e.serialNumber) as duplicate_count
+FROM Equipment e
+JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId
+JOIN Contract c ON ce.contractId = c.contractId
+JOIN Account a ON c.customerId = a.accountId
+WHERE c.customerId = 7
+ORDER BY e.serialNumber, e.equipmentId;
+
+-- Nếu kết quả OK, commit
+COMMIT;
+-- Nếu có vấn đề: ROLLBACK;
+
+SET SQL_SAFE_UPDATES = 1;
+
+-- 
