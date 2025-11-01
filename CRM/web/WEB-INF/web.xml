@@ -111,6 +111,22 @@
         <servlet-name>UpdateRequestStatusServlet</servlet-name>
         <servlet-class>controller.UpdateRequestStatusServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>PartStatisticsServlet</servlet-name>
+        <servlet-class>controller.PartStatisticsServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>RAGServlet</servlet-name>
+        <servlet-class>controller.RAGServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>AskGeminiServlet</servlet-name>
+        <servlet-class>controller.AskGeminiServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>PartDetailHistoryServlet</servlet-name>
+        <servlet-class>controller.PartDetailHistoryServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>LoginController</servlet-name>
         <url-pattern>/login</url-pattern>
@@ -272,6 +288,30 @@
     <servlet-mapping>
         <servlet-name>UpdateRequestStatusServlet</servlet-name>
         <url-pattern>/updateRequestStatus</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PartStatisticsServlet</servlet-name>
+        <url-pattern>/partStatistics</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>GeminiChatServlet</servlet-name>
+        <servlet-class>controller.GeminiChatServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>GeminiChatServlet</servlet-name>
+        <url-pattern>/GeminiChatServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RAGServlet</servlet-name>
+        <url-pattern>/RAGServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AskGeminiServlet</servlet-name>
+        <url-pattern>/AskGeminiServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PartDetailHistoryServlet</servlet-name>
+        <url-pattern>/PartDetailHistoryServlet</url-pattern>
     </servlet-mapping>
     <welcome-file-list>
         <welcome-file>home.jsp</welcome-file>

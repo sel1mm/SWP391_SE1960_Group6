@@ -436,19 +436,21 @@ public class ContractDAO extends MyDAO {
             }
 
             if (contractId > 0 && partDetailId > 0) {
-                // 2. Get part details
-                String selectPartSql = "SELECT pd.serialNumber, p.partName, p.description, p.unitPrice "
+                // 2. Get part details + OLD STATUS ⭐ THÊM oldStatus vào query
+                String selectPartSql = "SELECT pd.serialNumber, pd.status, p.partName, p.description, p.unitPrice "
                         + "FROM PartDetail pd JOIN Part p ON pd.partId = p.partId WHERE pd.partDetailId = ?";
                 String serialNumber = null;
                 String partName = null;
                 String description = null;
                 double unitPrice = 0.0;
+                String oldStatus = null; // ⭐ THÊM biến để lưu status cũ
 
                 try (PreparedStatement ps = con.prepareStatement(selectPartSql)) {
                     ps.setInt(1, partDetailId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
                             serialNumber = rs.getString("serialNumber");
+                            oldStatus = rs.getString("status"); // ⭐ LẤY status cũ
                             partName = rs.getString("partName");
                             description = rs.getString("description");
                             unitPrice = rs.getDouble("unitPrice");
@@ -499,6 +501,28 @@ public class ContractDAO extends MyDAO {
                     ps.setDate(1, contractDate);
                     ps.setInt(2, partDetailId);
                     ps.executeUpdate();
+                }
+
+                // ⭐⭐⭐ 6. GHI LỊCH SỬ THAY ĐỔI - THÊM MỚI ⭐⭐⭐
+// ⭐ 6. GHI LỊCH SỬ
+                try {
+                    PartDetailHistoryDAO historyDAO = new PartDetailHistoryDAO();
+                    String notes = "Technician lấy thiết bị từ kho để tạo contract #" + contractId;
+
+                    // ⭐ Truyền 'con' vào để dùng chung connection
+                    historyDAO.addHistoryWithTransaction(
+                            con, // ⭐⭐⭐ Connection của ContractDAO
+                            partDetailId,
+                            oldStatus,
+                            "InUse",
+                            customerId,
+                            notes
+                    );
+
+                    System.out.println("✅ History logged successfully");
+
+                } catch (Exception historyError) {
+                    System.err.println("⚠️ Warning: Failed to log history - " + historyError.getMessage());
                 }
             }
 
@@ -850,7 +874,8 @@ public class ContractDAO extends MyDAO {
             return price;
         }
     }
-     public Integer getContractEquipmentIdByContractAndEquipment(int contractId, int equipmentId) {
+
+    public Integer getContractEquipmentIdByContractAndEquipment(int contractId, int equipmentId) {
         String sql = "SELECT contractEquipmentId FROM ContractEquipment WHERE contractId = ? AND equipmentId = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, contractId);
@@ -858,7 +883,9 @@ public class ContractDAO extends MyDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int id = rs.getInt("contractEquipmentId");
-                    if (id > 0) return id;
+                    if (id > 0) {
+                        return id;
+                    }
                 }
             }
         } catch (SQLException e) {
