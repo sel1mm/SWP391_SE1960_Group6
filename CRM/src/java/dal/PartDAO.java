@@ -106,11 +106,19 @@ public class PartDAO extends DBContext {
         return null;
     }
 
-    // READ ALL: lấy danh sách tất cả Part
+    // READ ALL: lấy danh sách tất cả Part KÈM SỐ LƯỢNG TỪ PartDetail
     public List<NewPart> getAllParts() {
         List<NewPart> list = new ArrayList<>();
-        String sql = "SELECT partId, partName, description, unitprice, username, lastUpdatedDate "
-                   + "FROM Account JOIN Part ON Account.accountId = Part.lastUpdatedBy";
+        String sql = "SELECT Part.partId, Part.partName, Part.description, Part.unitPrice, "
+                   + "COALESCE(COUNT(PartDetail.partDetailId), 0) AS quantity, "
+                   + "Part.lastUpdatedBy, Part.lastUpdatedDate, Account.username "
+                   + "FROM Part "
+                   + "JOIN Account ON Account.accountId = Part.lastUpdatedBy "
+                   + "LEFT JOIN PartDetail ON PartDetail.partId = Part.partId "
+                   + "GROUP BY Part.partId, Part.partName, Part.description, Part.unitPrice, "
+                   + "         Part.lastUpdatedBy, Part.lastUpdatedDate, Account.username "
+                   + "ORDER BY Part.partId";
+        
         try (PreparedStatement ps = connection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -120,6 +128,7 @@ public class PartDAO extends DBContext {
                 part.setPartName(rs.getString("partName"));
                 part.setDescription(rs.getString("description"));
                 part.setUnitPrice(rs.getDouble("unitPrice"));
+                part.setQuantity(rs.getInt("quantity"));  // ← THÊM QUANTITY
                 part.setUserName(rs.getString("username"));
 
                 Date date = rs.getDate("lastUpdatedDate");
@@ -129,8 +138,11 @@ public class PartDAO extends DBContext {
 
                 list.add(part);
             }
+            
+            System.out.println("✅ Loaded " + list.size() + " parts with quantity");
         } catch (SQLException e) {
             System.out.println("❌ Lỗi khi lấy danh sách Part: " + e.getMessage());
+            e.printStackTrace();
         }
         return list;
     }
@@ -206,34 +218,49 @@ public class PartDAO extends DBContext {
             }
         }
     }
+    // THÊM VÀO CLASS PartDAO (dal/PartDAO.java)
 
-    // TEST MAIN
-    public static void main(String[] args) {
-        PartDAO dao = new PartDAO();
-
-        System.out.println("=== TEST THÊM PART MỚI (TỰ ĐỘNG TẠO INVENTORY) ===");
-        NewPart newPart = new NewPart(0, "RAM 16GB DDR5", "Bộ nhớ máy tính", 120.0, 1, LocalDate.now(), "admin");
-        boolean added = dao.addPart(newPart);
-        System.out.println(added ? "✅ Thêm thành công!" : "❌ Thêm thất bại!");
-
-        System.out.println("\n=== TEST LẤY DANH SÁCH PARTS ===");
-        List<NewPart> parts = dao.getAllParts();
-        for (NewPart p : parts) {
-            System.out.println(p);
+/**
+ * Đếm số lượng PartDetail theo trạng thái cho một Part cụ thể
+ * @param partId ID của Part
+ * @return Map<String, Integer> với key là status và value là số lượng
+ */
+public java.util.Map<String, Integer> getPartStatusCount(int partId) {
+    java.util.Map<String, Integer> statusCount = new java.util.HashMap<>();
+    
+    // Khởi tạo 4 trạng thái với giá trị 0
+    statusCount.put("Available", 0);
+    statusCount.put("Fault", 0);
+    statusCount.put("InUse", 0);
+    statusCount.put("Retired", 0);
+    
+    String sql = "SELECT status, COUNT(*) as count " +
+                 "FROM PartDetail " +
+                 "WHERE partId = ? " +
+                 "GROUP BY status";
+    
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setInt(1, partId);
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String status = rs.getString("status");
+                int count = rs.getInt("count");
+                statusCount.put(status, count);
+            }
         }
-
-        System.out.println("\n=== TEST CẬP NHẬT PART (KHÔNG ẢNH HƯỞNG INVENTORY) ===");
-        if (!parts.isEmpty()) {
-            NewPart part = parts.get(0);
-            part.setDescription("Mô tả đã cập nhật");
-            part.setUnitPrice(part.getUnitPrice() + 5);
-            boolean updated = dao.updatePart(part);
-            System.out.println(updated ? "✅ Cập nhật thành công!" : "❌ Cập nhật thất bại!");
-        }
-
-        System.out.println("\n=== TEST XÓA PART (TỰ ĐỘNG XÓA INVENTORY) ===");
-        int deleteId = 10; // Thay ID phù hợp
-        boolean deleted = dao.deletePart(deleteId);
-        System.out.println(deleted ? "✅ Đã xóa part và inventory" : "❌ Không xóa được");
+        
+        System.out.println("✅ Loaded status count for partId: " + partId);
+        System.out.println("   Available: " + statusCount.get("Available"));
+        System.out.println("   Fault: " + statusCount.get("Fault"));
+        System.out.println("   InUse: " + statusCount.get("InUse"));
+        System.out.println("   Retired: " + statusCount.get("Retired"));
+        
+    } catch (SQLException e) {
+        System.out.println("❌ Error getting status count: " + e.getMessage());
+        e.printStackTrace();
     }
+    
+    return statusCount;
+}
 }

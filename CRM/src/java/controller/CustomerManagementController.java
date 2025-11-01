@@ -263,7 +263,7 @@ public class CustomerManagementController extends HttpServlet {
                         registerRequest.setPhone(newPhone);
                         registerRequest.setFullName(newFullName);
 
-                        Response<Boolean> result = accountService.register(registerRequest);
+                        Response<Boolean> result = accountService.registerByCSS(registerRequest);
 
                         if (result.isSuccess()) {
                             Response<Account> createdAccountRes = accountService.getAccountByUsername(newUsername);

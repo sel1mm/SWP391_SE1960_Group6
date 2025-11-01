@@ -294,7 +294,61 @@ public class TechnicianWorkloadDAO extends MyDAO {
         
         return workload;
     }
+    /**
+ * Increment workload by points based on priority
+ */
+public boolean incrementWorkloadByPoints(int technicianId, int points) {
+    System.out.println(">>> incrementWorkloadByPoints() CALLED");
+    System.out.println("    technicianId: " + technicianId);
+    System.out.println("    points to add: " + points);
     
+    xSql = "UPDATE TechnicianWorkload SET currentActiveTasks = currentActiveTasks + ?, " +
+           "lastAssignedDate = ?, lastUpdated = ? WHERE technicianId = ?";
+    try {
+        ps = con.prepareStatement(xSql);
+        ps.setInt(1, points);
+        ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+        ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+        ps.setInt(4, technicianId);
+        
+        System.out.println("    SQL: " + xSql);
+        System.out.println("    Executing update...");
+        
+        int affectedRows = ps.executeUpdate();
+        
+        System.out.println("    Affected rows: " + affectedRows);
+        System.out.println("<<< incrementWorkloadByPoints() DONE");
+        
+        return affectedRows > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    } finally {
+        closeResources();
+    }
+}
+
+/**
+ * Decrement workload by points based on priority
+ */
+public boolean decrementWorkloadByPoints(int technicianId, int points) {
+    xSql = "UPDATE TechnicianWorkload SET currentActiveTasks = " +
+           "GREATEST(0, currentActiveTasks - ?), lastUpdated = ? WHERE technicianId = ?";
+    try {
+        ps = con.prepareStatement(xSql);
+        ps.setInt(1, points);
+        ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+        ps.setInt(3, technicianId);
+        
+        int affectedRows = ps.executeUpdate();
+        return affectedRows > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    } finally {
+        closeResources();
+    }
+}
     /**
      * Close database resources
      */

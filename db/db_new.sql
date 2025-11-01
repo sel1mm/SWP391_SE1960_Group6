@@ -745,36 +745,36 @@ ORDER BY sr.priorityLevel DESC, rr.repairDate ASC;
 -- Purpose: Automatically update technician workload when tasks are assigned/completed
 -- Maintains accurate workload data for UC-06
 
-DELIMITER //
+-- DELIMITER //
 
-CREATE TRIGGER trg_UpdateWorkloadOnTaskAssign
-AFTER INSERT ON WorkTask
-FOR EACH ROW
-BEGIN
+-- CREATE TRIGGER trg_UpdateWorkloadOnTaskAssign
+-- AFTER INSERT ON WorkTask
+-- FOR EACH ROW
+-- BEGIN
     -- Increment active task count when new task is assigned
-    INSERT INTO TechnicianWorkload (technicianId, currentActiveTasks, maxConcurrentTasks, lastAssignedDate, lastUpdated)
-    VALUES (NEW.technicianId, 1, 5, NOW(), NOW())
-    ON DUPLICATE KEY UPDATE 
-        currentActiveTasks = currentActiveTasks + 1,
-        lastAssignedDate = NOW(),
-        lastUpdated = NOW();
-END//
+--    INSERT INTO TechnicianWorkload (technicianId, currentActiveTasks, maxConcurrentTasks, lastAssignedDate, lastUpdated)
+--    VALUES (NEW.technicianId, 1, 5, NOW(), NOW())
+--    ON DUPLICATE KEY UPDATE 
+--        currentActiveTasks = currentActiveTasks + 1,
+--        lastAssignedDate = NOW(),
+--        lastUpdated = NOW();
+-- END//
 
-CREATE TRIGGER trg_UpdateWorkloadOnTaskComplete
-AFTER UPDATE ON WorkTask
-FOR EACH ROW
-BEGIN
+-- CREATE TRIGGER trg_UpdateWorkloadOnTaskComplete
+-- AFTER UPDATE ON WorkTask
+-- FOR EACH ROW
+-- BEGIN
     -- Decrement active task count and increment completed count when task is completed
-    IF NEW.status = 'Completed' AND OLD.status != 'Completed' THEN
-        UPDATE TechnicianWorkload
-        SET currentActiveTasks = GREATEST(0, currentActiveTasks - 1),
-            totalCompletedTasks = totalCompletedTasks + 1,
-            lastUpdated = NOW()
-        WHERE technicianId = NEW.technicianId;
-    END IF;
-END//
+--    IF NEW.status = 'Completed' AND OLD.status != 'Completed' THEN
+--        UPDATE TechnicianWorkload
+--        SET currentActiveTasks = GREATEST(0, currentActiveTasks - 1),
+--            totalCompletedTasks = totalCompletedTasks + 1,
+--            lastUpdated = NOW()
+--        WHERE technicianId = NEW.technicianId;
+--    END IF;
+-- END//
 
-DELIMITER ;
+-- DELIMITER ;
 
 -- ====================================================================
 -- 13. STORED PROCEDURES FOR TECHNICAL MANAGER OPERATIONS
@@ -940,13 +940,13 @@ WHERE table_schema = DATABASE()
 );
 
 -- Check triggers were created
-SELECT 'Triggers Created' AS Check_Type,
-       COUNT(*) AS Count_Result
-FROM information_schema.triggers
-WHERE trigger_schema = DATABASE()
-  AND trigger_name IN (
-    'trg_UpdateWorkloadOnTaskAssign', 'trg_UpdateWorkloadOnTaskComplete'
-);
+-- SELECT 'Triggers Created' AS Check_Type,
+--       COUNT(*) AS Count_Result
+-- FROM information_schema.triggers
+-- WHERE trigger_schema = DATABASE()
+--  AND trigger_name IN (
+--    'trg_UpdateWorkloadOnTaskAssign', 'trg_UpdateWorkloadOnTaskComplete'
+-- );
 
 -- Check stored procedures were created
 SELECT 'Procedures Created' AS Check_Type,
@@ -1225,24 +1225,24 @@ INSERT IGNORE INTO Contract (contractId, customerId, contractDate, contractType,
 -- Contract Equipment Relationships
 INSERT IGNORE INTO ContractEquipment (contractEquipmentId, contractId, equipmentId, startDate, endDate, quantity, price) VALUES 
 -- Contract 1 - Customer 4 (Lê Văn Khách)
-(1, 1, 1, '2024-01-01', '2024-12-31', 1, 5000000),
-(2, 1, 2, '2024-02-01', '2024-12-31', 1, 6000000),
+(1, 1, 1, '2024-01-01', '2025-12-31', 1, 5000000),
+(2, 1, 2, '2024-02-01', '2025-12-31', 1, 6000000),
 
 -- Contract 2 - Customer 5 (Phạm Thị Lan)
-(3, 2, 5, '2024-02-01', '2025-02-01', 1, 8000000),
-(4, 2, 6, '2024-02-10', '2025-02-10', 1, 12000000),
+(3, 2, 5, '2024-02-01', '2026-02-01', 1, 8000000),
+(4, 2, 6, '2024-02-10', '2026-02-10', 1, 12000000),
 
 -- Contract 3 - Customer 6 (Hoàng Văn Minh)
-(5, 3, 7, '2024-02-15', '2025-02-15', 1, 15000000),
-(6, 3, 8, '2024-02-20', '2025-02-20', 1, 10000000),
+(5, 3, 7, '2024-02-15', '2026-02-15', 1, 15000000),
+(6, 3, 8, '2024-02-20', '2026-02-20', 1, 10000000),
 
 -- Contract 4 - Customer 7 (Vũ Thị Hoa)
-(7, 4, 9, '2024-03-01', '2025-03-01', 1, 25000000),
-(8, 4, 10, '2024-03-20', '2025-03-20', 1, 30000000),
+(7, 4, 9, '2024-03-01', '2026-03-01', 1, 25000000),
+(8, 4, 10, '2024-03-20', '2026-03-20', 1, 30000000),
 
 -- Contract 5 - Customer 4 (Lê Văn Khách) - Extended
-(9, 5, 3, '2024-03-10', '2025-03-10', 1, 5500000),
-(10, 5, 4, '2024-03-10', '2025-03-10', 1, 6500000);
+(9, 5, 3, '2024-03-10', '2025-12-12', 1, 5500000),
+(10, 5, 4, '2024-03-10', '2025-12-12', 1, 6500000);
 
 -- ====================================================================
 -- 4. SERVICE REQUESTS FOR TESTING APPROVAL WORKFLOW
@@ -1423,7 +1423,7 @@ INSERT IGNORE INTO Contract (contractId, customerId, contractDate, contractType,
 (8, 7, '2024-04-01', 'Bảo trì',    'Active',    'Bảo trì HVAC trung tâm - Vũ Thị Hoa'),
 (9, 4, '2024-04-05', 'Bảo hành',   'Active',    'Bảo hành máy lạnh gia đình - Lê Văn Khách'),
 (10, 5,'2024-04-10', 'Bảo trì',    'Active',    'Bảo trì mở rộng cho hệ thống điện'),
-(11, 6,'2024-04-15', 'Bảo trì',    'Completed', 'Hoàn tất bảo trì quý I'),
+(11, 6,'2024-04-15', 'Bảo trì',    'Active', 'Hoàn tất bảo trì quý I'),
 (12, 7,'2024-04-20', 'Bảo hành',   'Active',    'Bảo hành thiết bị HVAC công nghiệp'),
 (13, 4,'2024-05-01', 'Bảo trì',    'Active',    'Bảo trì định kỳ nửa năm'),
 (14, 5,'2024-05-15', 'Bảo trì',    'Active',    'Bảo trì bổ sung phòng làm việc'),
@@ -1431,22 +1431,22 @@ INSERT IGNORE INTO Contract (contractId, customerId, contractDate, contractType,
 
 -- ContractEquipment for contracts 6..15 (equipment 1..10 exist)
 INSERT IGNORE INTO ContractEquipment (contractEquipmentId, contractId, equipmentId, startDate, endDate, quantity, price) VALUES 
-(11, 6,  5, '2024-03-20', '2025-03-20', 1, 8000000),
-(12, 6,  6, '2024-03-20', '2025-03-20', 1, 12000000),
-(13, 7,  8, '2024-03-25', '2025-03-25', 1, 9500000),
-(14, 7,  7, '2024-03-25', '2025-03-25', 1, 7500000),
-(15, 8,  9, '2024-04-01', '2025-04-01', 1, 26000000),
-(16, 8, 10, '2024-04-01', '2025-04-01', 1, 30000000),
-(17, 9,  1, '2024-04-05', '2025-04-05', 1, 5200000),
-(18, 9,  2, '2024-04-05', '2025-04-05', 1, 6100000),
-(19,10,  7, '2024-04-10', '2025-04-10', 1, 15500000),
-(20,10,  3, '2024-04-10', '2025-04-10', 1, 7000000),
-(21,11,  2, '2024-04-15', '2025-04-15', 1, 6000000),
-(22,11,  5, '2024-04-15', '2025-04-15', 1, 8200000),
-(23,12,  9, '2024-04-20', '2025-04-20', 1, 25000000),
-(24,13,  4, '2024-05-01', '2025-05-01', 1, 6600000),
-(25,14,  3, '2024-05-15', '2025-05-15', 1, 5600000),
-(26,15,  7, '2024-06-01', '2025-06-01', 1, 15000000);
+(11, 6,  5, '2024-03-20', '2026-03-20', 1, 8000000),
+(12, 6,  6, '2024-03-20', '2026-03-20', 1, 12000000),
+(13, 7,  8, '2024-03-25', '2026-03-25', 1, 9500000),
+(14, 7,  7, '2024-03-25', '2026-03-25', 1, 7500000),
+(15, 8,  9, '2024-04-01', '2026-04-01', 1, 26000000),
+(16, 8, 10, '2024-04-01', '2026-04-01', 1, 30000000),
+(17, 9,  1, '2024-04-05', '2026-04-05', 1, 5200000),
+(18, 9,  2, '2024-04-05', '2026-04-05', 1, 6100000),
+(19,10,  7, '2024-04-10', '2026-04-10', 1, 15500000),
+(20,10,  3, '2024-04-10', '2026-04-10', 1, 7000000),
+(21,11,  2, '2024-04-15', '2026-04-15', 1, 6000000),
+(22,11,  5, '2024-04-15', '2026-04-15', 1, 8200000),
+(23,12,  9, '2024-04-20', '2026-04-20', 1, 25000000),
+(24,13,  4, '2024-05-01', '2026-05-01', 1, 6600000),
+(25,14,  3, '2024-05-15', '2026-05-15', 1, 5600000),
+(26,15,  7, '2024-06-01', '2026-06-01', 1, 15000000);
 
 -- ====================================================================
 -- ADDITIONAL SEED: REPAIR REPORTS (12 more, IDs 9301..9312)
@@ -2143,3 +2143,321 @@ WHERE taskId IN (207,208,209,210)
   AND status = 'Assigned';
 
 COMMIT;
+
+
+DELIMITER //
+
+CREATE TRIGGER trg_UpdateWorkloadOnTaskAssign
+AFTER INSERT ON WorkTask
+FOR EACH ROW
+BEGIN
+    DECLARE workload_points INT DEFAULT 1;
+    DECLARE task_priority VARCHAR(20);
+    
+    -- Lấy priority từ WorkAssignment (nếu có)
+    SELECT wa.priority INTO task_priority
+    FROM WorkAssignment wa
+    WHERE wa.taskId = NEW.taskId
+    LIMIT 1;
+    
+    -- Tính workload points dựa trên priority
+    IF task_priority = 'Urgent' THEN
+        SET workload_points = 3;
+    ELSEIF task_priority = 'High' THEN
+        SET workload_points = 2;
+    ELSE
+        SET workload_points = 1;  -- Normal, Low
+    END IF;
+    
+    -- Cập nhật workload
+    INSERT INTO TechnicianWorkload (technicianId, currentActiveTasks, maxConcurrentTasks, lastAssignedDate, lastUpdated)
+    VALUES (NEW.technicianId, workload_points, 5, NOW(), NOW())
+    ON DUPLICATE KEY UPDATE 
+        currentActiveTasks = currentActiveTasks + workload_points,
+        lastAssignedDate = NOW(),
+        lastUpdated = NOW();
+END//
+
+-- ✅ Tạo lại trigger GIẢM workload theo priority
+CREATE TRIGGER trg_UpdateWorkloadOnTaskComplete
+AFTER UPDATE ON WorkTask
+FOR EACH ROW
+BEGIN
+    DECLARE workload_points INT DEFAULT 1;
+    DECLARE task_priority VARCHAR(20);
+    
+    -- Chỉ chạy khi status chuyển sang Completed
+    IF NEW.status = 'Completed' AND OLD.status != 'Completed' THEN
+        
+        -- Lấy priority từ WorkAssignment (nếu có)
+        SELECT wa.priority INTO task_priority
+        FROM WorkAssignment wa
+        WHERE wa.taskId = NEW.taskId
+        LIMIT 1;
+        
+        -- Tính workload points dựa trên priority
+        IF task_priority = 'Urgent' THEN
+            SET workload_points = 3;
+        ELSEIF task_priority = 'High' THEN
+            SET workload_points = 2;
+        ELSE
+            SET workload_points = 1;  -- Normal, Low
+        END IF;
+        
+        -- Giảm workload và tăng completed count
+        UPDATE TechnicianWorkload
+        SET currentActiveTasks = GREATEST(0, currentActiveTasks - workload_points),
+            totalCompletedTasks = totalCompletedTasks + 1,
+            lastUpdated = NOW()
+        WHERE technicianId = NEW.technicianId;
+        
+    END IF;
+END//
+
+DELIMITER ;
+
+-- Đồng bộ status của bảng maintenanceschedule với bảng work task
+DELIMITER //
+
+CREATE TRIGGER trg_UpdateScheduleStatusOnTaskComplete
+AFTER UPDATE ON WorkTask
+FOR EACH ROW
+BEGIN
+    -- Khi WorkTask completed, update MaintenanceSchedule tương ứng
+    IF NEW.status = 'Completed' AND OLD.status != 'Completed' AND NEW.scheduleId IS NOT NULL THEN
+        UPDATE MaintenanceSchedule
+        SET status = 'Completed'
+        WHERE scheduleId = NEW.scheduleId;
+    END IF;
+    
+    -- Khi WorkTask in progress, update MaintenanceSchedule
+    IF NEW.status = 'In Progress' AND OLD.status != 'In Progress' AND NEW.scheduleId IS NOT NULL THEN
+        UPDATE MaintenanceSchedule
+        SET status = 'In Progress'
+        WHERE scheduleId = NEW.scheduleId;
+    END IF;
+END//
+
+DELIMITER ;
+
+START TRANSACTION;
+
+CREATE TABLE IF NOT EXISTS ContractEquipment_backup AS 
+SELECT * FROM ContractEquipment 
+WHERE contractId IN (1, 5, 9, 13) AND equipmentId IN (1,2,3,4);
+
+CREATE TABLE IF NOT EXISTS Equipment_backup AS 
+SELECT * FROM Equipment WHERE equipmentId IN (1,2,3,4);
+
+
+
+
+-- Xóa equipment 1 trong contract 9 (giữ lại contract 1)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 1 AND contractId = 9;
+
+-- Xóa equipment 2 trong contract 9 (giữ lại contract 1)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 2 AND contractId = 9;
+
+-- Xóa equipment 4 trong contract 13 (giữ lại contract 5)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 4 AND contractId = 13;
+
+--- Xoa trung lap customer2
+SET SQL_SAFE_UPDATES = 0;
+
+START TRANSACTION;
+
+-- Backup dữ liệu trước khi xóa cho Customer2
+CREATE TABLE IF NOT EXISTS ContractEquipment_customer2_backup AS 
+SELECT * FROM ContractEquipment 
+WHERE contractId IN (2, 6, 10, 14) AND equipmentId IN (3, 5, 6);
+
+CREATE TABLE IF NOT EXISTS Equipment_customer2_backup AS 
+SELECT * FROM Equipment WHERE equipmentId IN (3, 5, 6);
+
+-- CUSTOMER 2 (Phạm Thị Lan - customerId = 5)
+-- Xóa equipment 3 trong contract 14 (giữ lại contract 10)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 3 AND contractId = 14;
+
+-- Xóa equipment 5 trong contract 6 (giữ lại contract 2)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 5 AND contractId = 6;
+
+-- Xóa equipment 6 trong contract 6 (giữ lại contract 2)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 6 AND contractId = 6;
+
+-- Kiểm tra lại kết quả sau khi xóa
+SELECT 
+    c.customerId,
+    a.fullName as customerName,
+    e.equipmentId,
+    e.serialNumber,
+    e.model,
+    c.contractId,
+    COUNT(*) OVER (PARTITION BY c.customerId, e.serialNumber) as duplicate_count
+FROM Equipment e
+JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId
+JOIN Contract c ON ce.contractId = c.contractId
+JOIN Account a ON c.customerId = a.accountId
+WHERE c.customerId = 5
+ORDER BY e.serialNumber, e.equipmentId;
+
+-- Nếu kết quả OK, commit
+COMMIT;
+-- Nếu có vấn đề: ROLLBACK;
+
+SET SQL_SAFE_UPDATES = 1;
+
+---- 
+
+
+--- xoa trung lap customer3 
+
+
+SET SQL_SAFE_UPDATES = 0;
+
+START TRANSACTION;
+
+-- Backup dữ liệu trước khi xóa cho Customer3
+CREATE TABLE IF NOT EXISTS ContractEquipment_customer3_backup AS 
+SELECT * FROM ContractEquipment 
+WHERE contractId IN (3, 7, 11, 15) AND equipmentId IN (2, 5, 7, 8);
+
+CREATE TABLE IF NOT EXISTS Equipment_customer3_backup AS 
+SELECT * FROM Equipment WHERE equipmentId IN (2, 5, 7, 8);
+
+-- CUSTOMER 3 (Hoàng Văn Minh - customerId = 6)
+-- Xóa equipment 7 trong contract 7 (giữ lại contract 3)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 7 AND contractId = 7;
+
+-- Xóa equipment 7 trong contract 15 (giữ lại contract 3)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 7 AND contractId = 15;
+
+-- Xóa equipment 8 trong contract 7 (giữ lại contract 3)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 8 AND contractId = 7;
+
+-- Kiểm tra lại kết quả sau khi xóa
+SELECT 
+    c.customerId,
+    a.fullName as customerName,
+    e.equipmentId,
+    e.serialNumber,
+    e.model,
+    c.contractId,
+    COUNT(*) OVER (PARTITION BY c.customerId, e.serialNumber) as duplicate_count
+FROM Equipment e
+JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId
+JOIN Contract c ON ce.contractId = c.contractId
+JOIN Account a ON c.customerId = a.accountId
+WHERE c.customerId = 6
+ORDER BY e.serialNumber, e.equipmentId;
+
+-- Nếu kết quả OK, commit
+COMMIT;
+-- Nếu có vấn đề: ROLLBACK;
+
+SET SQL_SAFE_UPDATES = 1;
+
+--- Xoa trung lap customer4
+
+
+SET SQL_SAFE_UPDATES = 0;
+
+START TRANSACTION;
+
+-- Backup dữ liệu trước khi xóa cho Customer4
+CREATE TABLE IF NOT EXISTS ContractEquipment_customer4_backup AS 
+SELECT * FROM ContractEquipment 
+WHERE contractId IN (4, 8, 12) AND equipmentId IN (9, 10);
+
+CREATE TABLE IF NOT EXISTS Equipment_customer4_backup AS 
+SELECT * FROM Equipment WHERE equipmentId IN (9, 10);
+
+-- CUSTOMER 4 (Vũ Thị Hoa - customerId = 7)
+-- Xóa equipment 9 trong contract 8 (giữ lại contract 4)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 9 AND contractId = 8;
+
+-- Xóa equipment 9 trong contract 12 (giữ lại contract 4)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 9 AND contractId = 12;
+
+-- Xóa equipment 10 trong contract 8 (giữ lại contract 4)
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 10 AND contractId = 8;
+
+-- Kiểm tra lại kết quả sau khi xóa
+SELECT 
+    c.customerId,
+    a.fullName as customerName,
+    e.equipmentId,
+    e.serialNumber,
+    e.model,
+    c.contractId,
+    COUNT(*) OVER (PARTITION BY c.customerId, e.serialNumber) as duplicate_count
+FROM Equipment e
+JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId
+JOIN Contract c ON ce.contractId = c.contractId
+JOIN Account a ON c.customerId = a.accountId
+WHERE c.customerId = 7
+ORDER BY e.serialNumber, e.equipmentId;
+
+-- Nếu kết quả OK, commit
+COMMIT;
+-- Nếu có vấn đề: ROLLBACK;
+
+SET SQL_SAFE_UPDATES = 1;
+
+-- 
+
+-- Bật event scheduler nếu chưa bật
+SET GLOBAL event_scheduler = ON;
+
+DELIMITER $$
+
+CREATE EVENT update_contract_status_daily
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+    -- Cập nhật "Completed" nếu tất cả thiết bị trong hợp đồng đã hết hạn
+    UPDATE Contract c
+    SET c.status = 'Completed'
+    WHERE c.status = 'Active'
+      AND NOT EXISTS (
+          SELECT 1
+          FROM ContractEquipment ce
+          WHERE ce.contractId = c.contractId
+            AND (ce.endDate IS NULL OR ce.endDate >= CURDATE())
+      );
+
+    -- (Tùy chọn) Cập nhật "Cancelled" hoặc "Expired" nếu có quy tắc riêng
+    -- Ví dụ: nếu hợp đồng đã hết hạn hơn 30 ngày
+     UPDATE Contract c
+     SET c.status = 'Cancelled'
+     WHERE c.status = 'Completed'
+	 AND EXISTS (
+          SELECT 1
+          FROM ContractEquipment ce
+          WHERE ce.contractId = c.contractId
+           AND ce.endDate < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+      );
+END $$
+
+DELIMITER ;
+
+SET SQL_SAFE_UPDATES = 0;
+
+DELETE c
+FROM Contract c
+LEFT JOIN ContractEquipment ce ON c.contractId = ce.contractId
+WHERE ce.contractId IS NULL;
+
+SET SQL_SAFE_UPDATES = 1;

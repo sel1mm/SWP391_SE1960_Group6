@@ -9,7 +9,6 @@
 <%@page import="model.WorkAssignment"%>
 
 <%
-    // Check if user is logged in and is a Technical Manager
     Account loggedInAccount = (Account) session.getAttribute("session_login");
     String userRole = (String) session.getAttribute("session_role");
     
@@ -34,21 +33,20 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
        /* SIDEBAR STYLES */
-            .sidebar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 100vh;
-                width: 260px;
-                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-                padding: 0;
-                transition: all 0.3s ease;
-                z-index: 1000;
-                box-shadow: 4px 0 10px rgba(0,0,0,0.1);
-                display: flex;
-                flex-direction: column;
-            }
-
+       .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: #000000;
+            padding: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
         
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8);
@@ -119,7 +117,20 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.1);
             border-bottom: 3px solid rgba(255,255,255,0.2);
         }
+        
+        .btn-success {
+            transition: all 0.3s ease;
+        }
 
+        .btn-success:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        .border-3 {
+            border-width: 3px !important;
+        }
+        
         .table th::after {
             content: '';
             position: absolute;
@@ -191,7 +202,6 @@
             100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
         }
 
-        /* Priority indicators */
         .priority-indicator {
             display: inline-block;
             width: 8px;
@@ -258,6 +268,52 @@
             color: white;
             border-radius: 15px 15px 0 0;
         }
+
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            margin: 0 5px;
+            padding: 8px 12px;
+            border: 1px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .filter-section select {
+            flex: 1;
+            max-width: 200px;
+        }
     </style>
 </head>
 <body>
@@ -265,7 +321,6 @@
     <nav class="sidebar">
         <div class="p-4">
             <h4 style="color: white;"><i class="fas fa-tools me-2"></i>Technical Manager</h4>
-
             <hr class="text-white">
         </div>
         <ul class="nav flex-column">
@@ -352,7 +407,8 @@
                                         <select class="form-select" id="taskId" name="taskId" required>
                                             <option value="">Chọn yêu cầu dịch vụ...</option>
                                             <c:forEach var="request" items="${pendingRequests}">
-                                                <option value="${request.requestId}">
+                                                <option value="${request.requestId}" 
+                                                        ${preSelectedRequestId != null && preSelectedRequestId == request.requestId.toString() ? 'selected' : ''}>
                                                     #${request.requestId} - ${request.requestType} (${request.priorityLevel})
                                                 </option>
                                             </c:forEach>
@@ -385,10 +441,10 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="priority" class="form-label">Độ Ưu Tiên</label>
                                         <select class="form-select" id="priority" name="priority" required>
-                                            <option value="Low">Thấp</option>
-                                            <option value="Normal" selected>Trung Bình</option>
-                                            <option value="High">Cao</option>
-                                            <option value="Urgent">Khẩn Cấp</option>
+                                           
+                                            <option value="Normal" ${preSelectedPriority == 'Normal' || preSelectedPriority == null ? 'selected' : ''}>Trung Bình (1 point)</option>
+                                            <option value="High" ${preSelectedPriority == 'High' ? 'selected' : ''}>Cao (2 points)</option>
+                                            <option value="Urgent" ${preSelectedPriority == 'Urgent' ? 'selected' : ''}>Khẩn Cấp (3 points)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -417,34 +473,49 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Tình Trạng Kỹ Thuật Viên</h5>
-                            
                         </div>
                         <div class="card-body">
-                            <c:forEach var="technician" items="${availableTechnicians}">
-                                <div class="mb-3 p-3 border rounded">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <strong>KTV #${technician.technicianId}</strong>
-                                        <span class="badge <c:choose>
-                                            <c:when test='${technician.availableCapacity > 2}'>bg-success</c:when>
-                                            <c:when test='${technician.availableCapacity > 0}'>bg-warning</c:when>
-                                            <c:otherwise>bg-danger</c:otherwise>
-                                        </c:choose>">
-                                            <c:out value='${technician.availableCapacity}' escapeXml='true'/>/<c:out value='${technician.maxConcurrentTasks}' escapeXml='true'/>
-                                        </span>
-                                    </div>
-                                    <div class="workload-indicator mb-2">
-                                        <div class="workload-bar <c:choose>
-                                            <c:when test='${technician.currentActiveTasks <= 2}'>workload-low</c:when>
-                                            <c:when test='${technician.currentActiveTasks <= 4}'>workload-medium</c:when>
-                                            <c:otherwise>workload-high</c:otherwise>
-                                        </c:choose>"
-                                             style="width: <c:out value='${(technician.currentActiveTasks * 100) / technician.maxConcurrentTasks}' escapeXml='true'/>%"></div>
-                                    </div>
-                                    <small class="text-muted">
-                                        Thời gian hoàn thành TB: ${technician.averageCompletionTime}h
-                                    </small>
-                                </div>
-                            </c:forEach>
+                           <c:forEach var="technician" items="${availableTechnicians}">
+    <%-- ✅ ĐÚNG: maxConcurrentTasks = 5, không nhân 3 nữa --%>
+    <c:set var="maxPoints" value="${technician.maxConcurrentTasks}" />
+    <c:set var="currentPoints" value="${technician.currentActiveTasks}" />
+    <c:set var="availablePoints" value="${maxPoints - currentPoints}" />
+    <c:set var="usagePercent" value="${(currentPoints * 100) / maxPoints}" />
+    
+    <div class="mb-3 p-3 border rounded">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>KTV #${technician.technicianId}</strong>
+            <span class="badge <c:choose>
+                <c:when test='${availablePoints >= 3}'>bg-success</c:when>
+                <c:when test='${availablePoints >= 1}'>bg-warning text-dark</c:when>
+                <c:otherwise>bg-danger</c:otherwise>
+            </c:choose>">
+                ${currentPoints}/${maxPoints} points
+            </span>
+        </div>
+        <div class="workload-indicator mb-2">
+            <div class="workload-bar <c:choose>
+                <c:when test='${usagePercent <= 50}'>workload-low</c:when>
+                <c:when test='${usagePercent <= 80}'>workload-medium</c:when>
+                <c:otherwise>workload-high</c:otherwise>
+            </c:choose>"
+                 style="width: ${usagePercent}%"></div>
+        </div>
+        <small class="text-muted">
+            <c:choose>
+                <c:when test="${availablePoints >= 3}">
+                    <span class="text-success">✓ Sẵn sàng nhận việc</span>
+                </c:when>
+                <c:when test="${availablePoints >= 1}">
+                    <span class="text-warning">⚠ Gần đầy</span>
+                </c:when>
+                <c:otherwise>
+                    <span class="text-danger">✗ Quá tải</span>
+                </c:otherwise>
+            </c:choose>
+        </small>
+    </div>
+</c:forEach>
                         </div>
                     </div>
                 </div>
@@ -456,11 +527,24 @@
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="fas fa-history me-2"></i>Lịch Sử Phân Công</h5>
-                            <button class="btn btn-outline-light btn-sm" onclick="refreshAssignmentHistory()">
-                                <i class="fas fa-sync-alt me-2"></i>Làm Mới
-                            </button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-light btn-sm" onclick="refreshAssignmentHistory()">
+                                    <i class="fas fa-sync-alt me-2"></i>Làm Mới
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body">
+                            <!-- Filter Section -->
+                            <div class="filter-section">
+                                <label>Lọc theo trạng thái:</label>
+                                <select id="statusFilter" class="form-select">
+                                    <option value="">Tất cả</option>
+                                    <option value="Assigned">Đã Phân Công</option>
+                                    <option value="In Progress">Đang Thực Hiện</option>
+                                    <option value="Completed">Đã Hoàn Thành</option>
+                                </select>
+                            </div>
+
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead class="table-light">
@@ -476,45 +560,14 @@
                                         </tr>
                                     </thead>
                                     <tbody id="assignmentHistoryTable">
-                                        <c:forEach var="assignment" items="${assignmentHistory}">
-                                            <tr>
-                                                <td>#${assignment.assignmentId}</td>
-                                                <td>#${assignment.taskId}</td>
-                                                <td>KTV #${assignment.assignedTo}</td>
-                                                <td>${assignment.assignmentDate}</td>
-                                                <td>${assignment.estimatedDuration}h</td>
-                                                <td>
-                                                    <span class="badge <c:choose>
-                                                        <c:when test='${assignment.priorityLevel == "Urgent"}'>bg-danger</c:when>
-                                                        <c:when test='${assignment.priorityLevel == "High"}'>bg-warning</c:when>
-                                                        <c:when test='${assignment.priorityLevel == "Normal"}'>bg-info</c:when>
-                                                        <c:otherwise>bg-secondary</c:otherwise>
-                                                    </c:choose>">
-                                                        <c:out value='${assignment.priorityLevel}' escapeXml='true'/>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge <c:choose>
-                                                        <c:when test='${assignment.acceptedByTechnician}'>bg-success</c:when>
-                                                        <c:otherwise>bg-warning</c:otherwise>
-                                                    </c:choose>">
-                                                        <c:choose>
-                                                            <c:when test='${assignment.acceptedByTechnician}'>Đã Chấp Nhận</c:when>
-                                                            <c:otherwise>Chờ Xác Nhận</c:otherwise>
-                                                        </c:choose>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-danger delete-assignment-btn" 
-                                                            data-assignment-id="<c:out value='${assignment.assignmentId}' escapeXml='true'/>"
-                                                            <c:if test='${assignment.acceptedByTechnician}'>Huỷ</c:if>>
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
+                                        <!-- Dynamic content will be loaded here -->
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="pagination" id="paginationControls">
+                                <!-- Pagination buttons will be generated here -->
                             </div>
                         </div>
                     </div>
@@ -523,10 +576,13 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Form validation
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let allAssignments = [];
+        let filteredAssignments = [];
+
         document.getElementById('assignWorkForm').addEventListener('submit', function(e) {
             const technicianSelect = document.getElementById('technicianId');
             const selectedOption = technicianSelect.options[technicianSelect.selectedIndex];
@@ -538,129 +594,312 @@
             }
         });
 
-function getStatusClass(status) {
-    switch(status) {
-        case 'Completed': return 'bg-success';
-        case 'Assigned': return 'bg-info';
-        default: return 'bg-warning'; // Chờ Xác Nhận hoặc In Progress
-    }
-}
+        function getStatusClass(status) {
+            switch(status) {
+                case 'Completed': return 'bg-success';
+                case 'Assigned': return 'bg-info';
+                case 'In Progress': return 'bg-warning text-dark';
+                default: return 'bg-secondary';
+            }
+        }
 
+        function getStatusText(status) {
+            switch(status) {
+                case 'Completed': return 'Đã Hoàn Thành';
+                case 'Assigned': return 'Đã Phân Công';
+                case 'In Progress': return 'Đang Thực Hiện';
+                default: return status;
+            }
+        }
 
-        // Refresh assignment history
         function refreshAssignmentHistory() {
             fetch('assignWork?action=getAssignmentHistory')
                 .then(response => response.json())
                 .then(data => {
-                    const tbody = document.getElementById('assignmentHistoryTable');
-                    tbody.innerHTML = '';
-                    
-                    data.forEach(assignment => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = 
-                            '<td>#' + assignment.assignmentId + '</td>' +
-                            '<td>#' + assignment.taskId + '</td>' +
-                            '<td>KTV #' + assignment.assignedTo + '</td>' +
-                            '<td>' + assignment.assignmentDate + '</td>' +
-                            '<td>' +  parseFloat(assignment.estimatedDuration).toFixed(2) + 'h</td>' +
-                            '<td>' +
-                                '<span class="badge ' + getPriorityClass(assignment.priority) + '">' +
-                                assignment.priority +
-                            '</span>' +
-                            '</td>' +
-                            '<td>' +
-  '<span class="badge ' + getStatusClass(assignment.status) + '">' +
-      (assignment.status === 'Completed' ? 'Đã Hoàn Thành' :
-       assignment.status === 'Assigned' ? 'Đang Thực Hiện' :
-       'Chờ Xác Nhận') +
-  '</span>' +
-'</td>'
- +
-                            '<td>' +
-                                '<button class="btn btn-sm btn-outline-danger delete-assignment-btn" ' +
-                                        'data-assignment-id="' + assignment.assignmentId + '"' +
-                                        (assignment.accepted ? ' disabled' : '') + '>' +
-                                    '<i class="fas fa-trash"></i>' +
-                                '</button>' +
-                            '</td>';
-                        tbody.appendChild(row);
-                    });
+                    allAssignments = data;
+                    applyFilter();
                 })
                 .catch(error => {
                     console.error('Error refreshing assignment history:', error);
                 });
         }
 
-        // Delete assignment
-        function deleteAssignment(assignmentId) {
-            if (confirm('Bạn có chắc chắn muốn xóa phân công này?')) {
-                fetch('assignWork', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'action=deleteAssignment&assignmentId=' + assignmentId
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        refreshAssignmentHistory();
-                        showToast('Xóa phân công thành công!', 'success');
-                        location.reload(); 
-                    } else {
-                        showToast('Lỗi khi xóa phân công: ' + (data.error || 'Unknown error'), 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting assignment:', error);
-                    showToast('Lỗi khi xóa phân công!', 'error');
-                });
+        function applyFilter() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            if (statusFilter === '') {
+                filteredAssignments = allAssignments;
+            } else {
+                filteredAssignments = allAssignments.filter(a => a.status === statusFilter);
             }
+            
+            currentPage = 1;
+            renderTable();
+            renderPagination();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('assignmentHistoryTable');
+            tbody.innerHTML = '';
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageAssignments = filteredAssignments.slice(startIndex, endIndex);
+            
+            pageAssignments.forEach(assignment => {
+                const row = document.createElement('tr');
+                row.innerHTML = 
+                    '<td>#' + assignment.assignmentId + '</td>' +
+                    '<td>#' + assignment.taskId + '</td>' +
+                    '<td>KTV #' + assignment.assignedTo + '</td>' +
+                    '<td>' + assignment.assignmentDate + '</td>' +
+                    '<td>' + parseFloat(assignment.estimatedDuration).toFixed(2) + 'h</td>' +
+                    '<td>' +
+                        '<span class="badge ' + getPriorityClass(assignment.priority) + '">' +
+                        assignment.priority +
+                        '</span>' +
+                    '</td>' +
+                    '<td>' +
+                        '<span class="badge ' + getStatusClass(assignment.status) + '">' +
+                        getStatusText(assignment.status) +
+                        '</span>' +
+                    '</td>' +
+                    '<td>' +
+                        '<button class="btn btn-sm btn-outline-danger delete-assignment-btn" ' +
+                                'data-assignment-id="' + assignment.assignmentId + '"' +
+                                (assignment.status === 'Completed' ? ' disabled' : '') + '>' +
+                            '<i class="fas fa-trash"></i>' +
+                        '</button>' +
+                    '</td>';
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);
+            const paginationControls = document.getElementById('paginationControls');
+            paginationControls.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+            
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '« Trước';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                    renderPagination();
+                }
+            };
+            paginationControls.appendChild(prevBtn);
+            
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                pageBtn.className = currentPage === i ? 'active' : '';
+                pageBtn.onclick = () => {
+                    currentPage = i;
+                    renderTable();
+                    renderPagination();
+                };
+                paginationControls.appendChild(pageBtn);
+            }
+            
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = 'Sau »';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable();
+                    renderPagination();
+                }
+            };
+            paginationControls.appendChild(nextBtn);
+        }
+
+       // Delete assignment
+
+        function deleteAssignment(assignmentId) {
+
+            if (confirm('Bạn có chắc chắn muốn xóa phân công này?')) {
+
+                fetch('assignWork', {
+
+                    method: 'POST',
+
+                    headers: {
+
+                        'Content-Type': 'application/x-www-form-urlencoded',
+
+                    },
+
+                    body: 'action=deleteAssignment&assignmentId=' + assignmentId
+
+                })
+
+                .then(response => response.json())
+
+                .then(data => {
+
+                    if (data.success) {
+
+                        refreshAssignmentHistory();
+
+                        showToast('Xóa phân công thành công!', 'success');
+
+                        location.reload(); 
+
+                    } else {
+
+                        showToast('Lỗi khi xóa phân công: ' + (data.error || 'Unknown error'), 'error');
+
+                    }
+
+                })
+
+                .catch(error => {
+
+                    console.error('Error deleting assignment:', error);
+
+                    showToast('Lỗi khi xóa phân công!', 'error');
+
+                });
+
+            }
+
         }
 
         // Event delegation for delete assignment buttons
+
         document.addEventListener('click', function(e) {
+
             if (e.target.closest('.delete-assignment-btn')) {
+
                 const button = e.target.closest('.delete-assignment-btn');
+
                 const assignmentId = button.getAttribute('data-assignment-id');
+
                 if (assignmentId) {
+
                     deleteAssignment(assignmentId);
+
                 }
+
             }
+
         });
 
         // Helper functions
+
         function getPriorityClass(priority) {
+
             switch(priority) {
+
                 case 'Urgent': return 'bg-danger';
+
                 case 'High': return 'bg-warning';
+
                 case 'Normal': return 'bg-info';
+
                 default: return 'bg-secondary';
+
             }
+
         }
 
         function showToast(message, type) {
+
             // Simple toast notification
+
             const toast = document.createElement('div');
+
             toast.className = 'alert alert-' + (type == 'success' ? 'success' : 'danger') + ' position-fixed';
+
             toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+
             toast.innerHTML = message +
+
                 '<button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>';
+
             document.body.appendChild(toast);
+
             
+
             setTimeout(() => {
+
                 if (toast.parentElement) {
+
                     toast.remove();
+
                 }
+
             }, 5000);
+
         }
 
         // Auto-refresh every 30 seconds
+
         setInterval(refreshAssignmentHistory, 30000);
+
         document.addEventListener('DOMContentLoaded', function() {
+
     refreshAssignmentHistory();
+
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    const taskSelect = document.getElementById('taskId');
+
+    const prioritySelect = document.getElementById('priority');
+
+    
+
+    // Check if fields were pre-filled
+
+    if (taskSelect.value && '${preSelectedRequestId}' !== '') {
+
+        // Add highlight animation
+
+        taskSelect.classList.add('border-success', 'border-3');
+
+        setTimeout(() => {
+
+            taskSelect.classList.remove('border-success', 'border-3');
+
+        }, 3000);
+
+        
+
+        // Show notification
+
+        showToast('Yêu cầu dịch vụ đã được chọn sẵn!', 'success');
+
+    }
+
+    
+
+    if (prioritySelect.value && '${preSelectedPriority}' !== '') {
+
+        prioritySelect.classList.add('border-success', 'border-3');
+
+        setTimeout(() => {
+
+            prioritySelect.classList.remove('border-success', 'border-3');
+
+        }, 3000);
+
+    }
+
 });
 
     </script>
+
 </body>
+
 </html>

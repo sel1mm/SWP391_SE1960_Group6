@@ -50,7 +50,7 @@
                 left: 0;
                 height: 100vh;
                 width: 260px;
-                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+                background: #000000;
                 padding: 0;
                 transition: all 0.3s ease;
                 z-index: 1000;
@@ -360,6 +360,103 @@
             font-size: 0.9rem;
             opacity: 0.9;
         }
+        /* Tab Styles */
+.nav-tabs {
+    border-bottom: 2px solid #e9ecef;
+}
+
+.nav-tabs .nav-link {
+    
+    color: #999999 !important; 
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 12px 20px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.nav-tabs .nav-link:hover {
+    border-bottom-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+    
+}
+
+.nav-tabs .nav-link.active {
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    border-bottom-color: #667eea;
+    font-weight: 600;
+}
+
+.nav-tabs .nav-link .badge {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    
+}
+/* Pagination Styles - Improved */
+.pagination {
+    margin: 0;
+    gap: 5px;
+}
+
+.pagination .page-item {
+    margin: 0 3px;
+}
+
+.pagination .page-link {
+    color: #495057;
+    background-color: #fff;
+    border: 2px solid #dee2e6;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s;
+    min-width: 45px;
+    text-align: center;
+}
+
+.pagination .page-link:hover {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.pagination .page-item.disabled .page-link {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.pagination .page-item.disabled .page-link:hover {
+    transform: none;
+    box-shadow: none;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+}
+
+/* Pagination info text */
+.pagination-info {
+    font-size: 0.95rem;
+    color: #495057;
+    font-weight: 500;
+}
+
+.pagination-info span {
+    font-weight: 700;
+    color: #667eea;
+}
     </style>
 </head>
 <body>
@@ -454,7 +551,7 @@
                 <div class="col-md-3">
                     <div class="stats-card">
                         <div class="stats-number">${overdueSchedules.size()}</div>
-                        <div class="stats-label">Quá Hạn</div>
+                        <div class="stats-label">Từ hôm nay trở xuống</div>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -585,108 +682,168 @@
                 </div>
             </div>
 
-            <!-- Schedule List -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Danh Sách Lịch Bảo Trì</h5>
-                            <div class="btn-group">
-                                <button class="btn btn-outline-light btn-sm" onclick="filterSchedules('all')">Tất Cả</button>
-                                <button class="btn btn-outline-light btn-sm" onclick="filterSchedules('upcoming')">Sắp Tới</button>
-                                <button class="btn btn-outline-light btn-sm" onclick="filterSchedules('overdue')">Quá Hạn</button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="scheduleTable">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Yêu Cầu</th>
-                                            <th>Thiết Bị</th>
-                                            <th>KTV</th>
-                                            <th>Ngày Bảo Trì</th>
-                                            <th>Loại</th>
-                                            <th>Độ Ưu Tiên</th>
-                                            <th>Trạng Thái</th>
-                                            <th>Hành Động</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach var="schedule" items="${allSchedules}">
-                                            <tr data-schedule-id="${schedule.scheduleId}">
-                                                <td>#${schedule.scheduleId}</td>
-                                                <td>
-                                                    <c:choose>
-                                                        <c:when test="${schedule.requestId != null}">
-                                                            #${schedule.requestId}
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="text-muted">N/A</span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </td>
-                                                <td>
-                                                    <c:choose>
-                                                        <c:when test="${schedule.equipmentId != null}">
-                                                            #${schedule.equipmentId}
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="text-muted">N/A</span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </td>
-                                                <td>KTV #${schedule.assignedTo}</td>
-                                                <td>${schedule.scheduledDate}</td>
-                                                <td>
-                                                    <span class="badge bg-info">${schedule.scheduleType}</span>
-                                                </td>
-                                                <td>
-                                                    <span class="priority-indicator priority-${schedule.priorityId == 1 ? 'low' : 
-                                                                                        schedule.priorityId == 2 ? 'medium' : 
-                                                                                        schedule.priorityId == 3 ? 'high' : 'critical'}"></span>
-                                                    ${schedule.priorityId == 1 ? 'Thấp' : 
-                                                      schedule.priorityId == 2 ? 'Trung Bình' : 
-                                                      schedule.priorityId == 3 ? 'Cao' : 'Khẩn Cấp'}
-                                                </td>
-                                                <td>
-                                                    <select class="form-select form-select-sm" 
-                                                            onchange="updateScheduleStatus(${schedule.scheduleId}, this.value)">
-                                                        <option value="Scheduled" ${schedule.status == 'Scheduled' ? 'selected' : ''}>Đã Lên Lịch</option>
-                                                        <option value="In Progress" ${schedule.status == 'In Progress' ? 'selected' : ''}>Đang Thực Hiện</option>
-                                                        <option value="Completed" ${schedule.status == 'Completed' ? 'selected' : ''}>Hoàn Thành</option>
-                                                        <option value="Cancelled" ${schedule.status == 'Cancelled' ? 'selected' : ''}>Hủy Bỏ</option>
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group btn-group-sm">
-                                                        <button class="btn btn-outline-primary schedule-action-btn" 
-                                                                data-action="edit"
-                                                                data-schedule-id="<c:out value='${schedule.scheduleId}' escapeXml='true'/>"
-                                                                title="Chỉnh sửa">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button class="btn btn-outline-danger schedule-action-btn" 
-                                                                data-action="delete"
-                                                                data-schedule-id="<c:out value='${schedule.scheduleId}' escapeXml='true'/>"
-                                                                title="Xóa"
-                                                                <c:if test='${schedule.status == "Completed" || schedule.status == "In Progress"}'>disabled</c:if>>
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+          <!-- Schedule List với Tabs và Pagination -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Danh Sách Lịch Bảo Trì</h5>
+            </div>
+            
+            <!-- Tabs Navigation -->
+            <div class="card-body pb-0">
+                <ul class="nav nav-tabs" id="scheduleStatusTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="all-tab" data-bs-toggle="tab" 
+                                data-filter="all" type="button" role="tab">
+                            <i class="fas fa-list me-1"></i>Tất Cả
+                            <span class="badge bg-primary ms-1">${allSchedules.size()}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="scheduled-tab" data-bs-toggle="tab" 
+                                data-filter="Scheduled" type="button" role="tab">
+                            <i class="fas fa-calendar-check me-1"></i>Đã Lên Lịch
+                            <span class="badge bg-info ms-1 scheduled-count">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="inprogress-tab" data-bs-toggle="tab" 
+                                data-filter="In Progress" type="button" role="tab">
+                            <i class="fas fa-spinner me-1"></i>Đang Thực Hiện
+                            <span class="badge bg-warning ms-1 inprogress-count">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="completed-tab" data-bs-toggle="tab" 
+                                data-filter="Completed" type="button" role="tab">
+                            <i class="fas fa-check-circle me-1"></i>Hoàn Thành
+                            <span class="badge bg-success ms-1 completed-count">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="overdue-tab" data-bs-toggle="tab" 
+                                data-filter="overdue" type="button" role="tab">
+                            <i class="fas fa-exclamation-triangle me-1"></i>Quá Hạn
+                            <span class="badge bg-danger ms-1 overdue-count">0</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="scheduleTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Yêu Cầu</th>
+                                <th>Thiết Bị</th>
+                                <th>KTV</th>
+                                <th>Ngày Bảo Trì</th>
+                                <th>Loại</th>
+                                <th>Độ Ưu Tiên</th>
+                                <th>Trạng Thái</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="schedule" items="${allSchedules}">
+                                <tr data-schedule-id="${schedule.scheduleId}"
+                                    data-status="${schedule.status}"
+                                    data-date="${schedule.scheduledDate}">
+                                    <td>#${schedule.scheduleId}</td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${schedule.requestId != null}">
+                                                #${schedule.requestId}
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="text-muted">N/A</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${schedule.equipmentId != null}">
+                                                #${schedule.equipmentId}
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="text-muted">N/A</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>KTV #${schedule.assignedTo}</td>
+                                    <td>${schedule.scheduledDate}</td>
+                                    <td>
+                                        <span class="badge bg-info">${schedule.scheduleType}</span>
+                                    </td>
+                                    <td>
+                                        <span class="priority-indicator priority-${schedule.priorityId == 1 ? 'low' : 
+                                                                            schedule.priorityId == 2 ? 'medium' : 
+                                                                            schedule.priorityId == 3 ? 'high' : 'critical'}"></span>
+                                        ${schedule.priorityId == 1 ? 'Thấp' : 
+                                          schedule.priorityId == 2 ? 'Trung Bình' : 
+                                          schedule.priorityId == 3 ? 'Cao' : 'Khẩn Cấp'}
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${schedule.status == 'Scheduled'}">
+                                                <span class="badge bg-primary">Đã Lên Lịch</span>
+                                            </c:when>
+                                            <c:when test="${schedule.status == 'In Progress'}">
+                                                <span class="badge bg-warning">Đang Thực Hiện</span>
+                                            </c:when>
+                                            <c:when test="${schedule.status == 'Completed'}">
+                                                <span class="badge bg-success">Hoàn Thành</span>
+                                            </c:when>
+                                            <c:when test="${schedule.status == 'Cancelled'}">
+                                                <span class="badge bg-secondary">Hủy Bỏ</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge bg-secondary">${schedule.status}</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary schedule-action-btn" 
+                                                    data-action="edit"
+                                                    data-schedule-id="<c:out value='${schedule.scheduleId}' escapeXml='true'/>"
+                                                    title="Chỉnh sửa">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger schedule-action-btn" 
+                                                    data-action="delete"
+                                                    data-schedule-id="<c:out value='${schedule.scheduleId}' escapeXml='true'/>"
+                                                    title="Xóa"
+                                                    <c:if test='${schedule.status == "Completed" || schedule.status == "In Progress"}'>disabled</c:if>>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+    <div class="pagination-info">
+        Hiển thị <span id="showingFrom">1</span> - <span id="showingTo">8</span> 
+        của <span id="totalRecords">0</span> bản ghi
+    </div>
+    <nav>
+        <ul class="pagination mb-0" id="pagination">
+                            <!-- Pagination buttons will be generated by JavaScript -->
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Edit Schedule Modal -->
     <div class="modal fade" id="editScheduleModal" tabindex="-1">
@@ -740,15 +897,12 @@
                             </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="editStatus" class="form-label">Trạng Thái</label>
-                            <select class="form-select" id="editStatus" name="status">
-                                <option value="Scheduled">Đã Lên Lịch</option>
-                                <option value="In Progress">Đang Thực Hiện</option>
-                                <option value="Completed">Hoàn Thành</option>
-                                <option value="Cancelled">Hủy Bỏ</option>
-                            </select>
-                        </div>
+                       <div class="mb-3">
+                        <label for="editStatusDisplay" class="form-label">Trạng Thái</label>
+                        <input type="text" class="form-control" id="editStatusDisplay" readonly 
+                               style="background-color: #e9ecef; cursor: not-allowed;">
+                        
+                    </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -781,241 +935,428 @@
     ]
     </script>
 
-    <!-- Scripts -->
+<!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <script>
-        let calendar;
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeCalendar();
-            setMinDateTime();
+let calendar;
+let currentFilter = 'all';
+let currentPage = 1;
+const itemsPerPage = 8;
+let filteredSchedules = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCalendar();
+    setMinDateTime();
+    initializeTabs();
+    initializeScheduleFilter();
+});
+
+function initializeCalendar() {
+    const scheduleDataElement = document.getElementById('scheduleData');
+    let scheduleEvents = [];
+    
+    try {
+        scheduleEvents = JSON.parse(scheduleDataElement.textContent);
+    } catch (e) {
+        console.error('Error parsing schedule data:', e);
+        scheduleEvents = [];
+    }
+    
+    const calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: scheduleEvents,
+        eventClick: function(info) {
+            editSchedule(info.event.extendedProps.scheduleId);
+        },
+        height: 'auto'
+    });
+    calendar.render();
+}
+
+function setMinDateTime() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    const minDateTime = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+    document.getElementById('scheduledDate').min = minDateTime;
+}
+
+function initializeTabs() {
+    const tabButtons = document.querySelectorAll('#scheduleStatusTabs button[data-filter]');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            currentFilter = filter;
+            currentPage = 1;
+            filterAndPaginateSchedules();
         });
+    });
+}
+
+function initializeScheduleFilter() {
+    updateTabCounts();
+    filterAndPaginateSchedules();
+}
+
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    dateStr = dateStr.trim();
+    
+    let date = null;
+    if (dateStr.includes(' ')) {
+        date = new Date(dateStr.replace(' ', 'T'));
+    } else if (dateStr.includes('T')) {
+        date = new Date(dateStr);
+    } else {
+        date = new Date(dateStr + 'T00:00:00');
+    }
+    
+    return isNaN(date.getTime()) ? null : date;
+}
+
+function updateTabCounts() {
+    const table = document.getElementById('scheduleTable');
+    const tbody = table.getElementsByTagName('tbody')[0];
+    if (!tbody) return;
+    
+    const rows = tbody.getElementsByTagName('tr');
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    let scheduledCount = 0;
+    let inprogressCount = 0;
+    let completedCount = 0;
+    let overdueCount = 0;
+    
+    for (let row of rows) {
+        const status = row.getAttribute('data-status');
+        const dateStr = row.getAttribute('data-date');
         
-        function initializeCalendar() {
-            // Parse schedule data from JSON data island
-            const scheduleDataElement = document.getElementById('scheduleData');
-            let scheduleEvents = [];
-            
-            try {
-                scheduleEvents = JSON.parse(scheduleDataElement.textContent);
-            } catch (e) {
-                console.error('Error parsing schedule data:', e);
-                scheduleEvents = [];
-            }
-            
-            const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                events: scheduleEvents,
-                eventClick: function(info) {
-                    editSchedule(info.event.extendedProps.scheduleId);
-                },
-                height: 'auto'
-            });
-            calendar.render();
+        if (!dateStr) continue;
+        
+        const scheduledDate = parseDate(dateStr);
+        if (!scheduledDate) continue;
+        
+        if (status === 'Scheduled') scheduledCount++;
+        else if (status === 'In Progress') inprogressCount++;
+        else if (status === 'Completed') completedCount++;
+        
+        if (scheduledDate < now && status !== 'Completed' && status !== 'Cancelled') {
+            overdueCount++;
+        }
+    }
+    
+    document.querySelector('.scheduled-count').textContent = scheduledCount;
+    document.querySelector('.inprogress-count').textContent = inprogressCount;
+    document.querySelector('.completed-count').textContent = completedCount;
+    document.querySelector('.overdue-count').textContent = overdueCount;
+}
+
+function filterAndPaginateSchedules() {
+    const table = document.getElementById('scheduleTable');
+    const tbody = table.getElementsByTagName('tbody')[0];
+    
+    if (!tbody) {
+        console.error('Table tbody not found');
+        return;
+    }
+    
+    const rows = Array.from(tbody.getElementsByTagName('tr'));
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    filteredSchedules = rows.filter(row => {
+        const status = row.getAttribute('data-status');
+        const dateStr = row.getAttribute('data-date');
+        
+        if (!dateStr) return false;
+        
+        const scheduledDate = parseDate(dateStr);
+        if (!scheduledDate) return false;
+        
+        const isOverdue = scheduledDate < now && status !== 'Completed' && status !== 'Cancelled';
+        
+        if (currentFilter === 'all') {
+            return true;
+        } else if (currentFilter === 'overdue') {
+            return isOverdue;
+        } else {
+            return status === currentFilter;
+        }
+    });
+    
+    rows.forEach(row => {
+        row.style.display = 'none';
+    });
+    
+    const totalItems = filteredSchedules.length;
+    
+    if (totalItems === 0) {
+        document.getElementById('showingFrom').textContent = '0';
+        document.getElementById('showingTo').textContent = '0';
+        document.getElementById('totalRecords').textContent = '0';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+    }
+    
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    
+    if (currentPage > totalPages) {
+        currentPage = totalPages;
+    }
+    if (currentPage < 1) {
+        currentPage = 1;
+    }
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+    
+    for (let i = startIndex; i < endIndex; i++) {
+        if (filteredSchedules[i]) {
+            filteredSchedules[i].style.display = '';
+        }
+    }
+    
+    document.getElementById('showingFrom').textContent = startIndex + 1;
+    document.getElementById('showingTo').textContent = endIndex;
+    document.getElementById('totalRecords').textContent = totalItems;
+    
+    renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    
+    if (totalPages <= 1) return;
+    
+    const prevLi = document.createElement('li');
+    prevLi.className = 'page-item' + (currentPage === 1 ? ' disabled' : '');
+    prevLi.innerHTML = '<a class="page-link" href="#" onclick="changePage(' + (currentPage - 1) + '); return false;"><i class="fas fa-chevron-left"></i></a>';
+    pagination.appendChild(prevLi);
+    
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    if (startPage > 1) {
+        const firstLi = document.createElement('li');
+        firstLi.className = 'page-item';
+        firstLi.innerHTML = '<a class="page-link" href="#" onclick="changePage(1); return false;">1</a>';
+        pagination.appendChild(firstLi);
+        
+        if (startPage > 2) {
+            const dotsLi = document.createElement('li');
+            dotsLi.className = 'page-item disabled';
+            dotsLi.innerHTML = '<span class="page-link">...</span>';
+            pagination.appendChild(dotsLi);
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageLi = document.createElement('li');
+        pageLi.className = 'page-item' + (i === currentPage ? ' active' : '');
+        pageLi.innerHTML = '<a class="page-link" href="#" onclick="changePage(' + i + '); return false;">' + i + '</a>';
+        pagination.appendChild(pageLi);
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const dotsLi = document.createElement('li');
+            dotsLi.className = 'page-item disabled';
+            dotsLi.innerHTML = '<span class="page-link">...</span>';
+            pagination.appendChild(dotsLi);
         }
         
-        function changeCalendarView(view) {
-            calendar.changeView(view);
-        }
-        
-        function setMinDateTime() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            
-            const minDateTime = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
-            document.getElementById('scheduledDate').min = minDateTime;
-        }
-        
-        function filterSchedules(filter) {
-            const table = document.getElementById('scheduleTable');
-            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-            
-            for (let row of rows) {
-                const statusCell = row.cells[7].querySelector('select');
-                const status = statusCell.value;
-                const scheduledDate = new Date(row.cells[4].textContent);
-                const now = new Date();
-                
-                let show = true;
-                
-                if (filter === 'upcoming') {
-                    const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    show = scheduledDate >= now && scheduledDate <= weekFromNow && status !== 'Completed';
-                } else if (filter === 'overdue') {
-                    show = scheduledDate < now && status !== 'Completed';
-                }
-                
-                row.style.display = show ? '' : 'none';
-            }
-        }
-        
-        function updateScheduleStatus(scheduleId, newStatus) {
-            fetch('scheduleMaintenance', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'action=updateStatus&scheduleId=' + scheduleId + '&status=' + encodeURIComponent(newStatus)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Cập nhật trạng thái thành công!', 'success');
-                    // Update calendar
-                    const event = calendar.getEventById(scheduleId);
-                    if (event) {
-                        event.setProp('className', 'fc-event-' + newStatus.toLowerCase().replace(" ", "-"));
-                    }
-                } else {
-                    showToast('Lỗi khi cập nhật trạng thái: ' + (data.error || 'Unknown error'), 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating status:', error);
-                showToast('Lỗi khi cập nhật trạng thái!', 'error');
-            });
-        }
-        
-        function editSchedule(scheduleId) {
-            fetch('scheduleMaintenance?action=getScheduleDetails&scheduleId=' + scheduleId)
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    showToast('Lỗi khi tải thông tin lịch bảo trì: ' + data.error, 'error');
-                    return;
-                }
-                
-                // Populate edit form
-                document.getElementById('editScheduleId').value = data.scheduleId;
-                
-                // Format date for datetime-local input
-                const scheduledDate = new Date(data.scheduledDate);
-                const formattedDate = scheduledDate.toISOString().slice(0, 16);
-                document.getElementById('editScheduledDate').value = formattedDate;
-                
-                document.getElementById('editScheduleType').value = data.scheduleType;
-                document.getElementById('editRecurrenceRule').value = data.recurrenceRule || '';
-                document.getElementById('editPriorityId').value = data.priorityId;
-                document.getElementById('editStatus').value = data.status;
-                
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('editScheduleModal'));
-                modal.show();
-            })
-            .catch(error => {
-                console.error('Error fetching schedule details:', error);
-                showToast('Lỗi khi tải thông tin lịch bảo trì!', 'error');
-            });
-        }
-        
-        function saveScheduleChanges() {
-            const form = document.getElementById('editScheduleForm');
-            const formData = new FormData(form);
-            
-            fetch('scheduleMaintenance', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (response.ok) {
-                    showToast('Cập nhật lịch bảo trì thành công!', 'success');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                } else {
-                    showToast('Lỗi khi cập nhật lịch bảo trì!', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating schedule:', error);
-                showToast('Lỗi khi cập nhật lịch bảo trì!', 'error');
-            });
-            
-            // Hide modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editScheduleModal'));
-            modal.hide();
-        }
-        
-  function deleteSchedule(scheduleId) {
-    if (confirm('Bạn có chắc chắn muốn xóa lịch bảo trì này?')) {
-        fetch('scheduleMaintenance', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'action=deleteSchedule&scheduleId=' + scheduleId
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('Xóa lịch bảo trì thành công!', 'success');
-                location.reload(); // reload luôn bảng + calendar
-            } else {
-                showToast('Lỗi khi xóa lịch bảo trì: ' + (data.error || 'Unknown error'), 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error deleting schedule:', error);
-            showToast('Lỗi khi xóa lịch bảo trì!', 'error');
+        const lastLi = document.createElement('li');
+        lastLi.className = 'page-item';
+        lastLi.innerHTML = '<a class="page-link" href="#" onclick="changePage(' + totalPages + '); return false;">' + totalPages + '</a>';
+        pagination.appendChild(lastLi);
+    }
+    
+    const nextLi = document.createElement('li');
+    nextLi.className = 'page-item' + (currentPage === totalPages ? ' disabled' : '');
+    nextLi.innerHTML = '<a class="page-link" href="#" onclick="changePage(' + (currentPage + 1) + '); return false;"><i class="fas fa-chevron-right"></i></a>';
+    pagination.appendChild(nextLi);
+}
+
+function changePage(page) {
+    const totalPages = Math.ceil(filteredSchedules.length / itemsPerPage) || 1;
+    
+    if (page < 1 || page > totalPages || page === currentPage) {
+        return;
+    }
+    
+    currentPage = page;
+    filterAndPaginateSchedules();
+    
+    const tableCard = document.querySelector('.card:has(#scheduleTable)');
+    if (tableCard) {
+        tableCard.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start'
         });
     }
 }
 
-        
-        // Event delegation for schedule action buttons
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.schedule-action-btn')) {
-                const button = e.target.closest('.schedule-action-btn');
-                const action = button.getAttribute('data-action');
-                const scheduleId = button.getAttribute('data-schedule-id');
-                
-                if (action && scheduleId) {
-                    if (action === 'edit') {
-                        editSchedule(scheduleId);
-                    } else if (action === 'delete') {
-                        deleteSchedule(scheduleId);
-                    }
-                }
-            }
-        }); 
-        
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            toast.className = 'alert alert-' + (type == 'success' ? 'success' : 'danger') + ' position-fixed';
-            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            toast.innerHTML = message +
-                '<button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>';
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 5000);
+function editSchedule(scheduleId) {
+    document.getElementById('editScheduleForm').reset();
+    
+    fetch('scheduleMaintenance?action=getScheduleDetails&scheduleId=' + scheduleId)
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            showToast('Lỗi: ' + data.error, 'error');
+            return;
         }
         
-        // Form validation
-        document.getElementById('scheduleForm').addEventListener('submit', function(e) {
-            const technicianSelect = document.getElementById('assignedTo');
-            const selectedOption = technicianSelect.options[technicianSelect.selectedIndex];
-            
-            if (selectedOption && selectedOption.textContent.includes('(Khả năng: 0/')) {
-                e.preventDefault();
-                alert('Kỹ thuật viên đã chọn không còn khả năng nhận thêm công việc!');
-                return false;
+        document.getElementById('editScheduleId').value = data.scheduleId;
+        
+        let scheduledDateStr = data.scheduledDate;
+        if (typeof scheduledDateStr === 'string') {
+            if (scheduledDateStr.length === 10) {
+                scheduledDateStr = scheduledDateStr + 'T00:00';
+            } else if (scheduledDateStr.includes('T')) {
+                scheduledDateStr = scheduledDateStr.substring(0, 16);
+            } else if (scheduledDateStr.includes(' ')) {
+                scheduledDateStr = scheduledDateStr.replace(' ', 'T').substring(0, 16);
             }
-        });
+        }
+        document.getElementById('editScheduledDate').value = scheduledDateStr;
+        
+        document.getElementById('editScheduleType').value = data.scheduleType || 'Preventive';
+        document.getElementById('editRecurrenceRule').value = data.recurrenceRule || '';
+        document.getElementById('editPriorityId').value = data.priorityId || '2';
+        
+        const statusMap = {
+            'Scheduled': 'Đã Lên Lịch',
+            'In Progress': 'Đang Thực Hiện',
+            'Completed': 'Hoàn Thành',
+            'Cancelled': 'Hủy Bỏ'
+        };
+        
+        document.getElementById('editStatusDisplay').value = statusMap[data.status] || data.status;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editScheduleModal'));
+        modal.show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Lỗi khi tải thông tin!', 'error');
+    });
+}
+
+function saveScheduleChanges() {
+    const form = document.getElementById('editScheduleForm');
+    const formData = new FormData(form);
+    
+    const scheduledDate = document.getElementById('editScheduledDate').value;
+    const scheduleType = document.getElementById('editScheduleType').value;
+    
+    if (!scheduledDate || !scheduleType) {
+        showToast('Vui lòng điền đầy đủ thông tin!', 'error');
+        return;
+    }
+    
+    fetch('scheduleMaintenance', {
+        method: 'POST',
+        body: new URLSearchParams(formData)
+    })
+    .then(response => {
+        if (response.ok) {
+            showToast('Cập nhật thành công!', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editScheduleModal'));
+            if (modal) modal.hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            return response.text().then(text => {
+                showToast('Lỗi: ' + text, 'error');
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Lỗi khi cập nhật!', 'error');
+    });
+}
+
+function deleteSchedule(scheduleId) {
+    if (!confirm('Bạn có chắc chắn muốn xóa?')) return;
+    
+    fetch('scheduleMaintenance', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'action=deleteSchedule&scheduleId=' + scheduleId
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Xóa thành công!', 'success');
+            location.reload();
+        } else {
+            showToast('Lỗi: ' + (data.error || 'Unknown'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Lỗi khi xóa!', 'error');
+    });
+}
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.schedule-action-btn')) {
+        const button = e.target.closest('.schedule-action-btn');
+        const action = button.getAttribute('data-action');
+        const scheduleId = button.getAttribute('data-schedule-id');
+        
+        if (action && scheduleId) {
+            if (action === 'edit') editSchedule(scheduleId);
+            else if (action === 'delete') deleteSchedule(scheduleId);
+        }
+    }
+});
+
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = 'alert alert-' + (type === 'success' ? 'success' : 'danger') + ' position-fixed';
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = message + '<button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>';
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentElement) toast.remove();
+    }, 5000);
+}
+
+document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+    const technicianSelect = document.getElementById('assignedTo');
+    const selectedOption = technicianSelect.options[technicianSelect.selectedIndex];
+    
+    if (selectedOption && selectedOption.textContent.includes('(Khả năng: 0/')) {
+        e.preventDefault();
+        alert('Kỹ thuật viên không còn khả năng nhận thêm công việc!');
+        return false;
+    }
+});
     </script>
         </div> <!-- content-wrapper -->
     </div> <!-- main-content -->

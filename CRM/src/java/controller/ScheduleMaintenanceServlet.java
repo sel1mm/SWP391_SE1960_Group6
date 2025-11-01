@@ -251,7 +251,7 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
 
         if (scheduleId > 0) {
             // --- Update workload KTV ---
-            technicianWorkloadDAO.incrementActiveTasks(assignedTo);
+            
 
             // --- Tạo WorkTask ---
             WorkTaskDAO workTaskDAO = new WorkTaskDAO();
@@ -263,7 +263,7 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
             task.setTaskDetails("Bảo trì " + scheduleType + 
                                 (equipmentId != null ? " thiết bị #" + equipmentId : ""));
             task.setStartDate(scheduledDate);
-            task.setEndDate(scheduledDate);             // chỉ 1 ngày
+            // endDate intentionally left null until completion
             task.setStatus("Assigned");
 
             int taskId = workTaskDAO.createWorkTask(task);
@@ -292,70 +292,84 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
 
     
     private void updateMaintenanceSchedule(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
+    
+    HttpSession session = request.getSession();
+    
+    try {
+        String scheduleIdStr = request.getParameter("scheduleId");
+        String scheduledDateStr = request.getParameter("scheduledDate");
+        String scheduleType = request.getParameter("scheduleType");
+        String recurrenceRule = request.getParameter("recurrenceRule");
+        // ❌ BỎ: String status = request.getParameter("status");
+        String priorityIdStr = request.getParameter("priorityId");
         
-        HttpSession session = request.getSession();
-        
-        try {
-            String scheduleIdStr = request.getParameter("scheduleId");
-            String priorityIdStr = request.getParameter("priorityId");
-            
-            // Validate required parameters
-            if (scheduleIdStr == null || scheduleIdStr.trim().isEmpty()) {
-                session.setAttribute("errorMessage", "Thiếu thông tin ID lịch bảo trì!");
-                response.sendRedirect("scheduleMaintenance");
-                return;
-            }
-            
-            if (priorityIdStr == null || priorityIdStr.trim().isEmpty()) {
-                session.setAttribute("errorMessage", "Thiếu thông tin mức độ ưu tiên!");
-                response.sendRedirect("scheduleMaintenance");
-                return;
-            }
-            
-            int scheduleId = Integer.parseInt(scheduleIdStr.trim());
-            String scheduledDateStr = request.getParameter("scheduledDate");
-            String scheduleType = request.getParameter("scheduleType");
-            String recurrenceRule = request.getParameter("recurrenceRule");
-            String status = request.getParameter("status");
-            int priorityId = Integer.parseInt(priorityIdStr.trim());
-            
-            // Parse scheduled date
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-            java.util.Date parsedDate = dateFormat.parse(scheduledDateStr);
-            Timestamp scheduledTimestamp = new Timestamp(parsedDate.getTime());
-            LocalDate scheduledDate = scheduledTimestamp.toLocalDateTime().toLocalDate();
-            
-            // Get existing schedule
-            MaintenanceSchedule existingSchedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
-            if (existingSchedule == null) {
-                session.setAttribute("errorMessage", "Không tìm thấy lịch bảo trì!");
-                response.sendRedirect("scheduleMaintenance");
-                return;
-            }
-            
-            // Update schedule
-            existingSchedule.setScheduledDate(scheduledDate);
-            existingSchedule.setScheduleType(scheduleType);
-            existingSchedule.setRecurrenceRule(recurrenceRule);
-            existingSchedule.setStatus(status);
-            existingSchedule.setPriorityId(priorityId);
-            
-            boolean success = maintenanceScheduleDAO.updateMaintenanceSchedule(existingSchedule);
-            
-            if (success) {
-                session.setAttribute("successMessage", "Cập nhật lịch bảo trì thành công!");
-            } else {
-                session.setAttribute("errorMessage", "Lỗi khi cập nhật lịch bảo trì!");
-            }
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            session.setAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
+        // Validate required parameters
+        if (scheduleIdStr == null || scheduleIdStr.trim().isEmpty()) {
+            session.setAttribute("errorMessage", "Thiếu thông tin ID lịch bảo trì!");
+            response.sendRedirect("scheduleMaintenance");
+            return;
         }
         
-        response.sendRedirect("scheduleMaintenance");
+        if (scheduledDateStr == null || scheduledDateStr.trim().isEmpty()) {
+            session.setAttribute("errorMessage", "Thiếu thông tin ngày bảo trì!");
+            response.sendRedirect("scheduleMaintenance");
+            return;
+        }
+        
+        if (scheduleType == null || scheduleType.trim().isEmpty()) {
+            session.setAttribute("errorMessage", "Thiếu thông tin loại bảo trì!");
+            response.sendRedirect("scheduleMaintenance");
+            return;
+        }
+        
+        int scheduleId = Integer.parseInt(scheduleIdStr.trim());
+        int priorityId = (priorityIdStr != null && !priorityIdStr.trim().isEmpty()) 
+                        ? Integer.parseInt(priorityIdStr.trim()) : 2;
+        
+        // Parse scheduled date
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+        java.util.Date parsedDate = dateFormat.parse(scheduledDateStr);
+        Timestamp scheduledTimestamp = new Timestamp(parsedDate.getTime());
+        LocalDate scheduledDate = scheduledTimestamp.toLocalDateTime().toLocalDate();
+        
+        // Get existing schedule
+        MaintenanceSchedule existingSchedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
+        if (existingSchedule == null) {
+            session.setAttribute("errorMessage", "Không tìm thấy lịch bảo trì!");
+            response.sendRedirect("scheduleMaintenance");
+            return;
+        }
+        
+        // ✅ Update schedule properties (KHÔNG cập nhật status)
+        existingSchedule.setScheduledDate(scheduledDate);
+        existingSchedule.setScheduleType(scheduleType);
+        existingSchedule.setRecurrenceRule((recurrenceRule != null && !recurrenceRule.trim().isEmpty()) 
+                                          ? recurrenceRule : null);
+        // ❌ BỎ: existingSchedule.setStatus(status);
+        existingSchedule.setPriorityId(priorityId);
+        
+        boolean success = maintenanceScheduleDAO.updateMaintenanceSchedule(existingSchedule);
+        
+        if (success) {
+            session.setAttribute("successMessage", "Cập nhật lịch bảo trì thành công!");
+        } else {
+            session.setAttribute("errorMessage", "Lỗi khi cập nhật lịch bảo trì!");
+        }
+        
+    } catch (ParseException e) {
+        e.printStackTrace();
+        session.setAttribute("errorMessage", "Định dạng ngày giờ không hợp lệ!");
+    } catch (NumberFormatException e) {
+        e.printStackTrace();
+        session.setAttribute("errorMessage", "Dữ liệu số không hợp lệ!");
+    } catch (Exception e) {
+        e.printStackTrace();
+        session.setAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
     }
+    
+    response.sendRedirect("scheduleMaintenance");
+}
     
    private void deleteMaintenanceSchedule(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {

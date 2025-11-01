@@ -3,6 +3,9 @@ package controller;
 import dal.ServiceRequestDAO;
 import dal.RequestApprovalDAO;
 import dal.AccountDAO;
+import dal.ContractDAO;
+import dal.NotificationDAO;
+
 import model.ServiceRequest;
 import model.ServiceRequestDetailDTO2;
 import model.RequestApproval;
@@ -21,6 +24,7 @@ import java.util.ArrayList;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.stream.Collectors;
+import model.Notification;
 
 @WebServlet(name = "TechnicalManagerApprovalServlet", urlPatterns = {"/technicalManagerApproval"})
 public class TechnicalManagerApprovalServlet extends HttpServlet {
@@ -29,6 +33,9 @@ public class TechnicalManagerApprovalServlet extends HttpServlet {
     private RequestApprovalDAO requestApprovalDAO;
     private AccountDAO accountDAO;
     private AccountRoleService accountRoleService;
+    private NotificationDAO notificationDAO;
+private ContractDAO contractDAO;
+    private static final int RECORDS_PER_PAGE = 10;
 
     @Override
     public void init() throws ServletException {
@@ -36,6 +43,8 @@ public class TechnicalManagerApprovalServlet extends HttpServlet {
         requestApprovalDAO = new RequestApprovalDAO();
         accountDAO = new AccountDAO();
         accountRoleService = new AccountRoleService();
+            notificationDAO = new NotificationDAO();  // ✅ THÊM DÒNG NÀY
+    contractDAO = new ContractDAO();          // ✅ THÊM DÒNG NÀY
     }
 
     @Override
@@ -124,174 +133,46 @@ public class TechnicalManagerApprovalServlet extends HttpServlet {
     }
 
     /**
-     * Display pending service requests for Technical Manager approval
+     * Display pending service requests for Technical Manager approval with pagination
      */
-    private void displayAssignedRequests(HttpServletRequest request, HttpServletResponse response, int managerId)
-            throws ServletException, IOException, SQLException {
-
-        // Get all pending requests for Technical Manager approval
-        List<ServiceRequest> requests = serviceRequestDAO.getPendingRequestsWithDetails();
-        
-        // Debug logging
-        System.out.println("DEBUG - Total requests retrieved: " + requests.size());
-        for (ServiceRequest req : requests) {
-            System.out.println("DEBUG - Request ID: " + req.getRequestId() + 
-                             ", Status: " + req.getStatus() + 
-                             ", Customer: " + req.getCustomerName());
-        }
-
-        // Get statistics for Technical Manager dashboard
-        int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
-        int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
-        int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
-        int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
-
-        // Get available technicians for assignment dropdown
-        List<Account> technicians = accountDAO.getAccountsByRole("Technician");
-
-        // Set attributes for JSP
-        request.setAttribute("requests", requests);
-        request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
-        request.setAttribute("urgentCount", urgentCount);
-        request.setAttribute("todayCount", todayCount);
-        request.setAttribute("approvedToday", approvedToday);
-        request.setAttribute("technicians", technicians);
-        request.setAttribute("viewMode", "assigned");
-
-        request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
-    }
-
-    /**
-     * Handle history view functionality for technical managers
-     */
-  private void handleHistory(HttpServletRequest request, HttpServletResponse response, int managerId)
+  private void displayAssignedRequests(HttpServletRequest request, HttpServletResponse response, int managerId)
         throws ServletException, IOException, SQLException {
 
-    // Lấy tất cả yêu cầu lịch sử
-    List<ServiceRequest> allRequests = serviceRequestDAO.getAllRequestsHistory();
-
-    // ❌ Loại bỏ các yêu cầu có trạng thái "Awaiting Approval"
-    List<ServiceRequest> requests = allRequests.stream()
-            .filter(req -> !"Awaiting Approval".equalsIgnoreCase(req.getStatus()))
-            .collect(Collectors.toList());
-
-    // Tính thống kê
-    int totalRequests = requests.size();
-    int approvedCount = (int) requests.stream().filter(req -> "Approved".equals(req.getStatus())).count();
-    int rejectedCount = (int) requests.stream().filter(req -> "Rejected".equals(req.getStatus())).count();
-    int pendingCount = (int) requests.stream().filter(req -> "Pending".equals(req.getStatus())).count();
-
-    // ✅ KHÔNG cần đếm awaitingApprovalCount ở đây nữa
-    // int awaitingApprovalCount = ...
-
-    // Set attribute cho JSP
-    request.setAttribute("requests", requests);
-    request.setAttribute("totalCount", totalRequests);
-    request.setAttribute("approvedCount", approvedCount);
-    request.setAttribute("rejectedCount", rejectedCount);
-    request.setAttribute("pendingCount", pendingCount);
-    request.setAttribute("viewMode", "history");
-
-    request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
-}
-
-
-    /**
-     * Handle search functionality for requests with status >= 'Awaiting Approval'
-     */
- private void handleSearch(HttpServletRequest request, HttpServletResponse response, int managerId)
-        throws ServletException, IOException, SQLException {
-
+    // Lấy các tham số filter và search
     String keyword = request.getParameter("keyword");
-    String viewMode = request.getParameter("viewMode");
-
-    if (keyword == null || keyword.trim().isEmpty()) {
-        if ("history".equalsIgnoreCase(viewMode)) {
-            handleHistory(request, response, managerId);
-        } else {
-            displayAssignedRequests(request, response, managerId);
-        }
-        return;
-    }
-
-    // Lấy dữ liệu tương ứng với trang hiện tại
-    List<ServiceRequest> allRequests;
-    if ("history".equalsIgnoreCase(viewMode)) {
-        allRequests = serviceRequestDAO.getAllRequestsHistory();
-    } else {
-        allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
-    }
-
-    List<ServiceRequest> requests = new ArrayList<>();
-
-    String keywordLower = keyword.trim().toLowerCase();
-    for (ServiceRequest req : allRequests) {
-        if (req.getDescription().toLowerCase().contains(keywordLower)
-                || String.valueOf(req.getRequestId()).contains(keyword.trim())
-                || (req.getCustomerName() != null && req.getCustomerName().toLowerCase().contains(keywordLower))) {
-            requests.add(req);
-        }
-    }
-
-    // 🟢 Nếu đang ở trang lịch sử → đếm theo status trong danh sách lịch sử
-    if ("history".equalsIgnoreCase(viewMode)) {
-        int totalRequests = requests.size();
-        int approvedCount = (int) requests.stream().filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
-        int rejectedCount = (int) requests.stream().filter(r -> "Rejected".equalsIgnoreCase(r.getStatus())).count();
-        int pendingCount = (int) requests.stream().filter(r -> "Pending".equalsIgnoreCase(r.getStatus())).count();
-        int awaitingApprovalCount = (int) requests.stream().filter(r -> "Awaiting Approval".equalsIgnoreCase(r.getStatus())).count();
-
-        request.setAttribute("totalCount", totalRequests);
-        request.setAttribute("approvedCount", approvedCount);
-        request.setAttribute("rejectedCount", rejectedCount);
-        request.setAttribute("pendingCount", pendingCount);
-        request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
-
-    } else {
-        // 🟢 Nếu ở trang chính → dùng các hàm đếm trong DAO
-        int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
-        int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
-        int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
-        int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
-
-        request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
-        request.setAttribute("urgentCount", urgentCount);
-        request.setAttribute("todayCount", todayCount);
-        request.setAttribute("approvedToday", approvedToday);
-    }
-
-    request.setAttribute("requests", requests);
-    request.setAttribute("keyword", keyword);
-    request.setAttribute("searchMode", true);
-    request.setAttribute("viewMode", viewMode);
-
-    request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
-}
-
-
-
-    /**
-     * Handle filter functionality for requests with status >= 'Awaiting Approval'
-     */
-  private void handleFilter(HttpServletRequest request, HttpServletResponse response, int managerId)
-        throws ServletException, IOException, SQLException {
-
     String priority = request.getParameter("priority");
     String urgency = request.getParameter("urgency");
-    String viewMode = request.getParameter("viewMode");
 
-    // Lấy danh sách theo trang hiện tại
-    List<ServiceRequest> allRequests;
-    if ("history".equalsIgnoreCase(viewMode)) {
-        allRequests = serviceRequestDAO.getAllRequestsHistory();
-    } else {
-        allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
+    // Lấy số trang
+    int page = 1;
+    String pageParam = request.getParameter("page");
+    if (pageParam != null && !pageParam.isEmpty()) {
+        try {
+            page = Integer.parseInt(pageParam);
+            if (page < 1) page = 1;
+        } catch (NumberFormatException e) {
+            page = 1;
+        }
     }
 
-    List<ServiceRequest> requests = new ArrayList<>();
+    // Lấy toàn bộ yêu cầu
+    List<ServiceRequest> allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
 
-    // Lọc theo priority và urgency
-    for (ServiceRequest req : allRequests) {
+    // Áp dụng search
+    List<ServiceRequest> filteredRequests = allRequests;
+    if (keyword != null && !keyword.trim().isEmpty()) {
+        String keywordLower = keyword.trim().toLowerCase();
+        filteredRequests = filteredRequests.stream()
+                .filter(req -> req.getDescription().toLowerCase().contains(keywordLower)
+                        || String.valueOf(req.getRequestId()).contains(keyword.trim())
+                        || (req.getCustomerName() != null && req.getCustomerName().toLowerCase().contains(keywordLower))
+                        || (req.getEquipmentName() != null && req.getEquipmentName().toLowerCase().contains(keywordLower)))
+                .collect(Collectors.toList());
+    }
+
+    // Áp dụng filter
+    List<ServiceRequest> finalFilteredRequests = new ArrayList<>();
+    for (ServiceRequest req : filteredRequests) {
         boolean matchesPriority = (priority == null || priority.trim().isEmpty() ||
                 priority.equalsIgnoreCase(req.getPriorityLevel()));
 
@@ -303,7 +184,7 @@ public class TechnicalManagerApprovalServlet extends HttpServlet {
                     matchesUrgency = daysPending >= 7;
                     break;
                 case "High":
-                    matchesUrgency = daysPending >= 3 &&  daysPending <=7;
+                    matchesUrgency = daysPending >= 3 && daysPending < 7;
                     break;
                 case "Normal":
                     matchesUrgency = daysPending < 3;
@@ -312,159 +193,600 @@ public class TechnicalManagerApprovalServlet extends HttpServlet {
         }
 
         if (matchesPriority && matchesUrgency) {
-            requests.add(req);
+            finalFilteredRequests.add(req);
         }
     }
 
-    // --- Thống kê ---
-    if ("history".equalsIgnoreCase(viewMode)) {
-        int totalRequests = requests.size();
-        int approvedCount = (int) requests.stream().filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
-        int rejectedCount = (int) requests.stream().filter(r -> "Rejected".equalsIgnoreCase(r.getStatus())).count();
-        int pendingCount = (int) requests.stream().filter(r -> "Pending".equalsIgnoreCase(r.getStatus())).count();
-        int awaitingApprovalCount = (int) requests.stream().filter(r -> "Awaiting Approval".equalsIgnoreCase(r.getStatus())).count();
+    // Tính toán phân trang
+    int totalRecords = finalFilteredRequests.size();
+    int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
 
-        request.setAttribute("totalCount", totalRequests);
-        request.setAttribute("approvedCount", approvedCount);
-        request.setAttribute("rejectedCount", rejectedCount);
-        request.setAttribute("pendingCount", pendingCount);
-        request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
-    } else {
-        int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
-        int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
-        int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
-        int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
-
-        request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
-        request.setAttribute("urgentCount", urgentCount);
-        request.setAttribute("todayCount", todayCount);
-        request.setAttribute("approvedToday", approvedToday);
+    if (totalPages > 0 && page > totalPages) {
+        page = totalPages;
     }
 
-    // --- Set attribute chung ---
+    int startIndex = (page - 1) * RECORDS_PER_PAGE;
+    int endIndex = Math.min(startIndex + RECORDS_PER_PAGE, totalRecords);
+
+    List<ServiceRequest> requests = new ArrayList<>();
+    if (startIndex < totalRecords) {
+        requests = finalFilteredRequests.subList(startIndex, endIndex);
+    }
+
+    // Lấy các thống kê
+    int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
+    int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
+    int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
+    int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
+
+    // Lấy danh sách kỹ thuật viên
+    List<Account> technicians = accountDAO.getAccountsByRole("Technician");
+
+    // Gửi dữ liệu sang JSP
     request.setAttribute("requests", requests);
+    request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
+    request.setAttribute("urgentCount", urgentCount);
+    request.setAttribute("todayCount", todayCount);
+    request.setAttribute("approvedToday", approvedToday);
+    request.setAttribute("technicians", technicians);
+    request.setAttribute("viewMode", "assigned");
+    request.setAttribute("currentPage", page);
+    request.setAttribute("totalPages", totalPages);
+    request.setAttribute("totalRecords", totalRecords);
+    
+    // Giữ lại các tham số filter
+    request.setAttribute("keyword", keyword);
     request.setAttribute("filterPriority", priority);
     request.setAttribute("filterUrgency", urgency);
-    request.setAttribute("filterMode", true);
-    request.setAttribute("viewMode", viewMode);
+    
+    // Đánh dấu có filter/search
+    boolean hasFilters = (keyword != null && !keyword.trim().isEmpty()) ||
+                        (priority != null && !priority.trim().isEmpty()) ||
+                        (urgency != null && !urgency.trim().isEmpty());
+    request.setAttribute("searchMode", hasFilters);
+    request.setAttribute("filterMode", hasFilters);
 
     request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
 }
 
 
     /**
-     * Handle request approval
+     * Handle history view with pagination and new filters
      */
-    private void handleApproveRequest(HttpServletRequest request, HttpServletResponse response, int managerId, HttpSession session)
+   private void handleHistory(HttpServletRequest request, HttpServletResponse response, int managerId)
+        throws ServletException, IOException, SQLException {
+
+    // Lấy các tham số filter và search
+    String keyword = request.getParameter("keyword");
+    String priority = request.getParameter("priority");
+    String statusFilter = request.getParameter("statusFilter");
+
+    // Lấy số trang
+    int page = 1;
+    String pageParam = request.getParameter("page");
+    if (pageParam != null && !pageParam.isEmpty()) {
+        try {
+            page = Integer.parseInt(pageParam);
+            if (page < 1) page = 1;
+        } catch (NumberFormatException e) {
+            page = 1;
+        }
+    }
+
+    // Lấy toàn bộ request lịch sử
+    List<ServiceRequest> allRequests = serviceRequestDAO.getAllRequestsHistory();
+    List<ServiceRequest> filteredRequests = allRequests.stream()
+            .filter(req -> !"Awaiting Approval".equalsIgnoreCase(req.getStatus()))
+            .collect(Collectors.toList());
+
+    // Áp dụng search
+    if (keyword != null && !keyword.trim().isEmpty()) {
+        String keywordLower = keyword.trim().toLowerCase();
+        filteredRequests = filteredRequests.stream()
+                .filter(req -> req.getDescription().toLowerCase().contains(keywordLower)
+                        || String.valueOf(req.getRequestId()).contains(keyword.trim())
+                        || (req.getCustomerName() != null && req.getCustomerName().toLowerCase().contains(keywordLower))
+                        || (req.getEquipmentName() != null && req.getEquipmentName().toLowerCase().contains(keywordLower)))
+                .collect(Collectors.toList());
+    }
+
+    // Áp dụng filter
+    List<ServiceRequest> finalFilteredRequests = new ArrayList<>();
+    for (ServiceRequest req : filteredRequests) {
+        boolean matchesPriority = (priority == null || priority.trim().isEmpty() ||
+                priority.equalsIgnoreCase(req.getPriorityLevel()));
+
+        boolean matchesStatus = true;
+        if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+            matchesStatus = statusFilter.equalsIgnoreCase(req.getStatus());
+        }
+
+        if (matchesPriority && matchesStatus) {
+            finalFilteredRequests.add(req);
+        }
+    }
+
+    // Tính toán phân trang
+    int totalRecords = finalFilteredRequests.size();
+    int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
+
+    if (totalPages > 0 && page > totalPages) {
+        page = totalPages;
+    }
+
+    int startIndex = (page - 1) * RECORDS_PER_PAGE;
+    int endIndex = Math.min(startIndex + RECORDS_PER_PAGE, totalRecords);
+
+    List<ServiceRequest> requests = new ArrayList<>();
+    if (startIndex < totalRecords) {
+        requests = finalFilteredRequests.subList(startIndex, endIndex);
+    }
+
+    // Thống kê
+    int totalRequests = finalFilteredRequests.size();
+    int approvedCount = (int) finalFilteredRequests.stream()
+            .filter(req -> "Approved".equalsIgnoreCase(req.getStatus())).count();
+    int rejectedCount = (int) finalFilteredRequests.stream()
+            .filter(req -> "Rejected".equalsIgnoreCase(req.getStatus())).count();
+
+    // Gửi dữ liệu sang JSP
+    request.setAttribute("requests", requests);
+    request.setAttribute("totalCount", totalRequests);
+    request.setAttribute("approvedCount", approvedCount);
+    request.setAttribute("rejectedCount", rejectedCount);
+    request.setAttribute("viewMode", "history");
+    request.setAttribute("currentPage", page);
+    request.setAttribute("totalPages", totalPages);
+    request.setAttribute("totalRecords", totalRecords);
+    
+    // Giữ lại các tham số filter
+    request.setAttribute("keyword", keyword);
+    request.setAttribute("filterPriority", priority);
+    request.setAttribute("statusFilter", statusFilter);
+    
+    // Đánh dấu có filter/search
+    boolean hasFilters = (keyword != null && !keyword.trim().isEmpty()) ||
+                        (priority != null && !priority.trim().isEmpty()) ||
+                        (statusFilter != null && !statusFilter.trim().isEmpty());
+    request.setAttribute("searchMode", hasFilters);
+    request.setAttribute("filterMode", hasFilters);
+
+    request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
+}
+
+
+    /**
+     * Handle search with pagination
+     */
+    private void handleSearch(HttpServletRequest request, HttpServletResponse response, int managerId)
             throws ServletException, IOException, SQLException {
 
-        String requestIdStr = request.getParameter("requestId");
-        String estimatedEffortStr = request.getParameter("estimatedEffort");
-        String recommendedSkills = request.getParameter("recommendedSkills");
-        String approvalNotes = request.getParameter("approvalNotes");
-        String internalNotes = request.getParameter("internalNotes");
-        String assignedTechnicianIdStr = request.getParameter("assignedTechnicianId");
+        String keyword = request.getParameter("keyword");
+        String viewMode = request.getParameter("viewMode");
 
-        // Validation
-        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
-            session.setAttribute("error", "Invalid request ID!");
-            response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
-            return;
-        }
-
-        if (estimatedEffortStr == null || estimatedEffortStr.trim().isEmpty()) {
-            session.setAttribute("error", "Please enter estimated time!");
-            response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
-            return;
-        }
-
-        int requestId;
-        double estimatedEffort;
-        Integer assignedTechnicianId = null;
-
-        try {
-            requestId = Integer.parseInt(requestIdStr.trim());
-            estimatedEffort = Double.parseDouble(estimatedEffortStr.trim());
-            
-            // Parse technician ID if provided
-            if (assignedTechnicianIdStr != null && !assignedTechnicianIdStr.trim().isEmpty() && !"0".equals(assignedTechnicianIdStr.trim())) {
-                assignedTechnicianId = Integer.parseInt(assignedTechnicianIdStr.trim());
+        // Get page number
+        int page = 1;
+        String pageParam = request.getParameter("page");
+        if (pageParam != null && !pageParam.isEmpty()) {
+            try {
+                page = Integer.parseInt(pageParam);
+                if (page < 1) page = 1;
+            } catch (NumberFormatException e) {
+                page = 1;
             }
-        } catch (NumberFormatException e) {
-            session.setAttribute("error", "Invalid data!");
-            response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+        }
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            if ("history".equalsIgnoreCase(viewMode)) {
+                handleHistory(request, response, managerId);
+            } else {
+                displayAssignedRequests(request, response, managerId);
+            }
             return;
         }
 
-        if (estimatedEffort <= 0 || estimatedEffort > 1000) {
-            session.setAttribute("error", "Estimated time must be between 0.5 and 1000 hours!");
-            response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
-            return;
-        }
-
-        // Update service request status and create approval record with technician assignment
-        // All validation is now handled within the DAO transaction for thread safety
-        dto.ServiceRequestUpdateResult result = serviceRequestDAO.updateServiceRequestStatusWithResult(requestId, "Approved", 
-            (approvalNotes != null ? approvalNotes.trim() : "") + 
-            (internalNotes != null ? " | Internal: " + internalNotes : ""), managerId, assignedTechnicianId);
-
-        if (result.isSuccess()) {
-            session.setAttribute("success", "Request approved successfully" + 
-                (assignedTechnicianId != null ? " and technician assigned!" : "!"));
+        // Get data based on view mode
+        List<ServiceRequest> allRequests;
+        if ("history".equalsIgnoreCase(viewMode)) {
+            allRequests = serviceRequestDAO.getAllRequestsHistory().stream()
+                    .filter(req -> !"Awaiting Approval".equalsIgnoreCase(req.getStatus()))
+                    .collect(Collectors.toList());
         } else {
-            session.setAttribute("error", result.getMessage());
+            allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
         }
 
-        response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+        // Filter by keyword
+        String keywordLower = keyword.trim().toLowerCase();
+        List<ServiceRequest> filteredRequests = allRequests.stream()
+                .filter(req -> req.getDescription().toLowerCase().contains(keywordLower)
+                        || String.valueOf(req.getRequestId()).contains(keyword.trim())
+                        || (req.getCustomerName() != null && req.getCustomerName().toLowerCase().contains(keywordLower)))
+                .collect(Collectors.toList());
+
+        // Calculate pagination
+        int totalRecords = filteredRequests.size();
+        int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
+        int startIndex = (page - 1) * RECORDS_PER_PAGE;
+        int endIndex = Math.min(startIndex + RECORDS_PER_PAGE, totalRecords);
+        
+        List<ServiceRequest> requests = filteredRequests.subList(startIndex, endIndex);
+
+        // Set statistics based on view mode
+        if ("history".equalsIgnoreCase(viewMode)) {
+            int totalCount = filteredRequests.size();
+            int approvedCount = (int) filteredRequests.stream()
+                    .filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
+            int rejectedCount = (int) filteredRequests.stream()
+                    .filter(r -> "Rejected".equalsIgnoreCase(r.getStatus())).count();
+
+            request.setAttribute("totalCount", totalCount);
+            request.setAttribute("approvedCount", approvedCount);
+            request.setAttribute("rejectedCount", rejectedCount);
+        } else {
+            int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
+            int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
+            int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
+            int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
+
+            request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
+            request.setAttribute("urgentCount", urgentCount);
+            request.setAttribute("todayCount", todayCount);
+            request.setAttribute("approvedToday", approvedToday);
+        }
+
+        request.setAttribute("requests", requests);
+        request.setAttribute("keyword", keyword);
+        request.setAttribute("searchMode", true);
+        request.setAttribute("viewMode", viewMode);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalRecords", totalRecords);
+
+        request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
     }
 
     /**
-     * Handle request rejection
+     * Handle filter with pagination and new status filters for history
      */
-    private void handleRejectRequest(HttpServletRequest request, HttpServletResponse response, int managerId, HttpSession session)
+    private void handleFilter(HttpServletRequest request, HttpServletResponse response, int managerId)
             throws ServletException, IOException, SQLException {
 
-        String requestIdStr = request.getParameter("requestId");
-        String rejectionReason = request.getParameter("rejectionReason");
-        String rejectionNotes = request.getParameter("rejectionNotes");
-        String internalNotes = request.getParameter("internalNotes");
+        String priority = request.getParameter("priority");
+        String urgency = request.getParameter("urgency");
+        String statusFilter = request.getParameter("statusFilter"); // New parameter for history view
+        String viewMode = request.getParameter("viewMode");
 
-        // Validation
-        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
-            session.setAttribute("error", "Mã yêu cầu không hợp lệ!");
-            response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
-            return;
+        // Get page number
+        int page = 1;
+        String pageParam = request.getParameter("page");
+        if (pageParam != null && !pageParam.isEmpty()) {
+            try {
+                page = Integer.parseInt(pageParam);
+                if (page < 1) page = 1;
+            } catch (NumberFormatException e) {
+                page = 1;
+            }
         }
 
-        if (rejectionReason == null || rejectionReason.trim().isEmpty()) {
-            session.setAttribute("error", "Please select a rejection reason!");
-            response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
-            return;
-        }
-
-        int requestId;
-        try {
-            requestId = Integer.parseInt(requestIdStr.trim());
-        } catch (NumberFormatException e) {
-            session.setAttribute("error", "Invalid request ID!");
-            response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
-            return;
-        }
-
-        // Update service request status and create approval record
-        // All validation is now handled within the DAO transaction for thread safety
-        dto.ServiceRequestUpdateResult result = serviceRequestDAO.updateServiceRequestStatusWithResult(requestId, "Rejected", 
-            (rejectionNotes != null ? rejectionNotes.trim() : "") + 
-            (internalNotes != null ? " | Internal: " + internalNotes : ""), managerId, null);
-
-        if (result.isSuccess()) {
-            session.setAttribute("success", "Request rejected successfully!");
+        // Get data based on view mode
+        List<ServiceRequest> allRequests;
+        if ("history".equalsIgnoreCase(viewMode)) {
+            allRequests = serviceRequestDAO.getAllRequestsHistory().stream()
+                    .filter(req -> !"Awaiting Approval".equalsIgnoreCase(req.getStatus()))
+                    .collect(Collectors.toList());
         } else {
-            session.setAttribute("error", result.getMessage());
+            allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
         }
 
-        response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+        // Apply filters
+        List<ServiceRequest> filteredRequests = new ArrayList<>();
+        for (ServiceRequest req : allRequests) {
+            boolean matchesPriority = (priority == null || priority.trim().isEmpty() ||
+                    priority.equalsIgnoreCase(req.getPriorityLevel()));
+
+            boolean matchesUrgency = true;
+            // Only apply urgency filter for non-history view
+            if (!"history".equalsIgnoreCase(viewMode) && urgency != null && !urgency.trim().isEmpty()) {
+                int daysPending = req.getDaysPending();
+                switch (urgency) {
+                    case "Urgent":
+                        matchesUrgency = daysPending >= 7;
+                        break;
+                    case "High":
+                        matchesUrgency = daysPending >= 3 && daysPending < 7;
+                        break;
+                    case "Normal":
+                        matchesUrgency = daysPending < 3;
+                        break;
+                }
+            }
+
+            boolean matchesStatus = true;
+            // Apply status filter for history view
+            if ("history".equalsIgnoreCase(viewMode) && statusFilter != null && !statusFilter.trim().isEmpty()) {
+                matchesStatus = statusFilter.equalsIgnoreCase(req.getStatus());
+            }
+
+            if (matchesPriority && matchesUrgency && matchesStatus) {
+                filteredRequests.add(req);
+            }
+        }
+
+        // Calculate pagination
+        int totalRecords = filteredRequests.size();
+        int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
+        int startIndex = (page - 1) * RECORDS_PER_PAGE;
+        int endIndex = Math.min(startIndex + RECORDS_PER_PAGE, totalRecords);
+        
+        List<ServiceRequest> requests = filteredRequests.subList(startIndex, endIndex);
+
+        // Set statistics based on view mode
+        if ("history".equalsIgnoreCase(viewMode)) {
+            int totalCount = filteredRequests.size();
+            int approvedCount = (int) filteredRequests.stream()
+                    .filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
+            int rejectedCount = (int) filteredRequests.stream()
+                    .filter(r -> "Rejected".equalsIgnoreCase(r.getStatus())).count();
+
+            request.setAttribute("totalCount", totalCount);
+            request.setAttribute("approvedCount", approvedCount);
+            request.setAttribute("rejectedCount", rejectedCount);
+            request.setAttribute("statusFilter", statusFilter);
+        } else {
+            int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
+            int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
+            int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
+            int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
+
+            request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
+            request.setAttribute("urgentCount", urgentCount);
+            request.setAttribute("todayCount", todayCount);
+            request.setAttribute("approvedToday", approvedToday);
+            request.setAttribute("filterUrgency", urgency);
+        }
+
+        request.setAttribute("requests", requests);
+        request.setAttribute("filterPriority", priority);
+        request.setAttribute("filterMode", true);
+        request.setAttribute("viewMode", viewMode);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalRecords", totalRecords);
+
+        request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
     }
+
+    /**
+     * Handle request approval
+     */
+ private void handleApproveRequest(HttpServletRequest request, HttpServletResponse response, 
+                                  int managerId, HttpSession session)
+        throws ServletException, IOException, SQLException {
+
+    String requestIdStr = request.getParameter("requestId");
+    String estimatedEffortStr = request.getParameter("estimatedEffort");
+    String recommendedSkills = request.getParameter("recommendedSkills");
+    String approvalNotes = request.getParameter("approvalNotes");
+    String internalNotes = request.getParameter("internalNotes");
+    String assignedTechnicianIdStr = request.getParameter("assignedTechnicianId");
+
+    if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+        session.setAttribute("error", "Invalid request ID!");
+        response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+        return;
+    }
+
+    if (estimatedEffortStr == null || estimatedEffortStr.trim().isEmpty()) {
+        session.setAttribute("error", "Please enter estimated time!");
+        response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+        return;
+    }
+
+    int requestId;
+    double estimatedEffort;
+    Integer assignedTechnicianId = null;
+
+    try {
+        requestId = Integer.parseInt(requestIdStr.trim());
+        estimatedEffort = Double.parseDouble(estimatedEffortStr.trim());
+        
+        if (assignedTechnicianIdStr != null && !assignedTechnicianIdStr.trim().isEmpty() && 
+            !"0".equals(assignedTechnicianIdStr.trim())) {
+            assignedTechnicianId = Integer.parseInt(assignedTechnicianIdStr.trim());
+        }
+    } catch (NumberFormatException e) {
+        session.setAttribute("error", "Invalid data!");
+        response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+        return;
+    }
+
+    if (estimatedEffort <= 0 || estimatedEffort > 1000) {
+        session.setAttribute("error", "Estimated time must be between 0.5 and 1000 hours!");
+        response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+        return;
+    }
+
+    // ✅ KHÔNG LƯU GHI CHÚ NỘI BỘ VÀO DB (vì ServiceRequest không có cột notes)
+    // Chỉ log ra console để manager theo dõi
+    if (internalNotes != null && !internalNotes.trim().isEmpty()) {
+        System.out.println("📝 Internal Notes for Request #" + requestId + ": " + internalNotes.trim());
+    }
+    
+    dto.ServiceRequestUpdateResult result = serviceRequestDAO.updateServiceRequestStatusWithResult(
+        requestId, "Approved", 
+        "",  // ✅ Để trống vì không có cột notes
+        managerId, assignedTechnicianId
+    );
+
+    if (result.isSuccess()) {
+        session.setAttribute("success", "Duyệt yêu cầu thành công" + 
+            (assignedTechnicianId != null ? " và đã phân công kỹ thuật viên!" : "!"));
+
+        // ✅ GỬI THÔNG BÁO CHO KHÁCH HÀNG VỚI GHI CHÚ DUYỆT + THỜI GIAN DỰ KIẾN
+        try {
+            ServiceRequestDetailDTO2 detail = serviceRequestDAO.getRequestDetailById(requestId);
+            if (detail != null) {
+                int customerId = detail.getCreatedBy();
+                Integer contractEquipmentId = contractDAO.getContractEquipmentIdByContractAndEquipment(
+                    detail.getContractId(), detail.getEquipmentId());
+                
+                Account tm = accountDAO.getAccountById(managerId);
+                String tmName = (tm != null && tm.getFullName() != null) ? 
+                               tm.getFullName() : "Technical Manager";
+
+                String equipInfo = (detail.getEquipmentModel() != null ? 
+                                   detail.getEquipmentModel() : "Equipment") +
+                                   (detail.getSerialNumber() != null ? 
+                                   (" (" + detail.getSerialNumber() + ")") : "");
+                
+                // ✅ TẠO MESSAGE CHO KHÁCH HÀNG VỚI GHI CHÚ DUYỆT + THỜI GIAN DỰ KIẾN
+                StringBuilder message = new StringBuilder();
+                message.append("Yêu cầu dịch vụ #").append(requestId)
+                       .append(" cho thiết bị ").append(equipInfo)
+                       .append(" đã được phê duyệt bởi ").append(tmName).append(".");
+                
+                // ✅ THÊM THỜI GIAN DỰ KIẾN
+                message.append("\n\nThời gian dự kiến hoàn thành: ").append(estimatedEffort).append(" giờ");
+                
+                // ✅ THÊM GHI CHÚ DUYỆT VÀO MESSAGE
+                if (approvalNotes != null && !approvalNotes.trim().isEmpty()) {
+                    message.append("\n\nGhi chú: ").append(approvalNotes.trim());
+                }
+                
+                if (recommendedSkills != null && !recommendedSkills.trim().isEmpty()) {
+                    message.append("\n\nKỹ năng yêu cầu: ").append(recommendedSkills.trim());
+                }
+
+                // Tạo notification
+                Notification n = new Notification();
+                n.setAccountId(customerId);
+                n.setNotificationType("System");
+                n.setContractEquipmentId(contractEquipmentId != null ? contractEquipmentId : 0);
+                n.setStatus("Unread");
+                n.setMessage(message.toString());
+                
+                notificationDAO.createNotification(n);
+                
+                System.out.println("✅ Notification sent to customer #" + customerId + 
+                                 " for approved request #" + requestId + 
+                                 " (Estimated: " + estimatedEffort + "h)");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            session.setAttribute("warning", "Yêu cầu đã được duyệt nhưng có lỗi khi gửi thông báo.");
+        }
+    } else {
+        session.setAttribute("error", result.getMessage());
+    }
+
+    response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+}
+
+// ========================================================================
+// ✅ HÀM 2: HANDLE REJECT REQUEST - WITHOUT INTERNAL NOTES STORAGE
+// ========================================================================
+private void handleRejectRequest(HttpServletRequest request, HttpServletResponse response, 
+                                 int managerId, HttpSession session)
+        throws ServletException, IOException, SQLException {
+
+    String requestIdStr = request.getParameter("requestId");
+    String rejectionReason = request.getParameter("rejectionReason");
+    String rejectionNotes = request.getParameter("rejectionNotes");
+    String internalNotes = request.getParameter("internalNotes");
+
+    // Validation
+    if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+        session.setAttribute("error", "Mã yêu cầu không hợp lệ!");
+        response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+        return;
+    }
+
+    if (rejectionReason == null || rejectionReason.trim().isEmpty()) {
+        session.setAttribute("error", "Please select a rejection reason!");
+        response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+        return;
+    }
+
+    int requestId;
+    try {
+        requestId = Integer.parseInt(requestIdStr.trim());
+    } catch (NumberFormatException e) {
+        session.setAttribute("error", "Invalid request ID!");
+        response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+        return;
+    }
+
+    // ✅ KHÔNG LƯU GHI CHÚ NỘI BỘ VÀO DB (vì ServiceRequest không có cột notes)
+    // Chỉ log ra console để manager theo dõi
+    if (internalNotes != null && !internalNotes.trim().isEmpty()) {
+        System.out.println("📝 Internal Notes for Rejected Request #" + requestId + ": " + internalNotes.trim());
+    }
+    
+    dto.ServiceRequestUpdateResult result = serviceRequestDAO.updateServiceRequestStatusWithResult(
+        requestId, "Rejected", 
+        "",  // ✅ Để trống vì không có cột notes
+        managerId, null
+    );
+
+    if (result.isSuccess()) {
+        session.setAttribute("success", "Yêu cầu đã được từ chối thành công!");
+
+        // ✅ GỬI THÔNG BÁO CHO KHÁCH HÀNG VỚI LÝ DO VÀ GHI CHÚ TỪ CHỐI
+        try {
+            ServiceRequestDetailDTO2 detail = serviceRequestDAO.getRequestDetailById(requestId);
+            if (detail != null) {
+                int customerId = detail.getCreatedBy();
+                Integer contractEquipmentId = contractDAO.getContractEquipmentIdByContractAndEquipment(
+                    detail.getContractId(), detail.getEquipmentId());
+                
+                Account tm = accountDAO.getAccountById(managerId);
+                String tmName = (tm != null && tm.getFullName() != null) ? 
+                               tm.getFullName() : "Technical Manager";
+
+                String equipInfo = (detail.getEquipmentModel() != null ? 
+                                   detail.getEquipmentModel() : "Equipment") +
+                                   (detail.getSerialNumber() != null ? 
+                                   (" (" + detail.getSerialNumber() + ")") : "");
+                
+                // ✅ TẠO MESSAGE CHO KHÁCH HÀNG VỚI LÝ DO VÀ GHI CHÚ TỪ CHỐI
+                StringBuilder message = new StringBuilder();
+                message.append("Yêu cầu dịch vụ #").append(requestId)
+                       .append(" cho thiết bị ").append(equipInfo)
+                       .append(" đã bị từ chối bởi ").append(tmName).append(".");
+                
+                // ✅ THÊM LÝ DO TỪ CHỐI
+                if (rejectionReason != null && !rejectionReason.trim().isEmpty()) {
+                    message.append("\n\nLý do: ").append(rejectionReason.trim());
+                }
+                
+                // ✅ THÊM GHI CHÚ TỪ CHỐI (HIỂN thị cho khách hàng)
+                if (rejectionNotes != null && !rejectionNotes.trim().isEmpty()) {
+                    message.append("\n\nGhi chú: ").append(rejectionNotes.trim());
+                }
+
+                // Tạo notification
+                Notification n = new Notification();
+                n.setAccountId(customerId);
+                n.setNotificationType("System");
+                n.setContractEquipmentId(contractEquipmentId != null ? contractEquipmentId : 0);
+                n.setStatus("Unread");
+                n.setMessage(message.toString());
+                
+                notificationDAO.createNotification(n);
+                
+                System.out.println("✅ Notification sent to customer #" + customerId + 
+                                 " for rejected request #" + requestId);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            session.setAttribute("warning", "Yêu cầu đã được từ chối nhưng có lỗi khi gửi thông báo.");
+        }
+    } else {
+        session.setAttribute("error", result.getMessage());
+    }
+
+    response.sendRedirect(request.getContextPath() + "/technicalManagerApproval");
+}
 
     /**
      * Handle AJAX request to get request details
@@ -487,7 +809,6 @@ public class TechnicalManagerApprovalServlet extends HttpServlet {
             ServiceRequestDetailDTO2 requestDetail = serviceRequestDAO.getRequestDetailById(requestId);
             
             if (requestDetail != null) {
-                // Convert to JSON manually (simple approach)
                 StringBuilder json = new StringBuilder();
                 json.append("{");
                 json.append("\"requestId\": ").append(requestDetail.getRequestId()).append(",");
@@ -498,7 +819,7 @@ public class TechnicalManagerApprovalServlet extends HttpServlet {
                 json.append("\"customerEmail\": \"").append(escapeJson(requestDetail.getCustomerEmail())).append("\",");
                 json.append("\"customerPhone\": \"").append(escapeJson(requestDetail.getCustomerPhone())).append("\",");
                 json.append("\"equipmentId\": ").append(requestDetail.getEquipmentId()).append(",");
-                json.append("\"equipmentModel\": \"").append(escapeJson(requestDetail.getEquipmentModel())).append("\",");
+                json.append("\"equipmentName\": \"").append(escapeJson(requestDetail.getEquipmentModel())).append("\",");
                 json.append("\"serialNumber\": \"").append(escapeJson(requestDetail.getSerialNumber())).append("\",");
                 json.append("\"contractType\": \"").append(escapeJson(requestDetail.getContractType())).append("\",");
                 json.append("\"description\": \"").append(escapeJson(requestDetail.getDescription())).append("\"");

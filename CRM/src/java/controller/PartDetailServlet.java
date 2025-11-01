@@ -1,6 +1,7 @@
 package controller;
 
 import dal.PartDetailDAO;
+import dal.PartDetailHistoryDAO; // THÊM MỚI
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -13,29 +14,25 @@ import model.Account;
 import model.NewPartDetail;
 
 /**
- * PartDetailServlet - Quản lý chi tiết thiết bị
+ * PartDetailServlet - Quản lý chi tiết thiết bị (CÓ LƯU LỊCH SỬ)
  * @author Admin
  */
 public class PartDetailServlet extends HttpServlet {
     
     private PartDetailDAO dao = new PartDetailDAO();
+    private PartDetailHistoryDAO historyDAO = new PartDetailHistoryDAO(); // THÊM MỚI
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession();
-        session.removeAttribute("successMessage");
-        session.removeAttribute("errorMessage");
         Account acc = (Account) session.getAttribute("session_login");
         if (acc == null) {
             response.sendRedirect("login");
             return;
         }
-        // Lấy danh sách tất cả part details
         List<NewPartDetail> list = dao.getAllPartDetails();
         request.setAttribute("list", list);
-        
-        // Forward về JSP
         request.getRequestDispatcher("partDetail.jsp").forward(request, response);
     }
 
@@ -54,7 +51,6 @@ public class PartDetailServlet extends HttpServlet {
             try {
                 System.out.println("=== START ADD ===");
                 
-                // Lấy accountId từ session
                 Account acc = (Account) session.getAttribute("session_login");
                 System.out.println("AccountId from session: " + acc.getAccountId());
                 
@@ -65,12 +61,10 @@ public class PartDetailServlet extends HttpServlet {
                     return;
                 }
                 
-                // Lấy dữ liệu từ form
                 String serialNumber = request.getParameter("serialNumber");
                 String status = request.getParameter("status");
                 String location = request.getParameter("location");
                 
-                // Validation Serial Number (theo quy tắc: ví dụ SNK-001-2024)
                 if (serialNumber == null || serialNumber.trim().isEmpty()) {
                     session.setAttribute("errorMessage", "Serial Number không được để trống!");
                     response.sendRedirect("partDetail");
@@ -79,7 +73,6 @@ public class PartDetailServlet extends HttpServlet {
                 
                 serialNumber = serialNumber.trim();
                 
-                // Quy tắc Serial Number: format SNK-XXX-YYYY (3 phần cách nhau bởi dấu gạch ngang)
                 String serialPattern = "^[A-Z]{3}-\\d{3}-\\d{4}$";
                 if (!serialNumber.matches(serialPattern)) {
                     session.setAttribute("errorMessage", "Serial Number phải theo định dạng: AAA-XXX-YYYY (VD: SNK-001-2024)");
@@ -87,12 +80,11 @@ public class PartDetailServlet extends HttpServlet {
                     return;
                 }
                 
-                // Kiểm tra trùng Serial Number
                 List<NewPartDetail> existingParts = dao.getAllPartDetails();
-               final String serialNumberValue = serialNumber; // hoặc lấy từ request
-boolean isDuplicate = existingParts.stream()
-    .anyMatch(p -> p.getSerialNumber() != null 
-               && p.getSerialNumber().equalsIgnoreCase(serialNumberValue));
+                final String serialNumberValue = serialNumber;
+                boolean isDuplicate = existingParts.stream()
+                    .anyMatch(p -> p.getSerialNumber() != null 
+                               && p.getSerialNumber().equalsIgnoreCase(serialNumberValue));
                 
                 if (isDuplicate) {
                     session.setAttribute("errorMessage", "Serial Number đã tồn tại! Vui lòng nhập Serial Number khác.");
@@ -100,7 +92,6 @@ boolean isDuplicate = existingParts.stream()
                     return;
                 }
                 
-                // Validation Location (tối thiểu 5 ký tự)
                 if (location == null || location.trim().isEmpty()) {
                     session.setAttribute("errorMessage", "Location không được để trống!");
                     response.sendRedirect("partDetail");
@@ -121,7 +112,6 @@ boolean isDuplicate = existingParts.stream()
                     return;
                 }
                 
-                // Validation Status (không cho phép Available khi tạo mới)
                 if (status == null || status.trim().isEmpty()) {
                     session.setAttribute("errorMessage", "Status không được để trống!");
                     response.sendRedirect("partDetail");
@@ -134,7 +124,6 @@ boolean isDuplicate = existingParts.stream()
                     return;
                 }
                 
-                // Tạo object mới
                 NewPartDetail newPart = new NewPartDetail();
                 newPart.setPartId(Integer.parseInt(request.getParameter("partId")));
                 newPart.setSerialNumber(serialNumber);
@@ -149,11 +138,15 @@ boolean isDuplicate = existingParts.stream()
                 System.out.println("  Status: " + newPart.getStatus());
                 System.out.println("  Location: " + newPart.getLocation());
                 
-                // Gọi DAO để insert
                 boolean success = dao.addPartDetail(newPart);
                 
                 if (success) {
                     System.out.println("✅ Add successful!");
+                    
+                    // ===== LƯU LỊCH SỬ THÊM MỚI =====
+                    int newPartDetailId = dao.getLastInsertedId(); // Cần thêm method này trong DAO
+                    historyDAO.addHistory(newPartDetailId, null, status, acc.getAccountId(), "Thêm mới thiết bị");
+                    
                     session.setAttribute("successMessage", "Thêm mới thành công!");
                 } else {
                     System.out.println("❌ Add failed!");
@@ -177,7 +170,7 @@ boolean isDuplicate = existingParts.stream()
             }
         }
 
-        // ===== XỬ LÝ EDIT =====
+        // ===== XỬ LÝ EDIT (CÓ LƯU LỊCH SỬ) =====
         if ("edit".equalsIgnoreCase(action)) {
             try {
                 System.out.println("=== START EDIT ===");
@@ -204,20 +197,17 @@ boolean isDuplicate = existingParts.stream()
                     return;
                 }
                 
-                // Lấy dữ liệu từ form
                 String serialNumber = request.getParameter("serialNumber");
                 String newStatus = request.getParameter("status");
                 String location = request.getParameter("location");
-                String oldStatus = part.getStatus();
+                String oldStatus = part.getStatus(); // LƯU TRẠNG THÁI CŨ
                 
-                // KIỂM TRA QUY TẮC: Nếu status hiện tại là "Available" thì KHÔNG được phép chuyển
                 if ("InUse".equalsIgnoreCase(oldStatus)) {
                     session.setAttribute("errorMessage", "⚠️ Không thể thay đổi trạng thái khi Part Detail đã ở trạng thái InUse!");
                     response.sendRedirect("partDetail");
                     return;
                 }
                 
-                // Validation Serial Number
                 if (serialNumber == null || serialNumber.trim().isEmpty()) {
                     session.setAttribute("errorMessage", "Serial Number không được để trống!");
                     response.sendRedirect("partDetail");
@@ -226,7 +216,6 @@ boolean isDuplicate = existingParts.stream()
                 
                 serialNumber = serialNumber.trim();
                 
-                // Quy tắc Serial Number
                 String serialPattern = "^[A-Z]{3}-\\d{3}-\\d{4}$";
                 if (!serialNumber.matches(serialPattern)) {
                     session.setAttribute("errorMessage", "Serial Number phải theo định dạng: AAA-XXX-YYYY (VD: SNK-001-2024)");
@@ -234,16 +223,15 @@ boolean isDuplicate = existingParts.stream()
                     return;
                 }
                 
-                // Kiểm tra trùng Serial Number (trừ chính nó)
                 List<NewPartDetail> existingParts = dao.getAllPartDetails();
-final String serialNumberValue = serialNumber;
-final int partDetailIdValue = partDetailId;
+                final String serialNumberValue = serialNumber;
+                final int partDetailIdValue = partDetailId;
 
-boolean isDuplicate = existingParts != null && serialNumberValue != null &&
-    existingParts.stream()
-                 .anyMatch(p -> p.getSerialNumber() != null &&
-                                serialNumberValue.equalsIgnoreCase(p.getSerialNumber()) &&
-                                p.getPartDetailId() != partDetailIdValue);
+                boolean isDuplicate = existingParts != null && serialNumberValue != null &&
+                    existingParts.stream()
+                                 .anyMatch(p -> p.getSerialNumber() != null &&
+                                                serialNumberValue.equalsIgnoreCase(p.getSerialNumber()) &&
+                                                p.getPartDetailId() != partDetailIdValue);
                 
                 if (isDuplicate) {
                     session.setAttribute("errorMessage", "Serial Number đã tồn tại! Vui lòng nhập Serial Number khác.");
@@ -251,7 +239,6 @@ boolean isDuplicate = existingParts != null && serialNumberValue != null &&
                     return;
                 }
                 
-                // Validation Location
                 if (location == null || location.trim().isEmpty()) {
                     session.setAttribute("errorMessage", "Location không được để trống!");
                     response.sendRedirect("partDetail");
@@ -272,7 +259,6 @@ boolean isDuplicate = existingParts != null && serialNumberValue != null &&
                     return;
                 }
                 
-                // Cập nhật dữ liệu
                 part.setPartId(Integer.parseInt(request.getParameter("partId")));
                 part.setSerialNumber(serialNumber);
                 part.setStatus(newStatus);
@@ -292,9 +278,15 @@ boolean isDuplicate = existingParts != null && serialNumberValue != null &&
                 if (success) {
                     System.out.println("✅ Edit successful!");
                     
-                    // Thông báo đặc biệt nếu chuyển sang Available
-                    if ("Available".equalsIgnoreCase(newStatus)) {
-                        session.setAttribute("successMessage", "⚠️ Cập nhật thành công! Lưu ý: Trạng thái Available không thể thay đổi.");
+                    // ===== LƯU LỊCH SỬ THAY ĐỔI =====
+                    if (!oldStatus.equals(newStatus)) {
+                        String notes = "Thay đổi trạng thái từ " + oldStatus + " sang " + newStatus;
+                        historyDAO.addHistory(partDetailId, oldStatus, newStatus, acc.getAccountId(), notes);
+                        System.out.println("✅ History saved: " + notes);
+                    }
+                    
+                    if ("InUse".equalsIgnoreCase(newStatus)) {
+                        session.setAttribute("successMessage", "⚠️ Cập nhật thành công! Lưu ý: Trạng thái InUse không thể thay đổi.");
                     } else {
                         session.setAttribute("successMessage", "Cập nhật thành công!");
                     }
@@ -360,7 +352,6 @@ boolean isDuplicate = existingParts != null && serialNumberValue != null &&
         String keyword = request.getParameter("keyword");
         String filter = request.getParameter("filter");
 
-        // Search theo keyword
         if (keyword != null && !keyword.trim().isEmpty()) {
             String keywordLower = keyword.toLowerCase().trim();
             System.out.println("Searching with keyword: " + keywordLower);
@@ -379,7 +370,6 @@ boolean isDuplicate = existingParts != null && serialNumberValue != null &&
             System.out.println("Found " + list.size() + " results");
         }
 
-        // Filter theo cột
         if (filter != null && !filter.isEmpty()) {
             System.out.println("Filtering by: " + filter);
             switch (filter.toLowerCase()) {
@@ -409,6 +399,6 @@ boolean isDuplicate = existingParts != null && serialNumberValue != null &&
 
     @Override
     public String getServletInfo() {
-        return "PartDetail Servlet - Manages part detail CRUD operations";
+        return "PartDetail Servlet - Manages part detail CRUD operations with history tracking";
     }
 }

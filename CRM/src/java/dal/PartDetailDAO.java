@@ -196,4 +196,19 @@ public class PartDetailDAO extends DBContext {
             return false;
         }
     }
+    /**
+ * Lấy ID của PartDetail vừa được thêm vào
+ */
+public int getLastInsertedId() {
+    String sql = "SELECT LAST_INSERT_ID() as id";
+    try (PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+            return rs.getInt("id");
+        }
+    } catch (SQLException e) {
+        System.out.println("Error getting last inserted ID: " + e.getMessage());
+    }
+    return -1;
+}
 }
