@@ -1225,24 +1225,24 @@ INSERT IGNORE INTO Contract (contractId, customerId, contractDate, contractType,
 -- Contract Equipment Relationships
 INSERT IGNORE INTO ContractEquipment (contractEquipmentId, contractId, equipmentId, startDate, endDate, quantity, price) VALUES 
 -- Contract 1 - Customer 4 (Lê Văn Khách)
-(1, 1, 1, '2024-01-01', '2024-12-31', 1, 5000000),
-(2, 1, 2, '2024-02-01', '2024-12-31', 1, 6000000),
+(1, 1, 1, '2024-01-01', '2025-12-31', 1, 5000000),
+(2, 1, 2, '2024-02-01', '2025-12-31', 1, 6000000),
 
 -- Contract 2 - Customer 5 (Phạm Thị Lan)
-(3, 2, 5, '2024-02-01', '2025-02-01', 1, 8000000),
-(4, 2, 6, '2024-02-10', '2025-02-10', 1, 12000000),
+(3, 2, 5, '2024-02-01', '2026-02-01', 1, 8000000),
+(4, 2, 6, '2024-02-10', '2026-02-10', 1, 12000000),
 
 -- Contract 3 - Customer 6 (Hoàng Văn Minh)
-(5, 3, 7, '2024-02-15', '2025-02-15', 1, 15000000),
-(6, 3, 8, '2024-02-20', '2025-02-20', 1, 10000000),
+(5, 3, 7, '2024-02-15', '2026-02-15', 1, 15000000),
+(6, 3, 8, '2024-02-20', '2026-02-20', 1, 10000000),
 
 -- Contract 4 - Customer 7 (Vũ Thị Hoa)
-(7, 4, 9, '2024-03-01', '2025-03-01', 1, 25000000),
-(8, 4, 10, '2024-03-20', '2025-03-20', 1, 30000000),
+(7, 4, 9, '2024-03-01', '2026-03-01', 1, 25000000),
+(8, 4, 10, '2024-03-20', '2026-03-20', 1, 30000000),
 
 -- Contract 5 - Customer 4 (Lê Văn Khách) - Extended
-(9, 5, 3, '2024-03-10', '2025-03-10', 1, 5500000),
-(10, 5, 4, '2024-03-10', '2025-03-10', 1, 6500000);
+(9, 5, 3, '2024-03-10', '2025-12-12', 1, 5500000),
+(10, 5, 4, '2024-03-10', '2025-12-12', 1, 6500000);
 
 -- ====================================================================
 -- 4. SERVICE REQUESTS FOR TESTING APPROVAL WORKFLOW
@@ -1423,7 +1423,7 @@ INSERT IGNORE INTO Contract (contractId, customerId, contractDate, contractType,
 (8, 7, '2024-04-01', 'Bảo trì',    'Active',    'Bảo trì HVAC trung tâm - Vũ Thị Hoa'),
 (9, 4, '2024-04-05', 'Bảo hành',   'Active',    'Bảo hành máy lạnh gia đình - Lê Văn Khách'),
 (10, 5,'2024-04-10', 'Bảo trì',    'Active',    'Bảo trì mở rộng cho hệ thống điện'),
-(11, 6,'2024-04-15', 'Bảo trì',    'Completed', 'Hoàn tất bảo trì quý I'),
+(11, 6,'2024-04-15', 'Bảo trì',    'Active', 'Hoàn tất bảo trì quý I'),
 (12, 7,'2024-04-20', 'Bảo hành',   'Active',    'Bảo hành thiết bị HVAC công nghiệp'),
 (13, 4,'2024-05-01', 'Bảo trì',    'Active',    'Bảo trì định kỳ nửa năm'),
 (14, 5,'2024-05-15', 'Bảo trì',    'Active',    'Bảo trì bổ sung phòng làm việc'),
@@ -1431,22 +1431,22 @@ INSERT IGNORE INTO Contract (contractId, customerId, contractDate, contractType,
 
 -- ContractEquipment for contracts 6..15 (equipment 1..10 exist)
 INSERT IGNORE INTO ContractEquipment (contractEquipmentId, contractId, equipmentId, startDate, endDate, quantity, price) VALUES 
-(11, 6,  5, '2024-03-20', '2025-03-20', 1, 8000000),
-(12, 6,  6, '2024-03-20', '2025-03-20', 1, 12000000),
-(13, 7,  8, '2024-03-25', '2025-03-25', 1, 9500000),
-(14, 7,  7, '2024-03-25', '2025-03-25', 1, 7500000),
-(15, 8,  9, '2024-04-01', '2025-04-01', 1, 26000000),
-(16, 8, 10, '2024-04-01', '2025-04-01', 1, 30000000),
-(17, 9,  1, '2024-04-05', '2025-04-05', 1, 5200000),
-(18, 9,  2, '2024-04-05', '2025-04-05', 1, 6100000),
-(19,10,  7, '2024-04-10', '2025-04-10', 1, 15500000),
-(20,10,  3, '2024-04-10', '2025-04-10', 1, 7000000),
-(21,11,  2, '2024-04-15', '2025-04-15', 1, 6000000),
-(22,11,  5, '2024-04-15', '2025-04-15', 1, 8200000),
-(23,12,  9, '2024-04-20', '2025-04-20', 1, 25000000),
-(24,13,  4, '2024-05-01', '2025-05-01', 1, 6600000),
-(25,14,  3, '2024-05-15', '2025-05-15', 1, 5600000),
-(26,15,  7, '2024-06-01', '2025-06-01', 1, 15000000);
+(11, 6,  5, '2024-03-20', '2026-03-20', 1, 8000000),
+(12, 6,  6, '2024-03-20', '2026-03-20', 1, 12000000),
+(13, 7,  8, '2024-03-25', '2026-03-25', 1, 9500000),
+(14, 7,  7, '2024-03-25', '2026-03-25', 1, 7500000),
+(15, 8,  9, '2024-04-01', '2026-04-01', 1, 26000000),
+(16, 8, 10, '2024-04-01', '2026-04-01', 1, 30000000),
+(17, 9,  1, '2024-04-05', '2026-04-05', 1, 5200000),
+(18, 9,  2, '2024-04-05', '2026-04-05', 1, 6100000),
+(19,10,  7, '2024-04-10', '2026-04-10', 1, 15500000),
+(20,10,  3, '2024-04-10', '2026-04-10', 1, 7000000),
+(21,11,  2, '2024-04-15', '2026-04-15', 1, 6000000),
+(22,11,  5, '2024-04-15', '2026-04-15', 1, 8200000),
+(23,12,  9, '2024-04-20', '2026-04-20', 1, 25000000),
+(24,13,  4, '2024-05-01', '2026-05-01', 1, 6600000),
+(25,14,  3, '2024-05-15', '2026-05-15', 1, 5600000),
+(26,15,  7, '2024-06-01', '2026-06-01', 1, 15000000);
 
 -- ====================================================================
 -- ADDITIONAL SEED: REPAIR REPORTS (12 more, IDs 9301..9312)
@@ -2416,3 +2416,48 @@ COMMIT;
 SET SQL_SAFE_UPDATES = 1;
 
 -- 
+
+-- Bật event scheduler nếu chưa bật
+SET GLOBAL event_scheduler = ON;
+
+DELIMITER $$
+
+CREATE EVENT update_contract_status_daily
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+    -- Cập nhật "Completed" nếu tất cả thiết bị trong hợp đồng đã hết hạn
+    UPDATE Contract c
+    SET c.status = 'Completed'
+    WHERE c.status = 'Active'
+      AND NOT EXISTS (
+          SELECT 1
+          FROM ContractEquipment ce
+          WHERE ce.contractId = c.contractId
+            AND (ce.endDate IS NULL OR ce.endDate >= CURDATE())
+      );
+
+    -- (Tùy chọn) Cập nhật "Cancelled" hoặc "Expired" nếu có quy tắc riêng
+    -- Ví dụ: nếu hợp đồng đã hết hạn hơn 30 ngày
+     UPDATE Contract c
+     SET c.status = 'Cancelled'
+     WHERE c.status = 'Completed'
+	 AND EXISTS (
+          SELECT 1
+          FROM ContractEquipment ce
+          WHERE ce.contractId = c.contractId
+           AND ce.endDate < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+      );
+END $$
+
+DELIMITER ;
+
+SET SQL_SAFE_UPDATES = 0;
+
+DELETE c
+FROM Contract c
+LEFT JOIN ContractEquipment ce ON c.contractId = ce.contractId
+WHERE ce.contractId IS NULL;
+
+SET SQL_SAFE_UPDATES = 1;
