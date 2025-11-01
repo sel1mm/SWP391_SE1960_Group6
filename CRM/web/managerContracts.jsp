@@ -1,1653 +1,1818 @@
-<%-- 
-    Document   : managerContracts
-    Created on : Oct 28, 2025, 9:55:30 PM
-    Author     : doand
---%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="vi">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CRM Dashboard - Quản Lý Hợp Đồng</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Hợp Đồng - Customer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-            body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background-color: #f8f9fa;
-                overflow-x: hidden;
-            }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
 
-            /* SIDEBAR STYLES */
+        /* ========== SIDEBAR STYLES ========== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: #000000;
+            padding: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+            font-size: 1.4rem;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .sidebar-brand i {
+            font-size: 2rem;
+            color: #ffc107;
+        }
+
+        .sidebar.collapsed .sidebar-brand span {
+            display: none;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 20px 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-menu::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+        }
+
+        .menu-section {
+            margin-bottom: 20px;
+        }
+
+        .menu-section-title {
+            padding: 8px 20px;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        .sidebar.collapsed .menu-section-title {
+            opacity: 0;
+            height: 0;
+            padding: 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            position: relative;
+            margin: 2px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-left: 4px solid #ffc107;
+        }
+
+        .menu-item i {
+            font-size: 1.2rem;
+            width: 30px;
+            text-align: center;
+        }
+
+        .menu-item span {
+            margin-left: 12px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .sidebar.collapsed .menu-item span {
+            display: none;
+        }
+
+        .menu-item .badge {
+            margin-left: auto;
+            font-size: 0.7rem;
+        }
+
+        .sidebar.collapsed .menu-item .badge {
+            display: none;
+        }
+
+        /* SIDEBAR FOOTER */
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffc107, #ff9800);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .user-details {
+            flex: 1;
+            transition: all 0.3s;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .sidebar.collapsed .user-details {
+            display: none;
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: white;
+            border: 1px solid white;
+            border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn-logout:hover {
+            background: white;
+            color: #1a1a2e;
+            border-color: white;
+        }
+
+        .sidebar.collapsed .btn-logout span {
+            display: none;
+        }
+
+        /* TOGGLE BUTTON */
+        .sidebar-toggle {
+            position: absolute;
+            top: 25px;
+            right: -15px;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border: 2px solid #1e3c72;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #1e3c72;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1001;
+        }
+
+        .sidebar-toggle:hover {
+            transform: scale(1.1);
+            background: #1e3c72;
+            color: white;
+        }
+
+        /* MAIN CONTENT WITH SIDEBAR */
+        .main-content {
+            margin-left: 260px;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
+        }
+
+        /* HEADER */
+        .page-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .page-header .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+        }
+
+        .page-header .breadcrumb-item {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .page-header .breadcrumb-item.active {
+            color: white;
+        }
+
+        .page-header .breadcrumb-item + .breadcrumb-item::before {
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* NOTIFICATION BADGE IN HEADER */
+        .notification-badge-header {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .notification-badge-header .btn {
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .notification-badge-header .btn:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: white;
+            transform: scale(1.05);
+        }
+
+        .notification-badge-header .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            padding: 5px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            background: #dc3545;
+            border: 2px solid #1e3c72;
+            color: white;
+            font-weight: 700;
+        }
+
+        /* CONTENT WRAPPER */
+        .content-wrapper {
+            padding: 30px 40px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 40px;
+            margin-top: 10px;
+            width: 400px;
+            max-height: 500px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1049;
+            overflow: hidden;
+        }
+
+        .notification-dropdown.show {
+            display: block;
+        }
+
+        .notification-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background: #f8f9fa;
+        }
+
+        .notification-item.unread {
+            background: #e7f3ff;
+            border-left: 4px solid #0d6efd;
+        }
+
+        .notification-item .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: 15px;
+        }
+
+        .notification-item.type-new .notification-icon {
+            background: #d1f2eb;
+            color: #198754;
+        }
+
+        .notification-item.type-expiring .notification-icon {
+            background: #fff3cd;
+            color: #ffc107;
+        }
+
+        .notification-item.type-response .notification-icon {
+            background: #cfe2ff;
+            color: #0d6efd;
+        }
+
+        /* STATS CARDS */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            border-left: 4px solid;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .stat-card.total {
+            border-color: #0d6efd;
+        }
+
+        .stat-card.active {
+            border-color: #198754;
+        }
+
+        .stat-card.expiring {
+            border-color: #ffc107;
+        }
+
+        .stat-card.expired {
+            border-color: #dc3545;
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-card.total .stat-card-icon {
+            background: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+        }
+
+        .stat-card.active .stat-card-icon {
+            background: rgba(25, 135, 84, 0.1);
+            color: #198754;
+        }
+
+        .stat-card.expiring .stat-card-icon {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+
+        .stat-card.expired .stat-card-icon {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .stat-card-title {
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        /* SEARCH & FILTER */
+        .search-filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .filter-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* CONTRACT TABLE */
+        .contract-table-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+            padding: 20px 25px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-responsive {
+            padding: 0;
+        }
+
+        .contract-table {
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .contract-table thead th {
+            background: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            padding: 15px 20px;
+            border-bottom: 2px solid #dee2e6;
+            white-space: nowrap;
+        }
+
+        .contract-table tbody td {
+            padding: 15px 20px;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .contract-table tbody tr {
+            transition: all 0.3s;
+        }
+
+        .contract-table tbody tr:hover {
+            background: #f8f9fa;
+            transform: scale(1.01);
+        }
+
+        /* STATUS BADGES */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-badge.active {
+            background: #d1f2eb;
+            color: #0f5132;
+        }
+
+        .status-badge.expiring {
+            background: #fff3cd;
+            color: #664d03;
+        }
+
+        .status-badge.expired {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .status-badge.terminated {
+            background: #e2e3e5;
+            color: #41464b;
+        }
+
+        /* CONTRACT TYPE BADGE */
+        .contract-type-badge {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .contract-type-badge.service {
+            background: #cfe2ff;
+            color: #084298;
+        }
+
+        .contract-type-badge.warranty {
+            background: #d1e7dd;
+            color: #0a3622;
+        }
+
+        /* ACTION BUTTONS */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .btn-view {
+            background: #0d6efd;
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: #0b5ed7;
+        }
+
+        .btn-download {
+            background: #198754;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #157347;
+        }
+
+        .btn-terminate {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-terminate:hover {
+            background: #bb2d3b;
+        }
+
+        .btn-terminate:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* DAYS REMAINING INDICATOR */
+        .days-remaining {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .days-remaining.critical {
+            color: #dc3545;
+        }
+
+        .days-remaining.warning {
+            color: #ffc107;
+        }
+
+        .days-remaining.safe {
+            color: #198754;
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state i {
+            font-size: 5rem;
+            color: #dee2e6;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            color: #6c757d;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #adb5bd;
+            font-size: 1rem;
+        }
+
+        /* PAGINATION */
+        .pagination-wrapper {
+            padding: 20px 25px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pagination {
+            margin: 0;
+        }
+
+        .page-link {
+            color: #000000;
+            border: 1px solid #dee2e6;
+            padding: 8px 15px;
+        }
+
+        .page-link:hover {
+            background: #000000;
+            color: white;
+            border-color: #000000;
+        }
+
+        .page-item.active .page-link {
+            background: #000000;
+            border-color: #000000;
+        }
+
+        /* MODAL CUSTOM */
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+        }
+
+        .modal-header {
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            padding: 20px 25px;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .modal-footer {
+            padding: 15px 25px;
+            background: #f8f9fa;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-value {
+            color: #212529;
+        }
+
+        /* ALERT CUSTOM */
+        .alert-custom {
+            border-left: 4px solid;
+            border-radius: 8px;
+            padding: 15px 20px;
+        }
+
+        .alert-custom.alert-warning {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .alert-custom.alert-info {
+            border-color: #0dcaf0;
+            background: #cff4fc;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
             .sidebar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 100vh;
-                width: 260px;
-                background: #000000;
-                padding: 0;
-                transition: all 0.3s ease;
-                z-index: 1000;
-                box-shadow: 4px 0 10px rgba(0,0,0,0.1);
-                display: flex;
-                flex-direction: column;
+                transform: translateX(-100%);
             }
 
-            .sidebar.collapsed {
-                width: 70px;
+            .sidebar.show {
+                transform: translateX(0);
             }
 
-            .sidebar-header {
-                padding: 25px 20px;
-                background: rgba(0,0,0,0.2);
-                border-bottom: 1px solid rgba(255,255,255,0.1);
-            }
-
-            .sidebar-brand {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                color: white;
-                text-decoration: none;
-                font-size: 1.4rem;
-                font-weight: 700;
-                transition: all 0.3s;
-            }
-
-            .sidebar-brand i {
-                font-size: 2rem;
-                color: #ffc107;
-            }
-
-            .sidebar.collapsed .sidebar-brand span {
-                display: none;
-            }
-
-            .sidebar-menu {
-                flex: 1;
-                padding: 20px 0;
-                overflow-y: auto;
-                overflow-x: hidden;
-            }
-
-            .sidebar-menu::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            .sidebar-menu::-webkit-scrollbar-thumb {
-                background: rgba(255,255,255,0.2);
-                border-radius: 10px;
-            }
-
-            .menu-item {
-                display: flex;
-                align-items: center;
-                padding: 14px 20px;
-                color: rgba(255,255,255,0.8);
-                text-decoration: none;
-                transition: all 0.3s;
-                position: relative;
-                margin: 2px 10px;
-                border-radius: 8px;
-            }
-
-            .menu-item:hover {
-                background: rgba(255,255,255,0.1);
-                color: white;
-                transform: translateX(5px);
-            }
-
-            .menu-item.active {
-                background: rgba(255,255,255,0.15);
-                color: white;
-                border-left: 4px solid #ffc107;
-            }
-
-            .menu-item i {
-                font-size: 1.2rem;
-                width: 30px;
-                text-align: center;
-            }
-
-            .menu-item span {
-                margin-left: 12px;
-                font-size: 0.95rem;
-                transition: all 0.3s;
-            }
-
-            .sidebar.collapsed .menu-item span {
-                display: none;
-            }
-
-            .menu-item .badge {
-                margin-left: auto;
-                font-size: 0.7rem;
-            }
-
-            .sidebar.collapsed .menu-item .badge {
-                display: none;
-            }
-
-            .sidebar-footer {
-                padding: 20px;
-                border-top: 1px solid rgba(255,255,255,0.1);
-                background: rgba(0,0,0,0.2);
-            }
-
-            .user-info {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                color: white;
-                margin-bottom: 15px;
-                padding: 10px;
-                background: rgba(255,255,255,0.1);
-                border-radius: 8px;
-                transition: all 0.3s;
-            }
-
-            .user-avatar {
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                background: linear-gradient(135deg, #ffc107, #ff9800);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 1.1rem;
-                color: white;
-            }
-
-            .user-details {
-                flex: 1;
-                transition: all 0.3s;
-            }
-
-            .user-name {
-                font-size: 0.9rem;
-                font-weight: 600;
-                margin-bottom: 2px;
-            }
-
-            .user-role {
-                font-size: 0.75rem;
-                color: rgba(255,255,255,0.6);
-            }
-
-            .sidebar.collapsed .user-details {
-                display: none;
-            }
-
-            .btn-logout {
-                width: 100%;
-                padding: 12px;
-                background: transparent;
-                color: white;
-                border: 1px solid white;
-                border-radius: 8px;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 10px;
-                transition: all 0.3s;
-                cursor: pointer;
-                text-decoration: none;
-            }
-
-            .btn-logout:hover {
-                background: white;
-                color: #1a1a2e;
-                border-color: white;
-            }
-
-            .sidebar.collapsed .btn-logout span {
-                display: none;
-            }
-
-            .sidebar-toggle {
-                position: absolute;
-                top: 25px;
-                right: -15px;
-                width: 30px;
-                height: 30px;
-                background: white;
-                border: 2px solid #1e3c72;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                color: #1e3c72;
-                transition: all 0.3s;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            }
-
-            .sidebar-toggle:hover {
-                transform: scale(1.1);
-                background: #1e3c72;
-                color: white;
-            }
-
-            /* MAIN CONTENT */
             .main-content {
-                margin-left: 260px;
-                transition: all 0.3s ease;
-                min-height: 100vh;
+                margin-left: 0;
             }
 
             .sidebar.collapsed ~ .main-content {
-                margin-left: 70px;
-            }
-
-            .top-navbar {
-                background: white;
-                padding: 20px 30px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-                font-weight: 700;
-                color: #1e3c72;
-                margin: 0;
+                margin-left: 0;
             }
 
             .content-wrapper {
-                padding: 30px;
+                padding: 20px 15px;
             }
 
-            .stats-card {
-                border-radius: 10px;
-                padding: 20px;
-                margin-bottom: 20px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                transition: all 0.3s;
+            .stats-row {
+                grid-template-columns: 1fr;
             }
 
-            .stats-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            }
-
-            .stats-card i {
-                font-size: 2.5rem;
-                opacity: 0.8;
-            }
-
-            .table-container {
-                background: white;
-                border-radius: 10px;
-                padding: 25px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            }
-
-            .badge-active {
-                background-color: #198754;
-            }
-
-            .badge-expired {
-                background-color: #dc3545;
-            }
-
-            .badge-pending {
-                background-color: #ffc107;
-                color: #000;
-            }
-
-            .badge-terminated {
-                background-color: #6c757d;
-            }
-
-            .search-filter-bar {
-                background: white;
-                padding: 20px;
-                border-radius: 10px;
-                margin-bottom: 20px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            .action-buttons {
+                flex-direction: column;
             }
 
             .btn-action {
-                padding: 5px 10px;
-                margin: 0 2px;
-            }
-
-            /* TOAST NOTIFICATION */
-            #toastContainer {
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                z-index: 99999;
-                width: 350px;
-                max-width: 90vw;
-            }
-
-            .toast-notification {
-                background: white;
-                border-radius: 10px;
-                padding: 15px 20px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                margin-bottom: 10px;
-                animation: slideInRight 0.4s ease-out;
-            }
-
-            @keyframes slideInRight {
-                from {
-                    transform: translateX(400px);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-
-            .toast-notification.hiding {
-                animation: slideOutRight 0.4s ease-out forwards;
-            }
-
-            @keyframes slideOutRight {
-                from {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-                to {
-                    transform: translateX(400px);
-                    opacity: 0;
-                }
-            }
-
-            .toast-notification.success {
-                border-left: 4px solid #198754;
-            }
-
-            .toast-notification.error {
-                border-left: 4px solid #dc3545;
-            }
-
-            .toast-notification.info {
-                border-left: 4px solid #0dcaf0;
-            }
-
-            .toast-icon {
-                font-size: 24px;
-                flex-shrink: 0;
-            }
-
-            .toast-icon.success {
-                color: #198754;
-            }
-
-            .toast-icon.error {
-                color: #dc3545;
-            }
-
-            .toast-icon.info {
-                color: #0dcaf0;
-            }
-
-            .toast-content {
-                flex: 1;
-            }
-
-            .toast-close {
-                background: none;
-                border: none;
-                cursor: pointer;
-                color: #999;
-                padding: 0;
-                font-size: 18px;
-                transition: color 0.2s;
-            }
-
-            .toast-close:hover {
-                color: #333;
-            }
-
-            .contract-value {
-                color: #198754;
-                font-weight: 700;
-                font-size: 1.1rem;
-            }
-
-            /* FOOTER STYLES */
-            .site-footer {
-                background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-                color: rgba(255, 255, 255, 0.9);
-                padding: 50px 0 20px;
-                margin-top: 50px;
-            }
-
-            .footer-content {
-                max-width: 1400px;
-                margin: 0 auto;
-                padding: 0 30px;
-            }
-
-            .footer-grid {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 50px;
-                margin-bottom: 60px;
-            }
-
-            .footer-section h5 {
-                color: #fff;
-                font-size: 1.1rem;
-                font-weight: 600;
-                margin-bottom: 20px;
-                position: relative;
-                padding-bottom: 10px;
-            }
-
-            .footer-section h5:after {
-                content: '';
-                position: absolute;
-                left: 0;
-                bottom: 0;
-                width: 50px;
-                height: 2px;
-                background: #ffc107;
-            }
-
-            .footer-about {
-                color: rgba(255, 255, 255, 0.8);
-                line-height: 1.8;
-                margin-bottom: 15px;
-                font-size: 14px;
-            }
-
-            .footer-version {
-                color: rgba(255, 255, 255, 0.6);
-                font-size: 0.9rem;
-            }
-
-            .footer-links {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            .footer-links li {
-                margin-bottom: 12px;
-            }
-
-            .footer-links a {
-                color: rgba(255, 255, 255, 0.8);
-                text-decoration: none;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                transition: all 0.3s;
-                font-size: 0.95rem;
-            }
-
-            .footer-links a:hover {
-                color: #ffc107;
-                transform: translateX(5px);
-            }
-
-            .footer-contact-item {
-                display: flex;
-                align-items: flex-start;
-                gap: 12px;
-                margin-bottom: 15px;
-                color: rgba(255, 255, 255, 0.8);
-                font-size: 0.9rem;
-            }
-
-            .footer-contact-item i {
-                font-size: 1rem;
-                color: #ffc107;
-                margin-top: 3px;
-            }
-
-            .footer-stats {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            .footer-stats li {
-                margin-bottom: 12px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                color: rgba(255, 255, 255, 0.8);
-                font-size: 0.9rem;
-            }
-
-            .footer-stats i {
-                color: #ffc107;
-                font-size: 1rem;
-            }
-
-            .footer-certifications {
-                display: flex;
-                gap: 10px;
-                margin-top: 20px;
-                flex-wrap: wrap;
-            }
-
-            .cert-badge {
-                background: rgba(255, 255, 255, 0.1);
-                padding: 6px 12px;
-                border-radius: 6px;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                font-size: 0.8rem;
-                transition: all 0.3s;
-            }
-
-            .cert-badge:hover {
-                background: rgba(255, 255, 255, 0.2);
-                transform: translateY(-2px);
-            }
-
-            .cert-badge i {
-                color: #ffc107;
-            }
-
-            .footer-divider {
-                height: 1px;
-                background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
-                margin-bottom: 40px;
-            }
-
-            .footer-bottom {
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-                padding-top: 25px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                flex-wrap: wrap;
-                gap: 15px;
-            }
-
-            .footer-copyright {
-                color: rgba(255, 255, 255, 0.7);
-                font-size: 0.9rem;
-            }
-
-            .footer-bottom-links {
-                display: flex;
-                gap: 25px;
-            }
-
-            .footer-bottom-links a {
-                color: rgba(255, 255, 255, 0.7);
-                text-decoration: none;
-                font-size: 0.9rem;
-                transition: all 0.3s;
-            }
-
-            .footer-bottom-links a:hover {
-                color: #ffc107;
-            }
-
-            .scroll-to-top {
-                position: fixed;
-                bottom: 30px;
-                right: 30px;
-                width: 45px;
-                height: 45px;
-                background: #ffc107;
-                color: #1e3c72;
-                border-radius: 50%;
-                display: none;
-                align-items: center;
+                width: 100%;
                 justify-content: center;
-                cursor: pointer;
-                transition: all 0.3s;
-                z-index: 999;
-                box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
             }
 
-            .scroll-to-top:hover {
-                background: #ffb300;
-                transform: translateY(-5px);
+            .notification-dropdown {
+                width: calc(100vw - 40px);
+                right: 20px;
             }
 
-            .scroll-to-top.show {
-                display: flex;
+            .detail-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
             }
+        }
 
-            /* RESPONSIVE */
-            @media (max-width: 768px) {
-                .sidebar {
-                    transform: translateX(-100%);
-                }
+        /* LOADING SPINNER */
+        .spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
 
-                .sidebar.show {
-                    transform: translateX(0);
-                }
+        .spinner-overlay.show {
+            display: flex;
+        }
 
-                .main-content {
-                    margin-left: 0;
-                }
+        .spinner-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
 
-                .sidebar.collapsed ~ .main-content {
-                    margin-left: 0;
-                }
+    <!-- ========== SIDEBAR ========== -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-chevron-left" id="toggleIcon"></i>
+        </div>
 
-                .footer-grid {
-                    grid-template-columns: 1fr;
-                    gap: 30px;
-                }
+        <div class="sidebar-header">
+            <a href="#" class="sidebar-brand">
+                <i class="fas fa-building"></i>
+                <span>CRM System</span>
+            </a>
+        </div>
 
-                .footer-bottom {
-                    flex-direction: column;
-                    text-align: center;
-                }
-
-                .footer-bottom-links {
-                    flex-direction: column;
-                    gap: 10px;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <!-- SIDEBAR -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-toggle" onclick="toggleSidebar()">
-                <i class="fas fa-chevron-left" id="toggleIcon"></i>
-            </div>
-
-            <div class="sidebar-header">
-                <a href="#" class="sidebar-brand">
-                    <i class="fas fa-chart-line"></i>
-                    <span>CRM System</span>
+        <div class="sidebar-menu">
+            <div class="menu-section">
+                <a href="${pageContext.request.contextPath}/dashboard" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/managerServiceRequest" class="menu-item">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Yêu Cầu Dịch Vụ</span>
+                    <span class="badge bg-warning">3</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/viewCustomerContract" class="menu-item active">
+                    <i class="fas fa-file-contract"></i>
+                    <span>Hợp Đồng</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/equipment" class="menu-item">
+                    <i class="fas fa-tools"></i>
+                    <span>Thiết Bị</span>
                 </a>
             </div>
 
-            <div class="sidebar-menu">
-                <div class="menu-section">
-                    <a href="${pageContext.request.contextPath}/dashboard" class="menu-item">
-                        <i class="fas fa-home"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/managerServiceRequest" class="menu-item">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span>Yêu Cầu Dịch Vụ</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/contracts" class="menu-item active">
-                        <i class="fas fa-file-contract"></i>
-                        <span>Hợp Đồng</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/equipment" class="menu-item">
-                        <i class="fas fa-tools"></i>
-                        <span>Thiết Bị</span>
-                    </a>
-                </div>
-
-                <div class="menu-section">
-                    <a href="${pageContext.request.contextPath}/customers" class="menu-item">
-                        <i class="fas fa-users"></i>
-                        <span>Khách Hàng</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/reports" class="menu-item">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Báo Cáo</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/maintenance" class="menu-item">
-                        <i class="fas fa-wrench"></i>
-                        <span>Bảo Trì</span>
-                    </a>
-                </div>
-
-                <div class="menu-section">
-                    <a href="${pageContext.request.contextPath}/manageProfile" class="menu-item">
-                        <i class="fas fa-user-circle"></i>
-                        <span>Hồ Sơ</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/settings" class="menu-item">
-                        <i class="fas fa-cog"></i>
-                        <span>Cài Đặt</span>
-                    </a>
-                </div>
+            <div class="menu-section">
+                <a href="${pageContext.request.contextPath}/reports" class="menu-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Báo Cáo</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/maintenance" class="menu-item">
+                    <i class="fas fa-wrench"></i>
+                    <span>Bảo Trì</span>
+                </a>
             </div>
 
-            <div class="sidebar-footer">
-                <div class="user-info">
-                    <div class="user-avatar">
-                        <c:choose>
-                            <c:when test="${not empty sessionScope.session_login.fullName}">
-                                ${sessionScope.session_login.fullName.substring(0,1).toUpperCase()}
-                            </c:when>
-                            <c:when test="${not empty sessionScope.session_login.username}">
-                                ${sessionScope.session_login.username.substring(0,1).toUpperCase()}
-                            </c:when>
-                            <c:otherwise>
-                                U
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                    <div class="user-details">
-                        <div class="user-name">
-                            <c:choose>
-                                <c:when test="${not empty sessionScope.session_login.fullName}">
-                                    ${sessionScope.session_login.fullName}
-                                </c:when>
-                                <c:when test="${not empty sessionScope.session_login.username}">
-                                    ${sessionScope.session_login.username}
-                                </c:when>
-                                <c:otherwise>
-                                    User
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                        <div class="user-role">
-                            <c:choose>
-                                <c:when test="${not empty sessionScope.session_role}">
-                                    ${sessionScope.session_role}
-                                </c:when>
-                                <c:otherwise>
-                                    Manager
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                    </div>
-                </div>
-                <a href="${pageContext.request.contextPath}/logout" class="btn-logout" style="text-decoration: none;">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Đăng Xuất</span>
+            <div class="menu-section">
+                <a href="${pageContext.request.contextPath}/manageProfile" class="menu-item">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Hồ Sơ</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/settings" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Cài Đặt</span>
                 </a>
             </div>
         </div>
 
-        <!-- MAIN CONTENT -->
-        <div class="main-content">
-            <div class="top-navbar">
-                <h1 class="page-title"><i class="fas fa-file-contract"></i> Quản Lý Hợp Đồng</h1>
-                <div class="d-flex gap-2">
-                    <a href="${pageContext.request.contextPath}/managerServiceRequest" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Quay Lại
-                    </a>
-                    <button class="btn btn-secondary" onclick="refreshPage()">
-                        <i class="fas fa-sync"></i> Làm Mới
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.session_login.fullName}">
+                            ${sessionScope.session_login.fullName.substring(0,1).toUpperCase()}
+                        </c:when>
+                        <c:when test="${not empty sessionScope.session_login.username}">
+                            ${sessionScope.session_login.username.substring(0,1).toUpperCase()}
+                        </c:when>
+                        <c:otherwise>
+                            C
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">
+                        <c:choose>
+                            <c:when test="${not empty sessionScope.session_login.fullName}">
+                                ${sessionScope.session_login.fullName}
+                            </c:when>
+                            <c:when test="${not empty sessionScope.session_login.username}">
+                                ${sessionScope.session_login.username}
+                            </c:when>
+                            <c:otherwise>
+                                Customer
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <div class="user-role">
+                        <c:choose>
+                            <c:when test="${not empty sessionScope.session_role}">
+                                ${sessionScope.session_role}
+                            </c:when>
+                            <c:otherwise>
+                                Khách Hàng
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </div>
+            <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Đăng Xuất</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="main-content">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <!-- NOTIFICATION DROPDOWN -->
+        <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-header">
+                <span><i class="fas fa-bell"></i> Thông Báo</span>
+                <button class="btn btn-sm btn-light" onclick="markAllAsRead()">
+                    <i class="fas fa-check-double"></i> Đọc tất cả
+                </button>
+            </div>
+            <div class="notification-list">
+                <!-- Example notifications -->
+                <div class="notification-item unread type-new" onclick="viewNotification(1)">
+                    <div class="d-flex">
+                        <div class="notification-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong>Hợp đồng mới được tạo</strong>
+                            <p class="mb-1 text-muted small">Hợp đồng HD001 đã được tạo và chờ xác nhận từ bạn.</p>
+                            <small class="text-muted"><i class="fas fa-clock"></i> 2 giờ trước</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notification-item unread type-expiring" onclick="viewNotification(2)">
+                    <div class="d-flex">
+                        <div class="notification-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong>Hợp đồng sắp hết hạn</strong>
+                            <p class="mb-1 text-muted small">Hợp đồng HD002 sẽ hết hạn trong 10 ngày nữa.</p>
+                            <small class="text-muted"><i class="fas fa-clock"></i> 1 ngày trước</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notification-item unread type-response" onclick="viewNotification(3)">
+                    <div class="d-flex">
+                        <div class="notification-icon">
+                            <i class="fas fa-reply"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong>Phản hồi yêu cầu chấm dứt</strong>
+                            <p class="mb-1 text-muted small">Yêu cầu chấm dứt hợp đồng HD003 đã được xử lý.</p>
+                            <small class="text-muted"><i class="fas fa-clock"></i> 3 ngày trước</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notification-item" onclick="viewNotification(4)">
+                    <div class="d-flex">
+                        <div class="notification-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong>Thông báo hệ thống</strong>
+                            <p class="mb-1 text-muted small">Hệ thống sẽ bảo trì vào 00:00 ngày 15/01/2025.</p>
+                            <small class="text-muted"><i class="fas fa-clock"></i> 1 tuần trước</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center p-3 border-top">
+                <a href="#" class="text-decoration-none">Xem tất cả thông báo</a>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-file-contract"></i> Quản Lý Hợp Đồng Khách Hàng</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#" class="text-white-50">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">Hợp đồng của tôi</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <!-- NOTIFICATION BADGE IN HEADER -->
+                <div class="notification-badge-header" onclick="toggleNotifications()">
+                    <button class="btn position-relative">
+                        <i class="fas fa-bell fs-5"></i>
+                        <span class="badge" id="notificationCount">3</span>
                     </button>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createContractModal">
-                        <i class="fas fa-plus"></i> Tạo Hợp Đồng Mới
-                    </button>
+                </div>
+                <div class="text-end">
+                    <p class="mb-0">Xin chào, <strong>customer1</strong></p>
+                    <small>Khách hàng</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="content-wrapper">
+        
+        <!-- STATISTICS CARDS -->
+        <div class="stats-row">
+            <div class="stat-card total">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-title">Tổng hợp đồng</div>
+                        <div class="stat-card-value">5</div>
+                    </div>
+                    <div class="stat-card-icon">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
                 </div>
             </div>
 
-            <div id="toastContainer"></div>
-
-            <div class="content-wrapper">
-                <!-- THỐNG KÊ -->
-                <div class="row">
-                    <div class="col-xl col-lg-3 col-md-6 col-sm-6">
-                        <div class="stats-card bg-primary text-white">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6>Tổng Hợp Đồng</h6>
-                                    
-                                </div>
-                                <i class="fas fa-file-contract"></i>
-                            </div>
-                        </div>
+            <div class="stat-card active">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-title">Đang hoạt động</div>
+                        <div class="stat-card-value">3</div>
                     </div>
-                    <div class="col-xl col-lg-3 col-md-6 col-sm-6">
-                        <div class="stats-card bg-success text-white">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6>Đang Hiệu Lực</h6>
-                                   
-                                </div>
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl col-lg-3 col-md-6 col-sm-6">
-                        <div class="stats-card bg-warning text-dark">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6>Sắp Hết Hạn</h6>
-                                   
-                                </div>
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl col-lg-3 col-md-6 col-sm-6">
-                        <div class="stats-card bg-danger text-white">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6>Đã Hết Hạn</h6>
-                                    
-                                </div>
-                                <i class="fas fa-times-circle"></i>
-                            </div>
-                        </div>
+                    <div class="stat-card-icon">
+                        <i class="fas fa-check-circle"></i>
                     </div>
                 </div>
+            </div>
 
-                <!-- SEARCH & FILTER BAR -->
-                <div class="search-filter-bar">
-                    <form action="${pageContext.request.contextPath}/contracts" method="get" class="row g-3">
-                        <div class="col-md-5">
-                            <div class="input-group">
-                                <input type="text" class="form-control" name="keyword" 
-                                       placeholder="Tìm kiếm theo mã hợp đồng, khách hàng..." value="${param.keyword}">
-                                <button class="btn btn-primary" type="submit" name="action" value="search">
-                                    <i class="fas fa-search"></i> Tìm Kiếm
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select" name="status" id="filterStatus">
-                                <option value="">-- Tất Cả Trạng Thái --</option>
-                                <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>Đang Hiệu Lực</option>
-                                <option value="Pending" ${param.status == 'Pending' ? 'selected' : ''}>Chờ Kích Hoạt</option>
-                                <option value="Expired" ${param.status == 'Expired' ? 'selected' : ''}>Đã Hết Hạn</option>
-                                <option value="Terminated" ${param.status == 'Terminated' ? 'selected' : ''}>Đã Chấm Dứt</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" name="type">
-                                <option value="">-- Loại Hợp Đồng --</option>
-                                <option value="Service" ${param.type == 'Service' ? 'selected' : ''}>Dịch Vụ</option>
-                                <option value="Maintenance" ${param.type == 'Maintenance' ? 'selected' : ''}>Bảo Trì</option>
-                                <option value="Support" ${param.type == 'Support' ? 'selected' : ''}>Hỗ Trợ</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" name="action" value="filter" class="btn btn-info w-100">
-                                <i class="fas fa-filter"></i> Lọc
-                            </button>
-                        </div>
-                    </form>
+            <div class="stat-card expiring">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-title">Sắp hết hạn</div>
+                        <div class="stat-card-value">1</div>
+                    </div>
+                    <div class="stat-card-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
                 </div>
+            </div>
 
-                <!-- BẢNG DANH SÁCH HỢP ĐỒNG -->
-                <div class="table-container">
+            <div class="stat-card expired">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-title">Đã hết hạn</div>
+                        <div class="stat-card-value">1</div>
+                    </div>
+                    <div class="stat-card-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEARCH & FILTER SECTION -->
+        <div class="search-filter-section">
+            <div class="filter-title">
+                <i class="fas fa-filter"></i> Tìm kiếm & Lọc
+            </div>
+            <form method="get" action="${pageContext.request.contextPath}/viewCustomerContract">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            <i class="fas fa-search"></i> Tìm kiếm
+                        </label>
+                        <input type="text" class="form-control" name="keyword" 
+                               placeholder="Tên khách hàng / SDT / Email / Username..." 
+                               value="${keyword}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt"></i> Từ ngày ký
+                        </label>
+                        <input type="date" class="form-control" name="fromDate" value="${fromDate}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt"></i> Đến ngày ký
+                        </label>
+                        <input type="date" class="form-control" name="toDate" value="${toDate}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">
+                            <i class="fas fa-info-circle"></i> Trạng thái
+                        </label>
+                        <select class="form-select" name="status">
+                            <option value="">Tất cả</option>
+                            <option value="Active" ${status == 'Active' ? 'selected' : ''}>Hoạt động</option>
+                            <option value="Expiring" ${status == 'Expiring' ? 'selected' : ''}>Sắp hết hạn</option>
+                            <option value="Expired" ${status == 'Expired' ? 'selected' : ''}>Hết hạn</option>
+                            <option value="Terminated" ${status == 'Terminated' ? 'selected' : ''}>Đã chấm dứt</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-search"></i> Tìm kiếm
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- CONTRACTS TABLE -->
+        <div class="contract-table-wrapper">
+            <div class="table-header">
+                <i class="fas fa-list"></i> Danh sách hợp đồng
+            </div>
+
+            <div class="table-responsive">
+                <table class="contract-table table">
+                    <thead>
+                        <tr>
+                            <th>Mã hợp đồng</th>
+                            <th>Loại hợp đồng</th>
+                            <th>Ngày ký</th>
+                            <th>Ngày kết thúc</th>
+                            <th>Còn lại</th>
+                            <th>Trạng thái</th>
+                            <th>Chi tiết</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Sample Data Row 1 - Active -->
+                        <tr>
+                            <td><strong>HD001</strong></td>
+                            <td><span class="contract-type-badge service">Dịch Vụ</span></td>
+                            <td>01/01/2024</td>
+                            <td>31/12/2024</td>
+                            <td><span class="days-remaining safe">120 ngày</span></td>
+                            <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Hoạt động</span></td>
+                            <td>
+                                <small class="text-muted">Giá trị: 50,000,000 VNĐ</small><br>
+                                <small class="text-muted">Thiết bị: 3 cái</small>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-action btn-view" onclick="viewContractDetail(1)">
+                                        <i class="fas fa-eye"></i> Xem
+                                    </button>
+                                    <button class="btn-action btn-download" onclick="downloadContract(1)">
+                                        <i class="fas fa-download"></i> Tải
+                                    </button>
+                                    <button class="btn-action btn-terminate" onclick="requestTermination(1)">
+                                        <i class="fas fa-ban"></i> Chấm dứt
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Sample Data Row 2 - Expiring -->
+                        <tr>
+                            <td><strong>HD002</strong></td>
+                            <td><span class="contract-type-badge warranty">Bảo Hành</span></td>
+                            <td>15/03/2024</td>
+                            <td>15/01/2025</td>
+                            <td><span class="days-remaining warning">10 ngày</span></td>
+                            <td><span class="status-badge expiring"><i class="fas fa-exclamation-triangle"></i> Sắp hết hạn</span></td>
+                            <td>
+                                <small class="text-muted">Giá trị: 30,000,000 VNĐ</small><br>
+                                <small class="text-muted">Thiết bị: 2 cái</small>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-action btn-view" onclick="viewContractDetail(2)">
+                                        <i class="fas fa-eye"></i> Xem
+                                    </button>
+                                    <button class="btn-action btn-download" onclick="downloadContract(2)">
+                                        <i class="fas fa-download"></i> Tải
+                                    </button>
+                                    <button class="btn-action btn-terminate" onclick="requestTermination(2)">
+                                        <i class="fas fa-ban"></i> Chấm dứt
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Sample Data Row 3 - Active -->
+                        <tr>
+                            <td><strong>HD003</strong></td>
+                            <td><span class="contract-type-badge service">Dịch Vụ</span></td>
+                            <td>10/05/2024</td>
+                            <td>10/05/2025</td>
+                            <td><span class="days-remaining safe">90 ngày</span></td>
+                            <td><span class="status-badge active"><i class="fas fa-check-circle"></i> Hoạt động</span></td>
+                            <td>
+                                <small class="text-muted">Giá trị: 75,000,000 VNĐ</small><br>
+                                <small class="text-muted">Thiết bị: 5 cái</small>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-action btn-view" onclick="viewContractDetail(3)">
+                                        <i class="fas fa-eye"></i> Xem
+                                    </button>
+                                    <button class="btn-action btn-download" onclick="downloadContract(3)">
+                                        <i class="fas fa-download"></i> Tải
+                                    </button>
+                                    <button class="btn-action btn-terminate" onclick="requestTermination(3)">
+                                        <i class="fas fa-ban"></i> Chấm dứt
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Sample Data Row 4 - Expired -->
+                        <tr>
+                            <td><strong>HD004</strong></td>
+                            <td><span class="contract-type-badge warranty">Bảo Hành</span></td>
+                            <td>01/06/2023</td>
+                            <td>01/06/2024</td>
+                            <td><span class="days-remaining critical">Đã hết hạn</span></td>
+                            <td><span class="status-badge expired"><i class="fas fa-times-circle"></i> Hết hạn</span></td>
+                            <td>
+                                <small class="text-muted">Giá trị: 20,000,000 VNĐ</small><br>
+                                <small class="text-muted">Thiết bị: 1 cái</small>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-action btn-view" onclick="viewContractDetail(4)">
+                                        <i class="fas fa-eye"></i> Xem
+                                    </button>
+                                    <button class="btn-action btn-download" onclick="downloadContract(4)">
+                                        <i class="fas fa-download"></i> Tải
+                                    </button>
+                                    <button class="btn-action btn-terminate" disabled title="Hợp đồng đã hết hạn">
+                                        <i class="fas fa-ban"></i> Chấm dứt
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Sample Data Row 5 - Terminated -->
+                        <tr>
+                            <td><strong>HD005</strong></td>
+                            <td><span class="contract-type-badge service">Dịch Vụ</span></td>
+                            <td>20/08/2024</td>
+                            <td>20/08/2025</td>
+                            <td><span class="days-remaining">-</span></td>
+                            <td><span class="status-badge terminated"><i class="fas fa-stop-circle"></i> Đã chấm dứt</span></td>
+                            <td>
+                                <small class="text-muted">Giá trị: 40,000,000 VNĐ</small><br>
+                                <small class="text-muted">Thiết bị: 2 cái</small>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-action btn-view" onclick="viewContractDetail(5)">
+                                        <i class="fas fa-eye"></i> Xem
+                                    </button>
+                                    <button class="btn-action btn-download" onclick="downloadContract(5)">
+                                        <i class="fas fa-download"></i> Tải
+                                    </button>
+                                    <button class="btn-action btn-terminate" disabled title="Hợp đồng đã chấm dứt">
+                                        <i class="fas fa-ban"></i> Chấm dứt
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Empty State (uncomment when no data) -->
+                        <!-- <tr>
+                            <td colspan="8">
+                                <div class="empty-state">
+                                    <i class="fas fa-folder-open"></i>
+                                    <h3>Không có hợp đồng nào</h3>
+                                    <p>Chưa có hợp đồng được tạo cho tài khoản của bạn.</p>
+                                </div>
+                            </td>
+                        </tr> -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PAGINATION -->
+            <div class="pagination-wrapper">
+                <div class="text-muted">
+                    Hiển thị <strong>1-5</strong> trong tổng số <strong>5</strong> hợp đồng
+                </div>
+                <nav>
+                    <ul class="pagination mb-0">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#"><i class="fas fa-chevron-left"></i></a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#"><i class="fas fa-chevron-right"></i></a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL: VIEW CONTRACT DETAIL -->
+    <div class="modal fade" id="viewContractModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);">
+                    <h5 class="modal-title">
+                        <i class="fas fa-file-contract"></i> Chi Tiết Hợp Đồng
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Contract Information -->
+                    <h6 class="fw-bold mb-3"><i class="fas fa-info-circle text-primary"></i> Thông Tin Hợp Đồng</h6>
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-hashtag"></i> Mã hợp đồng:</div>
+                        <div class="detail-value"><strong>HD001</strong></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-tag"></i> Loại hợp đồng:</div>
+                        <div class="detail-value"><span class="contract-type-badge service">Dịch Vụ</span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-calendar-check"></i> Ngày ký:</div>
+                        <div class="detail-value">01/01/2024</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-calendar-times"></i> Ngày kết thúc:</div>
+                        <div class="detail-value">31/12/2024</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-dollar-sign"></i> Giá trị hợp đồng:</div>
+                        <div class="detail-value"><strong class="text-success">50,000,000 VNĐ</strong></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-info-circle"></i> Trạng thái:</div>
+                        <div class="detail-value"><span class="status-badge active"><i class="fas fa-check-circle"></i> Hoạt động</span></div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Customer Information -->
+                    <h6 class="fw-bold mb-3"><i class="fas fa-user text-primary"></i> Thông Tin Khách Hàng</h6>
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-user"></i> Họ và tên:</div>
+                        <div class="detail-value">Nguyễn Văn A</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-envelope"></i> Email:</div>
+                        <div class="detail-value">customer1@example.com</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-phone"></i> Số điện thoại:</div>
+                        <div class="detail-value">0123456789</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-map-marker-alt"></i> Địa chỉ:</div>
+                        <div class="detail-value">123 Đường ABC, Quận 1, TP.HCM</div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Equipment List -->
+                    <h6 class="fw-bold mb-3"><i class="fas fa-tools text-primary"></i> Thiết Bị Trong Hợp Đồng</h6>
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-bordered table-sm">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Mã HĐ</th>
-                                    <th>Khách Hàng</th>
-                                    <th>Loại HĐ</th>
-                                    <th>Ngày Bắt Đầu</th>
-                                    <th>Ngày Kết Thúc</th>
-                                    <th>Giá Trị (VNĐ)</th>
-                                    <th>Trạng Thái</th>
-                                    <th>Thao Tác</th>
+                                    <th>STT</th>
+                                    <th>Tên thiết bị</th>
+                                    <th>Serial Number</th>
+                                    <th>Trạng thái</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Sample Data Row 1 -->
                                 <tr>
-                                    <td><strong>#CT001</strong></td>
-                                    <td>Công Ty TNHH ABC</td>
-                                    <td><span class="badge bg-primary">Dịch Vụ</span></td>
-                                    <td>01/01/2025</td>
-                                    <td>31/12/2025</td>
-                                    <td><span class="contract-value">250,000,000</span></td>
-                                    <td><span class="badge badge-active">Hiệu Lực</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info btn-action" onclick="viewContract(1)">
-                                            <i class="fas fa-eye"></i> Chi Tiết
-                                        </button>
-                                        <button class="btn btn-sm btn-warning btn-action" onclick="editContract(1)">
-                                            <i class="fas fa-edit"></i> Sửa
-                                        </button>
-                                        <button class="btn btn-sm btn-success btn-action" onclick="renewContract(1)">
-                                            <i class="fas fa-redo"></i> Gia Hạn
-                                        </button>
-                                    </td>
+                                    <td>1</td>
+                                    <td>Máy photocopy Canon iR2625</td>
+                                    <td>SN123456</td>
+                                    <td><span class="badge bg-success">Hoạt động</span></td>
                                 </tr>
-                                <!-- Sample Data Row 2 -->
                                 <tr>
-                                    <td><strong>#CT002</strong></td>
-                                    <td>Công Ty Cổ Phần XYZ</td>
-                                    <td><span class="badge bg-success">Bảo Trì</span></td>
-                                    <td>15/03/2025</td>
-                                    <td>14/03/2026</td>
-                                    <td><span class="contract-value">180,000,000</span></td>
-                                    <td><span class="badge badge-active">Hiệu Lực</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info btn-action" onclick="viewContract(2)">
-                                            <i class="fas fa-eye"></i> Chi Tiết
-                                        </button>
-                                        <button class="btn btn-sm btn-warning btn-action" onclick="editContract(2)">
-                                            <i class="fas fa-edit"></i> Sửa
-                                        </button>
-                                        <button class="btn btn-sm btn-success btn-action" onclick="renewContract(2)">
-                                            <i class="fas fa-redo"></i> Gia Hạn
-                                        </button>
-                                    </td>
+                                    <td>2</td>
+                                    <td>Máy in HP LaserJet Pro</td>
+                                    <td>SN789012</td>
+                                    <td><span class="badge bg-success">Hoạt động</span></td>
                                 </tr>
-                                <!-- Sample Data Row 3 -->
                                 <tr>
-                                    <td><strong>#CT003</strong></td>
-                                    <td>Doanh Nghiệp Tư Nhân 123</td>
-                                    <td><span class="badge bg-info">Hỗ Trợ</span></td>
-                                    <td>20/02/2025</td>
-                                    <td>19/11/2025</td>
-                                    <td><span class="contract-value">95,000,000</span></td>
-                                    <td><span class="badge badge-pending">Chờ Kích Hoạt</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info btn-action" onclick="viewContract(3)">
-                                            <i class="fas fa-eye"></i> Chi Tiết
-                                        </button>
-                                        <button class="btn btn-sm btn-success btn-action" onclick="activateContract(3)">
-                                            <i class="fas fa-check"></i> Kích Hoạt
-                                        </button>
-                                        <button class="btn btn-sm btn-warning btn-action" onclick="editContract(3)">
-                                            <i class="fas fa-edit"></i> Sửa
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Sample Data Row 4 -->
-                                <tr>
-                                    <td><strong>#CT004</strong></td>
-                                    <td>Công Ty TNHH DEF</td>
-                                    <td><span class="badge bg-primary">Dịch Vụ</span></td>
-                                    <td>10/06/2024</td>
-                                    <td>09/06/2025</td>
-                                    <td><span class="contract-value">320,000,000</span></td>
-                                    <td><span class="badge bg-warning text-dark">Sắp Hết Hạn</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info btn-action" onclick="viewContract(4)">
-                                            <i class="fas fa-eye"></i> Chi Tiết
-                                        </button>
-                                        <button class="btn btn-sm btn-success btn-action" onclick="renewContract(4)">
-                                            <i class="fas fa-redo"></i> Gia Hạn
-                                        </button>
-                                        <button class="btn btn-sm btn-warning btn-action" onclick="editContract(4)">
-                                            <i class="fas fa-edit"></i> Sửa
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Sample Data Row 5 -->
-                                <tr>
-                                    <td><strong>#CT005</strong></td>
-                                    <td>Tập Đoàn GHI</td>
-                                    <td><span class="badge bg-success">Bảo Trì</span></td>
-                                    <td>05/01/2024</td>
-                                    <td>04/01/2025</td>
-                                    <td><span class="contract-value">450,000,000</span></td>
-                                    <td><span class="badge badge-expired">Đã Hết Hạn</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info btn-action" onclick="viewContract(5)">
-                                            <i class="fas fa-eye"></i> Chi Tiết
-                                        </button>
-                                        <button class="btn btn-sm btn-success btn-action" onclick="renewContract(5)">
-                                            <i class="fas fa-redo"></i> Gia Hạn
-                                        </button>
-                                    </td>
+                                    <td>3</td>
+                                    <td>Máy scan Epson DS-770</td>
+                                    <td>SN345678</td>
+                                    <td><span class="badge bg-success">Hoạt động</span></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- PHÂN TRANG -->
-                    <nav aria-label="Page navigation" class="mt-4">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item disabled">
-                                <span class="page-link">
-                                    <i class="fas fa-chevron-left"></i> Trước
-                                </span>
-                            </li>
-                            <li class="page-item active">
-                                <span class="page-link">1</span>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">2</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">3</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">
-                                    Tiếp <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-
-                    <div class="text-center text-muted mb-3">
-                        <small>
-                            Trang <strong>1</strong> của <strong>3</strong> 
-                            | Hiển thị <strong>5</strong> hợp đồng
-                        </small>
+                    <!-- Alerts -->
+                    <div class="alert alert-custom alert-info mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Lưu ý:</strong> Hợp đồng này còn <strong>120 ngày</strong> nữa sẽ hết hạn. Vui lòng liên hệ với chúng tôi để gia hạn hoặc tạo hợp đồng mới.
                     </div>
                 </div>
-            </div>
-
-            <!-- FOOTER -->
-            <footer class="site-footer">
-                <div class="footer-content">
-                    <!-- Main Footer Content -->
-                    <div class="footer-grid">
-                        <!-- About Section -->
-                        <div class="footer-section">
-                            <h5>CRM System</h5>
-                            <p class="footer-about">
-                                Giải pháp quản lý khách hàng toàn diện, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ.
-                            </p>
-                            <p class="footer-version">
-                                <strong>Version:</strong> 1.0.0<br>
-                                <strong>Phiên bản:</strong> Enterprise Edition
-                            </p>
-                        </div>
-
-                        <!-- Products & Features -->
-                        <div class="footer-section">
-                            <h5>Tính năng chính</h5>
-                            <ul class="footer-links">
-                                <li><a href="#">→ Quản lý khách hàng</a></li>
-                                <li><a href="#">→ Quản lý hợp đồng</a></li>
-                                <li><a href="#">→ Quản lý thiết bị</a></li>
-                                <li><a href="#">→ Báo cáo & Phân tích</a></li>
-                                <li><a href="#">→ Quản lý yêu cầu dịch vụ</a></li>
-                            </ul>
-                        </div>
-
-                        <!-- Support & Help -->
-                        <div class="footer-section">
-                            <h5>Hỗ trợ & Trợ giúp</h5>
-                            <ul class="footer-links">
-                                <li><a href="#">→ Trung tâm trợ giúp</a></li>
-                                <li><a href="#">→ Hướng dẫn sử dụng</a></li>
-                                <li><a href="#">→ Liên hệ hỗ trợ</a></li>
-                                <li><a href="#">→ Câu hỏi thường gặp</a></li>
-                                <li><a href="#">→ Yêu cầu tính năng</a></li>
-                            </ul>
-                        </div>
-
-                        <!-- Company Info -->
-                        <div class="footer-section">
-                            <h5>Thông tin công ty</h5>
-                            <ul class="footer-links">
-                                <li><a href="#">→ Về chúng tôi</a></li>
-                                <li><a href="#">→ Điều khoản sử dụng</a></li>
-                                <li><a href="#">→ Chính sách bảo mật</a></li>
-                                <li><a href="#">→ Bảo mật dữ liệu</a></li>
-                                <li><a href="#">→ Liên hệ</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Divider -->
-                    <div class="footer-divider"></div>
-
-                    <!-- Bottom Info -->
-                    <div class="footer-grid" style="margin-bottom: 30px;">
-                        <!-- Contact Info -->
-                        <div>
-                            <h5 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Liên hệ</h5>
-                            <div class="footer-contact-item">
-                                <i class="fas fa-envelope"></i>
-                                <span><strong>Email:</strong> support@crmsystem.com</span>
-                            </div>
-                            <div class="footer-contact-item">
-                                <i class="fas fa-phone"></i>
-                                <span><strong>Hotline:</strong> (+84) 123 456 7890</span>
-                            </div>
-                            <div class="footer-contact-item">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <span><strong>Địa chỉ:</strong> Ho Chi Minh City, Vietnam</span>
-                            </div>
-                            <div class="footer-contact-item">
-                                <i class="fas fa-clock"></i>
-                                <span><strong>Hỗ trợ:</strong> 24/7</span>
-                            </div>
-                        </div>
-
-                        <!-- Stats -->
-                        <div>
-                            <h5 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Thống kê</h5>
-                            <ul class="footer-stats">
-                                <li><i class="fas fa-users"></i> <span>Người dùng: <strong>5,000+</strong></span></li>
-                                <li><i class="fas fa-building"></i> <span>Công ty: <strong>1,200+</strong></span></li>
-                                <li><i class="fas fa-database"></i> <span>Dữ liệu: <strong>500K+</strong></span></li>
-                                <li><i class="fas fa-star"></i> <span>Đánh giá: <strong>4.9/5.0</strong></span></li>
-                            </ul>
-                        </div>
-
-                        <!-- Certification -->
-                        <div style="grid-column: span 2;">
-                            <h5 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Chứng chỉ</h5>
-                            <div class="footer-certifications">
-                                <div class="cert-badge">
-                                    <i class="fas fa-lock"></i>
-                                    <span>ISO 27001</span>
-                                </div>
-                                <div class="cert-badge">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>GDPR</span>
-                                </div>
-                                <div class="cert-badge">
-                                    <i class="fas fa-shield-alt"></i>
-                                    <span>SOC 2</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Footer Bottom -->
-                    <div class="footer-bottom">
-                        <p class="footer-copyright">
-                            &copy; 2025 CRM System. All rights reserved. | Phát triển bởi <strong>Group 6</strong>
-                        </p>
-                        <div class="footer-bottom-links">
-                            <a href="#">Chính sách bảo mật</a>
-                            <a href="#">Điều khoản dịch vụ</a>
-                            <a href="#">Cài đặt Cookie</a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
-
-            <!-- Scroll to Top Button -->
-            <div class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">
-                <i class="fas fa-arrow-up"></i>
-            </div>
-        </div>
-
-        <!-- ========== MODAL TẠO HỢP ĐỒNG MỚI ========== -->
-        <div class="modal fade" id="createContractModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <form action="${pageContext.request.contextPath}/contracts" method="post" id="createContractForm">
-                        <input type="hidden" name="action" value="create">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title"><i class="fas fa-plus"></i> Tạo Hợp Đồng Mới</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Mã Khách Hàng <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" name="customerId" required min="1">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Loại Hợp Đồng <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="contractType" required>
-                                        <option value="">-- Chọn Loại --</option>
-                                        <option value="Service">Dịch Vụ</option>
-                                        <option value="Maintenance">Bảo Trì</option>
-                                        <option value="Support">Hỗ Trợ</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Ngày Bắt Đầu <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="startDate" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Ngày Kết Thúc <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="endDate" required>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Giá Trị Hợp Đồng (VNĐ) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="contractValue" required min="0" step="1000">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Điều Khoản & Điều Kiện</label>
-                                <textarea class="form-control" name="terms" rows="4" placeholder="Nhập các điều khoản và điều kiện của hợp đồng..."></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Ghi Chú</label>
-                                <textarea class="form-control" name="notes" rows="3" placeholder="Ghi chú thêm (nếu có)..."></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Tạo Hợp Đồng</button>
-                        </div>
-                    </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Đóng
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="downloadContract(1)">
+                        <i class="fas fa-download"></i> Tải xuống PDF
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="requestTermination(1)">
+                        <i class="fas fa-ban"></i> Yêu cầu chấm dứt
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- ========== MODAL XEM CHI TIẾT HỢP ĐỒNG ========== -->
-        <div class="modal fade" id="viewContractModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-info text-white">
-                        <h5 class="modal-title"><i class="fas fa-file-alt"></i> Chi Tiết Hợp Đồng</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
+    <!-- MODAL: REQUEST TERMINATION -->
+    <div class="modal fade" id="terminationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-ban"></i> Yêu Cầu Chấm Dứt Hợp Đồng
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="terminationForm" onsubmit="submitTermination(event)">
                     <div class="modal-body">
-                        <div class="row mb-3">
-                            <div class="col-md-6"><strong>Mã Hợp Đồng:</strong> <p id="viewContractId"></p></div>
-                            <div class="col-md-6"><strong>Khách Hàng:</strong> <p id="viewCustomer"></p></div>
+                        <input type="hidden" name="contractId" id="terminationContractId">
+                        
+                        <div class="alert alert-custom alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Cảnh báo:</strong> Yêu cầu chấm dứt hợp đồng là hành động nghiêm trọng. Vui lòng cung cấp lý do chi tiết.
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6"><strong>Loại Hợp Đồng:</strong> <p id="viewType"></p></div>
-                            <div class="col-md-6"><strong>Trạng Thái:</strong> <span id="viewStatus"></span></div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6"><strong>Ngày Bắt Đầu:</strong> <p id="viewStartDate"></p></div>
-                            <div class="col-md-6"><strong>Ngày Kết Thúc:</strong> <p id="viewEndDate"></p></div>
-                        </div>
+
                         <div class="mb-3">
-                            <strong>Giá Trị:</strong> <span class="contract-value" id="viewValue"></span> VNĐ
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-file-contract"></i> Hợp đồng:
+                            </label>
+                            <input type="text" class="form-control" id="terminationContractDisplay" readonly>
                         </div>
+
                         <div class="mb-3">
-                            <strong>Điều Khoản:</strong>
-                            <div class="border rounded p-3 bg-light" id="viewTerms" style="white-space: pre-wrap;"></div>
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-list"></i> Lý do chấm dứt: <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" name="terminationReason" id="terminationReason" required>
+                                <option value="">-- Chọn lý do --</option>
+                                <option value="service_quality">Chất lượng dịch vụ không đạt yêu cầu</option>
+                                <option value="financial">Lý do tài chính</option>
+                                <option value="no_longer_need">Không còn nhu cầu sử dụng</option>
+                                <option value="other">Lý do khác</option>
+                            </select>
                         </div>
+
                         <div class="mb-3">
-                            <strong>Ghi Chú:</strong>
-                            <div class="border rounded p-3 bg-light" id="viewNotes" style="white-space: pre-wrap;"></div>
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-comment"></i> Mô tả chi tiết: <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" name="terminationDescription" 
+                                      rows="5" required 
+                                      placeholder="Vui lòng mô tả chi tiết lý do chấm dứt hợp đồng..."
+                                      minlength="50" maxlength="500"></textarea>
+                            <small class="text-muted">Tối thiểu 50 ký tự, tối đa 500 ký tự</small>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="confirmTermination" required>
+                            <label class="form-check-label" for="confirmTermination">
+                                Tôi xác nhận đã đọc và hiểu rõ về việc chấm dứt hợp đồng. Tôi chịu trách nhiệm về quyết định này.
+                            </label>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-paper-plane"></i> Gửi Yêu Cầu
+                        </button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
+    </div>
 
-        <!-- ========== MODAL CHỈNH SỬA HỢP ĐỒNG ========== -->
-        <div class="modal fade" id="editContractModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <form action="${pageContext.request.contextPath}/contracts" method="post" id="editContractForm">
-                        <input type="hidden" name="action" value="update">
-                        <input type="hidden" name="contractId" id="editContractId">
-                        <div class="modal-header bg-warning text-dark">
-                            <h5 class="modal-title"><i class="fas fa-edit"></i> Chỉnh Sửa Hợp Đồng</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Loại Hợp Đồng <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="contractType" id="editContractType" required>
-                                        <option value="Service">Dịch Vụ</option>
-                                        <option value="Maintenance">Bảo Trì</option>
-                                        <option value="Support">Hỗ Trợ</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Trạng Thái <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="status" id="editStatus" required>
-                                        <option value="Active">Đang Hiệu Lực</option>
-                                        <option value="Pending">Chờ Kích Hoạt</option>
-                                        <option value="Expired">Đã Hết Hạn</option>
-                                        <option value="Terminated">Đã Chấm Dứt</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Ngày Kết Thúc <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="endDate" id="editEndDate" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Giá Trị (VNĐ) <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" name="contractValue" id="editValue" required min="0" step="1000">
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Điều Khoản</label>
-                                <textarea class="form-control" name="terms" id="editTerms" rows="4"></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Ghi Chú</label>
-                                <textarea class="form-control" name="notes" id="editNotes" rows="3"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-warning">Lưu Thay Đổi</button>
-                        </div>
-                    </form>
-                </div>
+    </div>
+    <!-- END MAIN CONTENT WRAPPER -->
+
+    <!-- LOADING SPINNER -->
+    <div class="spinner-overlay" id="loadingSpinner">
+        <div class="spinner-content">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
             </div>
+            <p class="mt-3 mb-0">Đang xử lý...</p>
         </div>
+    </div>
 
-        <!-- ========== MODAL GIA HẠN HỢP ĐỒNG ========== -->
-        <div class="modal fade" id="renewContractModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form action="${pageContext.request.contextPath}/contracts" method="post">
-                        <input type="hidden" name="action" value="renew">
-                        <input type="hidden" name="contractId" id="renewContractId">
-                        <div class="modal-header bg-success text-white">
-                            <h5 class="modal-title"><i class="fas fa-redo"></i> Gia Hạn Hợp Đồng</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Xác nhận gia hạn hợp đồng <strong id="renewContractCode"></strong>?</p>
-                            <div class="mb-3">
-                                <label class="form-label">Thời Hạn Gia Hạn <span class="text-danger">*</span></label>
-                                <select class="form-select" name="renewalPeriod" required>
-                                    <option value="3">3 Tháng</option>
-                                    <option value="6">6 Tháng</option>
-                                    <option value="12" selected>12 Tháng</option>
-                                    <option value="24">24 Tháng</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Ghi Chú Gia Hạn</label>
-                                <textarea class="form-control" name="renewalNote" rows="3"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-success">Xác Nhận Gia Hạn</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // ========== SIDEBAR TOGGLE ==========
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggleIcon');
+            sidebar.classList.toggle('collapsed');
 
-        <!-- ========== MODAL KÍCH HOẠT HỢP ĐỒNG ========== -->
-        <div class="modal fade" id="activateContractModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form action="${pageContext.request.contextPath}/contracts" method="post">
-                        <input type="hidden" name="action" value="activate">
-                        <input type="hidden" name="contractId" id="activateContractId">
-                        <div class="modal-header bg-success text-white">
-                            <h5 class="modal-title"><i class="fas fa-check"></i> Kích Hoạt Hợp Đồng</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Xác nhận kích hoạt hợp đồng <strong id="activateContractCode"></strong>?</p>
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle"></i> Hợp đồng sẽ bắt đầu có hiệu lực ngay sau khi được kích hoạt.
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-success">Xác Nhận</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+            if (sidebar.classList.contains('collapsed')) {
+                toggleIcon.classList.remove('fa-chevron-left');
+                toggleIcon.classList.add('fa-chevron-right');
+            } else {
+                toggleIcon.classList.remove('fa-chevron-right');
+                toggleIcon.classList.add('fa-chevron-left');
+            }
+        }
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-                // ========== TOAST NOTIFICATION ==========
-                let currentToastTimeout = null;
+        // ========== NOTIFICATION FUNCTIONS ==========
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+        }
 
-                function showToast(message, type) {
-                    const container = document.getElementById('toastContainer');
-                    if (currentToastTimeout) {
-                        clearTimeout(currentToastTimeout);
-                    }
+        function markAllAsRead() {
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
+            });
+            document.getElementById('notificationCount').textContent = '0';
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: 'Đã đánh dấu tất cả thông báo là đã đọc.',
+                timer: 2000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+        }
 
-                    let iconClass = 'fa-check-circle';
-                    if (type === 'error')
-                        iconClass = 'fa-exclamation-circle';
-                    if (type === 'info')
-                        iconClass = 'fa-info-circle';
+        function viewNotification(id) {
+            // Mark as read
+            event.target.closest('.notification-item').classList.remove('unread');
+            
+            // Update count
+            const currentCount = parseInt(document.getElementById('notificationCount').textContent);
+            if (currentCount > 0) {
+                document.getElementById('notificationCount').textContent = currentCount - 1;
+            }
+            
+            // Handle different notification types
+            console.log('View notification:', id);
+            toggleNotifications();
+        }
 
-                    const toastDiv = document.createElement('div');
-                    toastDiv.className = 'toast-notification ' + type;
-
-                    const iconDiv = document.createElement('div');
-                    iconDiv.className = 'toast-icon ' + type;
-                    iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
-
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'toast-content';
-                    contentDiv.textContent = message;
-
-                    const closeBtn = document.createElement('button');
-                    closeBtn.className = 'toast-close';
-                    closeBtn.type = 'button';
-                    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                    closeBtn.onclick = hideToast;
-
-                    toastDiv.appendChild(iconDiv);
-                    toastDiv.appendChild(contentDiv);
-                    toastDiv.appendChild(closeBtn);
-
-                    container.innerHTML = '';
-                    container.appendChild(toastDiv);
-
-                    currentToastTimeout = setTimeout(hideToast, 5000);
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const badge = document.querySelector('.notification-badge-header');
+            
+            if (badge && dropdown) {
+                if (!badge.contains(event.target) && !dropdown.contains(event.target)) {
+                    dropdown.classList.remove('show');
                 }
+            }
+        });
 
-                function hideToast() {
-                    const container = document.getElementById('toastContainer');
-                    const toast = container.querySelector('.toast-notification');
-                    if (toast) {
-                        toast.classList.add('hiding');
-                        setTimeout(() => {
-                            container.innerHTML = '';
-                        }, 400);
-                    }
+        // ========== FILTER FUNCTIONS ==========
+        function resetFilters() {
+            window.location.href = '${pageContext.request.contextPath}/viewCustomerContract';
+        }
+
+        // ========== CONTRACT ACTIONS ==========
+        function viewContractDetail(contractId) {
+            console.log('View contract:', contractId);
+            
+            // Show loading
+            document.getElementById('loadingSpinner').classList.add('show');
+            
+            // Simulate API call
+            setTimeout(() => {
+                document.getElementById('loadingSpinner').classList.remove('show');
+                const modal = new bootstrap.Modal(document.getElementById('viewContractModal'));
+                modal.show();
+            }, 500);
+        }
+
+        function downloadContract(contractId) {
+            Swal.fire({
+                title: 'Tải xuống hợp đồng?',
+                text: 'File PDF sẽ được tải về máy của bạn.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-download"></i> Tải xuống',
+                cancelButtonText: '<i class="fas fa-times"></i> Hủy',
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    document.getElementById('loadingSpinner').classList.add('show');
+                    
+                    // Simulate download
+                    setTimeout(() => {
+                        document.getElementById('loadingSpinner').classList.remove('show');
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thành công!',
+                            text: 'Hợp đồng đã được tải xuống.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        
+                        // Actual download logic here
+                        // window.location.href = contextPath + '/downloadContract?id=' + contractId;
+                    }, 1500);
                 }
+            });
+        }
 
-                // ========== SIDEBAR TOGGLE ==========
-                function toggleSidebar() {
-                    const sidebar = document.getElementById('sidebar');
-                    const toggleIcon = document.getElementById('toggleIcon');
-                    sidebar.classList.toggle('collapsed');
+        function requestTermination(contractId) {
+            // Set contract info
+            document.getElementById('terminationContractId').value = contractId;
+            document.getElementById('terminationContractDisplay').value = 'HD' + String(contractId).padStart(3, '0');
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('terminationModal'));
+            modal.show();
+        }
 
-                    if (sidebar.classList.contains('collapsed')) {
-                        toggleIcon.classList.remove('fa-chevron-left');
-                        toggleIcon.classList.add('fa-chevron-right');
-                    } else {
-                        toggleIcon.classList.remove('fa-chevron-right');
-                        toggleIcon.classList.add('fa-chevron-left');
-                    }
+        function submitTermination(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            // Validate
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+            
+            Swal.fire({
+                title: 'Xác nhận gửi yêu cầu?',
+                text: 'Yêu cầu chấm dứt hợp đồng sẽ được gửi đến bộ phận quản lý.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-paper-plane"></i> Xác nhận',
+                cancelButtonText: '<i class="fas fa-times"></i> Hủy',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Close modal
+                    bootstrap.Modal.getInstance(document.getElementById('terminationModal')).hide();
+                    
+                    // Show loading
+                    document.getElementById('loadingSpinner').classList.add('show');
+                    
+                    // Simulate API call
+                    setTimeout(() => {
+                        document.getElementById('loadingSpinner').classList.remove('show');
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Gửi thành công!',
+                            html: 'Yêu cầu chấm dứt hợp đồng đã được gửi.<br>Chúng tôi sẽ xem xét và phản hồi trong vòng 3-5 ngày làm việc.',
+                            confirmButtonText: 'Đóng'
+                        }).then(() => {
+                            // Reload page or update UI
+                            // window.location.reload();
+                        });
+                        
+                        // Reset form
+                        form.reset();
+                        form.classList.remove('was-validated');
+                    }, 1500);
                 }
+            });
+        }
 
-                // ========== REFRESH PAGE ==========
-                function refreshPage() {
-                    location.reload();
-                }
-
-                // ========== VIEW CONTRACT DETAILS ==========
-                function viewContract(id) {
-                    // Sample data - trong thực tế sẽ lấy từ server
-                    const contracts = {
-                        1: {
-                            code: '#CT001',
-                            customer: 'Công Ty TNHH ABC',
-                            type: 'Dịch Vụ',
-                            status: 'Hiệu Lực',
-                            startDate: '01/01/2025',
-                            endDate: '31/12/2025',
-                            value: '250,000,000',
-                            terms: 'Các điều khoản và điều kiện của hợp đồng dịch vụ...',
-                            notes: 'Ghi chú về hợp đồng...'
-                        },
-                        2: {
-                            code: '#CT002',
-                            customer: 'Công Ty Cổ Phần XYZ',
-                            type: 'Bảo Trì',
-                            status: 'Hiệu Lực',
-                            startDate: '15/03/2025',
-                            endDate: '14/03/2026',
-                            value: '180,000,000',
-                            terms: 'Các điều khoản bảo trì định kỳ theo lịch...',
-                            notes: 'Bảo trì hàng tháng'
-                        },
-                        3: {
-                            code: '#CT003',
-                            customer: 'Doanh Nghiệp Tư Nhân 123',
-                            type: 'Hỗ Trợ',
-                            status: 'Chờ Kích Hoạt',
-                            startDate: '20/02/2025',
-                            endDate: '19/11/2025',
-                            value: '95,000,000',
-                            terms: 'Điều khoản hỗ trợ kỹ thuật 24/7...',
-                            notes: 'Đang chờ xác nhận từ khách hàng'
-                        },
-                        4: {
-                            code: '#CT004',
-                            customer: 'Công Ty TNHH DEF',
-                            type: 'Dịch Vụ',
-                            status: 'Sắp Hết Hạn',
-                            startDate: '10/06/2024',
-                            endDate: '09/06/2025',
-                            value: '320,000,000',
-                            terms: 'Điều khoản dịch vụ toàn diện...',
-                            notes: 'Cần liên hệ gia hạn'
-                        },
-                        5: {
-                            code: '#CT005',
-                            customer: 'Tập Đoàn GHI',
-                            type: 'Bảo Trì',
-                            status: 'Đã Hết Hạn',
-                            startDate: '05/01/2024',
-                            endDate: '04/01/2025',
-                            value: '450,000,000',
-                            terms: 'Bảo trì định kỳ cho hệ thống lớn...',
-                            notes: 'Hết hạn cần làm mới'
-                        }
-                    };
-
-                    const contract = contracts[id];
-                    if (contract) {
-                        document.getElementById('viewContractId').textContent = contract.code;
-                        document.getElementById('viewCustomer').textContent = contract.customer;
-                        document.getElementById('viewType').textContent = contract.type;
-                        document.getElementById('viewStatus').innerHTML = '<span class="badge badge-active">' + contract.status + '</span>';
-                        document.getElementById('viewStartDate').textContent = contract.startDate;
-                        document.getElementById('viewEndDate').textContent = contract.endDate;
-                        document.getElementById('viewValue').textContent = contract.value;
-                        document.getElementById('viewTerms').textContent = contract.terms;
-                        document.getElementById('viewNotes').textContent = contract.notes;
-
-                        const modal = new bootstrap.Modal(document.getElementById('viewContractModal'));
-                        modal.show();
-                    }
-                }
-
-                // ========== EDIT CONTRACT ==========
-                function editContract(id) {
-                    // Sample data
-                    const contracts = {
-                        1: {type: 'Service', status: 'Active', endDate: '2025-12-31', value: '250000000', terms: 'Các điều khoản...', notes: 'Ghi chú...'},
-                        2: {type: 'Maintenance', status: 'Active', endDate: '2026-03-14', value: '180000000', terms: 'Bảo trì...', notes: 'Hàng tháng'},
-                        3: {type: 'Support', status: 'Pending', endDate: '2025-11-19', value: '95000000', terms: 'Hỗ trợ...', notes: 'Chờ xác nhận'},
-                        4: {type: 'Service', status: 'Active', endDate: '2025-06-09', value: '320000000', terms: 'Toàn diện...', notes: 'Cần gia hạn'},
-                        5: {type: 'Maintenance', status: 'Expired', endDate: '2025-01-04', value: '450000000', terms: 'Định kỳ...', notes: 'Hết hạn'}
-                    };
-
-                    const contract = contracts[id];
-                    if (contract) {
-                        document.getElementById('editContractId').value = id;
-                        document.getElementById('editContractType').value = contract.type;
-                        document.getElementById('editStatus').value = contract.status;
-                        document.getElementById('editEndDate').value = contract.endDate;
-                        document.getElementById('editValue').value = contract.value;
-                        document.getElementById('editTerms').value = contract.terms;
-                        document.getElementById('editNotes').value = contract.notes;
-
-                        const modal = new bootstrap.Modal(document.getElementById('editContractModal'));
-                        modal.show();
-                    }
-                }
-
-                // ========== RENEW CONTRACT ==========
-                function renewContract(id) {
-                    const contractCodes = {
-                        1: '#CT001',
-                        2: '#CT002',
-                        3: '#CT003',
-                        4: '#CT004',
-                        5: '#CT005'
-                    };
-
-                    document.getElementById('renewContractId').value = id;
-                    document.getElementById('renewContractCode').textContent = contractCodes[id];
-
-                    const modal = new bootstrap.Modal(document.getElementById('renewContractModal'));
-                    modal.show();
-                }
-
-                // ========== ACTIVATE CONTRACT ==========
-                function activateContract(id) {
-                    const contractCodes = {
-                        3: '#CT003'
-                    };
-
-                    document.getElementById('activateContractId').value = id;
-                    document.getElementById('activateContractCode').textContent = contractCodes[id];
-
-                    const modal = new bootstrap.Modal(document.getElementById('activateContractModal'));
-                    modal.show();
-                }
-
-                // ========== SCROLL TO TOP ==========
-                function scrollToTop() {
-                    window.scrollTo({top: 0, behavior: 'smooth'});
-                }
-
-                // Show/hide scroll to top button
-                window.addEventListener('scroll', function () {
-                    const scrollBtn = document.getElementById('scrollToTop');
-                    if (window.pageYOffset > 300) {
-                        scrollBtn.classList.add('show');
-                    } else {
-                        scrollBtn.classList.remove('show');
-                    }
+        // ========== PAGE LOAD ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Customer Contract Management Page Loaded');
+            
+            // Check for URL parameters to show notifications
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('success') === 'true') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: urlParams.get('message') || 'Thao tác đã được thực hiện thành công.',
+                    timer: 3000,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true
                 });
-
-                // ========== FILTER STATUS CHANGE ==========
-                document.getElementById('filterStatus')?.addEventListener('change', function () {
-                    this.form.submit();
+            }
+            
+            if (urlParams.get('error') === 'true') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: urlParams.get('message') || 'Đã xảy ra lỗi. Vui lòng thử lại.',
+                    confirmButtonText: 'Đóng'
                 });
-
-                // ========== FORM VALIDATION ==========
-                document.getElementById('createContractForm')?.addEventListener('submit', function (e) {
-                    const startDate = new Date(this.startDate.value);
-                    const endDate = new Date(this.endDate.value);
-
-                    if (endDate <= startDate) {
-                        e.preventDefault();
-                        showToast('Ngày kết thúc phải sau ngày bắt đầu!', 'error');
-                        return false;
-                    }
-                });
-
-                document.getElementById('editContractForm')?.addEventListener('submit', function (e) {
-                    const value = this.contractValue.value;
-
-                    if (value <= 0) {
-                        e.preventDefault();
-                        showToast('Giá trị hợp đồng phải lớn hơn 0!', 'error');
-                        return false;
-                    }
-                });
-
-                // ========== AUTO HIDE ALERTS ==========
-                window.addEventListener('load', function () {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const success = urlParams.get('success');
-                    const error = urlParams.get('error');
-
-                    if (success) {
-                        showToast(decodeURIComponent(success), 'success');
-                    }
-                    if (error) {
-                        showToast(decodeURIComponent(error), 'error');
-                    }
-                });
+            }
+        });
+    </script>
+</body>
+</html>

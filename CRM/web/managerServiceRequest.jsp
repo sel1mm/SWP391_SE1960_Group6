@@ -740,7 +740,7 @@
                         <span>Yêu Cầu Dịch Vụ</span>
                         <span class="badge bg-warning">${pendingCount}</span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/contracts" class="menu-item">
+                    <a href="${pageContext.request.contextPath}/managerContracts" class="menu-item">
                         <i class="fas fa-file-contract"></i>
                         <span>Hợp Đồng</span>
                     </a>
@@ -1360,8 +1360,7 @@
             </div>
         </div>
 
-        <!-- ========== MODAL TẠO YÊU CẦU MỚI for service request ========== -->
-
+        <!-- ========== MODAL TẠO YÊU CẦU MỚI ========== -->
         <div class="modal fade" id="createModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -1385,62 +1384,66 @@
                                     <option value="equipment">🔧 Hỗ Trợ Thiết Bị</option>
                                     <option value="account">👤 Hỗ Trợ Tài Khoản / Thông Tin</option>
                                 </select>
-                                <small class="form-text text-muted">
-                                    Chọn "Hỗ trợ thiết bị" nếu bạn gặp vấn đề với thiết bị, hoặc "Hỗ trợ tài khoản" nếu cần thay đổi thông tin cá nhân.
-                                </small>
                             </div>
 
-                            <!-- Chọn Thiết Bị (dropdown với checkbox) -->
+                            <!-- ✅ DROPDOWN THIẾT BỊ MỚI -->
                             <div class="mb-3" id="equipmentSelectField" style="display:none;">
                                 <label class="form-label">
                                     <i class="fas fa-tools"></i> Chọn Thiết Bị 
                                     <span class="text-danger">*</span>
                                 </label>
-                                <div class="dropdown">
-                                    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" 
-                                            type="button" 
-                                            id="equipmentDropdown" 
-                                            data-bs-toggle="dropdown" 
-                                            data-bs-auto-close="outside"
-                                            aria-expanded="false">
+
+                                <!-- Button trigger dropdown -->
+                                <button class="btn btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center" 
+                                        type="button" 
+                                        id="equipmentDropdownBtn"
+                                        onclick="toggleEquipmentDropdown()">
+                                    <span id="equipmentDropdownLabel">
                                         <i class="fas fa-list"></i> Chọn thiết bị cần hỗ trợ
-                                    </button>
-                                    <ul class="dropdown-menu w-100 p-3" 
-                                        aria-labelledby="equipmentDropdown" 
-                                        style="max-height: 300px; overflow-y: auto;">
-                                        <c:choose>
-                                            <c:when test="${not empty sessionScope.customerEquipmentList}">
-                                                <c:forEach var="equipment" items="${sessionScope.customerEquipmentList}" varStatus="status">
-                                                    <li class="mb-2">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input equipment-checkbox" 
-                                                                   type="checkbox" 
-                                                                   name="equipmentIds" 
-                                                                   value="${equipment.equipmentId}"
-                                                                   id="equipment_${status.index}"
-                                                                   data-contract="${equipment.contractId}"
-                                                                   onchange="updateSelectedEquipment()">
-                                                            <label class="form-check-label" for="equipment_${status.index}">
-                                                                <strong><c:out value="${equipment.model}"/></strong><br>
-                                                                <small class="text-muted">
-                                                                    Serial: <c:out value="${equipment.serialNumber}"/> | 
-                                                                    Hợp đồng: HD<c:out value="${String.format('%03d', equipment.contractId)}"/>
-                                                                </small>
-                                                            </label>
-                                                        </div>
-                                                    </li>
-                                                </c:forEach>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <li class="text-center text-muted py-3">
-                                                    <i class="fas fa-inbox fa-2x mb-2"></i>
-                                                    <p>Bạn chưa có thiết bị nào</p>
-                                                </li>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </ul>
+                                    </span>
+                                    <i class="fas fa-chevron-down" id="equipmentDropdownIcon"></i>
+                                </button>
+
+                                <!-- Dropdown menu -->
+                                <div class="border rounded mt-2 p-3 bg-light" 
+                                     id="equipmentDropdownMenu" 
+                                     style="display: none; max-height: 300px; overflow-y: auto;">
+
+                                    <c:choose>
+                                        <c:when test="${not empty sessionScope.customerEquipmentList}">
+                                            <c:forEach var="equipment" items="${sessionScope.customerEquipmentList}" varStatus="status">
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input equipment-checkbox" 
+                                                           type="checkbox" 
+                                                           name="equipmentIds" 
+                                                           value="${equipment.equipmentId}"
+                                                           id="equipment_${status.index}"
+                                                           data-model="${equipment.model}"
+                                                           data-serial="${equipment.serialNumber}"
+                                                           data-contract="${equipment.contractId}"
+                                                           onchange="updateSelectedEquipment()">
+                                                    <label class="form-check-label w-100" for="equipment_${status.index}">
+                                                        <strong><c:out value="${equipment.model}"/></strong><br>
+                                                        <small class="text-muted">
+                                                            Serial: <c:out value="${equipment.serialNumber}"/> | 
+                                                            Hợp đồng: HD<c:out value="${String.format('%03d', equipment.contractId)}"/>
+                                                        </small>
+                                                    </label>
+                                                </div>
+                                            </c:forEach>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="text-center text-muted py-3">
+                                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                                <p>Bạn chưa có thiết bị nào</p>
+                                            </div>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
+
+                                <!-- Hiển thị thiết bị đã chọn -->
                                 <div id="selectedEquipmentDisplay" class="mt-2"></div>
+
                                 <small class="form-text text-muted">
                                     <i class="fas fa-info-circle"></i> Bạn có thể chọn nhiều thiết bị cùng lúc
                                 </small>
@@ -2312,8 +2315,8 @@
                         document.addEventListener('DOMContentLoaded', function () {
                             console.log('🔍 DOM Loaded');
 
-                            
-                            
+
+
 
                             // Event cho nút EDIT
                             document.querySelectorAll('.btn-edit').forEach(function (button) {
@@ -2413,7 +2416,83 @@
             </script>
             <% session.removeAttribute("warning"); %>
         </c:if>
+        <script>
+// ========== EQUIPMENT DROPDOWN FUNCTIONS ==========
+            function toggleEquipmentDropdown() {
+                const menu = document.getElementById('equipmentDropdownMenu');
+                const icon = document.getElementById('equipmentDropdownIcon');
+
+                if (menu.style.display === 'none' || menu.style.display === '') {
+                    menu.style.display = 'block';
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                } else {
+                    menu.style.display = 'none';
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+            }
+
+// Đóng dropdown khi click bên ngoài
+            document.addEventListener('click', function (event) {
+                const dropdown = document.getElementById('equipmentDropdownMenu');
+                const button = document.getElementById('equipmentDropdownBtn');
+
+                if (dropdown && button) {
+                    if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+                        dropdown.style.display = 'none';
+                        const icon = document.getElementById('equipmentDropdownIcon');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-up');
+                            icon.classList.add('fa-chevron-down');
+                        }
+                    }
+                }
+            });
+
+            function updateSelectedEquipment() {
+                const checkboxes = document.querySelectorAll('.equipment-checkbox:checked');
+                const display = document.getElementById('selectedEquipmentDisplay');
+                const label = document.getElementById('equipmentDropdownLabel');
+
+                if (checkboxes.length === 0) {
+                    display.innerHTML = '';
+                    label.innerHTML = '<i class="fas fa-list"></i> Chọn thiết bị cần hỗ trợ';
+                    return;
+                }
+
+                // Update label
+                label.innerHTML = `<i class="fas fa-check-circle text-success"></i> Đã chọn ${checkboxes.length} thiết bị`;
+
+                // Update display
+                let html = '<div class="alert alert-info mb-0 mt-2"><strong>Đã chọn ' + checkboxes.length + ' thiết bị:</strong><ul class="mb-0 mt-2">';
+                checkboxes.forEach(function (cb) {
+                    const model = cb.dataset.model;
+                    const serial = cb.dataset.serial;
+                    html += '<li><strong>' + model + '</strong> (SN: ' + serial + ')</li>';
+                });
+                html += '</ul></div>';
+                display.innerHTML = html;
+            }
+
+// Reset dropdown khi đóng modal
+            document.getElementById('createModal').addEventListener('hidden.bs.modal', function () {
+                // Reset dropdown
+                const menu = document.getElementById('equipmentDropdownMenu');
+                if (menu) {
+                    menu.style.display = 'none';
+                }
+
+                const icon = document.getElementById('equipmentDropdownIcon');
+                if (icon) {
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+
+                // Uncheck all checkboxes
+                document.querySelectorAll('.equipment-checkbox').forEach(cb => cb.checked = false);
+                updateSelectedEquipment();
+            });
+        </script>
     </body>
-</html>
-</body>
 </html>
