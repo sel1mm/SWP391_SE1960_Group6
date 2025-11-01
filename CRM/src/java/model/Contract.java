@@ -10,6 +10,109 @@ public class Contract {
     private String status;
     private String details;
     
+    // ✅ Thông tin khách hàng (JOIN từ Account + AccountProfile)
+    private String customerName;
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getCustomerEmail() {
+        return customerEmail;
+    }
+
+    public void setCustomerEmail(String customerEmail) {
+        this.customerEmail = customerEmail;
+    }
+
+    public String getCustomerPhone() {
+        return customerPhone;
+    }
+
+    public void setCustomerPhone(String customerPhone) {
+        this.customerPhone = customerPhone;
+    }
+
+    public String getCustomerAddress() {
+        return customerAddress;
+    }
+
+    public void setCustomerAddress(String customerAddress) {
+        this.customerAddress = customerAddress;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+
+    public int getEquipmentCount() {
+        return equipmentCount;
+    }
+
+    public void setEquipmentCount(int equipmentCount) {
+        this.equipmentCount = equipmentCount;
+    }
+
+    public int getRequestCount() {
+        return requestCount;
+    }
+
+    public void setRequestCount(int requestCount) {
+        this.requestCount = requestCount;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+
+    public int getDaysUntilExpiry() {
+        return daysUntilExpiry;
+    }
+
+    public void setDaysUntilExpiry(int daysUntilExpiry) {
+        this.daysUntilExpiry = daysUntilExpiry;
+    }
+
+    public String getDocumentUrl() {
+        return documentUrl;
+    }
+
+    public void setDocumentUrl(String documentUrl) {
+        this.documentUrl = documentUrl;
+    }
+    private String customerEmail;
+    private String customerPhone;
+    private String customerAddress;
+    private boolean verified;
+
+    // ✅ Thông tin mở rộng
+    private int equipmentCount;
+    private int requestCount;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private int daysUntilExpiry;
+    private String documentUrl; // link PDF nếu có upload
+    
     public Contract() {
     }
     

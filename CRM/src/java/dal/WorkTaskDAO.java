@@ -148,11 +148,11 @@ public class WorkTaskDAO extends MyDAO {
      * Update task status
      */
     public boolean updateTaskStatus(int taskId, String newStatus) throws SQLException {
-        xSql = "UPDATE WorkTask SET status = ? WHERE taskId = ?";
+        xSql = "UPDATE WorkTask SET status = ?, endDate = CASE WHEN ? = 'Completed' THEN CURRENT_DATE ELSE NULL END WHERE taskId = ?";
         ps = con.prepareStatement(xSql);
         ps.setString(1, newStatus);
-        ps.setInt(2, taskId);
-        
+        ps.setString(2, newStatus);
+        ps.setInt(3, taskId);
         int affected = ps.executeUpdate();
         return affected > 0;
     }
@@ -516,8 +516,16 @@ public class WorkTaskDAO extends MyDAO {
         ps.setInt(3, task.getTechnicianId());
         ps.setString(4, task.getTaskType());
         ps.setString(5, task.getTaskDetails());
-        ps.setDate(6, Date.valueOf(task.getStartDate()));
-        ps.setDate(7, Date.valueOf(task.getEndDate()));
+        if (task.getStartDate() != null) {
+            ps.setDate(6, Date.valueOf(task.getStartDate()));
+        } else {
+            ps.setNull(6, Types.DATE);
+        }
+        if (task.getEndDate() != null) {
+            ps.setDate(7, Date.valueOf(task.getEndDate()));
+        } else {
+            ps.setNull(7, Types.DATE);
+        }
         ps.setString(8, task.getStatus());
 
         int affected = ps.executeUpdate();

@@ -1731,7 +1731,6 @@ public class ServiceRequestDAO extends MyDAO {
         return total;
     }
 
-
     public void updateStatus(int requestId, String status) throws SQLException {
         String sql = "UPDATE ServiceRequest SET status = ? WHERE requestId = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -1744,20 +1743,20 @@ public class ServiceRequestDAO extends MyDAO {
     /**
      * Search service requests by equipment name and description only
      */
-
     /**
      * Search service requests by equipment name and description only
+     *
      * @param keyword
      */
-
     /**
      * Search service requests by equipment name and description only
+     *
      * @param customerId
      * @param keyword
      */
-
     /**
      * Search service requests by equipment name and description only
+     *
      * @param customerId
      * @param keyword
      * @return
@@ -1791,6 +1790,97 @@ public class ServiceRequestDAO extends MyDAO {
 
         return list;
 
+    }
+
+    public List<ServiceRequest> getRequestsByContractIdWithEquipment(int contractId) {
+        List<ServiceRequest> list = new ArrayList<>();
+        String sql = """
+        SELECT sr.*, 
+               e.model AS equipmentModel, 
+               e.serialNumber AS equipmentSerial
+        FROM ServiceRequest sr
+        LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId
+        WHERE sr.contractId = ?
+        ORDER BY sr.requestDate DESC
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ServiceRequest sr = new ServiceRequest();
+                    sr.setRequestId(rs.getInt("requestId"));
+                    sr.setRequestType(rs.getString("requestType"));
+                    sr.setPriorityLevel(rs.getString("priorityLevel"));
+                    sr.setStatus(rs.getString("status"));
+                    sr.setDescription(rs.getString("description"));
+                    sr.setRequestDate(rs.getTimestamp("requestDate"));
+                    sr.setEquipmentModel(rs.getString("equipmentModel"));
+                    sr.setSerialNumber(rs.getString("equipmentSerial"));
+                    list.add(sr);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<ServiceRequest> getRequestsByContractIdPaged(int contractId, int offset, int limit) {
+        List<ServiceRequest> list = new ArrayList<>();
+        String sql = """
+        SELECT sr.requestId, sr.contractId, sr.requestType, sr.priorityLevel, 
+               sr.status, sr.requestDate, sr.description,
+               e.model AS equipmentModel, e.serialNumber AS equipmentSerial
+        FROM ServiceRequest sr
+        LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId
+        WHERE sr.contractId = ?
+        ORDER BY sr.requestDate DESC
+        LIMIT ? OFFSET ?
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+            ps.setInt(2, limit);
+            ps.setInt(3, offset);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ServiceRequest r = new ServiceRequest();
+                    r.setRequestId(rs.getInt("requestId"));
+                    r.setContractId(rs.getInt("contractId"));
+                    r.setRequestType(rs.getString("requestType"));
+                    r.setPriorityLevel(rs.getString("priorityLevel"));
+                    r.setStatus(rs.getString("status"));
+                    r.setDescription(rs.getString("description"));
+                    r.setEquipmentModel(rs.getString("equipmentModel"));
+                    r.setSerialNumber(rs.getString("equipmentSerial"));
+
+                    // ✅ Nếu bạn dùng java.util.Date
+                    r.setRequestDate(rs.getTimestamp("requestDate"));
+
+                    list.add(r);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public int countRequestsByContractId(int contractId) {
+        String sql = "SELECT COUNT(*) FROM ServiceRequest WHERE contractId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
 }

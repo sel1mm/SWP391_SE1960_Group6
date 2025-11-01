@@ -120,6 +120,12 @@
                             </c:if>
                             
                             <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="viewCustomerContracts">
+                                    <i class="fas fa-file-contract me-2"></i> Quản lý hợp đồng
+                                </a>
+                            </c:if>
+
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
                                 <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="viewCustomerRequest">
                                     <i class="fas fa-clipboard-list"></i> Quản lý yêu cầu
                                 </a>
@@ -162,7 +168,7 @@
                                     <a href="customerManagement" class="text-decoration-none text-dark">
                                         <div class="card card-hover text-center p-4">
                                             <i class="fas fa-users card-icon text-dark"></i>
-                                            <h5>Khách hàng</h5>
+                                            <h5>Tài khoản</h5>
                                             <p>Quản lý tài khoản khách hàng.</p>
                                         </div>
                                     </a>
@@ -172,7 +178,16 @@
                                         <div class="card card-hover text-center p-4">
                                             <i class="fas fa-clipboard-list card-icon text-dark"></i>
                                             <h5>Yêu cầu</h5>
-                                            <p>Quản lý yêu cầu.</p>
+                                            <p>Quản lý yêu cầu khách hàng.</p>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-4 mb-4">
+                                    <a href="viewCustomerContracts" class="text-decoration-none text-dark">
+                                        <div class="card card-hover text-center p-4">
+                                            <i class="fas fa-file-contract me-2 card-icon text-dark"></i>
+                                            <h5>Hợp đồng</h5>
+                                            <p>Quản lý hợp đồng khách hàng.</p>
                                         </div>
                                     </a>
                                 </div>

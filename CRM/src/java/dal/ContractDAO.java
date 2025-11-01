@@ -971,4 +971,211 @@ public class ContractDAO extends MyDAO {
         return null;
     }
 
+    public List<Contract> getAllContractsPaged(int offset, int limit) throws SQLException {
+        List<Contract> list = new ArrayList<>();
+        String sql = """
+        SELECT 
+            c.contractId, 
+            c.customerId, 
+            c.contractDate, 
+            c.contractType, 
+            c.status, 
+            c.details,
+            a.fullName AS customerName, 
+            a.email AS customerEmail, 
+            a.phone AS customerPhone,
+            COUNT(sr.requestId) AS requestCount
+        FROM Contract c
+        LEFT JOIN Account a ON c.customerId = a.accountId
+        LEFT JOIN ServiceRequest sr ON c.contractId = sr.contractId
+        GROUP BY 
+            c.contractId, 
+            c.customerId, 
+            c.contractDate, 
+            c.contractType, 
+            c.status, 
+            c.details,
+            a.fullName, 
+            a.email, 
+            a.phone
+        ORDER BY c.contractDate DESC
+        LIMIT ? OFFSET ?
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            ps.setInt(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Contract c = new Contract();
+                    c.setContractId(rs.getInt("contractId"));
+                    c.setCustomerId(rs.getInt("customerId"));
+                    c.setCustomerName(rs.getString("customerName"));
+                    c.setCustomerEmail(rs.getString("customerEmail"));
+                    c.setCustomerPhone(rs.getString("customerPhone"));
+                    c.setContractDate(rs.getDate("contractDate").toLocalDate());
+                    c.setContractType(rs.getString("contractType"));
+                    c.setStatus(rs.getString("status"));
+                    c.setDetails(rs.getString("details"));
+                    c.setRequestCount(rs.getInt("requestCount"));
+                    list.add(c);
+                }
+            }
+        }
+        return list;
+    }
+
+    public int countAllContracts() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Contract";
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    public List<Contract> filterContractsPaged(String keyword, String status, String contractType,
+            String fromDate, String toDate,
+            int offset, int limit) throws SQLException {
+        List<Contract> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
+        SELECT 
+            c.contractId, 
+            c.customerId, 
+            c.contractDate, 
+            c.contractType, 
+            c.status, 
+            c.details,
+            a.fullName AS customerName, 
+            a.email AS customerEmail, 
+            a.phone AS customerPhone,
+            COUNT(sr.requestId) AS requestCount
+        FROM Contract c
+        LEFT JOIN Account a ON c.customerId = a.accountId
+        LEFT JOIN ServiceRequest sr ON c.contractId = sr.contractId
+        WHERE 1=1
+    """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND (a.fullName LIKE ? OR a.phone LIKE ? OR a.email LIKE ? OR c.details LIKE ?)");
+            String like = "%" + keyword + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND c.status = ?");
+            params.add(status);
+        }
+        if (contractType != null && !contractType.isEmpty()) {
+            sql.append(" AND c.contractType = ?");
+            params.add(contractType);
+        }
+        if (fromDate != null && !fromDate.isEmpty()) {
+            sql.append(" AND DATE(c.contractDate) >= ?");
+            params.add(fromDate);
+        }
+        if (toDate != null && !toDate.isEmpty()) {
+            sql.append(" AND DATE(c.contractDate) <= ?");
+            params.add(toDate);
+        }
+
+        sql.append("""
+        GROUP BY 
+            c.contractId, 
+            c.customerId, 
+            c.contractDate, 
+            c.contractType, 
+            c.status, 
+            c.details,
+            a.fullName, 
+            a.email, 
+            a.phone
+        ORDER BY c.contractDate DESC
+        LIMIT ? OFFSET ?
+    """);
+
+        params.add(limit);
+        params.add(offset);
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Contract c = new Contract();
+                    c.setContractId(rs.getInt("contractId"));
+                    c.setCustomerId(rs.getInt("customerId"));
+                    c.setCustomerName(rs.getString("customerName"));
+                    c.setCustomerEmail(rs.getString("customerEmail"));
+                    c.setCustomerPhone(rs.getString("customerPhone"));
+                    c.setContractDate(rs.getDate("contractDate").toLocalDate());
+                    c.setContractType(rs.getString("contractType"));
+                    c.setStatus(rs.getString("status"));
+                    c.setDetails(rs.getString("details"));
+                    c.setRequestCount(rs.getInt("requestCount"));
+                    list.add(c);
+                }
+            }
+        }
+        return list;
+    }
+
+    public int countFilteredContracts(String keyword, String status, String contractType,
+            String fromDate, String toDate) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+        SELECT COUNT(DISTINCT c.contractId)
+        FROM Contract c
+        LEFT JOIN Account a ON c.customerId = a.accountId
+        LEFT JOIN ServiceRequest sr ON c.contractId = sr.contractId
+        WHERE 1=1
+    """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND (a.fullName LIKE ? OR a.phone LIKE ? OR a.email LIKE ? OR c.details LIKE ?)");
+            String like = "%" + keyword + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND c.status = ?");
+            params.add(status);
+        }
+        if (contractType != null && !contractType.isEmpty()) {
+            sql.append(" AND c.contractType = ?");
+            params.add(contractType);
+        }
+        if (fromDate != null && !fromDate.isEmpty()) {
+            sql.append(" AND DATE(c.contractDate) >= ?");
+            params.add(fromDate);
+        }
+        if (toDate != null && !toDate.isEmpty()) {
+            sql.append(" AND DATE(c.contractDate) <= ?");
+            params.add(toDate);
+        }
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+
+        return 0;
+    }
+
 }

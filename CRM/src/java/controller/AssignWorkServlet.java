@@ -190,7 +190,7 @@ public class AssignWorkServlet extends HttpServlet {
             task.setTaskType("Request");
             task.setTaskDetails("Task generated from service request #" + requestId);
             task.setStartDate(LocalDate.now());
-            task.setEndDate(LocalDate.now().plusDays(3));
+            // endDate intentionally left null until completion
             task.setStatus("Assigned");
 
             int taskId = workTaskDAO.createWorkTask(task);

@@ -170,6 +170,12 @@
                             </c:if>
                             
                             <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
+                                <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="viewCustomerContracts">
+                                    <i class="fas fa-file-contract me-2"></i> Quản lý hợp đồng
+                                </a>
+                            </c:if>
+                            
+                            <c:if test="${sessionScope.session_role eq 'Customer Support Staff'}">
                                 <a class="nav-link ${currentPage eq 'users' ? 'fw-bold bg-white text-dark' : ''}" href="viewCustomerRequest">
                                     <i class="fas fa-clipboard-list"></i> Quản lý yêu cầu
                                 </a>

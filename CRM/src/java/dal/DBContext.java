@@ -16,7 +16,11 @@ public class DBContext {
 
             String password = "sa123456";
 
+<<<<<<< HEAD
             String url = "jdbc:mysql://localhost:3306/new_db?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
+=======
+            String url = "jdbc:mysql://localhost:3306/reviewiter2?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
+>>>>>>> 5a7196791b4ef59864e427448473fc847702e12a
 
 
             Class.forName("com.mysql.cj.jdbc.Driver");
