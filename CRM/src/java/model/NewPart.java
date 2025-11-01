@@ -1,28 +1,50 @@
 package model;
+
 import java.time.LocalDate;
 
+/**
+ * NewPart - Model cho bảng Part với Quantity
+ * @author Admin
+ */
 public class NewPart {
     private int partId;
     private String partName;
     private String description;
     private double unitPrice;
+    private int quantity; // Tổng số lượng đếm từ PartDetail
     private int lastUpdatedBy;
     private LocalDate lastUpdatedDate;
-    private String userName ;
+    private String userName; // JOIN với Account
 
+    // Constructor mặc định
     public NewPart() {
     }
 
-    public NewPart(int partId, String partName, String description, double unitPrice, int lastUpdatedBy, LocalDate lastUpdatedDate, String userName) {
+    // Constructor đầy đủ (có quantity)
+    public NewPart(int partId, String partName, String description, double unitPrice, 
+                   int quantity, int lastUpdatedBy, LocalDate lastUpdatedDate, String userName) {
         this.partId = partId;
+        this.partName = partName;
+        this.description = description;
+        this.unitPrice = unitPrice;
+        this.quantity = quantity;
+        this.lastUpdatedBy = lastUpdatedBy;
+        this.lastUpdatedDate = lastUpdatedDate;
+        this.userName = userName;
+    }
+
+    // Constructor không có quantity (dùng khi thêm mới Part)
+    public NewPart(String partName, String description, double unitPrice, 
+                   int lastUpdatedBy, LocalDate lastUpdatedDate) {
         this.partName = partName;
         this.description = description;
         this.unitPrice = unitPrice;
         this.lastUpdatedBy = lastUpdatedBy;
         this.lastUpdatedDate = lastUpdatedDate;
-        this.userName = userName ;
+        this.quantity = 0; // Mặc định = 0 khi tạo mới
     }
 
+    // Getters and Setters
     public int getPartId() {
         return partId;
     }
@@ -55,6 +77,14 @@ public class NewPart {
         this.unitPrice = unitPrice;
     }
 
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
     public int getLastUpdatedBy() {
         return lastUpdatedBy;
     }
@@ -81,12 +111,15 @@ public class NewPart {
 
     @Override
     public String toString() {
-        return "NewPart{" + "partId=" + partId + ", partName=" + partName + ", description=" + description + ", unitPrice=" + unitPrice + ", lastUpdatedBy=" + lastUpdatedBy + ", lastUpdatedDate=" + lastUpdatedDate + ", userName=" + userName + '}';
+        return "NewPart{" +
+                "partId=" + partId +
+                ", partName='" + partName + '\'' +
+                ", description='" + description + '\'' +
+                ", unitPrice=" + unitPrice +
+                ", quantity=" + quantity +
+                ", lastUpdatedBy=" + lastUpdatedBy +
+                ", lastUpdatedDate=" + lastUpdatedDate +
+                ", userName='" + userName + '\'' +
+                '}';
     }
-
-  
-
-
-    
 }
-

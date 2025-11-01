@@ -1,0 +1,34 @@
+[
+  {
+    "id": "T1",
+    "text": "TechManager có thể duyệt những cái mà Customer Support Staff gửi."
+  },
+  {
+    "id": "T2",
+    "text": "TechManager có thể từ chối, duyệt, và xem chi tiết thông tin của người gửi đến."
+  },
+  {
+    "id": "T3",
+    "text": "Khi duyệt hoặc từ chối, TechManager sẽ thông báo tới khách hàng những thông tin mình ghi."
+  },
+  {
+    "id": "T4",
+    "text": "Nếu là loại hợp đồng bảo hành thì TechManager sẽ gửi cho Technician để hoàn thành công việc."
+  },
+  {
+    "id": "T5",
+    "text": "Nếu hợp đồng là bảo trì, TechManager sẽ lập lịch bảo trì và giao cho Technician để hoàn thành công việc."
+  },
+  {
+    "id": "T6",
+    "text": "TechManager có thể xem khối lượng công việc và trạng thái của Technician với các công việc được giao."
+  },
+  {
+    "id": "T7",
+    "text": "Trong loại hợp đồng bảo trì, TechManager có thể từ chối và yêu cầu Technician làm lại nếu không hài lòng với công việc."
+  },
+  {
+    "id": "T8",
+    "text": "Nếu TechManager hài lòng, họ sẽ đồng ý và gửi thông báo cho khách hàng về việc bảo trì hoàn tất."
+  }
+]

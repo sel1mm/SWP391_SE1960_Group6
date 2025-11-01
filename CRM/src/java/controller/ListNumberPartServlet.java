@@ -29,8 +29,6 @@ public class ListNumberPartServlet extends HttpServlet {
         
         // Kiểm tra đăng nhập
         HttpSession session = request.getSession();
-        session.removeAttribute("successMessage");
-    session.removeAttribute("errorMessage");
         Account acc = (Account) session.getAttribute("session_login");
         if (acc == null) {
             response.sendRedirect("login");
@@ -269,7 +267,56 @@ public class ListNumberPartServlet extends HttpServlet {
                     break;
             }
         }
+// THÊM VÀO doPost() TRONG ListNumberPartServlet
+// Đặt TRƯỚC phần "XỬ LÝ SEARCH & FILTER"
 
+// ===== XỬ LÝ DETAIL (Lấy thống kê trạng thái) =====
+if ("detail".equalsIgnoreCase(action)) {
+    try {
+        System.out.println("=== START DETAIL ===");
+        
+        int partId = Integer.parseInt(request.getParameter("partId"));
+        System.out.println("Getting detail for PartId: " + partId);
+        
+        // Lấy thông tin Part
+        NewPart part = dao.getPartById(partId);
+        
+        if (part == null) {
+            session.setAttribute("errorMessage", "Không tìm thấy Part với ID: " + partId);
+            response.sendRedirect("numberPart");
+            return;
+        }
+        
+        // Lấy số lượng theo trạng thái
+        java.util.Map<String, Integer> statusCount = dao.getPartStatusCount(partId);
+        
+        // Lấy danh sách tất cả parts (để hiển thị bảng chính)
+         list = dao.getAllParts();
+        
+        // Set attributes
+        request.setAttribute("list", list);
+        request.setAttribute("selectedPart", part);
+        request.setAttribute("statusCount", statusCount);
+        request.setAttribute("showDetail", true);
+        
+        System.out.println("✅ Detail loaded successfully!");
+        
+        request.getRequestDispatcher("numberPart.jsp").forward(request, response);
+        return;
+        
+    } catch (NumberFormatException e) {
+        System.out.println("❌ Number format error: " + e.getMessage());
+        session.setAttribute("errorMessage", "ID không hợp lệ!");
+        response.sendRedirect("numberPart");
+        return;
+    } catch (Exception e) {
+        System.out.println("❌ Unexpected error: " + e.getMessage());
+        e.printStackTrace();
+        session.setAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
+        response.sendRedirect("numberPart");
+        return;
+    }
+}
         request.setAttribute("list", list);
         request.getRequestDispatcher("numberPart.jsp").forward(request, response);
     }

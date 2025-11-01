@@ -729,7 +729,7 @@
                                    placeholder="0123456789"
                                    value="${sessionScope.user.phone}"
                                    pattern="[0-9]{10,11}">
-                            <div class="error-message" id="phoneError">Phone number must be 10-11 digits</div>
+                            <div class="error-message" id="phoneError">Phone number must be 10-11 digits </div>
                         </div>
 
                         <div class="form-group">

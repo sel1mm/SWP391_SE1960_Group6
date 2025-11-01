@@ -160,6 +160,103 @@ body {
     font-size: 14px;
 }
 
+/* ========== DETAIL PANEL - THÊM MỚI ========== */
+.detail-panel {
+    background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 100%);
+    border: 2px solid #4285f4;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.detail-header h3 {
+    color: #1967d2;
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-close-detail {
+    padding: 8px 20px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-close-detail:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(220,53,69,0.3);
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.status-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 5px solid;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s;
+}
+
+.status-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.status-card.available {
+    border-left-color: #28a745;
+}
+
+.status-card.fault {
+    border-left-color: #ffc107;
+}
+
+.status-card.inuse {
+    border-left-color: #17a2b8;
+}
+
+.status-card.retired {
+    border-left-color: #6c757d;
+}
+
+.status-card h4 {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+
+.status-card .count {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1;
+}
+
 /* Search Filter Container */
 .search-filter-container {
     display: flex;
@@ -291,7 +388,7 @@ body {
     background-color: #f0f0f0;
 }
 
-.btn-edit, .btn-delete {
+.btn-edit, .btn-delete, .btn-detail {
     color: white;
     border: none;
     padding: 7px 12px;
@@ -306,12 +403,22 @@ body {
     margin-right: 5px;
 }
 
+.btn-detail {
+    background: #17a2b8;
+}
+
 .btn-edit {
     background: #007bff;
 }
 
 .btn-delete {
     background: #dc3545;
+}
+
+.btn-detail:hover {
+    background: #138496;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(23,162,184,0.3);
 }
 
 .btn-edit:hover {
@@ -466,14 +573,15 @@ body {
     box-shadow: 0 2px 6px rgba(108,117,125,0.3);
 }
 
-/* Column widths */
-.inventory-table thead tr th:nth-child(1) { width: 8%; }
-.inventory-table thead tr th:nth-child(2) { width: 10%; }
-.inventory-table thead tr th:nth-child(3) { width: 20%; }
-.inventory-table thead tr th:nth-child(4) { width: 10%; }
-.inventory-table thead tr th:nth-child(5) { width: 15%; }
-.inventory-table thead tr th:nth-child(6) { width: 15%; }
-.inventory-table thead tr th:nth-child(7) { width: 19%; }
+/* Column widths - CẬP NHẬT ĐỂ CÓ 8 CỘT */
+.inventory-table thead tr th:nth-child(1) { width: 7%; }  /* Part ID */
+.inventory-table thead tr th:nth-child(2) { width: 12%; } /* Part Name */
+.inventory-table thead tr th:nth-child(3) { width: 16%; } /* Description */
+.inventory-table thead tr th:nth-child(4) { width: 8%; }  /* Unit Price */
+.inventory-table thead tr th:nth-child(5) { width: 7%; }  /* Quantity */
+.inventory-table thead tr th:nth-child(6) { width: 11%; } /* Last Updated By */
+.inventory-table thead tr th:nth-child(7) { width: 11%; } /* Last Update Time */
+.inventory-table thead tr th:nth-child(8) { width: 28%; } /* Action */
 
 .inventory-table tbody td:nth-child(3) {
     max-width: 300px;
@@ -487,6 +595,12 @@ body {
     overflow: visible;
     word-wrap: break-word;
     background-color: #fffbea;
+}
+
+/* Highlight quantity */
+.inventory-table tbody td:nth-child(5) {
+    font-weight: 600;
+    color: #28a745;
 }
 
 .success-message, .error-message {
@@ -543,7 +657,7 @@ body {
                     <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
                     <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
                     <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
-                    <a href="transactionHistory"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
+                    <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
                     <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
                     <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
                     <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
@@ -570,6 +684,45 @@ body {
                     </div>
                 </c:if>
 
+                <!-- ========== DETAIL PANEL - THÊM MỚI ========== -->
+                <c:if test="${showDetail && selectedPart != null}">
+                    <div class="detail-panel">
+                        <div class="detail-header">
+                            <h3>
+                                <i class="fas fa-chart-pie"></i> 
+                                Chi tiết trạng thái: ${selectedPart.partName}
+                            </h3>
+                            <form action="numberPart" method="get" style="display: inline;">
+                                <button type="submit" class="btn-close-detail">
+                                    <i class="fas fa-times"></i> Đóng
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div class="status-grid">
+                            <div class="status-card available">
+                                <h4><i class="fas fa-check-circle"></i> Available (Sẵn sàng)</h4>
+                                <div class="count">${statusCount['Available']}</div>
+                            </div>
+                            
+                            <div class="status-card fault">
+                                <h4><i class="fas fa-exclamation-triangle"></i> Fault (Lỗi)</h4>
+                                <div class="count">${statusCount['Fault']}</div>
+                            </div>
+                            
+                            <div class="status-card inuse">
+                                <h4><i class="fas fa-tools"></i> InUse (Đang dùng)</h4>
+                                <div class="count">${statusCount['InUse']}</div>
+                            </div>
+                            
+                            <div class="status-card retired">
+                                <h4><i class="fas fa-archive"></i> Retired (Ngừng dùng)</h4>
+                                <div class="count">${statusCount['Retired']}</div>
+                            </div>
+                        </div>
+                    </div>
+                </c:if>
+
                 <!-- Search & Filter -->
                 <div class="search-filter-container">
                     <form action="numberPart" method="POST" style="display:flex; width:100%; align-items:center; gap:10px;">
@@ -586,6 +739,7 @@ body {
                                 <option value="">-- Filter by --</option>
                                 <option value="partId" ${param.filter == 'partId' ? 'selected' : ''}>By Part ID</option>
                                 <option value="partName" ${param.filter == 'partName' ? 'selected' : ''}>By Part Name</option>
+                                <option value="quantity" ${param.filter == 'quantity' ? 'selected' : ''}>By Quantity</option>
                                 <option value="unitPrice" ${param.filter == 'unitPrice' ? 'selected' : ''}>By Unit Price</option>
                                 <option value="updatePerson" ${param.filter == 'updatePerson' ? 'selected' : ''}>By Update Person</option>
                                 <option value="updateDate" ${param.filter == 'updateDate' ? 'selected' : ''}>By Update Date</option>
@@ -606,6 +760,7 @@ body {
                             <th>Part Name</th>
                             <th>Description</th>
                             <th>Unit Price</th>
+                            <th>Quantity</th>
                             <th>Last Updated By</th>
                             <th>Last Update Time</th>
                             <th>Action</th>
@@ -618,9 +773,19 @@ body {
                                 <td>${ls.partName}</td>
                                 <td>${ls.description}</td>
                                 <td>${ls.unitPrice}</td>
+                                <td>${ls.quantity}</td>
                                 <td>${ls.userName}</td>
                                 <td>${ls.lastUpdatedDate}</td>
                                 <td>
+                                    <!-- ========== NÚT DETAIL - THÊM MỚI ========== -->
+                                    <form action="numberPart" method="post" style="display: inline;">
+                                        <input type="hidden" name="action" value="detail">
+                                        <input type="hidden" name="partId" value="${ls.partId}">
+                                        <button type="submit" class="btn-detail">
+                                            <i class="fas fa-info-circle"></i> Detail
+                                        </button>
+                                    </form>
+                                    
                                     <button type="button" class="btn-edit" 
                                             onclick="openForm('edit',
                                                             '${ls.partId}',
@@ -799,7 +964,7 @@ body {
         const rows = Array.from(tableBody.rows);
 
         const filteredRows = rows.filter(row => {
-            return Array.from(row.cells).slice(0, 6)
+            return Array.from(row.cells).slice(0, 7)
                     .some(td => td.innerText.toLowerCase().includes(keyword));
         });
 

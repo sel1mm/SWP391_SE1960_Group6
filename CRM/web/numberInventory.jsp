@@ -432,7 +432,7 @@ body {
                         <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
                         <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
                         <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
-                        <a href="transactionHistory"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
+                        <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
                         <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
                         <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
                         <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
