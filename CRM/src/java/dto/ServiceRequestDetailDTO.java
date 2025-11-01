@@ -19,6 +19,7 @@ public class ServiceRequestDetailDTO {
     private Date requestDate; // Giữ Date vì ServiceRequest dùng Date
     private String status;
     private String requestType;
+    private String paymentStatus; // ✅ THÊM: Pending / Completed
     
     // Thông tin từ Contract
     private String contractType;
@@ -36,6 +37,7 @@ public class ServiceRequestDetailDTO {
     
     // Constructor mặc định
     public ServiceRequestDetailDTO() {
+        this.paymentStatus = "Pending"; // ✅ Default value
     }
 
     // Getters and Setters
@@ -111,6 +113,15 @@ public class ServiceRequestDetailDTO {
         this.requestType = requestType;
     }
 
+    // ✅ NEW: Payment Status Getter/Setter
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus != null ? paymentStatus : "Pending";
+    }
+
     public String getContractType() {
         return contractType;
     }
@@ -175,6 +186,47 @@ public class ServiceRequestDetailDTO {
         this.customerName = customerName;
     }
 
+    // ✅ NEW: Helper method to get display status
+    /**
+     * Get display status based on business logic:
+     * - "Chờ Xử Lý" = Pending + Awaiting Approval
+     * - "Đang Xử Lý" = Approved + (Completed but paymentStatus = Pending)
+     * - "Hoàn Thành" = Completed + paymentStatus = Completed
+     * - "Đã Hủy" = Cancelled
+     * - "Bị Từ Chối" = Rejected
+     */
+    public String getDisplayStatus() {
+        if (status == null) {
+            return "Unknown";
+        }
+        
+        switch (status) {
+            case "Pending":
+            case "Awaiting Approval":
+                return "Chờ Xử Lý";
+                
+            case "Approved":
+                return "Đang Xử Lý";
+                
+            case "Completed":
+                // Check payment status
+                if ("Completed".equals(paymentStatus)) {
+                    return "Hoàn Thành";
+                } else {
+                    return "Đang Xử Lý"; // Completed but not paid yet
+                }
+                
+            case "Cancelled":
+                return "Đã Hủy";
+                
+            case "Rejected":
+                return "Bị Từ Chối";
+                
+            default:
+                return status; // Return original if unknown
+        }
+    }
+
     @Override
     public String toString() {
         return "ServiceRequestDetailDTO{" +
@@ -182,8 +234,17 @@ public class ServiceRequestDetailDTO {
                 ", contractId=" + contractId +
                 ", equipmentId=" + equipmentId +
                 ", status='" + status + '\'' +
+                ", paymentStatus='" + paymentStatus + '\'' +
                 ", equipmentModel='" + equipmentModel + '\'' +
                 ", serialNumber='" + serialNumber + '\'' +
                 '}';
+    }
+
+    public String getCustomerEmail() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public String getCustomerPhone() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

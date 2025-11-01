@@ -318,6 +318,10 @@
                 background-color: #ffc107;
                 color: #000;
             }
+            .badge-awaiting {
+                background-color: #ff9800; /* Màu cam đậm */
+                color: #fff;
+            }
             .badge-inprogress {
                 background-color: #0dcaf0;
             }
@@ -339,6 +343,16 @@
             .btn-action {
                 padding: 5px 10px;
                 margin: 0 2px;
+            }
+            .btn-purple {
+                background: #8b5cf6;
+                color: white;
+                border: none;
+            }
+
+            .btn-purple:hover {
+                background: #7c3aed;
+                color: white;
             }
 
             /* TOAST NOTIFICATION */
@@ -867,8 +881,10 @@
                 <% } %>
 
                 <!-- THỐNG KÊ - 5 Ô TRẢI ĐỀU TOÀN MÀN HÌNH -->
+                <!-- ✅ THỐNG KÊ - 6 Ô THEO DISPLAY STATUS -->
                 <div class="row">
-                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+                    <!-- 1. Tổng Yêu Cầu -->
+                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6 mb-3">
                         <div class="stats-card bg-primary text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -879,45 +895,106 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+
+                    <!-- 2. Chờ Xác Nhận (Pending) -->
+                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6 mb-3">
                         <div class="stats-card bg-warning text-dark">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6>Chờ Xử Lý</h6>
-                                    <h2>${pendingCount}</h2>
+                                    <h6>Chờ Xác Nhận</h6>
+                                    <h2>
+                                        <c:set var="countChoXacNhan" value="0" />
+                                        <c:forEach var="req" items="${allRequests}">
+                                            <c:if test="${req.getDisplayStatus() == 'Chờ Xác Nhận'}">
+                                                <c:set var="countChoXacNhan" value="${countChoXacNhan + 1}" />
+                                            </c:if>
+                                        </c:forEach>
+                                        ${countChoXacNhan}
+                                    </h2>
                                 </div>
-                                <i class="fas fa-clock"></i>
+                                <i class="fas fa-question-circle"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+
+                    <!-- 3. Chờ Xử Lý (Awaiting Approval) -->
+                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6 mb-3">
+                        <div class="stats-card" style="background: #ff9800; color: white;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6>Chờ Xử Lý</h6>
+                                    <h2>
+                                        <c:set var="countChoXuLy" value="0" />
+                                        <c:forEach var="req" items="${allRequests}">
+                                            <c:if test="${req.getDisplayStatus() == 'Chờ Xử Lý'}">
+                                                <c:set var="countChoXuLy" value="${countChoXuLy + 1}" />
+                                            </c:if>
+                                        </c:forEach>
+                                        ${countChoXuLy}
+                                    </h2>
+                                </div>
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Đang Xử Lý (Approved + Completed chưa trả) -->
+                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6 mb-3">
                         <div class="stats-card bg-info text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6>Đã Duyệt</h6>
-                                    <h2>${inProgressCount}</h2>
+                                    <h6>Đang Xử Lý</h6>
+                                    <h2>
+                                        <c:set var="countDangXuLy" value="0" />
+                                        <c:forEach var="req" items="${allRequests}">
+                                            <c:if test="${req.getDisplayStatus() == 'Đang Xử Lý'}">
+                                                <c:set var="countDangXuLy" value="${countDangXuLy + 1}" />
+                                            </c:if>
+                                        </c:forEach>
+                                        ${countDangXuLy}
+                                    </h2>
                                 </div>
                                 <i class="fas fa-spinner"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl col-lg-6 col-md-6 col-sm-6">
+
+                    <!-- 5. Hoàn Thành -->
+                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6 mb-3">
                         <div class="stats-card bg-success text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6>Hoàn Thành</h6>
-                                    <h2>${completedCount}</h2>
+                                    <h2>
+                                        <c:set var="countHoanThanh" value="0" />
+                                        <c:forEach var="req" items="${allRequests}">
+                                            <c:if test="${req.getDisplayStatus() == 'Hoàn Thành'}">
+                                                <c:set var="countHoanThanh" value="${countHoanThanh + 1}" />
+                                            </c:if>
+                                        </c:forEach>
+                                        ${countHoanThanh}
+                                    </h2>
                                 </div>
                                 <i class="fas fa-check-circle"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl col-lg-6 col-md-6 col-sm-6">
+
+                    <!-- 6. Đã Hủy -->
+                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6 mb-3">
                         <div class="stats-card bg-danger text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6>Đã Hủy</h6>
-                                    <h2>${cancelledCount}</h2>
+                                    <h2>
+                                        <c:set var="countDaHuy" value="0" />
+                                        <c:forEach var="req" items="${allRequests}">
+                                            <c:if test="${req.getDisplayStatus() == 'Đã Hủy'}">
+                                                <c:set var="countDaHuy" value="${countDaHuy + 1}" />
+                                            </c:if>
+                                        </c:forEach>
+                                        ${countDaHuy}
+                                    </h2>
                                 </div>
                                 <i class="fas fa-times-circle"></i>
                             </div>
@@ -1006,37 +1083,78 @@
                                             <fmt:formatDate value="${req.requestDate}" pattern="dd/MM/yyyy"/>
                                         </td>
                                         <td>
+                                            <%-- ✅ SỬ DỤNG getDisplayStatus() thay vì req.status --%>
+                                            <c:set var="displayStatus" value="${req.getDisplayStatus()}" />
                                             <c:choose>
-                                                <c:when test="${req.status == 'Pending'}"><span class="badge badge-pending">Chờ Xử Lý</span></c:when>
-                                                <c:when test="${req.status == 'Approved'}"><span class="badge badge-inprogress">Đã Duyệt</span></c:when>
-                                                <c:when test="${req.status == 'Completed'}"><span class="badge badge-completed">Hoàn Thành</span></c:when>
-                                                <c:when test="${req.status == 'Rejected'}"><span class="badge badge-cancelled">Bị từ chối</span></c:when>
-                                                <c:when test="${req.status == 'Cancelled'}"><span class="badge badge-cancelled">Đã Hủy</span></c:when>
+                                                <c:when test="${displayStatus == 'Chờ Xác Nhận'}">
+                                                    <span class="badge badge-pending"><i class="fas fa-question-circle"></i> Chờ Xác Nhận</span>
+                                                </c:when>
+                                                <c:when test="${displayStatus == 'Chờ Xử Lý'}">
+                                                    <span class="badge badge-awaiting"><i class="fas fa-hourglass-half"></i> Chờ Xử Lý</span>
+                                                </c:when>
+                                                <c:when test="${displayStatus == 'Đang Xử Lý'}">
+                                                    <span class="badge badge-inprogress"><i class="fas fa-spinner"></i> Đang Xử Lý</span>
+                                                </c:when>
+                                                <c:when test="${displayStatus == 'Hoàn Thành'}">
+                                                    <span class="badge badge-completed"><i class="fas fa-check-circle"></i> Hoàn Thành</span>
+                                                </c:when>
+                                                <c:when test="${displayStatus == 'Đã Hủy'}">
+                                                    <span class="badge badge-cancelled"><i class="fas fa-times-circle"></i> Đã Hủy</span>
+                                                </c:when>
+                                                <c:when test="${displayStatus == 'Bị Từ Chối'}">
+                                                    <span class="badge bg-secondary"><i class="fas fa-ban"></i> Bị Từ Chối</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="badge bg-secondary">${displayStatus}</span>
+                                                </c:otherwise>
                                             </c:choose>
                                         </td>
+
                                         <td>
+                                            <%-- Set các biến để dễ đọc --%>
+                                            <c:set var="displayStatus" value="${req.getDisplayStatus()}" />
+                                            <c:set var="dbStatus" value="${req.status}" />
+                                            <c:set var="paymentStatus" value="${req.paymentStatus}" />
+                                            <c:set var="requestType" value="${req.requestType}" />
+
+                                            <%-- NÚT CHI TIẾT - Luôn hiển thị --%>
                                             <button class="btn btn-sm btn-info btn-action btn-view"
-                                                    data-id="${req.requestId}"
-                                                    data-contract-id="${req.contractId}"
-                                                    data-equipment-id="${req.equipmentId}"
-                                                    data-equipment-name="${req.equipmentName}"
-                                                    data-request-date="<fmt:formatDate value="${req.requestDate}" pattern="dd/MM/yyyy"/>"
-                                                    data-status="${req.status}"
-                                                    data-priority="${req.priorityLevel}">
+                                                    onclick="viewRequestDetail(${req.requestId}, '${displayStatus}')">
                                                 <i class="fas fa-eye"></i> Chi Tiết
                                             </button>
 
-                                            <c:if test="${req.status == 'Pending'}">
+                                            <%-- ✅ NÚT SỬA - CHỈ KHI "Chờ Xác Nhận" --%>
+                                            <c:if test="${displayStatus == 'Chờ Xác Nhận'}">
                                                 <button class="btn btn-sm btn-warning btn-action btn-edit"
                                                         data-id="${req.requestId}"
                                                         data-description="${fn:escapeXml(req.description)}"
                                                         data-priority="${req.priorityLevel}">
                                                     <i class="fas fa-edit"></i> Sửa
                                                 </button>
+                                            </c:if>
+
+                                            <%-- ✅ NÚT HỦY - CHỈ KHI "Chờ Xác Nhận" --%>
+                                            <c:if test="${displayStatus == 'Chờ Xác Nhận'}">
                                                 <button class="btn btn-sm btn-danger btn-action btn-cancel"
                                                         data-id="${req.requestId}">
                                                     <i class="fas fa-times-circle"></i> Hủy
                                                 </button>
+                                            </c:if>
+
+                                            <%-- ✅ NÚT XEM BÁO GIÁ + THANH TOÁN - 
+                                                 Khi displayStatus = "Đang Xử Lý" VÀ là đơn Equipment chưa trả --%>
+                                            <c:if test="${displayStatus == 'Đang Xử Lý' && 
+                                                          dbStatus == 'Completed' && 
+                                                          paymentStatus != 'Completed' && 
+                                                          (requestType == 'Service' || requestType == 'Warranty')}">
+                                                  <button class="btn btn-sm btn-purple btn-action"
+                                                          onclick="viewQuotation(${req.requestId})">
+                                                      <i class="fas fa-file-invoice"></i> Báo Giá
+                                                  </button>
+                                                  <button class="btn btn-sm btn-success btn-action"
+                                                          onclick="makePayment(${req.requestId})">
+                                                      <i class="fas fa-credit-card"></i> Thanh Toán
+                                                  </button>
                                             </c:if>
                                         </td>
                                     </tr>
@@ -1395,37 +1513,241 @@
             </div>
         </div>
 
-        <!-- MODAL XEM CHI TIẾT -->
-        <div class="modal fade" id="viewModal" tabindex="-1">
+        <!-- ========================================== -->
+        <!-- MODAL 1: CHỜ XÁC NHẬN (Pending) -->
+        <!-- ========================================== -->
+        <div class="modal fade" id="viewModalPending" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header bg-info text-white">
-                        <h5 class="modal-title"><i class="fas fa-file-alt"></i> Chi Tiết Yêu Cầu</h5>
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">
+                            <i class="fas fa-question-circle"></i> Chi Tiết Yêu Cầu - Chờ Xác Nhận
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-hashtag"></i> Mã Yêu Cầu:</strong>
+                                <p class="fw-normal" id="pendingRequestId"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-calendar"></i> Ngày Tạo:</strong>
+                                <p class="fw-normal" id="pendingRequestDate"></p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-file-contract"></i> Mã Hợp Đồng:</strong>
+                                <p class="fw-normal" id="pendingContractId"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-tools"></i> Thiết Bị:</strong>
+                                <p class="fw-normal" id="pendingEquipmentName"></p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-info-circle"></i> Trạng Thái:</strong>
+                                <span class="badge badge-pending" id="pendingStatus">Chờ Xác Nhận</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-exclamation-circle"></i> Mức Độ Ưu Tiên:</strong>
+                                <span class="badge" id="pendingPriority"></span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-tag"></i> Loại Yêu Cầu:</strong>
+                                <span class="badge" id="pendingRequestType"></span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <strong><i class="fas fa-comment-dots"></i> Mô Tả Vấn Đề:</strong>
+                            <div class="border rounded p-3 bg-light description-display" id="pendingDescription"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODAL 2: CHỜ XỬ LÝ (Awaiting Approval) -->
+        <!-- ========================================== -->
+        <div class="modal fade" id="viewModalAwaiting" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: #ff9800; color: white;">
+                        <h5 class="modal-title">
+                            <i class="fas fa-hourglass-half"></i> Chi Tiết Yêu Cầu - Chờ Xử Lý
+                        </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row mb-3">
-                            <div class="col-md-6"><strong>Mã Yêu Cầu:</strong> <p class="fw-normal" id="viewRequestId"></p></div>
-                            <div class="col-md-6"><strong>Ngày Tạo:</strong> <p class="fw-normal" id="viewRequestDate"></p></div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-hashtag"></i> Mã Yêu Cầu:</strong>
+                                <p class="fw-normal" id="awaitingRequestId"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-calendar"></i> Ngày Tạo:</strong>
+                                <p class="fw-normal" id="awaitingRequestDate"></p>
+                            </div>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-md-6"><strong>Mã Hợp Đồng:</strong> <p class="fw-normal" id="viewContractId"></p></div>
-                            <div class="col-md-6"><strong>Mã Thiết Bị:</strong> <p class="fw-normal" id="viewEquipmentId"></p></div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-file-contract"></i> Mã Hợp Đồng:</strong>
+                                <p class="fw-normal" id="awaitingContractId"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-tools"></i> Thiết Bị:</strong>
+                                <p class="fw-normal" id="awaitingEquipmentName"></p>
+                            </div>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-md-6"><strong>Tên Thiết Bị:</strong> <p class="fw-normal" id="viewEquipmentName"></p></div>
-                            <div class="col-md-6"><strong>Trạng Thái:</strong> <span class="badge" id="viewStatus"></span></div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-info-circle"></i> Trạng Thái:</strong>
+                                <span class="badge badge-awaiting" id="awaitingStatus">Chờ Xử Lý</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-exclamation-circle"></i> Mức Độ Ưu Tiên:</strong>
+                                <span class="badge" id="awaitingPriority"></span>
+                            </div>
                         </div>
-                        <div class="row mb-3">   
-                            <div class="col-md-12"><strong>Mức Độ Ưu Tiên:</strong> <span class="badge" id="viewPriority"></span></div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-tag"></i> Loại Yêu Cầu:</strong>
+                                <span class="badge" id="awaitingRequestType"></span>
+                            </div>
+                            <!-- ✅ THÊM: TÊN NGƯỜI XỬ LÝ -->
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-user-cog"></i> Người Xử Lý:</strong>
+                                <p class="fw-normal text-primary" id="awaitingTechnicianName">
+                                    <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                                </p>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <strong>Mô Tả Vấn Đề:</strong>
-                            <div class="border rounded p-3 bg-light description-display" id="viewDescription"></div>
+                            <strong><i class="fas fa-comment-dots"></i> Mô Tả Vấn Đề:</strong>
+                            <div class="border rounded p-3 bg-light description-display" id="awaitingDescription"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODAL 3: ĐANG XỬ LÝ - BÁO GIÁ (In Progress) -->
+        <!-- ========================================== -->
+        <div class="modal fade" id="viewModalQuotation" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-file-invoice-dollar"></i> Báo Giá Dịch Vụ
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Thông Tin Yêu Cầu -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Thông Tin Yêu Cầu</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>Mã Yêu Cầu:</strong>
+                                        <p id="quotationRequestId"></p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Ngày Tạo:</strong>
+                                        <p id="quotationRequestDate"></p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Mã Hợp Đồng:</strong>
+                                        <p id="quotationContractId"></p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Thiết Bị:</strong>
+                                        <p id="quotationEquipmentName"></p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <strong>Mô Tả Vấn Đề:</strong>
+                                        <div class="border rounded p-2 bg-light" id="quotationDescription"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thông Tin Báo Giá -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0"><i class="fas fa-clipboard-check"></i> Chi Tiết Báo Giá</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong><i class="fas fa-user-cog"></i> Kỹ Thuật Viên:</strong>
+                                        <p class="text-primary" id="quotationTechnicianName"></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong><i class="fas fa-calendar-check"></i> Ngày Sửa Chữa:</strong>
+                                        <p id="quotationRepairDate">Chưa xác định</p>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong><i class="fas fa-stethoscope"></i> Chẩn Đoán:</strong>
+                                    <div class="border rounded p-3 bg-light" id="quotationDiagnosis"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong><i class="fas fa-wrench"></i> Chi Tiết Sửa Chữa:</strong>
+                                    <div class="border rounded p-3 bg-light" id="quotationDetails"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="alert alert-info">
+                                            <strong><i class="fas fa-dollar-sign"></i> Chi Phí Ước Tính:</strong>
+                                            <h4 class="mb-0 text-primary" id="quotationCost">0 VNĐ</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert alert-warning">
+                                            <strong><i class="fas fa-info-circle"></i> Trạng Thái Báo Giá:</strong>
+                                            <p class="mb-0" id="quotationQuotationStatus">Pending</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lưu Ý -->
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Lưu ý:</strong> Khi bạn đồng ý báo giá, bạn sẽ được chuyển sang trang thanh toán để hoàn tất giao dịch. 
+                            Nếu từ chối, yêu cầu vẫn giữ nguyên trạng thái.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" id="quotationRequestIdHidden">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Từ Chối
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="acceptQuotation()">
+                            <i class="fas fa-check-circle"></i> Đồng Ý & Thanh Toán
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1473,6 +1795,8 @@
                 </div>
             </div>
         </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
@@ -1523,7 +1847,7 @@
                             const toast = container.querySelector('.toast-notification');
                             if (toast) {
                                 toast.classList.add('hiding');
-                                setTimeout(() => {
+                                setTimeout(function () {
                                     container.innerHTML = '';
                                 }, 400);
                             }
@@ -1571,13 +1895,11 @@
                         }
 
                         // ========== TOGGLE FIELDS FUNCTION ==========
-                        // ========== TOGGLE FIELDS FUNCTION ==========
                         function toggleFields() {
                             const supportType = document.getElementById('supportType').value;
                             const equipmentSelectField = document.getElementById('equipmentSelectField');
                             const priorityField = document.getElementById('priorityField');
                             const descriptionField = document.getElementById('descriptionField');
-
                             const priorityInput = document.getElementById('priorityLevel');
                             const descriptionInput = document.getElementById('description');
 
@@ -1585,35 +1907,30 @@
                                 equipmentSelectField.style.display = 'block';
                                 priorityField.style.display = 'block';
                                 descriptionField.style.display = 'block';
-
                                 priorityInput.setAttribute('required', 'required');
                                 descriptionInput.setAttribute('required', 'required');
-
                                 updateCharCount();
                             } else if (supportType === 'account') {
                                 equipmentSelectField.style.display = 'none';
                                 priorityField.style.display = 'block';
                                 descriptionField.style.display = 'block';
-
-                                // Clear all equipment selections
-                                document.querySelectorAll('.equipment-checkbox').forEach(cb => cb.checked = false);
+                                document.querySelectorAll('.equipment-checkbox').forEach(function (cb) {
+                                    cb.checked = false;
+                                });
                                 updateSelectedEquipment();
-
                                 priorityInput.setAttribute('required', 'required');
                                 descriptionInput.setAttribute('required', 'required');
-
                                 updateCharCount();
                             } else {
                                 equipmentSelectField.style.display = 'none';
                                 priorityField.style.display = 'none';
                                 descriptionField.style.display = 'none';
-
                                 priorityInput.removeAttribute('required');
                                 descriptionInput.removeAttribute('required');
                             }
                         }
 
-// ========== UPDATE SELECTED EQUIPMENT DISPLAY ==========
+                        // ========== UPDATE SELECTED EQUIPMENT DISPLAY ==========
                         function updateSelectedEquipment() {
                             const checkboxes = document.querySelectorAll('.equipment-checkbox:checked');
                             const display = document.getElementById('selectedEquipmentDisplay');
@@ -1624,17 +1941,16 @@
                             }
 
                             let html = '<div class="alert alert-info mb-0"><strong>Đã chọn ' + checkboxes.length + ' thiết bị:</strong><ul class="mb-0 mt-2">';
-                            checkboxes.forEach(cb => {
+                            checkboxes.forEach(function (cb) {
                                 const label = document.querySelector('label[for="' + cb.id + '"]');
                                 const equipmentName = label.querySelector('strong').textContent;
                                 html += '<li>' + equipmentName + '</li>';
                             });
                             html += '</ul></div>';
-
                             display.innerHTML = html;
                         }
 
-// ========== VALIDATION FUNCTION ==========
+                        // ========== VALIDATION FUNCTIONS ==========
                         function validateCreateForm(event) {
                             const supportType = document.getElementById('supportType').value;
                             const description = document.getElementById('description').value.trim();
@@ -1661,12 +1977,31 @@
 
                             if (supportType === 'equipment') {
                                 const selectedEquipment = document.querySelectorAll('.equipment-checkbox:checked');
-
                                 if (selectedEquipment.length === 0) {
                                     event.preventDefault();
                                     showToast('Vui lòng chọn ít nhất một thiết bị!', 'error');
                                     return false;
                                 }
+                            }
+
+                            return true;
+                        }
+
+                        function validateEditForm(event) {
+                            const description = document.getElementById('editDescription').value.trim();
+
+                            if (description.length < 10) {
+                                event.preventDefault();
+                                showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
+                                document.getElementById('editDescription').focus();
+                                return false;
+                            }
+
+                            if (description.length > 1000) {
+                                event.preventDefault();
+                                showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
+                                document.getElementById('editDescription').focus();
+                                return false;
                             }
 
                             return true;
@@ -1691,66 +2026,233 @@
                             }
                         }
 
-                        function viewRequest(id, contractId, equipmentId, equipmentName, description, requestDate, status, priorityLevel) {
-                            console.log('📋 Opening modal with data:', {id, contractId, equipmentId, equipmentName, description, requestDate, status, priorityLevel});
+                        function scrollToTop() {
+                            window.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
+                            });
+                        }
 
-                            // Set các giá trị
-                            const viewRequestIdEl = document.getElementById('viewRequestId');
-                            const viewContractIdEl = document.getElementById('viewContractId');
-                            const viewEquipmentIdEl = document.getElementById('viewEquipmentId');
-                            const viewEquipmentNameEl = document.getElementById('viewEquipmentName');
-                            const viewDescriptionEl = document.getElementById('viewDescription');
-                            const viewRequestDateEl = document.getElementById('viewRequestDate');
+                        // ========== VIEW REQUEST DETAIL FUNCTION (AJAX) ==========
+                        /**
+                         * ✅ Hàm mới: Gọi AJAX để lấy dữ liệu và hiển thị modal phù hợp
+                         */
+                        function viewRequestDetail(requestId, displayStatus) {
+                            console.log('🔍 Opening detail modal for request:', requestId, 'Status:', displayStatus);
 
-                            if (viewRequestIdEl)
-                                viewRequestIdEl.textContent = '#' + id;
-                            if (viewContractIdEl)
-                                viewContractIdEl.textContent = contractId;
-                            if (viewEquipmentIdEl)
-                                viewEquipmentIdEl.textContent = equipmentId;
-                            if (viewEquipmentNameEl)
-                                viewEquipmentNameEl.textContent = equipmentName;
-                            if (viewDescriptionEl)
-                                viewDescriptionEl.textContent = description;
-                            if (viewRequestDateEl)
-                                viewRequestDateEl.textContent = requestDate;
+                            // Hiển thị loading
+                            Swal.fire({
+                                title: 'Đang tải...',
+                                html: 'Vui lòng đợi trong giây lát',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
 
-                            const statusBadge = document.getElementById('viewStatus');
-                            if (statusBadge) {
-                                const statusMap = {
-                                    'Pending': {className: 'badge-pending', text: 'Chờ Xử Lý'},
-                                    'Approved': {className: 'badge-inprogress', text: 'Đã Duyệt'},
-                                    'Completed': {className: 'badge-completed', text: 'Hoàn Thành'},
-                                    'Rejected': {className: 'badge-cancelled', text: 'Bị từ chối'},
-                                    'Cancelled': {className: 'badge-cancelled', text: 'Đã Hủy'}
-                                };
-                                const statusInfo = statusMap[status] || {className: 'bg-secondary', text: status};
-                                statusBadge.className = 'badge ' + statusInfo.className;
-                                statusBadge.textContent = statusInfo.text;
-                            }
+                            // Gọi AJAX để lấy dữ liệu
+                            fetch('${pageContext.request.contextPath}/managerServiceRequest?action=viewDetail&requestId=' + requestId)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        Swal.close(); // Đóng loading
 
-                            const priorityBadge = document.getElementById('viewPriority');
-                            if (priorityBadge) {
-                                const priorityMap = {
-                                    'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
-                                    'High': {className: 'bg-warning text-dark', text: 'Cao'},
-                                    'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
-                                };
-                                const priorityInfo = priorityMap[priorityLevel] || {className: 'bg-dark', text: priorityLevel};
-                                priorityBadge.className = 'badge ' + priorityInfo.className;
-                                priorityBadge.textContent = priorityInfo.text;
+                                        if (!data.success) {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Lỗi!',
+                                                text: data.message || 'Không thể tải thông tin yêu cầu'
+                                            });
+                                            return;
+                                        }
+
+                                        console.log('✅ Received data:', data);
+
+                                        // Hiển thị modal tùy theo trạng thái
+                                        if (displayStatus === 'Chờ Xác Nhận') {
+                                            showPendingModal(data);
+                                        } else if (displayStatus === 'Chờ Xử Lý') {
+                                            showAwaitingModal(data);
+                                        } else if (displayStatus === 'Đang Xử Lý' && data.hasQuotation) {
+                                            showQuotationModal(data);
+                                        } else {
+                                            // Fallback: dùng modal Pending
+                                            showPendingModal(data);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        Swal.close();
+                                        console.error('❌ Error:', error);
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi!',
+                                            text: 'Có lỗi xảy ra khi tải dữ liệu: ' + error.message
+                                        });
+                                    });
+                        }
+
+                        // ========== MODAL 1: CHỜ XÁC NHẬN ==========
+                        function showPendingModal(data) {
+                            document.getElementById('pendingRequestId').textContent = '#' + data.requestId;
+                            document.getElementById('pendingRequestDate').textContent = data.requestDate;
+                            document.getElementById('pendingContractId').textContent = data.contractId || 'N/A';
+                            document.getElementById('pendingEquipmentName').textContent = data.equipmentName || 'N/A';
+                            document.getElementById('pendingDescription').textContent = data.description;
+
+                            // Priority badge
+                            const priorityBadge = document.getElementById('pendingPriority');
+                            const priorityMap = {
+                                'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
+                                'High': {className: 'bg-warning text-dark', text: 'Cao'},
+                                'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
+                            };
+                            const priority = priorityMap[data.priorityLevel] || {className: 'bg-dark', text: data.priorityLevel};
+                            priorityBadge.className = 'badge ' + priority.className;
+                            priorityBadge.textContent = priority.text;
+
+                            // Request Type badge
+                            const typeBadge = document.getElementById('pendingRequestType');
+                            if (data.requestType === 'Service' || data.requestType === 'Warranty') {
+                                typeBadge.className = 'badge bg-primary';
+                                typeBadge.textContent = '🔧 Hỗ Trợ Thiết Bị';
+                            } else if (data.requestType === 'InformationUpdate') {
+                                typeBadge.className = 'badge bg-info';
+                                typeBadge.textContent = '👤 Hỗ Trợ Tài Khoản';
+                            } else {
+                                typeBadge.className = 'badge bg-secondary';
+                                typeBadge.textContent = data.requestType || 'N/A';
                             }
 
                             // Mở modal
-                            const modalEl = document.getElementById('viewModal');
-                            if (modalEl) {
-                                const modal = new bootstrap.Modal(modalEl);
-                                modal.show();
-                                console.log('✅ Modal opened');
-                            } else {
-                                console.error('❌ Modal element not found!');
-                            }
+                            new bootstrap.Modal(document.getElementById('viewModalPending')).show();
                         }
+
+// ========== MODAL 2: CHỜ XỬ LÝ ==========
+                        function showAwaitingModal(data) {
+                            document.getElementById('awaitingRequestId').textContent = '#' + data.requestId;
+                            document.getElementById('awaitingRequestDate').textContent = data.requestDate;
+                            document.getElementById('awaitingContractId').textContent = data.contractId || 'N/A';
+                            document.getElementById('awaitingEquipmentName').textContent = data.equipmentName || 'N/A';
+                            document.getElementById('awaitingDescription').textContent = data.description;
+
+                            // Priority badge
+                            const priorityBadge = document.getElementById('awaitingPriority');
+                            const priorityMap = {
+                                'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
+                                'High': {className: 'bg-warning text-dark', text: 'Cao'},
+                                'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
+                            };
+                            const priority = priorityMap[data.priorityLevel] || {className: 'bg-dark', text: data.priorityLevel};
+                            priorityBadge.className = 'badge ' + priority.className;
+                            priorityBadge.textContent = priority.text;
+
+                            // Request Type badge
+                            const typeBadge = document.getElementById('awaitingRequestType');
+                            if (data.requestType === 'Service' || data.requestType === 'Warranty') {
+                                typeBadge.className = 'badge bg-primary';
+                                typeBadge.textContent = '🔧 Hỗ Trợ Thiết Bị';
+                            } else if (data.requestType === 'InformationUpdate') {
+                                typeBadge.className = 'badge bg-info';
+                                typeBadge.textContent = '👤 Hỗ Trợ Tài Khoản';
+                            } else {
+                                typeBadge.className = 'badge bg-secondary';
+                                typeBadge.textContent = data.requestType || 'N/A';
+                            }
+
+                            // ✅ Tên người xử lý
+                            const technicianNameEl = document.getElementById('awaitingTechnicianName');
+                            if (data.assignedTechnicianName) {
+                                technicianNameEl.innerHTML = '<i class="fas fa-user-check"></i> ' + data.assignedTechnicianName;
+                                technicianNameEl.className = 'fw-normal text-primary';
+                            } else {
+                                technicianNameEl.innerHTML = '<i class="fas fa-question-circle"></i> Chưa phân công';
+                                technicianNameEl.className = 'fw-normal text-muted';
+                            }
+
+                            // Mở modal
+                            new bootstrap.Modal(document.getElementById('viewModalAwaiting')).show();
+                        }
+
+// ========== MODAL 3: ĐANG XỬ LÝ - BÁO GIÁ ==========
+                        function showQuotationModal(data) {
+                            // Thông tin yêu cầu
+                            document.getElementById('quotationRequestId').textContent = '#' + data.requestId;
+                            document.getElementById('quotationRequestDate').textContent = data.requestDate;
+                            document.getElementById('quotationContractId').textContent = data.contractId || 'N/A';
+                            document.getElementById('quotationEquipmentName').textContent = data.equipmentName || 'N/A';
+                            document.getElementById('quotationDescription').textContent = data.description;
+
+                            // Thông tin báo giá
+                            if (data.quotation) {
+                                const q = data.quotation;
+
+                                document.getElementById('quotationTechnicianName').textContent = q.technicianName || 'N/A';
+                                document.getElementById('quotationRepairDate').textContent = q.repairDate || 'Chưa xác định';
+                                document.getElementById('quotationDiagnosis').textContent = q.diagnosis || 'Chưa có thông tin';
+                                document.getElementById('quotationDetails').textContent = q.details || 'Chưa có chi tiết';
+
+                                // Format currency
+                                const cost = parseFloat(q.estimatedCost) || 0;
+                                document.getElementById('quotationCost').textContent = cost.toLocaleString('vi-VN') + ' VNĐ';
+
+                                // Quotation status
+                                const statusEl = document.getElementById('quotationQuotationStatus');
+                                if (q.quotationStatus === 'Approved') {
+                                    statusEl.textContent = '✅ Đã Duyệt';
+                                    statusEl.className = 'mb-0 text-success fw-bold';
+                                } else if (q.quotationStatus === 'Pending') {
+                                    statusEl.textContent = '⏳ Chờ Xác Nhận';
+                                    statusEl.className = 'mb-0 text-warning fw-bold';
+                                } else {
+                                    statusEl.textContent = q.quotationStatus || 'N/A';
+                                    statusEl.className = 'mb-0';
+                                }
+
+                                // Lưu requestId cho nút "Đồng Ý"
+                                document.getElementById('quotationRequestIdHidden').value = data.requestId;
+                            }
+
+                            // Mở modal
+                            new bootstrap.Modal(document.getElementById('viewModalQuotation')).show();
+                        }
+
+// ========== ĐỒNG Ý BÁO GIÁ ==========
+                        function acceptQuotation() {
+                            const requestId = document.getElementById('quotationRequestIdHidden').value;
+
+                            Swal.fire({
+                                title: 'Xác nhận đồng ý báo giá?',
+                                text: 'Bạn sẽ được chuyển đến trang thanh toán',
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonText: '✅ Đồng Ý',
+                                cancelButtonText: '❌ Hủy',
+                                confirmButtonColor: '#10b981',
+                                cancelButtonColor: '#6c757d'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Gửi POST request
+                                    const form = document.createElement('form');
+                                    form.method = 'POST';
+                                    form.action = '${pageContext.request.contextPath}/managerServiceRequest';
+
+                                    const actionInput = document.createElement('input');
+                                    actionInput.type = 'hidden';
+                                    actionInput.name = 'action';
+                                    actionInput.value = 'AcceptQuotation';
+
+                                    const requestIdInput = document.createElement('input');
+                                    requestIdInput.type = 'hidden';
+                                    requestIdInput.name = 'requestId';
+                                    requestIdInput.value = requestId;
+
+                                    form.appendChild(actionInput);
+                                    form.appendChild(requestIdInput);
+                                    document.body.appendChild(form);
+                                    form.submit();
+                                }
+                            });
+                        }
+
 
                         function editRequest(id, description, priorityLevel) {
                             document.getElementById('editRequestId').value = id;
@@ -1765,10 +2267,35 @@
                             new bootstrap.Modal(document.getElementById('cancelModal')).show();
                         }
 
-                        function scrollToTop() {
-                            window.scrollTo({
-                                top: 0,
-                                behavior: 'smooth'
+                        // ========== PAYMENT & QUOTATION FUNCTIONS ==========
+                        function viewQuotation(requestId) {
+                            var contextPath = '${pageContext.request.contextPath}';
+                            Swal.fire({
+                                title: 'Xem Báo Giá',
+                                html: 'Đang tải thông tin báo giá cho yêu cầu #' + requestId + '...',
+                                icon: 'info',
+                                showConfirmButton: true,
+                                confirmButtonText: 'Đóng'
+                            }).then(function () {
+                                window.location.href = contextPath + '/managerServiceRequest?action=viewQuotation&requestId=' + requestId;
+                            });
+                        }
+
+                        function makePayment(requestId) {
+                            var contextPath = '${pageContext.request.contextPath}';
+                            Swal.fire({
+                                title: 'Xác nhận thanh toán?',
+                                text: 'Bạn sẽ được chuyển đến trang thanh toán',
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonText: 'Tiếp tục',
+                                cancelButtonText: 'Hủy',
+                                confirmButtonColor: '#10b981',
+                                cancelButtonColor: '#6c757d'
+                            }).then(function (result) {
+                                if (result.isConfirmed) {
+                                    window.location.href = contextPath + '/managerServiceRequest?action=makePayment&requestId=' + requestId;
+                                }
                             });
                         }
 
@@ -1785,35 +2312,11 @@
                         document.addEventListener('DOMContentLoaded', function () {
                             console.log('🔍 DOM Loaded');
 
-                            // Event cho nút VIEW
-                            document.querySelectorAll('.btn-view').forEach(button => {
-                                button.addEventListener('click', function (e) {
-                                    e.preventDefault(); // Ngăn hành động mặc định
-
-                                    const data = this.dataset;
-                                    const requestId = data.id;
-
-                                    console.log('✅ VIEW clicked, Request ID:', requestId);
-
-                                    const descElement = document.getElementById('desc-' + requestId);
-                                    const description = descElement ? descElement.textContent.trim() : 'Không có mô tả';
-
-                                    // Gọi hàm viewRequest
-                                    viewRequest(
-                                            requestId,
-                                            data.contractId || 'N/A',
-                                            data.equipmentId || 'N/A',
-                                            data.equipmentName || 'N/A',
-                                            description,
-                                            data.requestDate || 'N/A',
-                                            data.status || 'N/A',
-                                            data.priority || 'Normal'
-                                            );
-                                });
-                            });
+                            
+                            
 
                             // Event cho nút EDIT
-                            document.querySelectorAll('.btn-edit').forEach(button => {
+                            document.querySelectorAll('.btn-edit').forEach(function (button) {
                                 button.addEventListener('click', function () {
                                     const data = this.dataset;
                                     editRequest(data.id, data.description, data.priority);
@@ -1821,19 +2324,18 @@
                             });
 
                             // Event cho nút CANCEL
-                            document.querySelectorAll('.btn-cancel').forEach(button => {
+                            document.querySelectorAll('.btn-cancel').forEach(function (button) {
                                 button.addEventListener('click', function () {
                                     confirmCancel(this.dataset.id);
                                 });
                             });
 
-                            // Event cho textarea description trong create modal
+                            // Event cho textarea
                             const descriptionTextarea = document.getElementById('description');
                             if (descriptionTextarea) {
                                 descriptionTextarea.addEventListener('input', updateCharCount);
                             }
 
-                            // Event cho textarea description trong edit modal
                             const editDescriptionTextarea = document.getElementById('editDescription');
                             if (editDescriptionTextarea) {
                                 editDescriptionTextarea.addEventListener('input', updateEditCharCount);
@@ -1859,83 +2361,59 @@
                                     updateEditCharCount();
                                 });
                             }
-
-                            // Ngăn nhập ký tự không phải số cho contract và equipment ID
-                            const numberInputs = ['contractId', 'equipmentId'];
-                            numberInputs.forEach(function (inputId) {
-                                const input = document.getElementById(inputId);
-                                if (input) {
-                                    input.addEventListener('keypress', function (e) {
-                                        if (e.key < '0' || e.key > '9') {
-                                            e.preventDefault();
-                                        }
-                                    });
-
-                                    input.addEventListener('paste', function (e) {
-                                        setTimeout(function () {
-                                            input.value = input.value.replace(/[^0-9]/g, '');
-                                        }, 0);
-                                    });
-                                }
-                            });
                         });
-
         </script>
-    </script>
 
-    <!-- ========== ✅ FLASH MESSAGE HANDLER ✅ ========== -->
-    <c:if test="${not empty sessionScope.success}">
-        <script>
-            Swal.fire({
-                icon: 'success',
-                title: 'Thành công!',
-                text: '${sessionScope.success}',
-                timer: 3000,
-                showConfirmButton: false,
-                position: 'top-end',
-                toast: true,
-                timerProgressBar: true
-            });
-        </script>
-        <% session.removeAttribute("success"); %>
-    </c:if>
+        <!-- ========== ✅ FLASH MESSAGE HANDLER ✅ ========== -->
+        <c:if test="${not empty sessionScope.success}">
+            <script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: '${sessionScope.success}',
+                    timer: 3000,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true,
+                    timerProgressBar: true
+                });
+            </script>
+            <% session.removeAttribute("success"); %>
+        </c:if>
 
-    <c:if test="${not empty sessionScope.error}">
-        <script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Lỗi!',
-                text: '${sessionScope.error}',
-                timer: 3000,
-                showConfirmButton: false,
-                position: 'top-end',
-                toast: true,
-                timerProgressBar: true
-            });
-        </script>
-        <% session.removeAttribute("error"); %>
-    </c:if>
+        <c:if test="${not empty sessionScope.error}">
+            <script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: '${sessionScope.error}',
+                    timer: 3000,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true,
+                    timerProgressBar: true
+                });
+            </script>
+            <% session.removeAttribute("error"); %>
+        </c:if>
 
-    <c:if test="${not empty sessionScope.warning}">
-        <script>
-            Swal.fire({
-                icon: 'warning',
-                title: 'Cảnh báo!',
-                text: '${sessionScope.warning}',
-                timer: 3000,
-                showConfirmButton: false,
-                position: 'top-end',
-                toast: true,
-                timerProgressBar: true
-            });
-        </script>
-        <% session.removeAttribute("warning"); %>
-    </c:if>
-    <!-- ========== KẾT THÚC ========== -->
-
-</body>
-
+        <c:if test="${not empty sessionScope.warning}">
+            <script>
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Cảnh báo!',
+                    text: '${sessionScope.warning}',
+                    timer: 3000,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true,
+                    timerProgressBar: true
+                }
+                );
+            </script>
+            <% session.removeAttribute("warning"); %>
+        </c:if>
+    </body>
 </html>
 </body>
-
 </html>

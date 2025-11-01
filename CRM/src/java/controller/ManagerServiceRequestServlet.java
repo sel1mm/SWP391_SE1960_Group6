@@ -14,6 +14,9 @@ import java.util.Date;
 import java.util.List;
 import dal.EquipmentDAO;
 import model.Equipment;
+import model.RepairReport;
+import dal.ServiceRequestDAO.ServiceRequestWithQuotation;
+import java.math.BigDecimal;
 
 @WebServlet(name = "ManagerServiceRequestServlet", urlPatterns = {"/managerServiceRequest"})
 public class ManagerServiceRequestServlet extends HttpServlet {
@@ -59,7 +62,6 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                 ewc.setModel(eq.getModel());
                 ewc.setSerialNumber(eq.getSerialNumber());
 
-                // Get contract ID
                 String contractIdStr = equipmentDAO.getContractIdForEquipment(eq.getEquipmentId(), customerId);
                 if (contractIdStr != null && contractIdStr.startsWith("HD")) {
                     ewc.setContractId(Integer.parseInt(contractIdStr.substring(2)));
@@ -78,7 +80,10 @@ public class ManagerServiceRequestServlet extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        if ("search".equals(action)) {
+        // ✅ THÊM ACTION XEM CHI TIẾT
+        if ("viewDetail".equals(action)) {
+            handleViewDetail(request, response, customerId);
+        } else if ("search".equals(action)) {
             handleSearch(request, response, customerId);
         } else if ("filter".equals(action)) {
             handleFilter(request, response, customerId);
@@ -111,6 +116,8 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             handleUpdateRequest(request, response);
         } else if ("CancelServiceRequest".equals(action)) {
             handleCancelRequest(request, response);
+        } else if ("AcceptQuotation".equals(action)) {  // ✅ THÊM ACTION MỚI
+            handleAcceptQuotation(request, response, customerId);
         }
     }
 
@@ -192,18 +199,38 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             requests = allRequests.subList(offset, endIndex);
         }
 
-        int totalRequests = serviceRequestDAO.getTotalRequests(customerId);
-        int pendingCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Pending");
-        int inProgressCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Approved");
-        int completedCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Completed");
-        int cancelledCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Cancelled");
+        // ✅ TÍNH THỐNG KÊ DỰA TRÊN getDisplayStatus()
+        int totalRequests = allRequests.size();
+        int countChoXacNhan = 0;
+        int countChoXuLy = 0;
+        int countDangXuLy = 0;
+        int countHoanThanh = 0;
+        int countDaHuy = 0;
+
+        for (ServiceRequest req : allRequests) {
+            String displayStatus = req.getDisplayStatus();
+
+            if ("Chờ Xác Nhận".equals(displayStatus)) {
+                countChoXacNhan++;
+            } else if ("Chờ Xử Lý".equals(displayStatus)) {
+                countChoXuLy++;
+            } else if ("Đang Xử Lý".equals(displayStatus)) {
+                countDangXuLy++;
+            } else if ("Hoàn Thành".equals(displayStatus)) {
+                countHoanThanh++;
+            } else if ("Đã Hủy".equals(displayStatus)) {
+                countDaHuy++;
+            }
+        }
 
         request.setAttribute("requests", requests);
+        request.setAttribute("allRequests", allRequests); // ✅ ĐỂ JSP DÙNG
         request.setAttribute("totalRequests", totalRequests);
-        request.setAttribute("pendingCount", pendingCount);
-        request.setAttribute("inProgressCount", inProgressCount);
-        request.setAttribute("completedCount", completedCount);
-        request.setAttribute("cancelledCount", cancelledCount);
+        request.setAttribute("countChoXacNhan", countChoXacNhan);
+        request.setAttribute("countChoXuLy", countChoXuLy);
+        request.setAttribute("countDangXuLy", countDangXuLy);
+        request.setAttribute("countHoanThanh", countHoanThanh);
+        request.setAttribute("countDaHuy", countDaHuy);
         request.setAttribute("currentPage", currentPage);
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("pageSize", PAGE_SIZE);
@@ -241,18 +268,38 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             requests = allRequests.subList(offset, endIndex);
         }
 
-        int totalRequests = serviceRequestDAO.getTotalRequests(customerId);
-        int pendingCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Pending");
-        int inProgressCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Approved");
-        int completedCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Completed");
-        int cancelledCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Cancelled");
+        // ✅ TÍNH THỐNG KÊ DỰA TRÊN getDisplayStatus()
+        int totalRequests = allRequests.size();
+        int countChoXacNhan = 0;
+        int countChoXuLy = 0;
+        int countDangXuLy = 0;
+        int countHoanThanh = 0;
+        int countDaHuy = 0;
+
+        for (ServiceRequest req : allRequests) {
+            String displayStatus = req.getDisplayStatus();
+
+            if ("Chờ Xác Nhận".equals(displayStatus)) {
+                countChoXacNhan++;
+            } else if ("Chờ Xử Lý".equals(displayStatus)) {
+                countChoXuLy++;
+            } else if ("Đang Xử Lý".equals(displayStatus)) {
+                countDangXuLy++;
+            } else if ("Hoàn Thành".equals(displayStatus)) {
+                countHoanThanh++;
+            } else if ("Đã Hủy".equals(displayStatus)) {
+                countDaHuy++;
+            }
+        }
 
         request.setAttribute("requests", requests);
+        request.setAttribute("allRequests", allRequests); // ✅ ĐỂ JSP DÙNG
         request.setAttribute("totalRequests", totalRequests);
-        request.setAttribute("pendingCount", pendingCount);
-        request.setAttribute("inProgressCount", inProgressCount);
-        request.setAttribute("completedCount", completedCount);
-        request.setAttribute("cancelledCount", cancelledCount);
+        request.setAttribute("countChoXacNhan", countChoXacNhan);
+        request.setAttribute("countChoXuLy", countChoXuLy);
+        request.setAttribute("countDangXuLy", countDangXuLy);
+        request.setAttribute("countHoanThanh", countHoanThanh);
+        request.setAttribute("countDaHuy", countDaHuy);
         request.setAttribute("keyword", keyword);
         request.setAttribute("searchMode", true);
         request.setAttribute("currentPage", currentPage);
@@ -291,18 +338,38 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             requests = allRequests.subList(offset, endIndex);
         }
 
-        int totalRequests = serviceRequestDAO.getTotalRequests(customerId);
-        int pendingCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Pending");
-        int inProgressCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Approved");
-        int completedCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Completed");
-        int cancelledCount = serviceRequestDAO.getRequestCountByStatus(customerId, "Cancelled");
+        // ✅ TÍNH THỐNG KÊ DỰA TRÊN getDisplayStatus()
+        int totalRequests = allRequests.size();
+        int countChoXacNhan = 0;
+        int countChoXuLy = 0;
+        int countDangXuLy = 0;
+        int countHoanThanh = 0;
+        int countDaHuy = 0;
+
+        for (ServiceRequest req : allRequests) {
+            String displayStatus = req.getDisplayStatus();
+
+            if ("Chờ Xác Nhận".equals(displayStatus)) {
+                countChoXacNhan++;
+            } else if ("Chờ Xử Lý".equals(displayStatus)) {
+                countChoXuLy++;
+            } else if ("Đang Xử Lý".equals(displayStatus)) {
+                countDangXuLy++;
+            } else if ("Hoàn Thành".equals(displayStatus)) {
+                countHoanThanh++;
+            } else if ("Đã Hủy".equals(displayStatus)) {
+                countDaHuy++;
+            }
+        }
 
         request.setAttribute("requests", requests);
+        request.setAttribute("allRequests", allRequests); // ✅ ĐỂ JSP DÙNG
         request.setAttribute("totalRequests", totalRequests);
-        request.setAttribute("pendingCount", pendingCount);
-        request.setAttribute("inProgressCount", inProgressCount);
-        request.setAttribute("completedCount", completedCount);
-        request.setAttribute("cancelledCount", cancelledCount);
+        request.setAttribute("countChoXacNhan", countChoXacNhan);
+        request.setAttribute("countChoXuLy", countChoXuLy);
+        request.setAttribute("countDangXuLy", countDangXuLy);
+        request.setAttribute("countHoanThanh", countHoanThanh);
+        request.setAttribute("countDaHuy", countDaHuy);
         request.setAttribute("filterStatus", status);
         request.setAttribute("filterMode", true);
         request.setAttribute("currentPage", currentPage);
@@ -634,5 +701,175 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             session.setAttribute("error", "Có lỗi xảy ra khi hủy yêu cầu. Vui lòng thử lại!");
         }
         response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+    }
+
+    /**
+     * ✅ XỬ LÝ XEM CHI TIẾT YÊU CẦU Lấy thông tin đầy đủ theo trạng thái: - "Chờ
+     * Xác Nhận": Thông tin cơ bản - "Chờ Xử Lý": + Tên người xử lý - "Đang Xử
+     * Lý": + Báo giá (RepairReport)
+     */
+    private void handleViewDetail(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
+        String requestIdStr = request.getParameter("requestId");
+
+        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu không hợp lệ!\"}");
+            return;
+        }
+
+        try {
+            int requestId = Integer.parseInt(requestIdStr.trim());
+
+            // Lấy thông tin đầy đủ
+            ServiceRequestWithQuotation data = serviceRequestDAO.getRequestWithQuotation(requestId, customerId);
+
+            if (data == null || data.getServiceRequest() == null) {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write("{\"success\": false, \"message\": \"Không tìm thấy yêu cầu!\"}");
+                return;
+            }
+
+            ServiceRequest sr = data.getServiceRequest();
+            String displayStatus = sr.getDisplayStatus();
+
+            // Tạo JSON response
+            StringBuilder json = new StringBuilder();
+            json.append("{");
+            json.append("\"success\": true,");
+            json.append("\"requestId\": ").append(sr.getRequestId()).append(",");
+            json.append("\"contractId\": \"").append(sr.getContractId() != null ? "HD" + String.format("%03d", sr.getContractId()) : "N/A").append("\",");
+            json.append("\"equipmentId\": ").append(sr.getEquipmentId() != null ? sr.getEquipmentId() : 0).append(",");
+            json.append("\"equipmentName\": \"").append(escapeJson(sr.getEquipmentName() != null ? sr.getEquipmentName() : "N/A")).append("\",");
+            json.append("\"description\": \"").append(escapeJson(sr.getDescription())).append("\",");
+            json.append("\"priorityLevel\": \"").append(sr.getPriorityLevel()).append("\",");
+            json.append("\"requestDate\": \"").append(new java.text.SimpleDateFormat("dd/MM/yyyy").format(sr.getRequestDate())).append("\",");
+            json.append("\"displayStatus\": \"").append(escapeJson(displayStatus)).append("\",");
+            json.append("\"requestType\": \"").append(sr.getRequestType()).append("\",");
+            json.append("\"paymentStatus\": \"").append(sr.getPaymentStatus() != null ? sr.getPaymentStatus() : "Pending").append("\"");
+
+            // ✅ THÊM THÔNG TIN NGƯỜI XỬ LÝ (cho "Chờ Xử Lý")
+            if (data.getAssignedTechnicianName() != null) {
+                json.append(",\"assignedTechnicianName\": \"").append(escapeJson(data.getAssignedTechnicianName())).append("\"");
+            }
+
+            // ✅ THÊM THÔNG TIN BÁO GIÁ (cho "Đang Xử Lý")
+            if (data.getRepairReport() != null) {
+                RepairReport report = data.getRepairReport();
+                json.append(",\"hasQuotation\": true");
+                json.append(",\"quotation\": {");
+                json.append("\"reportId\": ").append(report.getReportId()).append(",");
+                json.append("\"details\": \"").append(escapeJson(report.getDetails() != null ? report.getDetails() : "")).append("\",");
+                json.append("\"diagnosis\": \"").append(escapeJson(report.getDiagnosis() != null ? report.getDiagnosis() : "")).append("\",");
+                json.append("\"estimatedCost\": ").append(report.getEstimatedCost() != null ? report.getEstimatedCost() : 0).append(",");
+                json.append("\"quotationStatus\": \"").append(report.getQuotationStatus() != null ? report.getQuotationStatus() : "Pending").append("\",");
+                json.append("\"technicianName\": \"").append(escapeJson(report.getTechnicianName() != null ? report.getTechnicianName() : "N/A")).append("\"");
+
+                if (report.getRepairDate() != null) {
+                    json.append(",\"repairDate\": \"").append(report.getRepairDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))).append("\"");
+                }
+
+                json.append("}");
+            } else {
+                json.append(",\"hasQuotation\": false");
+            }
+
+            json.append("}");
+
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(json.toString());
+
+        } catch (NumberFormatException e) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu phải là số nguyên!\"}");
+        } catch (Exception e) {
+            System.err.println("❌ Error in handleViewDetail: " + e.getMessage());
+            e.printStackTrace();
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+        }
+    }
+
+    /**
+     * ✅ XỬ LÝ ĐỒNG Ý BÁO GIÁ Chuyển hướng sang trang thanh toán
+     */
+    private void handleAcceptQuotation(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
+        HttpSession session = request.getSession();
+        String requestIdStr = request.getParameter("requestId");
+
+        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+            session.setAttribute("error", "Mã yêu cầu không hợp lệ!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+            return;
+        }
+
+        try {
+            int requestId = Integer.parseInt(requestIdStr.trim());
+
+            // Kiểm tra request có thuộc về customer không
+            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+
+            if (sr == null || sr.getCreatedBy() != customerId) {
+                session.setAttribute("error", "Bạn không có quyền xử lý yêu cầu này!");
+                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+                return;
+            }
+
+            // Kiểm tra trạng thái hợp lệ (phải là "Đang Xử Lý")
+            if (!"Đang Xử Lý".equals(sr.getDisplayStatus())) {
+                session.setAttribute("error", "Chỉ có thể thanh toán cho yêu cầu đang xử lý!");
+                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+                return;
+            }
+
+            // Kiểm tra có báo giá không
+            RepairReport report = serviceRequestDAO.getRepairReportByRequestId(requestId);
+
+            if (report == null || report.getEstimatedCost() == null) {
+                session.setAttribute("error", "Không tìm thấy thông tin báo giá!");
+                response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+                return;
+            }
+
+            // ✅ CHUYỂN SANG TRANG THANH TOÁN
+            // TODO: Thay đổi URL này theo đúng payment servlet của bạn
+            session.setAttribute("paymentRequestId", requestId);
+            session.setAttribute("paymentAmount", report.getEstimatedCost());
+            session.setAttribute("success", "Vui lòng tiến hành thanh toán để hoàn tất yêu cầu!");
+
+            // Redirect đến trang thanh toán (bạn cần tạo trang này)
+            response.sendRedirect(request.getContextPath() + "/payment?requestId=" + requestId);
+
+        } catch (NumberFormatException e) {
+            session.setAttribute("error", "Mã yêu cầu phải là số nguyên!");
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+        } catch (Exception e) {
+            System.err.println("❌ Error accepting quotation: " + e.getMessage());
+            e.printStackTrace();
+            session.setAttribute("error", "Có lỗi xảy ra: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/managerServiceRequest");
+        }
+    }
+
+    /**
+     * Helper method để escape JSON string
+     */
+    private String escapeJson(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 }
