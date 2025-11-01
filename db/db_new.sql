@@ -745,36 +745,36 @@ ORDER BY sr.priorityLevel DESC, rr.repairDate ASC;
 -- Purpose: Automatically update technician workload when tasks are assigned/completed
 -- Maintains accurate workload data for UC-06
 
-DELIMITER //
+-- DELIMITER //
 
-CREATE TRIGGER trg_UpdateWorkloadOnTaskAssign
-AFTER INSERT ON WorkTask
-FOR EACH ROW
-BEGIN
+-- CREATE TRIGGER trg_UpdateWorkloadOnTaskAssign
+-- AFTER INSERT ON WorkTask
+-- FOR EACH ROW
+-- BEGIN
     -- Increment active task count when new task is assigned
-    INSERT INTO TechnicianWorkload (technicianId, currentActiveTasks, maxConcurrentTasks, lastAssignedDate, lastUpdated)
-    VALUES (NEW.technicianId, 1, 5, NOW(), NOW())
-    ON DUPLICATE KEY UPDATE 
-        currentActiveTasks = currentActiveTasks + 1,
-        lastAssignedDate = NOW(),
-        lastUpdated = NOW();
-END//
+--    INSERT INTO TechnicianWorkload (technicianId, currentActiveTasks, maxConcurrentTasks, lastAssignedDate, lastUpdated)
+--    VALUES (NEW.technicianId, 1, 5, NOW(), NOW())
+--    ON DUPLICATE KEY UPDATE 
+--        currentActiveTasks = currentActiveTasks + 1,
+--        lastAssignedDate = NOW(),
+--        lastUpdated = NOW();
+-- END//
 
-CREATE TRIGGER trg_UpdateWorkloadOnTaskComplete
-AFTER UPDATE ON WorkTask
-FOR EACH ROW
-BEGIN
+-- CREATE TRIGGER trg_UpdateWorkloadOnTaskComplete
+-- AFTER UPDATE ON WorkTask
+-- FOR EACH ROW
+-- BEGIN
     -- Decrement active task count and increment completed count when task is completed
-    IF NEW.status = 'Completed' AND OLD.status != 'Completed' THEN
-        UPDATE TechnicianWorkload
-        SET currentActiveTasks = GREATEST(0, currentActiveTasks - 1),
-            totalCompletedTasks = totalCompletedTasks + 1,
-            lastUpdated = NOW()
-        WHERE technicianId = NEW.technicianId;
-    END IF;
-END//
+--    IF NEW.status = 'Completed' AND OLD.status != 'Completed' THEN
+--        UPDATE TechnicianWorkload
+--        SET currentActiveTasks = GREATEST(0, currentActiveTasks - 1),
+--            totalCompletedTasks = totalCompletedTasks + 1,
+--            lastUpdated = NOW()
+--        WHERE technicianId = NEW.technicianId;
+--    END IF;
+-- END//
 
-DELIMITER ;
+-- DELIMITER ;
 
 -- ====================================================================
 -- 13. STORED PROCEDURES FOR TECHNICAL MANAGER OPERATIONS
@@ -940,13 +940,13 @@ WHERE table_schema = DATABASE()
 );
 
 -- Check triggers were created
-SELECT 'Triggers Created' AS Check_Type,
-       COUNT(*) AS Count_Result
-FROM information_schema.triggers
-WHERE trigger_schema = DATABASE()
-  AND trigger_name IN (
-    'trg_UpdateWorkloadOnTaskAssign', 'trg_UpdateWorkloadOnTaskComplete'
-);
+-- SELECT 'Triggers Created' AS Check_Type,
+--       COUNT(*) AS Count_Result
+-- FROM information_schema.triggers
+-- WHERE trigger_schema = DATABASE()
+--  AND trigger_name IN (
+--    'trg_UpdateWorkloadOnTaskAssign', 'trg_UpdateWorkloadOnTaskComplete'
+-- );
 
 -- Check stored procedures were created
 SELECT 'Procedures Created' AS Check_Type,
