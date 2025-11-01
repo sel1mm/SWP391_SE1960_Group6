@@ -5,6 +5,7 @@ import model.ServiceRequestDetailDTO2;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import model.RepairReport;
 
 public class ServiceRequestDAO extends MyDAO {
 
@@ -1789,6 +1790,196 @@ public class ServiceRequestDAO extends MyDAO {
         }
 
         return list;
+
+    }
+
+    // ============ QUOTATION & REPAIR INFO METHODS ============
+    /**
+     * Lấy thông tin báo giá (RepairReport) cho một Service Request Dùng cho
+     * modal "Đang Xử Lý" - hiển thị báo giá
+     */
+    public RepairReport getRepairReportByRequestId(int requestId) {
+        String sql = "SELECT rr.*, "
+                + "a.fullName as technicianName "
+                + "FROM RepairReport rr "
+                + "LEFT JOIN Account a ON rr.technicianId = a.accountId "
+                + "WHERE rr.requestId = ?";
+
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, requestId);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                RepairReport report = new RepairReport();
+                report.setReportId(rs.getInt("reportId"));
+                report.setRequestId(rs.getInt("requestId"));
+
+                // Handle nullable technicianId
+                int techId = rs.getInt("technicianId");
+                if (!rs.wasNull()) {
+                    report.setTechnicianId(techId);
+                }
+
+                report.setDetails(rs.getString("details"));
+                report.setDiagnosis(rs.getString("diagnosis"));
+                report.setEstimatedCost(rs.getBigDecimal("estimatedCost"));
+                report.setQuotationStatus(rs.getString("quotationStatus"));
+
+                // ✅ Convert SQL Date to LocalDate
+                java.sql.Date sqlDate = rs.getDate("repairDate");
+                if (sqlDate != null) {
+                    report.setRepairDate(sqlDate.toLocalDate());
+                }
+
+                // Thông tin người sửa
+                report.setTechnicianName(rs.getString("technicianName"));
+
+                return report;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error getting repair report: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return null;
+    }
+
+    /**
+     * Lấy tên người xử lý (Assigned Technician) từ RequestApproval Dùng cho
+     * modal "Chờ Xử Lý"
+     */
+    public String getAssignedTechnicianName(int requestId) {
+        String sql = "SELECT a.fullName "
+                + "FROM RequestApproval ra "
+                + "INNER JOIN Account a ON ra.assignedTechnicianId = a.accountId "
+                + "WHERE ra.requestId = ?";
+
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, requestId);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("fullName");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error getting technician name: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return null;
+    }
+
+    /**
+     * Lấy đầy đủ thông tin Service Request + Báo giá (nếu có) + Người xử lý
+     * Dùng cho modal "Chi Tiết" tùy theo trạng thái
+     */
+    public ServiceRequestWithQuotation getRequestWithQuotation(int requestId, int customerId) {
+        String sql = "SELECT sr.*, "
+                + "e.model as equipmentName, "
+                + "ra.assignedTechnicianId, "
+                + "tech.fullName as assignedTechnicianName, "
+                + "rr.reportId, rr.technicianId as repairTechnicianId, "
+                + "rr.details as repairDetails, rr.diagnosis, "
+                + "rr.estimatedCost, rr.quotationStatus, rr.repairDate "
+                + "FROM ServiceRequest sr "
+                + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
+                + "LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId "
+                + "LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId "
+                + "LEFT JOIN RepairReport rr ON sr.requestId = rr.requestId "
+                + "WHERE sr.requestId = ? AND sr.createdBy = ?";
+
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, requestId);
+            ps.setInt(2, customerId);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                ServiceRequestWithQuotation result = new ServiceRequestWithQuotation();
+
+                // ✅ Service Request info
+                ServiceRequest sr = mapResultSetToServiceRequest(rs);
+                result.setServiceRequest(sr);
+
+                // ✅ Technician info (for "Chờ Xử Lý" state)
+                result.setAssignedTechnicianName(rs.getString("assignedTechnicianName"));
+
+                // ✅ Repair Report info (for "Đang Xử Lý" state)
+                if (rs.getObject("reportId") != null) {
+                    RepairReport report = new RepairReport();
+                    report.setReportId(rs.getInt("reportId"));
+                    report.setRequestId(requestId);
+
+                    // Handle nullable technicianId
+                    int techId = rs.getInt("repairTechnicianId");
+                    if (!rs.wasNull()) {
+                        report.setTechnicianId(techId);
+                    }
+
+                    report.setDetails(rs.getString("repairDetails"));
+                    report.setDiagnosis(rs.getString("diagnosis"));
+                    report.setEstimatedCost(rs.getBigDecimal("estimatedCost"));
+                    report.setQuotationStatus(rs.getString("quotationStatus"));
+
+                    // ✅ Convert SQL Date to LocalDate
+                    java.sql.Date sqlDate = rs.getDate("repairDate");
+                    if (sqlDate != null) {
+                        report.setRepairDate(sqlDate.toLocalDate());
+                    }
+
+                    report.setTechnicianName(rs.getString("assignedTechnicianName"));
+                    result.setRepairReport(report);
+                }
+
+                return result;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error getting request with quotation: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+        return null;
+    }
+
+    // ============ INNER CLASS FOR COMBINED DATA ============
+    /**
+     * Class kết hợp ServiceRequest + RepairReport + Technician info Dùng để trả
+     * về đầy đủ thông tin cho modal "Chi Tiết"
+     */
+    public static class ServiceRequestWithQuotation {
+
+        private ServiceRequest serviceRequest;
+        private RepairReport repairReport;
+        private String assignedTechnicianName;
+
+        public ServiceRequest getServiceRequest() {
+            return serviceRequest;
+        }
+
+        public void setServiceRequest(ServiceRequest serviceRequest) {
+            this.serviceRequest = serviceRequest;
+        }
+
+        public RepairReport getRepairReport() {
+            return repairReport;
+        }
+
+        public void setRepairReport(RepairReport repairReport) {
+            this.repairReport = repairReport;
+        }
+
+        public String getAssignedTechnicianName() {
+            return assignedTechnicianName;
+        }
+
+        public void setAssignedTechnicianName(String assignedTechnicianName) {
+            this.assignedTechnicianName = assignedTechnicianName;
+        }
 
     }
 

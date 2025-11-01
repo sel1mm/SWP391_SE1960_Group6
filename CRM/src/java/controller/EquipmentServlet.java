@@ -10,19 +10,24 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @WebServlet(name = "EquipmentServlet", urlPatterns = {"/equipment"})
 public class EquipmentServlet extends HttpServlet {
 
     private EquipmentDAO equipmentDAO;
+    
+    private static final int PAGE_SIZE = 10; // ← THAY ĐỔI SỐ NÀY ĐỂ ĐIỀU CHỈNH
+    // ============================================
 
     @Override
     public void init() throws ServletException {
         equipmentDAO = new EquipmentDAO();
         System.out.println("✅ EquipmentDAO initialized");
+        System.out.println("📄 PAGE_SIZE configured: " + PAGE_SIZE + " thiết bị/trang");
     }
 
     @Override
@@ -33,242 +38,281 @@ public class EquipmentServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
 
         HttpSession session = request.getSession();
-
-        //  🔍 DEBUG: Print all session attributes
-        System.out.println("========== EQUIPMENT SERVLET DEBUG ==========");
-        System.out.println("📋 All Session Attributes:");
-        Enumeration<String> attrs = session.getAttributeNames();
-        while (attrs.hasMoreElements()) {
-            String attr = attrs.nextElement();
-            System.out.println("   " + attr + " = " + session.getAttribute(attr));
-        }
-
         Integer customerId = (Integer) session.getAttribute("session_login_id");
-        System.out.println("🔢 Customer ID from session: " + customerId);
 
-        // Kiểm tra đăng nhập
         if (customerId == null) {
             System.out.println("❌ Customer not logged in! Redirecting to login...");
-            String targetUrl = request.getRequestURI();
-            String queryString = request.getQueryString();
-            if (queryString != null) {
-                targetUrl += "?" + queryString;
-            }
-            session.setAttribute("targetUrl", targetUrl);
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        System.out.println("✅ Customer logged in successfully: " + customerId);
-        System.out.println("=============================================");
-
         String action = request.getParameter("action");
 
-        if ("search".equals(action)) {
-            handleSearch(request, response, customerId);
+        if ("search".equals(action) || "filter".equals(action)) {
+            handleSearchAndFilter(request, response, customerId);
         } else {
             displayAllEquipment(request, response, customerId);
         }
     }
 
     /**
-     * Hiển thị tất cả thiết bị của customer
+     * Hiển thị tất cả thiết bị với phân trang
      */
     private void displayAllEquipment(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
 
-        System.out.println("🚀 Starting displayAllEquipment for customer: " + customerId);
+        System.out.println("🚀 displayAllEquipment for customer: " + customerId);
 
         try {
-            // Lấy danh sách thiết bị của customer từ các hợp đồng
-            List<Equipment> equipmentList = equipmentDAO.getEquipmentByCustomerContracts(customerId);
-            System.out.println("📦 Equipment list size: " + equipmentList.size());
-
-            // ✅ THÊM DEBUG CHO TỪNG EQUIPMENT
-            System.out.println("========== EQUIPMENT DETAILS ==========");
-            for (Equipment eq : equipmentList) {
-                System.out.println("Equipment ID: " + eq.getEquipmentId());
-                System.out.println("  Model: " + eq.getModel());
-                System.out.println("  Serial: " + eq.getSerialNumber());
-                System.out.println("  Description: " + eq.getDescription());
-                System.out.println("  Install Date: " + eq.getInstallDate());
-                System.out.println("  Last Updated: " + eq.getLastUpdatedDate());
-                System.out.println("  Last Updated By: " + eq.getLastUpdatedBy());
-                System.out.println("--------------------------------------");
+            // Lấy trang hiện tại
+            int currentPage = 1;
+            String pageParam = request.getParameter("page");
+            if (pageParam != null && !pageParam.isEmpty()) {
+                try {
+                    currentPage = Integer.parseInt(pageParam);
+                    if (currentPage < 1) currentPage = 1;
+                } catch (NumberFormatException e) {
+                    currentPage = 1;
+                }
             }
-            System.out.println("=========================================");
 
-            // Lấy thống kê thiết bị
+            // Lấy danh sách thiết bị
+            List<Equipment> allEquipment = equipmentDAO.getEquipmentByCustomerContracts(customerId);
+            System.out.println("📦 Total equipment: " + allEquipment.size());
+
+            // Lấy thống kê
             Map<String, Integer> stats = equipmentDAO.getEquipmentStatsByCustomer(customerId);
-            System.out.println("📊 Stats: " + stats);
 
-            // Thêm thông tin hợp đồng và trạng thái cho mỗi thiết bị
-            List<EquipmentWithContract> equipmentWithContracts = new ArrayList<>();
-            for (Equipment equipment : equipmentList) {
-                System.out.println("🔧 Processing equipment: " + equipment.getEquipmentId() + " - " + equipment.getModel());
-
+            // Tạo danh sách với thông tin đầy đủ
+            List<EquipmentWithContract> fullList = new ArrayList<>();
+            for (Equipment equipment : allEquipment) {
                 EquipmentWithContract ewc = new EquipmentWithContract();
                 ewc.setEquipment(equipment);
-
-                // Lấy thông tin hợp đồng liên quan
+                
                 String contractId = equipmentDAO.getContractIdForEquipment(
                         equipment.getEquipmentId(), customerId);
-                System.out.println("   📄 Contract ID: " + contractId);
                 ewc.setContractId(contractId != null ? contractId : "N/A");
-
-                // Lấy trạng thái thiết bị
+                
                 String status = equipmentDAO.getEquipmentStatus(equipment.getEquipmentId());
-                System.out.println("   🔴 Status: " + status);
                 ewc.setStatus(status);
-
-                equipmentWithContracts.add(ewc);
+                
+                fullList.add(ewc);
             }
 
-            System.out.println("✅ Final list size: " + equipmentWithContracts.size());
+            // ============ PHÂN TRANG ============
+            int totalItems = fullList.size();
+            int totalPages = (int) Math.ceil((double) totalItems / PAGE_SIZE);
+            
+            // Điều chỉnh currentPage nếu vượt quá totalPages
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            }
 
-            // Set attributes
+            int startIndex = (currentPage - 1) * PAGE_SIZE;
+            int endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
+            
+            List<EquipmentWithContract> paginatedList = new ArrayList<>();
+            if (startIndex < totalItems) {
+                paginatedList = fullList.subList(startIndex, endIndex);
+            }
+
+            System.out.println("📄 Pagination Info:");
+            System.out.println("   - Total items: " + totalItems);
+            System.out.println("   - Page size: " + PAGE_SIZE);
+            System.out.println("   - Total pages: " + totalPages);
+            System.out.println("   - Current page: " + currentPage);
+            System.out.println("   - Items on this page: " + paginatedList.size());
+            System.out.println("   - Show pagination: " + (totalPages > 1 ? "YES" : "NO"));
+
+            // Set attributes cho JSP
             request.setAttribute("totalEquipment", stats.get("total"));
             request.setAttribute("activeCount", stats.get("active"));
             request.setAttribute("repairCount", stats.get("repair"));
             request.setAttribute("maintenanceCount", stats.get("maintenance"));
-            request.setAttribute("equipmentList", equipmentWithContracts);
+            request.setAttribute("equipmentList", paginatedList);
+            request.setAttribute("currentPage", currentPage);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("searchMode", false);
 
-            System.out.println("🎯 Forwarding to equipment.jsp...");
             request.getRequestDispatcher("/equipment.jsp").forward(request, response);
 
         } catch (Exception e) {
             System.out.println("💥 ERROR in displayAllEquipment: " + e.getMessage());
             e.printStackTrace();
-
-            request.setAttribute("error", "Có lỗi xảy ra khi tải danh sách thiết bị: " + e.getMessage());
-            request.setAttribute("totalEquipment", 0);
-            request.setAttribute("activeCount", 0);
-            request.setAttribute("repairCount", 0);
-            request.setAttribute("maintenanceCount", 0);
-            request.setAttribute("equipmentList", new ArrayList<>());
-
-            request.getRequestDispatcher("/equipment.jsp").forward(request, response);
+            handleError(request, response, "Có lỗi xảy ra khi tải danh sách thiết bị: " + e.getMessage());
         }
     }
 
     /**
-     * Tìm kiếm thiết bị
+     * Xử lý tìm kiếm và lọc
      */
-    private void handleSearch(HttpServletRequest request, HttpServletResponse response, int customerId)
+    private void handleSearchAndFilter(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
 
         String keyword = request.getParameter("keyword");
-        System.out.println("🔍 Search keyword: " + keyword);
+        String statusFilter = request.getParameter("status");
+        String sortBy = request.getParameter("sortBy");
+        
+        System.out.println("🔍 Search - Keyword: " + keyword + ", Status: " + statusFilter + ", Sort: " + sortBy);
 
         try {
             List<Equipment> allEquipment = equipmentDAO.getEquipmentByCustomerContracts(customerId);
             List<EquipmentWithContract> filteredList = new ArrayList<>();
 
-            // Lọc theo keyword
+            // Tạo danh sách đầy đủ
+            for (Equipment equipment : allEquipment) {
+                EquipmentWithContract ewc = new EquipmentWithContract();
+                ewc.setEquipment(equipment);
+                
+                String contractId = equipmentDAO.getContractIdForEquipment(
+                        equipment.getEquipmentId(), customerId);
+                ewc.setContractId(contractId != null ? contractId : "N/A");
+                
+                String status = equipmentDAO.getEquipmentStatus(equipment.getEquipmentId());
+                ewc.setStatus(status);
+                
+                filteredList.add(ewc);
+            }
+
+            // ============ LỌC KEYWORD ============
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String lowerKeyword = keyword.toLowerCase().trim();
+                filteredList = filteredList.stream()
+                    .filter(ewc -> {
+                        Equipment eq = ewc.getEquipment();
+                        return (eq.getModel() != null && eq.getModel().toLowerCase().contains(lowerKeyword))
+                            || (eq.getSerialNumber() != null && eq.getSerialNumber().toLowerCase().contains(lowerKeyword))
+                            || (eq.getDescription() != null && eq.getDescription().toLowerCase().contains(lowerKeyword))
+                            || (ewc.getContractId() != null && ewc.getContractId().toLowerCase().contains(lowerKeyword));
+                    })
+                    .collect(Collectors.toList());
+            }
 
-                for (Equipment equipment : allEquipment) {
-                    boolean match = false;
+            // ============ LỌC TRẠNG THÁI ============
+            if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+                filteredList = filteredList.stream()
+                    .filter(ewc -> statusFilter.equals(ewc.getStatus()))
+                    .collect(Collectors.toList());
+            }
 
-                    if (equipment.getModel() != null
-                            && equipment.getModel().toLowerCase().contains(lowerKeyword)) {
-                        match = true;
-                    }
-                    if (equipment.getSerialNumber() != null
-                            && equipment.getSerialNumber().toLowerCase().contains(lowerKeyword)) {
-                        match = true;
-                    }
-                    if (equipment.getDescription() != null
-                            && equipment.getDescription().toLowerCase().contains(lowerKeyword)) {
-                        match = true;
-                    }
+            // ============ SẮP XẾP ============
+            if (sortBy == null || sortBy.isEmpty()) {
+                sortBy = "newest";
+            }
 
-                    if (match) {
-                        EquipmentWithContract ewc = new EquipmentWithContract();
-                        ewc.setEquipment(equipment);
+            switch (sortBy) {
+                case "oldest":
+                    filteredList.sort(Comparator.comparing(ewc -> 
+                        ewc.getEquipment().getInstallDate() != null 
+                        ? ewc.getEquipment().getInstallDate() 
+                        : java.time.LocalDate.MIN));
+                    break;
+                    
+                case "name_asc":
+                    filteredList.sort(Comparator.comparing(ewc -> 
+                        ewc.getEquipment().getModel() != null 
+                        ? ewc.getEquipment().getModel() 
+                        : ""));
+                    break;
+                    
+                case "name_desc":
+                    filteredList.sort(Comparator.comparing(ewc -> 
+                        ewc.getEquipment().getModel() != null 
+                        ? ewc.getEquipment().getModel() 
+                        : "", Comparator.reverseOrder()));
+                    break;
+                    
+                case "newest":
+                default:
+                    filteredList.sort(Comparator.comparing(ewc -> 
+                        ewc.getEquipment().getInstallDate() != null 
+                        ? ewc.getEquipment().getInstallDate() 
+                        : java.time.LocalDate.MIN, Comparator.reverseOrder()));
+                    break;
+            }
 
-                        String contractId = equipmentDAO.getContractIdForEquipment(
-                                equipment.getEquipmentId(), customerId);
-                        ewc.setContractId(contractId != null ? contractId : "N/A");
-
-                        String status = equipmentDAO.getEquipmentStatus(equipment.getEquipmentId());
-                        ewc.setStatus(status);
-
-                        filteredList.add(ewc);
-                    }
-                }
-            } else {
-                // Nếu không có keyword, hiển thị tất cả
-                for (Equipment equipment : allEquipment) {
-                    EquipmentWithContract ewc = new EquipmentWithContract();
-                    ewc.setEquipment(equipment);
-
-                    String contractId = equipmentDAO.getContractIdForEquipment(
-                            equipment.getEquipmentId(), customerId);
-                    ewc.setContractId(contractId != null ? contractId : "N/A");
-
-                    String status = equipmentDAO.getEquipmentStatus(equipment.getEquipmentId());
-                    ewc.setStatus(status);
-
-                    filteredList.add(ewc);
+            // ============ PHÂN TRANG ============
+            int currentPage = 1;
+            String pageParam = request.getParameter("page");
+            if (pageParam != null && !pageParam.isEmpty()) {
+                try {
+                    currentPage = Integer.parseInt(pageParam);
+                    if (currentPage < 1) currentPage = 1;
+                } catch (NumberFormatException e) {
+                    currentPage = 1;
                 }
             }
 
-            System.out.println("✅ Search results: " + filteredList.size() + " items");
+            int totalItems = filteredList.size();
+            int totalPages = (int) Math.ceil((double) totalItems / PAGE_SIZE);
+            
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            }
 
-            // Tính lại thống kê cho kết quả tìm kiếm
+            int startIndex = (currentPage - 1) * PAGE_SIZE;
+            int endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
+            
+            List<EquipmentWithContract> paginatedList = new ArrayList<>();
+            if (startIndex < totalItems) {
+                paginatedList = filteredList.subList(startIndex, endIndex);
+            }
+
+            // ============ THỐNG KÊ ============
             int totalCount = filteredList.size();
-            int activeCount = 0, repairCount = 0, maintenanceCount = 0;
+            int activeCount = (int) filteredList.stream().filter(e -> "Active".equals(e.getStatus())).count();
+            int repairCount = (int) filteredList.stream().filter(e -> "Repair".equals(e.getStatus())).count();
+            int maintenanceCount = (int) filteredList.stream().filter(e -> "Maintenance".equals(e.getStatus())).count();
 
-            for (EquipmentWithContract ewc : filteredList) {
-                String status = ewc.getStatus();
-                if ("Active".equals(status)) {
-                    activeCount++;
-                } else if ("Repair".equals(status)) {
-                    repairCount++;
-                } else if ("Maintenance".equals(status)) {
-                    maintenanceCount++;
-                }
-            }
+            System.out.println("✅ Search/Filter Results:");
+            System.out.println("   - Total items found: " + totalItems);
+            System.out.println("   - Total pages: " + totalPages);
+            System.out.println("   - Current page: " + currentPage);
+            System.out.println("   - Items on this page: " + paginatedList.size());
+            System.out.println("   - Show pagination: " + (totalPages > 1 ? "YES" : "NO"));
 
+            // Set attributes
             request.setAttribute("totalEquipment", totalCount);
             request.setAttribute("activeCount", activeCount);
             request.setAttribute("repairCount", repairCount);
             request.setAttribute("maintenanceCount", maintenanceCount);
-            request.setAttribute("equipmentList", filteredList);
+            request.setAttribute("equipmentList", paginatedList);
+            request.setAttribute("currentPage", currentPage);
+            request.setAttribute("totalPages", totalPages);
             request.setAttribute("keyword", keyword);
             request.setAttribute("searchMode", true);
 
             request.getRequestDispatcher("/equipment.jsp").forward(request, response);
 
         } catch (Exception e) {
-            System.out.println("💥 ERROR in handleSearch: " + e.getMessage());
+            System.out.println("💥 ERROR in handleSearchAndFilter: " + e.getMessage());
             e.printStackTrace();
-
-            request.setAttribute("error", "Có lỗi xảy ra khi tìm kiếm: " + e.getMessage());
-
-            // Set default stats in case of error
-            request.setAttribute("totalEquipment", 0);
-            request.setAttribute("activeCount", 0);
-            request.setAttribute("repairCount", 0);
-            request.setAttribute("maintenanceCount", 0);
-            request.setAttribute("equipmentList", new ArrayList<>());
-            request.setAttribute("keyword", keyword);
-            request.setAttribute("searchMode", true);
-
-            request.getRequestDispatcher("/equipment.jsp").forward(request, response);
+            handleError(request, response, "Có lỗi xảy ra khi tìm kiếm: " + e.getMessage());
         }
     }
 
+    private void handleError(HttpServletRequest request, HttpServletResponse response, String errorMessage)
+            throws ServletException, IOException {
+        
+        request.setAttribute("error", errorMessage);
+        request.setAttribute("totalEquipment", 0);
+        request.setAttribute("activeCount", 0);
+        request.setAttribute("repairCount", 0);
+        request.setAttribute("maintenanceCount", 0);
+        request.setAttribute("equipmentList", new ArrayList<>());
+        request.setAttribute("currentPage", 1);
+        request.setAttribute("totalPages", 0);
+        
+        request.getRequestDispatcher("/equipment.jsp").forward(request, response);
+    }
+
     /**
-     * Inner class để kết hợp Equipment với Contract info và Status
+     * Inner class để kết hợp Equipment với Contract và Status
      */
     public static class EquipmentWithContract {
-
         private Equipment equipment;
         private String contractId;
-        private String status; // Active, Repair, Maintenance
+        private String status;
 
         public Equipment getEquipment() {
             return equipment;
