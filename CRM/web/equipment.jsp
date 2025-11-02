@@ -516,6 +516,41 @@
                 display: flex;
             }
 
+            /* ✅ REPAIR INFO SECTION */
+            .repair-info-section {
+                background: #fff3cd;
+                border: 1px solid #ffc107;
+                border-radius: 8px;
+                padding: 20px;
+                margin-top: 20px;
+            }
+
+            .repair-info-section h6 {
+                color: #856404;
+                font-weight: 600;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .info-item {
+                display: flex;
+                margin-bottom: 12px;
+                padding: 8px;
+                background: white;
+                border-radius: 4px;
+            }
+
+            .info-item strong {
+                min-width: 150px;
+                color: #495057;
+            }
+
+            .info-item span {
+                color: #212529;
+            }
+
             /* RESPONSIVE */
             @media (max-width: 768px) {
                 .sidebar {
@@ -562,7 +597,7 @@
 
             <div class="sidebar-menu">
                 <div class="menu-section">
-                    <a href="${pageContext.request.contextPath}/dashboard" class="menu-item">
+                    <a href="${pageContext.request.contextPath}/dashbroadCustomer.jsp" class="menu-item">
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
@@ -578,33 +613,15 @@
                         <i class="fas fa-tools"></i>
                         <span>Thiết Bị</span>
                     </a>
-                </div>
-
-                <div class="menu-section">
-                    <a href="${pageContext.request.contextPath}/customers" class="menu-item">
-                        <i class="fas fa-users"></i>
-                        <span>Khách Hàng</span>
+                    <a href="${pageContext.request.contextPath}/invoices" class="menu-item">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>Hóa Đơn</span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/reports" class="menu-item">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Báo Cáo</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/maintenance" class="menu-item">
-                        <i class="fas fa-wrench"></i>
-                        <span>Bảo Trì</span>
-                    </a>
-                </div>
-
-                <div class="menu-section">
                     <a href="${pageContext.request.contextPath}/manageProfile" class="menu-item">
                         <i class="fas fa-user-circle"></i>
                         <span>Hồ Sơ</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/settings" class="menu-item">
-                        <i class="fas fa-cog"></i>
-                        <span>Cài Đặt</span>
-                    </a>
-                </div>
+                    </a> 
+                </div>               
             </div>
 
             <div class="sidebar-footer">
@@ -657,7 +674,6 @@
             <div id="toastContainer"></div>
 
             <div class="content-wrapper">
-                <!-- ========== ✅ THÊM ĐOẠN NÀY ✅ ========== -->
                 <%
                     String errorMsg = (String) session.getAttribute("error");
                     String successMsg = (String) session.getAttribute("success");
@@ -684,7 +700,7 @@
                     });
                 </script>
                 <% } %>
-                <!-- ========== KẾT THÚC ========== -->
+
                 <!-- THỐNG KÊ - 4 Ô -->
                 <div class="row">
                     <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
@@ -824,17 +840,29 @@
                                                             data-install-date="${item.equipment.installDate}"
                                                             data-last-update="${item.equipment.lastUpdatedDate}"
                                                             data-status="${item.status}"
-                                                            onclick="viewEquipment(this)">
+                                                            onclick="viewEquipmentDetail(this)">
                                                         <i class="fas fa-eye"></i> Chi Tiết
                                                     </button>
-                                                    <button class="btn btn-sm btn-warning btn-action"
-                                                            data-id="${item.equipment.equipmentId}"
-                                                            data-contract="${item.contractId}"
-                                                            data-serial="${item.equipment.serialNumber}"
-                                                            data-model="${item.equipment.model}"
-                                                            onclick="createRequest(this)">
-                                                        <i class="fas fa-plus-circle"></i> Tạo Đơn
-                                                    </button>
+
+                                                    <%-- ✅ VÔ HIỆU HÓA NÚT TẠO ĐƠN KHI THIẾT BỊ ĐANG SỬA --%>
+                                                    <c:choose>
+                                                        <c:when test="${item.status == 'Repair'}">
+                                                            <button class="btn btn-sm btn-secondary btn-action" disabled 
+                                                                    title="Thiết bị đang được sửa chữa">
+                                                                <i class="fas fa-ban"></i> Không thể tạo đơn
+                                                            </button>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <button class="btn btn-sm btn-warning btn-action"
+                                                                    data-id="${item.equipment.equipmentId}"
+                                                                    data-contract="${item.contractId}"
+                                                                    data-serial="${item.equipment.serialNumber}"
+                                                                    data-model="${item.equipment.model}"
+                                                                    onclick="createRequest(this)">
+                                                                <i class="fas fa-plus-circle"></i> Tạo Đơn
+                                                            </button>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </td>
                                             </tr>
                                         </c:forEach>
@@ -918,9 +946,9 @@
             </div>
         </div>
 
-        <!-- MODAL VIEW EQUIPMENT -->
+        <!-- ✅ MODAL VIEW EQUIPMENT - CẬP NHẬT HIỂN THỊ THÔNG TIN SỬA CHỮA -->
         <div class="modal fade" id="viewModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header bg-info text-white">
                         <h5 class="modal-title">
@@ -929,42 +957,98 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong>Tên Thiết Bị:</strong>
-                                <p class="fw-normal" id="viewEquipmentName"></p>
+                        <!-- THÔNG TIN CƠ BẢN -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-tools"></i> Thông Tin Thiết Bị</h6>
                             </div>
-                            <div class="col-md-6">
-                                <strong>Serial Number:</strong>
-                                <p class="fw-normal" id="viewSerialNumber"></p>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Tên Thiết Bị:</strong>
+                                        <p class="fw-normal" id="viewEquipmentName"></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Serial Number:</strong>
+                                        <p class="fw-normal" id="viewSerialNumber"></p>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Mã Hợp Đồng:</strong>
+                                        <p class="fw-normal" id="viewContractId"></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Ngày Lắp Đặt:</strong>
+                                        <p class="fw-normal" id="viewInstallDate"></p>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Cập Nhật Lần Cuối:</strong>
+                                        <p class="fw-normal" id="viewLastUpdate"></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Trạng Thái:</strong>
+                                        <span class="badge" id="viewStatus"></span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <strong>Mô Tả:</strong>
+                                    <div class="border rounded p-3 bg-light" id="viewDescription"></div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong>Mã Hợp Đồng:</strong>
-                                <p class="fw-normal" id="viewContractId"></p>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Ngày Lắp Đặt:</strong>
-                                <p class="fw-normal" id="viewInstallDate"></p>
-                            </div>
-                        </div>
+                        <!-- ✅ THÔNG TIN SỬA CHỮA (CHỈ HIỂN THỊ KHI STATUS = REPAIR) -->
+                        <div id="repairInfoSection" style="display: none;">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-wrench"></i> Thông Tin Sửa Chữa
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong><i class="fas fa-user-cog"></i> Kỹ Thuật Viên:</strong>
+                                            <p class="text-primary fw-bold" id="viewTechnicianName">Đang tải...</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong><i class="fas fa-calendar-check"></i> Ngày Bắt Đầu Sửa:</strong>
+                                            <p id="viewRepairDate">N/A</p>
+                                        </div>
+                                    </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong>Cập Nhật Lần Cuối:</strong>
-                                <p class="fw-normal" id="viewLastUpdate"></p>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Trạng Thái:</strong>
-                                <span class="badge" id="viewStatus"></span>
-                            </div>
-                        </div>
+                                    <div class="mb-3">
+                                        <strong><i class="fas fa-stethoscope"></i> Chẩn Đoán:</strong>
+                                        <div class="border rounded p-3 bg-light" id="viewDiagnosis">Chưa có thông tin</div>
+                                    </div>
 
-                        <div class="mb-3">
-                            <strong>Mô Tả:</strong>
-                            <div class="border rounded p-3 bg-light" id="viewDescription"></div>
+                                    <div class="mb-3">
+                                        <strong><i class="fas fa-clipboard-list"></i> Chi Tiết Sửa Chữa:</strong>
+                                        <div class="border rounded p-3 bg-light" id="viewRepairDetails">Chưa có thông tin</div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="alert alert-info mb-0">
+                                                <strong><i class="fas fa-dollar-sign"></i> Chi Phí Ước Tính:</strong>
+                                                <h5 class="mb-0 text-primary" id="viewEstimatedCost">0 VNĐ</h5>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="alert alert-warning mb-0">
+                                                <strong><i class="fas fa-info-circle"></i> Trạng Thái Báo Giá:</strong>
+                                                <p class="mb-0 fw-bold" id="viewQuotationStatus">N/A</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -989,7 +1073,7 @@
                     <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post" id="createRequestForm">
                         <input type="hidden" name="action" value="CreateServiceRequest">
                         <input type="hidden" name="supportType" value="equipment">
-                        <input type="hidden" name="equipmentId" id="requestEquipmentId">
+                        <input type="hidden" name="equipmentIds" id="requestEquipmentId">
                         <input type="hidden" name="contractId" id="requestContractIdValue">
 
                         <div class="modal-body">
@@ -1141,8 +1225,9 @@
                     }
                 }
 
-                // ========== VIEW EQUIPMENT ==========
-                function viewEquipment(button) {
+                // ========== ✅ VIEW EQUIPMENT DETAIL - GỌI AJAX LẤY THÔNG TIN SỬA CHỮA ==========
+                function viewEquipmentDetail(button) {
+                    const equipmentId = button.getAttribute('data-id');
                     const model = button.getAttribute('data-model');
                     const serial = button.getAttribute('data-serial');
                     const contract = button.getAttribute('data-contract');
@@ -1151,6 +1236,7 @@
                     const lastUpdate = button.getAttribute('data-last-update');
                     const status = button.getAttribute('data-status');
 
+                    // Điền thông tin cơ bản
                     document.getElementById('viewEquipmentName').textContent = model || 'N/A';
                     document.getElementById('viewSerialNumber').textContent = serial || 'N/A';
                     document.getElementById('viewContractId').textContent = contract || 'N/A';
@@ -1168,6 +1254,67 @@
                     } else if (status === 'Maintenance') {
                         statusBadge.className = 'badge badge-maintenance';
                         statusBadge.innerHTML = '<i class="fas fa-cog"></i> Đang bảo trì';
+                    }
+
+                    // ✅ NẾU THIẾT BỊ ĐANG SỬA CHỮA → GỌI AJAX LẤY THÔNG TIN
+                    const repairSection = document.getElementById('repairInfoSection');
+                    if (status === 'Repair') {
+                        repairSection.style.display = 'block';
+
+                        // Hiển thị loading
+                        document.getElementById('viewTechnicianName').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải...';
+                        document.getElementById('viewRepairDate').textContent = 'Đang tải...';
+                        document.getElementById('viewDiagnosis').textContent = 'Đang tải...';
+                        document.getElementById('viewRepairDetails').textContent = 'Đang tải...';
+                        document.getElementById('viewEstimatedCost').textContent = 'Đang tải...';
+                        document.getElementById('viewQuotationStatus').textContent = 'Đang tải...';
+
+                        // Gọi AJAX
+                        fetch('${pageContext.request.contextPath}/equipment?action=getRepairInfo&equipmentId=' + equipmentId)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success && data.repairInfo) {
+                                        const info = data.repairInfo;
+
+                                        document.getElementById('viewTechnicianName').innerHTML =
+                                                '<i class="fas fa-user-check"></i> ' + (info.technicianName || 'Chưa phân công');
+                                        document.getElementById('viewRepairDate').textContent = info.repairDate || 'N/A';
+                                        document.getElementById('viewDiagnosis').textContent = info.diagnosis || 'Chưa có thông tin';
+                                        document.getElementById('viewRepairDetails').textContent = info.repairDetails || 'Chưa có thông tin';
+                                        document.getElementById('viewEstimatedCost').textContent =
+                                                (info.estimatedCost ? parseFloat(info.estimatedCost).toLocaleString('vi-VN') + ' VNĐ' : '0 VNĐ');
+
+                                        const quotationStatus = document.getElementById('viewQuotationStatus');
+                                        if (info.quotationStatus === 'Approved') {
+                                            quotationStatus.textContent = '✅ Đã Duyệt';
+                                            quotationStatus.className = 'mb-0 fw-bold text-success';
+                                        } else if (info.quotationStatus === 'Pending') {
+                                            quotationStatus.textContent = '⏳ Chờ Xác Nhận';
+                                            quotationStatus.className = 'mb-0 fw-bold text-warning';
+                                        } else {
+                                            quotationStatus.textContent = info.quotationStatus || 'N/A';
+                                            quotationStatus.className = 'mb-0 fw-bold';
+                                        }
+                                    } else {
+                                        document.getElementById('viewTechnicianName').textContent = 'Không có thông tin';
+                                        document.getElementById('viewRepairDate').textContent = 'N/A';
+                                        document.getElementById('viewDiagnosis').textContent = 'Chưa có thông tin';
+                                        document.getElementById('viewRepairDetails').textContent = 'Chưa có thông tin';
+                                        document.getElementById('viewEstimatedCost').textContent = '0 VNĐ';
+                                        document.getElementById('viewQuotationStatus').textContent = 'N/A';
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching repair info:', error);
+                                    document.getElementById('viewTechnicianName').textContent = 'Lỗi khi tải dữ liệu';
+                                    document.getElementById('viewRepairDate').textContent = 'N/A';
+                                    document.getElementById('viewDiagnosis').textContent = 'N/A';
+                                    document.getElementById('viewRepairDetails').textContent = 'N/A';
+                                    document.getElementById('viewEstimatedCost').textContent = '0 VNĐ';
+                                    document.getElementById('viewQuotationStatus').textContent = 'N/A';
+                                });
+                    } else {
+                        repairSection.style.display = 'none';
                     }
 
                     new bootstrap.Modal(document.getElementById('viewModal')).show();
@@ -1192,6 +1339,31 @@
                     new bootstrap.Modal(document.getElementById('createRequestModal')).show();
                 }
 
+                function toggleSidebar() {
+                    const sidebar = document.getElementById('sidebar');
+                    const toggleIcon = document.getElementById('toggleIcon');
+                    sidebar.classList.toggle('collapsed');
+
+                    if (sidebar.classList.contains('collapsed')) {
+                        toggleIcon.classList.remove('fa-chevron-left');
+                        toggleIcon.classList.add('fa-chevron-right');
+                    } else {
+                        toggleIcon.classList.remove('fa-chevron-right');
+                        toggleIcon.classList.add('fa-chevron-left');
+                    }
+                }
+
+                function refreshPage() {
+                    window.location.href = '${pageContext.request.contextPath}/equipment';
+                }
+
+                function scrollToTop() {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }
+
                 // ========== EVENT LISTENERS ==========
                 document.addEventListener('DOMContentLoaded', function () {
                     const descriptionTextarea = document.getElementById('requestDescription');
@@ -1206,6 +1378,15 @@
                             document.getElementById('createRequestForm').reset();
                             updateCharCount();
                         });
+                    }
+                });
+
+                window.addEventListener('scroll', function () {
+                    const scrollBtn = document.getElementById('scrollToTop');
+                    if (window.pageYOffset > 300) {
+                        scrollBtn.classList.add('show');
+                    } else {
+                        scrollBtn.classList.remove('show');
                     }
                 });
         </script>

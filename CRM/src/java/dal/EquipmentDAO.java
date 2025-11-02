@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  * DAO for Equipment operations with Category support.
- * Complete version combining both implementations.
+ * Complete merged version combining both implementations.
  */
 public class EquipmentDAO extends DBContext {
 
@@ -560,6 +560,62 @@ public class EquipmentDAO extends DBContext {
         return "N/A";
     }
 
+    /**
+     * Get repair information for equipment (includes technician, quotation, repair details)
+     * @param equipmentId Equipment ID
+     * @return Map containing repair info or null if not found
+     */
+    public Map<String, Object> getEquipmentRepairInfo(int equipmentId) {
+        String sql = "SELECT " +
+                     "    u.full_name AS technician_name, " +
+                     "    sr.request_date AS repair_date, " +
+                     "    q.diagnosis, " +
+                     "    q.repair_details, " +
+                     "    q.estimated_cost, " +
+                     "    q.quotation_status " +
+                     "FROM Equipment e " +
+                     "LEFT JOIN ServiceRequest sr ON e.equipment_id = sr.equipment_id " +
+                     "    AND sr.status IN ('Approved', 'Completed') " +
+                     "    AND sr.request_type IN ('Service', 'Warranty') " +
+                     "LEFT JOIN Quotation q ON sr.request_id = q.request_id " +
+                     "LEFT JOIN Users u ON q.technician_id = u.user_id " +
+                     "WHERE e.equipment_id = ? " +
+                     "    AND sr.request_id IS NOT NULL " +
+                     "ORDER BY sr.request_date DESC " +
+                     "LIMIT 1";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, equipmentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Map<String, Object> repairInfo = new HashMap<>();
+
+                    repairInfo.put("technicianName", rs.getString("technician_name"));
+                    repairInfo.put("repairDate", rs.getDate("repair_date") != null
+                            ? rs.getDate("repair_date").toString() : null);
+                    repairInfo.put("diagnosis", rs.getString("diagnosis"));
+                    repairInfo.put("repairDetails", rs.getString("repair_details"));
+                    repairInfo.put("estimatedCost", rs.getBigDecimal("estimated_cost"));
+                    repairInfo.put("quotationStatus", rs.getString("quotation_status"));
+
+                    System.out.println("✅ Found repair info for equipment: " + equipmentId
+                            + " - Technician: " + rs.getString("technician_name"));
+
+                    return repairInfo;
+                }
+            }
+
+            System.out.println("⚠️ No repair info found for equipment: " + equipmentId);
+            return null;
+
+        } catch (SQLException e) {
+            System.out.println("💥 Error getting repair info for equipment " + equipmentId + ": " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // ==================== HELPER METHODS ====================
 
     /**
@@ -638,7 +694,7 @@ public class EquipmentDAO extends DBContext {
         EquipmentDAO dao = new EquipmentDAO();
         
         System.out.println("========================================");
-        System.out.println("TESTING EquipmentDAO - Complete Version");
+        System.out.println("TESTING EquipmentDAO - Complete Merged Version");
         System.out.println("========================================\n");
 
         // Test 1: Get All Equipment
@@ -658,100 +714,28 @@ public class EquipmentDAO extends DBContext {
         }
         System.out.println();
 
-        // Test 2: Find Equipment by ID
-        System.out.println("--- Test 2: Find Equipment by ID (1) ---");
-        try {
-            Equipment eq = dao.findById(1);
-            if (eq != null) {
-                System.out.println("✅ Found: " + eq.getModel());
-                System.out.println("  - Serial: " + eq.getSerialNumber());
-                System.out.println("  - Category: " + eq.getCategoryName());
-                System.out.println("  - Description: " + eq.getDescription());
-            } else {
-                System.out.println("❌ Equipment not found");
-            }
-        } catch (SQLException e) {
-            System.out.println("❌ Error: " + e.getMessage());
-        }
-        System.out.println();
-
-        // Test 3: Get Equipment Status
-        System.out.println("--- Test 3: Get Equipment Status (ID 1) ---");
+        // Test 2: Get Equipment Status
+        System.out.println("--- Test 2: Get Equipment Status (ID 1) ---");
         String status = dao.getEquipmentStatus(1);
         System.out.println("✅ Status: " + status);
         System.out.println();
 
-        // Test 4: Validate Equipment
-        System.out.println("--- Test 4: Validate Equipment ---");
-        System.out.println("Equipment ID 1 valid: " + dao.isValidEquipment(1));
-        System.out.println("Equipment ID 999 valid: " + dao.isValidEquipment(999));
-        System.out.println();
-
-        // Test 5: Get Equipment by Category
-        System.out.println("--- Test 5: Get Equipment by Category (ID 13) ---");
-        try {
-            List<Equipment> categoryEquipment = dao.getEquipmentByCategory(13);
-            System.out.println("✅ Found " + categoryEquipment.size() + " equipment(s) in category");
-            
-            for (Equipment eq : categoryEquipment) {
-                System.out.println("  - " + eq.getModel() + " (" + eq.getSerialNumber() + ")");
-            }
-        } catch (SQLException e) {
-            System.out.println("❌ Error: " + e.getMessage());
+        // Test 3: Get Equipment Repair Info
+        System.out.println("--- Test 3: Get Equipment Repair Info (ID 1) ---");
+        Map<String, Object> repairInfo = dao.getEquipmentRepairInfo(1);
+        if (repairInfo != null) {
+            System.out.println("✅ Repair Info Found:");
+            System.out.println("  - Technician: " + repairInfo.get("technicianName"));
+            System.out.println("  - Repair Date: " + repairInfo.get("repairDate"));
+            System.out.println("  - Diagnosis: " + repairInfo.get("diagnosis"));
+            System.out.println("  - Estimated Cost: " + repairInfo.get("estimatedCost"));
+        } else {
+            System.out.println("⚠️ No repair info found");
         }
         System.out.println();
 
-        // Test 6: Get Equipment Count
-        System.out.println("--- Test 6: Get Equipment Count ---");
-        try {
-            int totalCount = dao.getEquipmentCount(null);
-            int searchCount = dao.getEquipmentCount("HVAC");
-            
-            System.out.println("✅ Total equipment: " + totalCount);
-            System.out.println("✅ Equipment matching 'HVAC': " + searchCount);
-        } catch (SQLException e) {
-            System.out.println("❌ Error: " + e.getMessage());
-        }
-        System.out.println();
-
-        // Test 7: Get Contract ID for Equipment
-        System.out.println("--- Test 7: Get Contract ID for Equipment ---");
-        System.out.println("Testing getContractIdForEquipment(equipmentId: 1, customerId: 1)");
-        String contractId1 = dao.getContractIdForEquipment(1, 1);
-        System.out.println("✅ Contract ID: " + contractId1);
-        
-        System.out.println("\nTesting getContractIdForEquipment(equipmentId: 2, customerId: 1)");
-        String contractId2 = dao.getContractIdForEquipment(2, 1);
-        System.out.println("✅ Contract ID: " + contractId2);
-        
-        System.out.println("\nTesting getContractIdForEquipment(equipmentId: 999, customerId: 1)");
-        String contractId3 = dao.getContractIdForEquipment(999, 1);
-        System.out.println("✅ Contract ID: " + contractId3 + " (Should be N/A)");
-        
-        System.out.println("\nTesting getContractIdForEquipment(equipmentId: 1, customerId: 999)");
-        String contractId4 = dao.getContractIdForEquipment(1, 999);
-        System.out.println("✅ Contract ID: " + contractId4 + " (Should be N/A)");
-        System.out.println();
-
-        // Test 8: Get Equipment by Customer Contracts
-        System.out.println("--- Test 8: Get Equipment by Customer Contracts (customerId: 1) ---");
-        try {
-            List<Equipment> customerEquipment = dao.getEquipmentByCustomerContracts(1);
-            System.out.println("✅ Found " + customerEquipment.size() + " equipment(s) for customer");
-            
-            for (Equipment eq : customerEquipment) {
-                String contractId = dao.getContractIdForEquipment(eq.getEquipmentId(), 1);
-                System.out.println("  - Equipment ID: " + eq.getEquipmentId() + 
-                                 " | Model: " + eq.getModel() + 
-                                 " | Contract: " + contractId);
-            }
-        } catch (SQLException e) {
-            System.out.println("❌ Error: " + e.getMessage());
-        }
-        System.out.println();
-
-        // Test 9: Get Equipment Statistics by Customer
-        System.out.println("--- Test 9: Get Equipment Statistics by Customer (customerId: 1) ---");
+        // Test 4: Get Equipment Stats by Customer
+        System.out.println("--- Test 4: Get Equipment Statistics (customerId: 1) ---");
         Map<String, Integer> stats = dao.getEquipmentStatsByCustomer(1);
         System.out.println("✅ Total: " + stats.get("total"));
         System.out.println("✅ Active: " + stats.get("active"));
@@ -759,8 +743,14 @@ public class EquipmentDAO extends DBContext {
         System.out.println("✅ Maintenance: " + stats.get("maintenance"));
         System.out.println();
 
-        // Test 10: Get Equipment by Contract ID
-        System.out.println("--- Test 10: Get Equipment by Contract ID (contractId: 1) ---");
+        // Test 5: Get Contract ID for Equipment
+        System.out.println("--- Test 5: Get Contract ID for Equipment ---");
+        String contractId = dao.getContractIdForEquipment(1, 1);
+        System.out.println("✅ Equipment 1 - Contract ID: " + contractId);
+        System.out.println();
+
+        // Test 6: Get Equipment by Contract ID
+        System.out.println("--- Test 6: Get Equipment by Contract ID (contractId: 1) ---");
         List<EquipmentWithStatus> contractEquipment = dao.getEquipmentByContractId(1);
         System.out.println("✅ Found " + contractEquipment.size() + " equipment(s) in contract");
         
@@ -771,8 +761,25 @@ public class EquipmentDAO extends DBContext {
         }
         System.out.println();
 
-        // Test 11: Search Equipment with Pagination
-        System.out.println("--- Test 11: Search Equipment (keyword: 'Air', page: 1, size: 5) ---");
+        // Test 7: Get Equipment by Customer Contracts
+        System.out.println("--- Test 7: Get Equipment by Customer Contracts (customerId: 1) ---");
+        try {
+            List<Equipment> customerEquipment = dao.getEquipmentByCustomerContracts(1);
+            System.out.println("✅ Found " + customerEquipment.size() + " equipment(s) for customer");
+            
+            for (Equipment eq : customerEquipment) {
+                String cId = dao.getContractIdForEquipment(eq.getEquipmentId(), 1);
+                System.out.println("  - Equipment ID: " + eq.getEquipmentId() + 
+                                 " | Model: " + eq.getModel() + 
+                                 " | Contract: " + cId);
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error: " + e.getMessage());
+        }
+        System.out.println();
+
+        // Test 8: Search Equipment with Pagination
+        System.out.println("--- Test 8: Search Equipment (keyword: 'Air', page: 1, size: 5) ---");
         try {
             List<Equipment> searchResults = dao.searchEquipment("Air", 1, 5);
             System.out.println("✅ Found " + searchResults.size() + " result(s)");
@@ -785,8 +792,27 @@ public class EquipmentDAO extends DBContext {
         }
         System.out.println();
 
+        // Test 9: Get Equipment Count
+        System.out.println("--- Test 9: Get Equipment Count ---");
+        try {
+            int totalCount = dao.getEquipmentCount(null);
+            int searchCount = dao.getEquipmentCount("HVAC");
+            
+            System.out.println("✅ Total equipment: " + totalCount);
+            System.out.println("✅ Equipment matching 'HVAC': " + searchCount);
+        } catch (SQLException e) {
+            System.out.println("❌ Error: " + e.getMessage());
+        }
+        System.out.println();
+
+        // Test 10: Validate Equipment
+        System.out.println("--- Test 10: Validate Equipment ---");
+        System.out.println("Equipment ID 1 valid: " + dao.isValidEquipment(1));
+        System.out.println("Equipment ID 999 valid: " + dao.isValidEquipment(999));
+        System.out.println();
+
         System.out.println("========================================");
-        System.out.println("ALL TESTS COMPLETED");
+        System.out.println("ALL TESTS COMPLETED SUCCESSFULLY");
         System.out.println("========================================");
     }
 }

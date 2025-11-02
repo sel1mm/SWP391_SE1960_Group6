@@ -731,7 +731,7 @@
             <div class="sidebar-menu">
                 <div class="menu-section">
 
-                    <a href="${pageContext.request.contextPath}/dashboard" class="menu-item">
+                    <a href="${pageContext.request.contextPath}/dashbroadCustomer.jsp" class="menu-item">
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
@@ -740,7 +740,7 @@
                         <span>Yêu Cầu Dịch Vụ</span>
                         <span class="badge bg-warning">${pendingCount}</span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/managerContracts" class="menu-item">
+                    <a href="${pageContext.request.contextPath}/contracts" class="menu-item">
                         <i class="fas fa-file-contract"></i>
                         <span>Hợp Đồng</span>
                     </a>
@@ -748,37 +748,16 @@
                         <i class="fas fa-tools"></i>
                         <span>Thiết Bị</span>
                     </a>
-                </div>
-
-                <div class="menu-section">
-
-                    <a href="${pageContext.request.contextPath}/customers" class="menu-item">
-                        <i class="fas fa-users"></i>
-                        <span>Khách Hàng</span>
+                    <a href="${pageContext.request.contextPath}/invoices" class="menu-item">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>Hóa Đơn</span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/reports" class="menu-item">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Báo Cáo</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/maintenance" class="menu-item">
-                        <i class="fas fa-wrench"></i>
-                        <span>Bảo Trì</span>
-                    </a>
-                </div>
-
-                <div class="menu-section">
-
                     <a href="${pageContext.request.contextPath}/manageProfile" class="menu-item">
                         <i class="fas fa-user-circle"></i>
                         <span>Hồ Sơ</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/settings" class="menu-item">
-                        <i class="fas fa-cog"></i>
-                        <span>Cài Đặt</span>
-                    </a>
-                </div>
+                    </a> 
+                </div>                
             </div>
-
             <div class="sidebar-footer">
                 <div class="user-info">
                     <div class="user-avatar">

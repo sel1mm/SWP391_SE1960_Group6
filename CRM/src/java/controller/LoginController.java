@@ -97,7 +97,7 @@ public class LoginController extends HttpServlet {
                 response.sendRedirect("technician/dashboard");
 
             } else if ("customer".equals(userRole)) {
-                response.sendRedirect("managerServiceRequest");
+                response.sendRedirect("dashbroadCustomer.jsp");
             } else {
                 response.sendRedirect("home.jsp");
             }
