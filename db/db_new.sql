@@ -744,37 +744,131 @@ ORDER BY sr.priorityLevel DESC, rr.repairDate ASC;
 -- Purpose: Automatically update technician workload when tasks are assigned/completed
 -- Maintains accurate workload data for UC-06
 
--- DELIMITER //
+-- ====================================================================
+-- XÓA TRIGGER CŨ
+-- ====================================================================
+DROP TRIGGER IF EXISTS trg_UpdateWorkloadOnTaskAssign;
+DROP TRIGGER IF EXISTS trg_UpdateWorkloadOnTaskComplete;
+DROP TRIGGER IF EXISTS trg_UpdateScheduleStatusOnTaskComplete;
+	DELIMITER //
 
--- CREATE TRIGGER trg_UpdateWorkloadOnTaskAssign
--- AFTER INSERT ON WorkTask
--- FOR EACH ROW
--- BEGIN
-    -- Increment active task count when new task is assigned
---    INSERT INTO TechnicianWorkload (technicianId, currentActiveTasks, maxConcurrentTasks, lastAssignedDate, lastUpdated)
---    VALUES (NEW.technicianId, 1, 5, NOW(), NOW())
---    ON DUPLICATE KEY UPDATE 
---        currentActiveTasks = currentActiveTasks + 1,
---        lastAssignedDate = NOW(),
---        lastUpdated = NOW();
--- END//
+	CREATE TRIGGER trg_UpdateWorkloadOnTaskAssign
+	AFTER INSERT ON WorkTask
+	FOR EACH ROW
+	BEGIN
+		DECLARE workload_points INT DEFAULT 1;
+		DECLARE task_priority VARCHAR(20);
+		
+		-- Lấy priority từ WorkAssignment (nếu có)
+		SELECT wa.priority INTO task_priority
+		FROM WorkAssignment wa
+		WHERE wa.taskId = NEW.taskId
+		LIMIT 1;
+		
+		-- Tính workload points dựa trên priority
+		IF task_priority = 'Urgent' THEN
+			SET workload_points = 3;
+		ELSEIF task_priority = 'High' THEN
+			SET workload_points = 2;
+		ELSE
+			SET workload_points = 1;  -- Normal, Low
+		END IF;
+		
+		-- Cập nhật workload
+		INSERT INTO TechnicianWorkload (technicianId, currentActiveTasks, maxConcurrentTasks, lastAssignedDate, lastUpdated)
+		VALUES (NEW.technicianId, workload_points, 5, NOW(), NOW())
+		ON DUPLICATE KEY UPDATE 
+			currentActiveTasks = currentActiveTasks + workload_points,
+			lastAssignedDate = NOW(),
+			lastUpdated = NOW();
+	END//
 
--- CREATE TRIGGER trg_UpdateWorkloadOnTaskComplete
--- AFTER UPDATE ON WorkTask
--- FOR EACH ROW
--- BEGIN
-    -- Decrement active task count and increment completed count when task is completed
---    IF NEW.status = 'Completed' AND OLD.status != 'Completed' THEN
---        UPDATE TechnicianWorkload
---        SET currentActiveTasks = GREATEST(0, currentActiveTasks - 1),
---            totalCompletedTasks = totalCompletedTasks + 1,
---            lastUpdated = NOW()
---        WHERE technicianId = NEW.technicianId;
---    END IF;
--- END//
+	-- ✅ Tạo lại trigger GIẢM workload theo priority
 
--- DELIMITER ;
+CREATE TRIGGER trg_UpdateWorkloadOnTaskComplete
+AFTER UPDATE ON WorkTask
+FOR EACH ROW
+BEGIN
+    DECLARE workload_points INT DEFAULT 1;
+    DECLARE task_priority VARCHAR(20);
+    DECLARE schedule_priority_id INT DEFAULT NULL;
+    
+    -- Chỉ chạy khi status chuyển sang Completed
+    IF NEW.status = 'Completed' AND OLD.status != 'Completed' THEN
+        
+        -- ✅ BƯỚC 1: Thử lấy priority từ WorkAssignment (cho task từ /assignWork)
+        SELECT wa.priority INTO task_priority
+        FROM WorkAssignment wa
+        WHERE wa.taskId = NEW.taskId
+        LIMIT 1;
+        
+        -- ✅ BƯỚC 2: Nếu không có WorkAssignment, lấy từ MaintenanceSchedule (cho task từ /scheduleMaintenance)
+        IF task_priority IS NULL AND NEW.scheduleId IS NOT NULL THEN
+            SELECT ms.priorityId INTO schedule_priority_id
+            FROM MaintenanceSchedule ms
+            WHERE ms.scheduleId = NEW.scheduleId
+            LIMIT 1;
+            
+            -- Convert priorityId sang priority string
+            IF schedule_priority_id = 4 THEN
+                SET task_priority = 'Urgent';
+            ELSEIF schedule_priority_id = 3 THEN
+                SET task_priority = 'High';
+            ELSEIF schedule_priority_id = 2 THEN
+                SET task_priority = 'Normal';
+            ELSE
+                SET task_priority = 'Normal';
+            END IF;
+        END IF;
+        
+        -- ✅ BƯỚC 3: Tính workload points dựa trên priority
+        IF task_priority = 'Urgent' THEN
+            SET workload_points = 3;
+        ELSEIF task_priority = 'High' THEN
+            SET workload_points = 2;
+        ELSE
+            SET workload_points = 1;  -- Normal, Low
+        END IF;
+        
+        -- ✅ BƯỚC 4: Giảm workload và tăng completed count
+        UPDATE TechnicianWorkload
+        SET currentActiveTasks = GREATEST(0, currentActiveTasks - workload_points),
+            totalCompletedTasks = totalCompletedTasks + 1,
+            lastUpdated = NOW()
+        WHERE technicianId = NEW.technicianId;
+        
+    END IF;
+END//
 
+DELIMITER ;
+
+-- ====================================================================
+-- VERIFY: Kiểm tra trigger đã được tạo
+-- ====================================================================
+SHOW TRIGGERS WHERE `Trigger` = 'trg_UpdateWorkloadOnTaskComplete';
+	-- Đồng bộ status của bảng maintenanceschedule với bảng work task
+	DELIMITER //
+
+	CREATE TRIGGER trg_UpdateScheduleStatusOnTaskComplete
+	AFTER UPDATE ON WorkTask
+	FOR EACH ROW
+	BEGIN
+		-- Khi WorkTask completed, update MaintenanceSchedule tương ứng
+		IF NEW.status = 'Completed' AND OLD.status != 'Completed' AND NEW.scheduleId IS NOT NULL THEN
+			UPDATE MaintenanceSchedule
+			SET status = 'Completed'
+			WHERE scheduleId = NEW.scheduleId;
+		END IF;
+		
+		-- Khi WorkTask in progress, update MaintenanceSchedule
+		IF NEW.status = 'In Progress' AND OLD.status != 'In Progress' AND NEW.scheduleId IS NOT NULL THEN
+			UPDATE MaintenanceSchedule
+			SET status = 'In Progress'
+			WHERE scheduleId = NEW.scheduleId;
+		END IF;
+	END//
+
+	DELIMITER ;
 -- ====================================================================
 -- 13. STORED PROCEDURES FOR TECHNICAL MANAGER OPERATIONS
 -- ====================================================================
@@ -2544,101 +2638,6 @@ INSERT INTO Equipment (equipmentId, serialNumber, model, description, installDat
 
 COMMIT;
 
-
-DELIMITER //
-
-CREATE TRIGGER trg_UpdateWorkloadOnTaskAssign
-AFTER INSERT ON WorkTask
-FOR EACH ROW
-BEGIN
-    DECLARE workload_points INT DEFAULT 1;
-    DECLARE task_priority VARCHAR(20);
-    
-    -- Lấy priority từ WorkAssignment (nếu có)
-    SELECT wa.priority INTO task_priority
-    FROM WorkAssignment wa
-    WHERE wa.taskId = NEW.taskId
-    LIMIT 1;
-    
-    -- Tính workload points dựa trên priority
-    IF task_priority = 'Urgent' THEN
-        SET workload_points = 3;
-    ELSEIF task_priority = 'High' THEN
-        SET workload_points = 2;
-    ELSE
-        SET workload_points = 1;  -- Normal, Low
-    END IF;
-    
-    -- Cập nhật workload
-    INSERT INTO TechnicianWorkload (technicianId, currentActiveTasks, maxConcurrentTasks, lastAssignedDate, lastUpdated)
-    VALUES (NEW.technicianId, workload_points, 5, NOW(), NOW())
-    ON DUPLICATE KEY UPDATE 
-        currentActiveTasks = currentActiveTasks + workload_points,
-        lastAssignedDate = NOW(),
-        lastUpdated = NOW();
-END//
-
--- ✅ Tạo lại trigger GIẢM workload theo priority
-CREATE TRIGGER trg_UpdateWorkloadOnTaskComplete
-AFTER UPDATE ON WorkTask
-FOR EACH ROW
-BEGIN
-    DECLARE workload_points INT DEFAULT 1;
-    DECLARE task_priority VARCHAR(20);
-    
-    -- Chỉ chạy khi status chuyển sang Completed
-    IF NEW.status = 'Completed' AND OLD.status != 'Completed' THEN
-        
-        -- Lấy priority từ WorkAssignment (nếu có)
-        SELECT wa.priority INTO task_priority
-        FROM WorkAssignment wa
-        WHERE wa.taskId = NEW.taskId
-        LIMIT 1;
-        
-        -- Tính workload points dựa trên priority
-        IF task_priority = 'Urgent' THEN
-            SET workload_points = 3;
-        ELSEIF task_priority = 'High' THEN
-            SET workload_points = 2;
-        ELSE
-            SET workload_points = 1;  -- Normal, Low
-        END IF;
-        
-        -- Giảm workload và tăng completed count
-        UPDATE TechnicianWorkload
-        SET currentActiveTasks = GREATEST(0, currentActiveTasks - workload_points),
-            totalCompletedTasks = totalCompletedTasks + 1,
-            lastUpdated = NOW()
-        WHERE technicianId = NEW.technicianId;
-        
-    END IF;
-END//
-
-DELIMITER ;
-
--- Đồng bộ status của bảng maintenanceschedule với bảng work task
-DELIMITER //
-
-CREATE TRIGGER trg_UpdateScheduleStatusOnTaskComplete
-AFTER UPDATE ON WorkTask
-FOR EACH ROW
-BEGIN
-    -- Khi WorkTask completed, update MaintenanceSchedule tương ứng
-    IF NEW.status = 'Completed' AND OLD.status != 'Completed' AND NEW.scheduleId IS NOT NULL THEN
-        UPDATE MaintenanceSchedule
-        SET status = 'Completed'
-        WHERE scheduleId = NEW.scheduleId;
-    END IF;
-    
-    -- Khi WorkTask in progress, update MaintenanceSchedule
-    IF NEW.status = 'In Progress' AND OLD.status != 'In Progress' AND NEW.scheduleId IS NOT NULL THEN
-        UPDATE MaintenanceSchedule
-        SET status = 'In Progress'
-        WHERE scheduleId = NEW.scheduleId;
-    END IF;
-END//
-
-DELIMITER ;
 
 START TRANSACTION;
 
