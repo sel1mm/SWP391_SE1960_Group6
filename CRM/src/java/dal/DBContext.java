@@ -13,23 +13,8 @@ public class DBContext {
     public DBContext() {
         try {
             String username = "root";
-
-<<<<<<< HEAD
-            String password = "1choigamenhuhack";
-
-
-            String url = "jdbc:mysql://localhost:3306/testdb?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
-=======
             String password = "sa12345";
-
-
-            String url = "jdbc:mysql://localhost:3306/swp5?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
-
-           
->>>>>>> 3dce6636964f04dc9b5224f909e62976776fe8fd
-
-
-
+            String url = "jdbc:mysql://localhost:3306/lamtb?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection(url, username, password);
             System.out.println("✅ Database connection successful!");
