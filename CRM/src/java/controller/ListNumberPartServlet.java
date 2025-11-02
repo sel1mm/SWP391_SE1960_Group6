@@ -1,328 +1,382 @@
+    package controller;
 
-package controller;
+    import dal.CategoryDAO;
+    import dal.PartDAO;
+    import java.io.IOException;
+    import jakarta.servlet.ServletException;
+    import jakarta.servlet.http.HttpServlet;
+    import jakarta.servlet.http.HttpServletRequest;
+    import jakarta.servlet.http.HttpServletResponse;
+    import jakarta.servlet.http.HttpSession;
+    import java.time.LocalDate;
+    import java.util.Comparator;
+    import java.util.List;
+    import java.util.Map;
+    import java.util.stream.Collectors;
+    import model.Account;
+    import model.Category;
+    import model.NewPart;
 
-import dal.PartDAO;
-import java.io.IOException;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-import model.Account;
-import model.NewPart;
+    /**
+     * ListNumberPartServlet - Quản lý danh sách hàng tồn kho với Category
+     * @author Admin
+     */
+    public class ListNumberPartServlet extends HttpServlet {
 
-/**
- * ListNumberPartServlet - Quản lý danh sách hàng tồn kho
- * @author Admin
- */
-public class ListNumberPartServlet extends HttpServlet {
-    
-    private PartDAO dao = new PartDAO();
+        private PartDAO dao = new PartDAO();
+        private CategoryDAO categoryDAO = new CategoryDAO();
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        // Kiểm tra đăng nhập
-        HttpSession session = request.getSession();
-        Account acc = (Account) session.getAttribute("session_login");
-        if (acc == null) {
-            response.sendRedirect("login");
-            return;
+        @Override
+        protected void doGet(HttpServletRequest request, HttpServletResponse response)
+                throws ServletException, IOException {
+
+            // Kiểm tra đăng nhập
+            HttpSession session = request.getSession();
+            Account acc = (Account) session.getAttribute("session_login");
+            if (acc == null) {
+                response.sendRedirect("login");
+                return;
+            }
+
+            // ✅ Load categories
+            List<Category> categories = categoryDAO.getCategoriesByType("Part");
+            request.setAttribute("categories", categories);
+
+            // Lấy danh sách tất cả parts
+            List<NewPart> list = dao.getAllParts();
+            request.setAttribute("list", list);
+
+            // Forward về JSP
+            request.getRequestDispatcher("numberPart.jsp").forward(request, response);
         }
 
-        // Lấy danh sách tất cả parts
-        List<NewPart> list = dao.getAllParts();
-        request.setAttribute("list", list);
-        
-        // Forward về JSP
-        request.getRequestDispatcher("numberPart.jsp").forward(request, response);
-    }
+        @Override
+        protected void doPost(HttpServletRequest request, HttpServletResponse response)
+                throws ServletException, IOException {
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        HttpSession session = request.getSession();
-        Account acc = (Account) session.getAttribute("session_login");
-        session.removeAttribute("successMessage");
-    session.removeAttribute("errorMessage");
-        // Kiểm tra đăng nhập
-        if (acc == null) {
-            response.sendRedirect("login");
-            return;
-        }
+            HttpSession session = request.getSession();
+            Account acc = (Account) session.getAttribute("session_login");
 
-        String action = request.getParameter("action");
-        if (action == null) action = "";
+            // Xóa message cũ
+            session.removeAttribute("successMessage");
+            session.removeAttribute("errorMessage");
 
-        // ===== XỬ LÝ ADD =====
-        if ("add".equalsIgnoreCase(action)) {
-            try {
-                System.out.println("=== START ADD PART ===");
-                
-                String partName = request.getParameter("partName");
-                String description = request.getParameter("description");
-                String unitPriceStr = request.getParameter("unitPrice");
+            // Kiểm tra đăng nhập
+            if (acc == null) {
+                response.sendRedirect("login");
+                return;
+            }
 
-                System.out.println("PartName: " + partName);
-                System.out.println("Description: " + description);
-                System.out.println("UnitPrice: " + unitPriceStr);
-                
-                if (partName == null || description == null || unitPriceStr == null 
-                    || partName.trim().isEmpty() || description.trim().isEmpty()) {
-                    session.setAttribute("errorMessage", "Vui lòng điền đầy đủ thông tin!");
+            String action = request.getParameter("action");
+            if (action == null) action = "";
+
+            // ===== XỬ LÝ ADD =====
+            if ("add".equalsIgnoreCase(action)) {
+                try {
+                    System.out.println("=== START ADD PART ===");
+
+                    String partName = request.getParameter("partName");
+                    String description = request.getParameter("description");
+                    String unitPriceStr = request.getParameter("unitPrice");
+                    String categoryIdStr = request.getParameter("categoryId");
+
+                    System.out.println("PartName: " + partName);
+                    System.out.println("Description: " + description);
+                    System.out.println("UnitPrice: " + unitPriceStr);
+                    System.out.println("CategoryId: " + categoryIdStr);
+
+                    if (partName == null || description == null || unitPriceStr == null 
+                        || partName.trim().isEmpty() || description.trim().isEmpty()) {
+                        session.setAttribute("errorMessage", "Vui lòng điền đầy đủ thông tin!");
+                        response.sendRedirect("numberPart");
+                        return;
+                    }
+
+                    double unitPrice = Double.parseDouble(unitPriceStr);
+
+                    if (unitPrice <= 0 || unitPrice >= 10000000) {
+                        session.setAttribute("errorMessage", "Giá phải > 0 và < 10,000,000!");
+                        response.sendRedirect("numberPart");
+                        return;
+                    }
+
+                    NewPart part = new NewPart();
+                    part.setPartName(partName.trim());
+                    part.setDescription(description.trim());
+                    part.setUnitPrice(unitPrice);
+
+                    // ✅ SET CATEGORY (có thể NULL)
+                    if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
+                        part.setCategoryId(Integer.parseInt(categoryIdStr));
+                    }
+
+                    part.setLastUpdatedBy(acc.getAccountId());
+                    part.setLastUpdatedDate(LocalDate.now());
+
+                    System.out.println("Calling DAO to add part...");
+                    boolean success = dao.addPart(part);
+
+                    if (success) {
+                        System.out.println("✅ Add part successful!");
+                        session.setAttribute("successMessage", "Thêm Part thành công!");
+                    } else {
+                        System.out.println("❌ Add part failed!");
+                        session.setAttribute("errorMessage", "Thêm Part thất bại!");
+                    }
+
+                    response.sendRedirect("numberPart");
+                    return;
+
+                } catch (NumberFormatException e) {
+                    System.out.println("❌ Number format error: " + e.getMessage());
+                    session.setAttribute("errorMessage", "Giá không hợp lệ!");
+                    response.sendRedirect("numberPart");
+                    return;
+                } catch (Exception e) {
+                    System.out.println("❌ Unexpected error: " + e.getMessage());
+                    e.printStackTrace();
+                    session.setAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
                     response.sendRedirect("numberPart");
                     return;
                 }
+            }
 
-                double unitPrice = Double.parseDouble(unitPriceStr);
-                
-                if (unitPrice <= 0 || unitPrice >= 10000000) {
-                    session.setAttribute("errorMessage", "Giá phải > 0 và < 10,000,000!");
+            // ===== XỬ LÝ EDIT =====
+            if ("edit".equalsIgnoreCase(action)) {
+                try {
+                    System.out.println("=== START EDIT PART ===");
+
+                    int partId = Integer.parseInt(request.getParameter("partId"));
+                    String partName = request.getParameter("partName");
+                    String description = request.getParameter("description");
+                    double unitPrice = Double.parseDouble(request.getParameter("unitPrice"));
+                    String categoryIdStr = request.getParameter("categoryId");
+
+                    System.out.println("Editing PartId: " + partId);
+                    System.out.println("New PartName: " + partName);
+                    System.out.println("New UnitPrice: " + unitPrice);
+                    System.out.println("New CategoryId: " + categoryIdStr);
+
+                    if (partName == null || description == null 
+                        || partName.trim().isEmpty() || description.trim().isEmpty()) {
+                        session.setAttribute("errorMessage", "Vui lòng điền đầy đủ thông tin!");
+                        response.sendRedirect("numberPart");
+                        return;
+                    }
+
+                    if (unitPrice <= 0 || unitPrice >= 10000000) {
+                        session.setAttribute("errorMessage", "Giá phải > 0 và < 10,000,000!");
+                        response.sendRedirect("numberPart");
+                        return;
+                    }
+
+                    NewPart part = new NewPart();
+                    part.setPartId(partId);
+                    part.setPartName(partName.trim());
+                    part.setDescription(description.trim());
+                    part.setUnitPrice(unitPrice);
+
+                    // ✅ SET CATEGORY
+                    if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
+                        part.setCategoryId(Integer.parseInt(categoryIdStr));
+                    }
+
+                    part.setLastUpdatedBy(acc.getAccountId());
+                    part.setLastUpdatedDate(LocalDate.now());
+
+                    boolean success = dao.updatePart(part);
+
+                    if (success) {
+                        System.out.println("✅ Edit part successful!");
+                        session.setAttribute("successMessage", "Cập nhật Part thành công!");
+                    } else {
+                        System.out.println("❌ Edit part failed!");
+                        session.setAttribute("errorMessage", "Cập nhật Part thất bại!");
+                    }
+
+                    response.sendRedirect("numberPart");
+                    return;
+
+                } catch (NumberFormatException e) {
+                    System.out.println("❌ Number format error: " + e.getMessage());
+                    session.setAttribute("errorMessage", "Dữ liệu không hợp lệ!");
+                    response.sendRedirect("numberPart");
+                    return;
+                } catch (Exception e) {
+                    System.out.println("❌ Unexpected error: " + e.getMessage());
+                    e.printStackTrace();
+                    session.setAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
                     response.sendRedirect("numberPart");
                     return;
                 }
-
-                NewPart part = new NewPart();
-                part.setPartName(partName.trim());
-                part.setDescription(description.trim());
-                part.setUnitPrice(unitPrice);
-                part.setLastUpdatedBy(acc.getAccountId());
-                part.setLastUpdatedDate(LocalDate.now());
-                
-                System.out.println("Calling DAO to add part...");
-                boolean success = dao.addPart(part);
-                
-                if (success) {
-                    System.out.println("✅ Add part successful!");
-                    session.setAttribute("successMessage", "Thêm Part thành công!");
-                } else {
-                    System.out.println("❌ Add part failed!");
-                    session.setAttribute("errorMessage", "Thêm Part thất bại!");
-                }
-                
-                response.sendRedirect("numberPart");
-                return;
-                
-            } catch (NumberFormatException e) {
-                System.out.println("❌ Number format error: " + e.getMessage());
-                session.setAttribute("errorMessage", "Giá không hợp lệ!");
-                response.sendRedirect("numberPart");
-                return;
-            } catch (Exception e) {
-                System.out.println("❌ Unexpected error: " + e.getMessage());
-                e.printStackTrace();
-                session.setAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
-                response.sendRedirect("numberPart");
-                return;
             }
-        }
 
-        // ===== XỬ LÝ EDIT =====
-        if ("edit".equalsIgnoreCase(action)) {
-            try {
-                System.out.println("=== START EDIT PART ===");
-                
-                int partId = Integer.parseInt(request.getParameter("partId"));
-                String partName = request.getParameter("partName");
-                String description = request.getParameter("description");
-                double unitPrice = Double.parseDouble(request.getParameter("unitPrice"));
-                
-                System.out.println("Editing PartId: " + partId);
-                System.out.println("New PartName: " + partName);
-                System.out.println("New UnitPrice: " + unitPrice);
-                
-                if (partName == null || description == null 
-                    || partName.trim().isEmpty() || description.trim().isEmpty()) {
-                    session.setAttribute("errorMessage", "Vui lòng điền đầy đủ thông tin!");
+            // ===== XỬ LÝ DELETE =====
+            if ("delete".equalsIgnoreCase(action)) {
+                try {
+                    System.out.println("=== START DELETE PART ===");
+
+                    int partId = Integer.parseInt(request.getParameter("partId"));
+                    System.out.println("Deleting PartId: " + partId);
+
+                    boolean success = dao.deletePart(partId);
+
+                    if (success) {
+                        System.out.println("✅ Delete part successful!");
+                        session.setAttribute("successMessage", "Xóa Part thành công!");
+                    } else {
+                        System.out.println("❌ Delete part failed!");
+                        session.setAttribute("errorMessage", "Xóa Part thất bại!");
+                    }
+
+                    response.sendRedirect("numberPart");
+                    return;
+
+                } catch (NumberFormatException e) {
+                    System.out.println("❌ Number format error: " + e.getMessage());
+                    session.setAttribute("errorMessage", "ID không hợp lệ!");
+                    response.sendRedirect("numberPart");
+                    return;
+                } catch (Exception e) {
+                    System.out.println("❌ Unexpected error: " + e.getMessage());
+                    e.printStackTrace();
+                    session.setAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
                     response.sendRedirect("numberPart");
                     return;
                 }
-                
-                if (unitPrice <= 0 || unitPrice >= 10000000) {
-                    session.setAttribute("errorMessage", "Giá phải > 0 và < 10,000,000!");
+            }
+
+            // ===== XỬ LÝ DETAIL (Lấy thống kê trạng thái) =====
+            if ("detail".equalsIgnoreCase(action)) {
+                try {
+                    System.out.println("=== START DETAIL ===");
+
+                    int partId = Integer.parseInt(request.getParameter("partId"));
+                    System.out.println("Getting detail for PartId: " + partId);
+
+                    // Lấy thông tin Part
+                    NewPart part = dao.getPartById(partId);
+
+                    if (part == null) {
+                        session.setAttribute("errorMessage", "Không tìm thấy Part với ID: " + partId);
+                        response.sendRedirect("numberPart");
+                        return;
+                    }
+
+                    // Lấy số lượng theo trạng thái
+                    Map<String, Integer> statusCount = dao.getPartStatusCount(partId);
+
+                    // Lấy danh sách tất cả parts (để hiển thị bảng chính)
+                    List<NewPart> list = dao.getAllParts();
+
+                    // ✅ Load categories
+                    List<Category> categories = categoryDAO.getCategoriesByType("Part");
+
+                    // Set attributes
+                    request.setAttribute("list", list);
+                    request.setAttribute("categories", categories);
+                    request.setAttribute("selectedPart", part);
+                    request.setAttribute("statusCount", statusCount);
+                    request.setAttribute("showDetail", true);
+
+                    System.out.println("✅ Detail loaded successfully!");
+
+                    request.getRequestDispatcher("numberPart.jsp").forward(request, response);
+                    return;
+
+                } catch (NumberFormatException e) {
+                    System.out.println("❌ Number format error: " + e.getMessage());
+                    session.setAttribute("errorMessage", "ID không hợp lệ!");
+                    response.sendRedirect("numberPart");
+                    return;
+                } catch (Exception e) {
+                    System.out.println("❌ Unexpected error: " + e.getMessage());
+                    e.printStackTrace();
+                    session.setAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
                     response.sendRedirect("numberPart");
                     return;
                 }
-                
-                NewPart part = new NewPart();
-                part.setPartId(partId);
-                part.setPartName(partName.trim());
-                part.setDescription(description.trim());
-                part.setUnitPrice(unitPrice);
-                part.setLastUpdatedBy(acc.getAccountId());
-                part.setLastUpdatedDate(LocalDate.now());
-                
-                boolean success = dao.updatePart(part);
-                
-                if (success) {
-                    System.out.println("✅ Edit part successful!");
-                    session.setAttribute("successMessage", "Cập nhật Part thành công!");
-                } else {
-                    System.out.println("❌ Edit part failed!");
-                    session.setAttribute("errorMessage", "Cập nhật Part thất bại!");
+            }
+
+            // ===== XỬ LÝ SEARCH & FILTER =====
+            List<NewPart> list = dao.getAllParts();
+            String keyword = request.getParameter("keyword");
+            String filter = request.getParameter("filter");
+            String categoryFilter = request.getParameter("categoryFilter");
+
+            // ✅ FILTER BY CATEGORY TRƯỚC
+            if (categoryFilter != null && !categoryFilter.isEmpty()) {
+                try {
+                    int catId = Integer.parseInt(categoryFilter);
+                    list = dao.getPartsByCategory(catId);
+                    System.out.println("Filtered by categoryId: " + catId);
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid categoryId: " + categoryFilter);
                 }
-                
-                response.sendRedirect("numberPart");
-                return;
-                
-            } catch (NumberFormatException e) {
-                System.out.println("❌ Number format error: " + e.getMessage());
-                session.setAttribute("errorMessage", "Dữ liệu không hợp lệ!");
-                response.sendRedirect("numberPart");
-                return;
-            } catch (Exception e) {
-                System.out.println("❌ Unexpected error: " + e.getMessage());
-                e.printStackTrace();
-                session.setAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
-                response.sendRedirect("numberPart");
-                return;
             }
-        }
 
-        // ===== XỬ LÝ DELETE =====
-        if ("delete".equalsIgnoreCase(action)) {
-            try {
-                System.out.println("=== START DELETE PART ===");
-                
-                int partId = Integer.parseInt(request.getParameter("partId"));
-                System.out.println("Deleting PartId: " + partId);
-                
-                boolean success = dao.deletePart(partId);
-                
-                if (success) {
-                    System.out.println("✅ Delete part successful!");
-                    session.setAttribute("successMessage", "Xóa Part thành công!");
-                } else {
-                    System.out.println("❌ Delete part failed!");
-                    session.setAttribute("errorMessage", "Xóa Part thất bại!");
+            // Search theo keyword
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String keywordLower = keyword.toLowerCase().trim();
+                System.out.println("Searching with keyword: " + keywordLower);
+
+                list = list.stream()
+                    .filter(p -> 
+                        String.valueOf(p.getPartId()).contains(keywordLower) ||
+                        p.getPartName().toLowerCase().contains(keywordLower) ||
+                        p.getDescription().toLowerCase().contains(keywordLower) ||
+                        String.valueOf(p.getUnitPrice()).contains(keywordLower) ||
+                        (p.getCategoryName() != null && p.getCategoryName().toLowerCase().contains(keywordLower)) ||
+                        (p.getUserName() != null && p.getUserName().toLowerCase().contains(keywordLower)) ||
+                        (p.getLastUpdatedDate() != null && p.getLastUpdatedDate().toString().contains(keywordLower))
+                    )
+                    .collect(Collectors.toList());
+
+                System.out.println("Found " + list.size() + " results");
+            }
+
+            // Filter/Sort theo cột
+            if (filter != null && !filter.isEmpty()) {
+                System.out.println("Filtering by: " + filter);
+                switch (filter.toLowerCase()) {
+                    case "partid": 
+                        list.sort(Comparator.comparing(NewPart::getPartId)); 
+                        break;
+                    case "partname": 
+                        list.sort(Comparator.comparing(NewPart::getPartName)); 
+                        break;
+                    case "category":
+                        list.sort(Comparator.comparing(p -> 
+                            p.getCategoryName() != null ? p.getCategoryName() : ""
+                        )); 
+                        break;
+                    case "quantity":
+                        list.sort(Comparator.comparing(NewPart::getQuantity).reversed()); 
+                        break;
+                    case "unitprice": 
+                        list.sort(Comparator.comparing(NewPart::getUnitPrice)); 
+                        break;
+                    case "updateperson": 
+                        list.sort(Comparator.comparing(p -> 
+                            p.getUserName() != null ? p.getUserName() : ""
+                        )); 
+                        break;
+                    case "updatedate": 
+                        list.sort(Comparator.comparing(NewPart::getLastUpdatedDate).reversed()); 
+                        break;
                 }
-                
-                response.sendRedirect("numberPart");
-                return;
-                
-            } catch (NumberFormatException e) {
-                System.out.println("❌ Number format error: " + e.getMessage());
-                session.setAttribute("errorMessage", "ID không hợp lệ!");
-                response.sendRedirect("numberPart");
-                return;
-            } catch (Exception e) {
-                System.out.println("❌ Unexpected error: " + e.getMessage());
-                e.printStackTrace();
-                session.setAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
-                response.sendRedirect("numberPart");
-                return;
             }
+
+            // ✅ Load categories cho form
+            List<Category> categories = categoryDAO.getCategoriesByType("Part");
+            request.setAttribute("categories", categories);
+
+            request.setAttribute("list", list);
+            request.getRequestDispatcher("numberPart.jsp").forward(request, response);
         }
 
-        // ===== XỬ LÝ SEARCH & FILTER =====
-        List<NewPart> list = dao.getAllParts();
-        String keyword = request.getParameter("keyword");
-        String filter = request.getParameter("filter");
-
-        // Search theo keyword
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            String keywordLower = keyword.toLowerCase().trim();
-            System.out.println("Searching with keyword: " + keywordLower);
-            
-            list = list.stream()
-                .filter(p -> 
-                    String.valueOf(p.getPartId()).contains(keywordLower) ||
-                    p.getPartName().toLowerCase().contains(keywordLower) ||
-                    p.getDescription().toLowerCase().contains(keywordLower) ||
-                    String.valueOf(p.getUnitPrice()).contains(keywordLower) ||
-                    (p.getUserName() != null && p.getUserName().toLowerCase().contains(keywordLower)) ||
-                    (p.getLastUpdatedDate() != null && p.getLastUpdatedDate().toString().contains(keywordLower))
-                )
-                .collect(Collectors.toList());
-            
-            System.out.println("Found " + list.size() + " results");
+        @Override
+        public String getServletInfo() {
+            return "ListNumberPart Servlet - Manages part inventory CRUD operations with Category support";
         }
-
-        // Filter theo cột
-        if (filter != null && !filter.isEmpty()) {
-            System.out.println("Filtering by: " + filter);
-            switch (filter.toLowerCase()) {
-                case "partid": 
-                    list.sort(Comparator.comparing(NewPart::getPartId)); 
-                    break;
-                case "partname": 
-                    list.sort(Comparator.comparing(NewPart::getPartName)); 
-                    break;
-                case "unitprice": 
-                    list.sort(Comparator.comparing(NewPart::getUnitPrice)); 
-                    break;
-                case "updateperson": 
-                    list.sort(Comparator.comparing(p -> 
-                        p.getUserName() != null ? p.getUserName() : ""
-                    )); 
-                    break;
-                case "updatedate": 
-                    list.sort(Comparator.comparing(NewPart::getLastUpdatedDate).reversed()); 
-                    break;
-            }
-        }
-// THÊM VÀO doPost() TRONG ListNumberPartServlet
-// Đặt TRƯỚC phần "XỬ LÝ SEARCH & FILTER"
-
-// ===== XỬ LÝ DETAIL (Lấy thống kê trạng thái) =====
-if ("detail".equalsIgnoreCase(action)) {
-    try {
-        System.out.println("=== START DETAIL ===");
-        
-        int partId = Integer.parseInt(request.getParameter("partId"));
-        System.out.println("Getting detail for PartId: " + partId);
-        
-        // Lấy thông tin Part
-        NewPart part = dao.getPartById(partId);
-        
-        if (part == null) {
-            session.setAttribute("errorMessage", "Không tìm thấy Part với ID: " + partId);
-            response.sendRedirect("numberPart");
-            return;
-        }
-        
-        // Lấy số lượng theo trạng thái
-        java.util.Map<String, Integer> statusCount = dao.getPartStatusCount(partId);
-        
-        // Lấy danh sách tất cả parts (để hiển thị bảng chính)
-         list = dao.getAllParts();
-        
-        // Set attributes
-        request.setAttribute("list", list);
-        request.setAttribute("selectedPart", part);
-        request.setAttribute("statusCount", statusCount);
-        request.setAttribute("showDetail", true);
-        
-        System.out.println("✅ Detail loaded successfully!");
-        
-        request.getRequestDispatcher("numberPart.jsp").forward(request, response);
-        return;
-        
-    } catch (NumberFormatException e) {
-        System.out.println("❌ Number format error: " + e.getMessage());
-        session.setAttribute("errorMessage", "ID không hợp lệ!");
-        response.sendRedirect("numberPart");
-        return;
-    } catch (Exception e) {
-        System.out.println("❌ Unexpected error: " + e.getMessage());
-        e.printStackTrace();
-        session.setAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
-        response.sendRedirect("numberPart");
-        return;
     }
-}
-        request.setAttribute("list", list);
-        request.getRequestDispatcher("numberPart.jsp").forward(request, response);
-    }
-
-    @Override
-    public String getServletInfo() {
-        return "ListNumberPart Servlet - Manages part inventory CRUD operations";
-    }
-}

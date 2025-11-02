@@ -14,13 +14,11 @@ public class DBContext {
         try {
             String username = "root";
 
-            String password = "sa123456";
+            String password = "1choigamenhuhack";
 
-<<<<<<< HEAD
-            String url = "jdbc:mysql://localhost:3306/new_db?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
-=======
-            String url = "jdbc:mysql://localhost:3306/reviewiter2?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
->>>>>>> 5a7196791b4ef59864e427448473fc847702e12a
+
+            String url = "jdbc:mysql://localhost:3306/testdb?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
+
 
 
             Class.forName("com.mysql.cj.jdbc.Driver");

@@ -1,7 +1,8 @@
 package controller;
 
+import dal.CategoryDAO;
 import dal.PartDetailDAO;
-import dal.PartDetailHistoryDAO; // THÊM MỚI
+import dal.PartDetailHistoryDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -11,16 +12,18 @@ import jakarta.servlet.http.HttpSession;
 import java.util.Comparator;
 import java.util.List;
 import model.Account;
+import model.Category;
 import model.NewPartDetail;
 
 /**
- * PartDetailServlet - Quản lý chi tiết thiết bị (CÓ LƯU LỊCH SỬ)
+ * PartDetailServlet - Quản lý chi tiết thiết bị với Category support
  * @author Admin
  */
 public class PartDetailServlet extends HttpServlet {
     
     private PartDetailDAO dao = new PartDetailDAO();
-    private PartDetailHistoryDAO historyDAO = new PartDetailHistoryDAO(); // THÊM MỚI
+    private PartDetailHistoryDAO historyDAO = new PartDetailHistoryDAO();
+    private CategoryDAO categoryDAO = new CategoryDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -31,6 +34,11 @@ public class PartDetailServlet extends HttpServlet {
             response.sendRedirect("login");
             return;
         }
+        
+        // ✅ Load categories
+        List<Category> categories = categoryDAO.getCategoriesByType("Part");
+        request.setAttribute("categories", categories);
+        
         List<NewPartDetail> list = dao.getAllPartDetails();
         request.setAttribute("list", list);
         request.getRequestDispatcher("partDetail.jsp").forward(request, response);
@@ -144,7 +152,7 @@ public class PartDetailServlet extends HttpServlet {
                     System.out.println("✅ Add successful!");
                     
                     // ===== LƯU LỊCH SỬ THÊM MỚI =====
-                    int newPartDetailId = dao.getLastInsertedId(); // Cần thêm method này trong DAO
+                    int newPartDetailId = dao.getLastInsertedId();
                     historyDAO.addHistory(newPartDetailId, null, status, acc.getAccountId(), "Thêm mới thiết bị");
                     
                     session.setAttribute("successMessage", "Thêm mới thành công!");
@@ -200,7 +208,7 @@ public class PartDetailServlet extends HttpServlet {
                 String serialNumber = request.getParameter("serialNumber");
                 String newStatus = request.getParameter("status");
                 String location = request.getParameter("location");
-                String oldStatus = part.getStatus(); // LƯU TRẠNG THÁI CŨ
+                String oldStatus = part.getStatus();
                 
                 if ("InUse".equalsIgnoreCase(oldStatus)) {
                     session.setAttribute("errorMessage", "⚠️ Không thể thay đổi trạng thái khi Part Detail đã ở trạng thái InUse!");
@@ -351,7 +359,20 @@ public class PartDetailServlet extends HttpServlet {
         List<NewPartDetail> list = dao.getAllPartDetails();
         String keyword = request.getParameter("keyword");
         String filter = request.getParameter("filter");
+        String categoryFilter = request.getParameter("categoryFilter");
 
+        // ✅ FILTER BY CATEGORY TRƯỚC
+        if (categoryFilter != null && !categoryFilter.isEmpty()) {
+            try {
+                int catId = Integer.parseInt(categoryFilter);
+                list = dao.getPartDetailsByCategory(catId);
+                System.out.println("Filtered by categoryId: " + catId);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid categoryId: " + categoryFilter);
+            }
+        }
+
+        // Search theo keyword
         if (keyword != null && !keyword.trim().isEmpty()) {
             String keywordLower = keyword.toLowerCase().trim();
             System.out.println("Searching with keyword: " + keywordLower);
@@ -363,6 +384,7 @@ public class PartDetailServlet extends HttpServlet {
                     pd.getSerialNumber().toLowerCase().contains(keywordLower) ||
                     pd.getStatus().toLowerCase().contains(keywordLower) ||
                     pd.getLocation().toLowerCase().contains(keywordLower) ||
+                    (pd.getCategoryName() != null && pd.getCategoryName().toLowerCase().contains(keywordLower)) ||
                     (pd.getUsername() != null && pd.getUsername().toLowerCase().contains(keywordLower))
                 )
                 .collect(java.util.stream.Collectors.toList());
@@ -370,6 +392,7 @@ public class PartDetailServlet extends HttpServlet {
             System.out.println("Found " + list.size() + " results");
         }
 
+        // Filter/Sort theo cột
         if (filter != null && !filter.isEmpty()) {
             System.out.println("Filtering by: " + filter);
             switch (filter.toLowerCase()) {
@@ -379,8 +402,16 @@ public class PartDetailServlet extends HttpServlet {
                 case "inventoryid": 
                     list.sort(Comparator.comparing(NewPartDetail::getPartDetailId)); 
                     break;
+                case "category":
+                    list.sort(Comparator.comparing(pd -> 
+                        pd.getCategoryName() != null ? pd.getCategoryName() : ""
+                    )); 
+                    break;
                 case "partname": 
                     list.sort(Comparator.comparing(NewPartDetail::getSerialNumber)); 
+                    break;
+                case "status": 
+                    list.sort(Comparator.comparing(NewPartDetail::getStatus)); 
                     break;
                 case "lastupdateperson": 
                     list.sort(Comparator.comparing(pd -> 
@@ -393,12 +424,16 @@ public class PartDetailServlet extends HttpServlet {
             }
         }
 
+        // ✅ Load categories cho form
+        List<Category> categories = categoryDAO.getCategoriesByType("Part");
+        request.setAttribute("categories", categories);
+        
         request.setAttribute("list", list);
         request.getRequestDispatcher("partDetail.jsp").forward(request, response);
     }
 
     @Override
     public String getServletInfo() {
-        return "PartDetail Servlet - Manages part detail CRUD operations with history tracking";
+        return "PartDetail Servlet - Manages part detail CRUD operations with history tracking and category support";
     }
 }

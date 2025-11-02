@@ -8,7 +8,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-        <title>CRM System - Danh sách hàng tồn kho</title>
+        <title>CRM System - Danh sách thiết bị</title>
 
         <style>
            * {
@@ -225,20 +225,16 @@ body {
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
 }
 
-.status-card.available {
+.status-card.active {
     border-left-color: #28a745;
 }
 
-.status-card.fault {
+.status-card.repair {
+    border-left-color: #dc3545;
+}
+
+.status-card.maintenance {
     border-left-color: #ffc107;
-}
-
-.status-card.inuse {
-    border-left-color: #17a2b8;
-}
-
-.status-card.retired {
-    border-left-color: #6c757d;
 }
 
 .status-card h4 {
@@ -508,7 +504,7 @@ body {
 }
 
 .form-container input[type="text"],
-.form-container input[type="number"],
+.form-container input[type="date"],
 .form-container select {
     width: 100%;
     padding: 9px 12px;
@@ -525,6 +521,12 @@ body {
     border-color: #999;
     box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
     background: white;
+}
+
+.form-container input:disabled {
+    background: #e9ecef;
+    cursor: not-allowed;
+    color: #6c757d;
 }
 
 #formMessage {
@@ -576,35 +578,29 @@ body {
     box-shadow: 0 2px 6px rgba(108,117,125,0.3);
 }
 
-/* Column widths - CẬP NHẬT ĐỂ CÓ 9 CỘT */
-.inventory-table thead tr th:nth-child(1) { width: 6%; }  /* Part ID */
-.inventory-table thead tr th:nth-child(2) { width: 11%; } /* Part Name */
-.inventory-table thead tr th:nth-child(3) { width: 10%; } /* Category */
-.inventory-table thead tr th:nth-child(4) { width: 14%; } /* Description */
-.inventory-table thead tr th:nth-child(5) { width: 7%; }  /* Unit Price */
-.inventory-table thead tr th:nth-child(6) { width: 6%; }  /* Quantity */
+/* Column widths - 9 CỘT */
+.inventory-table thead tr th:nth-child(1) { width: 6%; }  /* Equipment ID */
+.inventory-table thead tr th:nth-child(2) { width: 11%; } /* Serial Number */
+.inventory-table thead tr th:nth-child(3) { width: 10%; } /* Model */
+.inventory-table thead tr th:nth-child(4) { width: 10%; } /* Category */
+.inventory-table thead tr th:nth-child(5) { width: 14%; } /* Description */
+.inventory-table thead tr th:nth-child(6) { width: 9%; }  /* Install Date */
 .inventory-table thead tr th:nth-child(7) { width: 10%; } /* Last Updated By */
 .inventory-table thead tr th:nth-child(8) { width: 10%; } /* Last Update Time */
-.inventory-table thead tr th:nth-child(9) { width: 26%; } /* Action */
+.inventory-table thead tr th:nth-child(9) { width: 20%; } /* Action */
 
-.inventory-table tbody td:nth-child(4) {
+.inventory-table tbody td:nth-child(5) {
     max-width: 300px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.inventory-table tbody td:nth-child(4):hover {
+.inventory-table tbody td:nth-child(5):hover {
     white-space: normal;
     overflow: visible;
     word-wrap: break-word;
     background-color: #fffbea;
-}
-
-/* Highlight quantity */
-.inventory-table tbody td:nth-child(6) {
-    font-weight: 600;
-    color: #28a745;
 }
 
 /* Button container trong Action column */
@@ -676,10 +672,10 @@ body {
                     <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
                     <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
                     <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
-                    <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị </span></a>
+                    <a href="numberEquipment" class="active"><i class="fas fa-list"></i><span>Danh sách thiết bị</span></a>
                     <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
                     <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết linh kiện</span></a>
-                     <a href="category" class="active"><i class="fas fa-tags"></i><span>Quản lý danh mục</span></a>
+                    <a href="category"><i class="fas fa-tags"></i><span>Quản lý danh mục</span></a>
                     <a href="logout" style="margin-top: auto; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-weight: 500;">
                         <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
                     </a>
@@ -688,7 +684,7 @@ body {
 
             <!-- Content -->
             <div class="content">
-                <h2>Danh sách hàng linh kiện</h2>
+                <h2>Danh sách thiết bị</h2>
 
                 <!-- Success/Error Messages -->
                 <c:if test="${not empty successMessage}">
@@ -703,14 +699,14 @@ body {
                 </c:if>
 
                 <!-- ========== DETAIL PANEL ========== -->
-                <c:if test="${showDetail && selectedPart != null}">
+                <c:if test="${showDetail && selectedEquipment != null}">
                     <div class="detail-panel">
                         <div class="detail-header">
                             <h3>
                                 <i class="fas fa-chart-pie"></i> 
-                                Chi tiết trạng thái: ${selectedPart.partName}
+                                Chi tiết trạng thái: ${selectedEquipment.model}
                             </h3>
-                            <form action="numberPart" method="get" style="display: inline;">
+                            <form action="numberEquipment" method="get" style="display: inline;">
                                 <button type="submit" class="btn-close-detail">
                                     <i class="fas fa-times"></i> Đóng
                                 </button>
@@ -718,24 +714,19 @@ body {
                         </div>
                         
                         <div class="status-grid">
-                            <div class="status-card available">
-                                <h4><i class="fas fa-check-circle"></i> Available (Sẵn sàng)</h4>
-                                <div class="count">${statusCount['Available']}</div>
+                            <div class="status-card active">
+                                <h4><i class="fas fa-check-circle"></i> Active (Hoạt động)</h4>
+                                <div class="count">${statusCount['Active']}</div>
                             </div>
                             
-                            <div class="status-card fault">
-                                <h4><i class="fas fa-exclamation-triangle"></i> Faulty (Lỗi)</h4>
-                                <div class="count">${statusCount['Faulty']}</div>
+                            <div class="status-card repair">
+                                <h4><i class="fas fa-tools"></i> Repair (Sửa chữa)</h4>
+                                <div class="count">${statusCount['Repair']}</div>
                             </div>
                             
-                            <div class="status-card inuse">
-                                <h4><i class="fas fa-tools"></i> InUse (Đang dùng)</h4>
-                                <div class="count">${statusCount['InUse']}</div>
-                            </div>
-                            
-                            <div class="status-card retired">
-                                <h4><i class="fas fa-archive"></i> Retired (Ngừng dùng)</h4>
-                                <div class="count">${statusCount['Retired']}</div>
+                            <div class="status-card maintenance">
+                                <h4><i class="fas fa-wrench"></i> Maintenance (Bảo trì)</h4>
+                                <div class="count">${statusCount['Maintenance']}</div>
                             </div>
                         </div>
                     </div>
@@ -743,7 +734,7 @@ body {
 
                 <!-- Search & Filter -->
                 <div class="search-filter-container">
-                    <form action="numberPart" method="POST" style="display:flex; width:100%; align-items:center; gap:10px; flex-wrap: wrap;">
+                    <form action="numberEquipment" method="POST" style="display:flex; width:100%; align-items:center; gap:10px; flex-wrap: wrap;">
                         <div class="search-group">
                             <input type="text" placeholder="Nhập từ khoá..." name="keyword"
                                    value="${param.keyword}" class="search-input"/>
@@ -753,7 +744,7 @@ body {
                         </div>
 
                         <div class="filter-group">
-                            <!-- ✅ FILTER BY CATEGORY -->
+                            <!-- FILTER BY CATEGORY -->
                             <select name="categoryFilter" class="filter-select" onchange="this.form.submit()">
                                 <option value="">-- All Categories --</option>
                                 <c:forEach items="${categories}" var="cat">
@@ -766,17 +757,17 @@ body {
                             <!-- FILTER BY COLUMN -->
                             <select name="filter" class="filter-select" onchange="this.form.submit()">
                                 <option value="">-- Sort by --</option>
-                                <option value="partId" ${param.filter == 'partId' ? 'selected' : ''}>By Part ID</option>
-                                <option value="partName" ${param.filter == 'partName' ? 'selected' : ''}>By Part Name</option>
+                                <option value="equipmentId" ${param.filter == 'equipmentId' ? 'selected' : ''}>By Equipment ID</option>
+                                <option value="serialNumber" ${param.filter == 'serialNumber' ? 'selected' : ''}>By Serial Number</option>
+                                <option value="model" ${param.filter == 'model' ? 'selected' : ''}>By Model</option>
                                 <option value="category" ${param.filter == 'category' ? 'selected' : ''}>By Category</option>
-                                <option value="quantity" ${param.filter == 'quantity' ? 'selected' : ''}>By Quantity</option>
-                                <option value="unitPrice" ${param.filter == 'unitPrice' ? 'selected' : ''}>By Unit Price</option>
+                                <option value="installDate" ${param.filter == 'installDate' ? 'selected' : ''}>By Install Date</option>
                                 <option value="updatePerson" ${param.filter == 'updatePerson' ? 'selected' : ''}>By Update Person</option>
                                 <option value="updateDate" ${param.filter == 'updateDate' ? 'selected' : ''}>By Update Date</option>
                             </select>
 
                             <button type="button" class="btn-new" onclick="openForm('new')">
-                                <i class="fas fa-plus"></i> New Part
+                                <i class="fas fa-plus"></i> New Equipment
                             </button>
                         </div>
                     </form>
@@ -786,34 +777,43 @@ body {
                 <table class="inventory-table">
                     <thead>
                         <tr>
-                            <th>Part ID</th>
-                            <th>Part Name</th>
+                            <th>Equipment ID</th>
+                            <th>Serial Number</th>
+                            <th>Model</th>
                             <th>Category</th>
                             <th>Description</th>
-                            <th>Unit Price</th>
-                            <th>Quantity</th>
+                            <th>Install Date</th>
                             <th>Last Updated By</th>
                             <th>Last Update Time</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <c:forEach items="${list}" var="ls">
+                        <c:forEach items="${list}" var="equipment">
                             <tr>
-                                <td>${ls.partId}</td>
-                                <td>${ls.partName}</td>
-                                <td>${ls.categoryName != null ? ls.categoryName : 'N/A'}</td>
-                                <td>${ls.description}</td>
-                                <td>${ls.unitPrice}</td>
-                                <td>${ls.quantity}</td>
-                                <td>${ls.userName}</td>
-                                <td>${ls.lastUpdatedDate}</td>
+                                <td>${equipment.equipmentId}</td>
+                                <td>${equipment.serialNumber}</td>
+                                <td>${equipment.model}</td>
                                 <td>
-                                    <!-- ✅ BUTTON LAYOUT DỌC -->
+                                    <c:choose>
+                                        <c:when test="${not empty equipment.categoryName}">
+                                            ${equipment.categoryName}
+                                        </c:when>
+                                        <c:otherwise>
+                                            N/A
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td>${equipment.description}</td>
+                                <td>${equipment.installDate}</td>
+                                <td>${equipment.username}</td>
+                                <td>${equipment.lastUpdatedDate}</td>
+                                <td>
+                                    <!-- BUTTON LAYOUT DỌC -->
                                     <div style="display: flex; flex-direction: column; gap: 5px;">
-                                        <form action="numberPart" method="post" style="margin: 0;">
+                                        <form action="numberEquipment" method="post" style="margin: 0;">
                                             <input type="hidden" name="action" value="detail">
-                                            <input type="hidden" name="partId" value="${ls.partId}">
+                                            <input type="hidden" name="equipmentId" value="${equipment.equipmentId}">
                                             <button type="submit" class="btn-detail" style="width: 100%;">
                                                 <i class="fas fa-info-circle"></i> Detail
                                             </button>
@@ -821,16 +821,17 @@ body {
                                         
                                         <button type="button" class="btn-edit" style="width: 100%; margin: 0;"
                                                 onclick="openForm('edit',
-                                                                '${ls.partId}',
-                                                                '${ls.partName}',
-                                                                '${ls.description}',
-                                                                '${ls.unitPrice}',
-                                                                '${ls.categoryId}')">
+                                                                '${equipment.equipmentId}',
+                                                                '${equipment.serialNumber}',
+                                                                '${equipment.model}',
+                                                                '${equipment.description}',
+                                                                '${equipment.installDate}',
+                                                                '${equipment.categoryId}')">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
                                         
                                         <button type="button" class="btn-delete" style="width: 100%; margin: 0;"
-                                                onclick="confirmDelete(${ls.partId})">
+                                                onclick="confirmDelete(${equipment.equipmentId})">
                                             <i class="fas fa-trash"></i> Delete
                                         </button>
                                     </div>
@@ -843,17 +844,22 @@ body {
                 <!-- Form Popup -->
                 <div class="form-overlay" id="formOverlay">
                     <div class="form-container">
-                        <h2 id="formTitle">Add New Part</h2>
-                        <form action="numberPart" method="POST" id="partForm" onsubmit="return validateForm()">
+                        <h2 id="formTitle">Add New Equipment</h2>
+                        <form action="numberEquipment" method="POST" id="equipmentForm" onsubmit="return validateForm()">
                             <input type="hidden" name="action" id="actionInput" value="add">
-                            <input type="hidden" name="partId" id="partId">
+                            <input type="hidden" name="equipmentId" id="equipmentId">
 
-                            <label>Part Name * (Tối thiểu 3 ký tự)</label>
-                            <input type="text" name="partName" id="partName" required 
+                            <label>Serial Number * (3-30 ký tự)</label>
+                            <input type="text" name="serialNumber" id="serialNumber" required 
                                    minlength="3" maxlength="30"
-                                   placeholder="Nhập tên part (ít nhất 3 ký tự)">
+                                   placeholder="Nhập serial number (3-30 ký tự)">
 
-                            <!-- ✅ THÊM CATEGORY DROPDOWN -->
+                            <label>Model * (Tối thiểu 3 ký tự)</label>
+                            <input type="text" name="model" id="model" required 
+                                   minlength="3" maxlength="50"
+                                   placeholder="Nhập model (ít nhất 3 ký tự)">
+
+                            <!-- CATEGORY DROPDOWN -->
                             <label>Category</label>
                             <select name="categoryId" id="categoryId" class="filter-select" style="width: 100%; background: #fafafa;">
                                 <option value="">-- Select Category --</option>
@@ -863,14 +869,12 @@ body {
                             </select>
 
                             <label>Description * (10-100 ký tự)</label>
-                            <input type="text" name="description" id="partDescription" required 
+                            <input type="text" name="description" id="description" required 
                                    minlength="10" maxlength="100"
-                                   placeholder="Nhập placeholder="Nhập mô tả (10-100 ký tự)">
+                                   placeholder="Nhập mô tả (10-100 ký tự)">
 
-                            <label>Unit Price *</label>
-                            <input type="number" name="unitPrice" id="partPrice" 
-                                   step="0.01" required min="0.01" max="9999999.99"
-                                   placeholder="Nhập giá (0 < giá < 10,000,000)">
+                            <label>Install Date *</label>
+                            <input type="date" name="installDate" id="installDate" required>
 
                             <p id="formMessage"></p>
 
@@ -901,32 +905,43 @@ body {
 
         <script>
     // ========== FORM FUNCTIONS ==========
-    function openForm(mode, partId = '', partName = '', description = '', unitPrice = '', categoryId = '') {
+    function openForm(mode, equipmentId = '', serialNumber = '', model = '', description = '', installDate = '', categoryId = '') {
         const overlay = document.getElementById("formOverlay");
         const title = document.getElementById("formTitle");
         const actionInput = document.getElementById("actionInput");
         const formMessage = document.getElementById("formMessage");
+        const installDateInput = document.getElementById("installDate");
 
         overlay.style.display = "flex";
         formMessage.textContent = "";
         formMessage.style.color = "#dc3545";
 
         if (mode === "new") {
-            title.textContent = "Add New Part";
+            title.textContent = "Add New Equipment";
             actionInput.value = "add";
-            document.getElementById("partId").value = "";
-            document.getElementById("partName").value = "";
+            document.getElementById("equipmentId").value = "";
+            document.getElementById("serialNumber").value = "";
+            document.getElementById("model").value = "";
             document.getElementById("categoryId").value = "";
-            document.getElementById("partDescription").value = "";
-            document.getElementById("partPrice").value = "";
+            document.getElementById("description").value = "";
+            document.getElementById("installDate").value = "";
+            
+            // Enable install date for ADD
+            installDateInput.disabled = false;
+            installDateInput.style.background = "#fafafa";
         } else {
-            title.textContent = "Edit Part";
+            title.textContent = "Edit Equipment";
             actionInput.value = "edit";
-            document.getElementById("partId").value = partId;
-            document.getElementById("partName").value = partName;
+            document.getElementById("equipmentId").value = equipmentId;
+            document.getElementById("serialNumber").value = serialNumber;
+            document.getElementById("model").value = model;
             document.getElementById("categoryId").value = categoryId;
-            document.getElementById("partDescription").value = description;
-            document.getElementById("partPrice").value = unitPrice;
+            document.getElementById("description").value = description;
+            document.getElementById("installDate").value = installDate;
+            
+            // DISABLE install date for EDIT
+            installDateInput.disabled = true;
+            installDateInput.style.background = "#e9ecef";
         }
     }
 
@@ -936,26 +951,39 @@ body {
     }
 
     function validateForm() {
-        const partName = document.getElementById("partName").value.trim();
-        const description = document.getElementById("partDescription").value.trim();
-        const unitPrice = parseFloat(document.getElementById("partPrice").value);
+        const serialNumber = document.getElementById("serialNumber").value.trim();
+        const model = document.getElementById("model").value.trim();
+        const description = document.getElementById("description").value.trim();
+        const installDate = document.getElementById("installDate").value;
         const formMessage = document.getElementById("formMessage");
+        const actionInput = document.getElementById("actionInput").value;
         
         formMessage.textContent = "";
         formMessage.style.color = "#dc3545";
         
-        // Validate Part Name (min 3, max 30)
-        if (partName.length < 3) {
-            formMessage.textContent = "❌ Tên Part phải có ít nhất 3 ký tự!";
+        // Validate Serial Number (3-30 characters)
+        if (serialNumber.length < 3) {
+            formMessage.textContent = "❌ Serial Number phải có ít nhất 3 ký tự!";
             return false;
         }
         
-        if (partName.length > 30) {
-            formMessage.textContent = "❌ Tên Part không được vượt quá 30 ký tự!";
+        if (serialNumber.length > 30) {
+            formMessage.textContent = "❌ Serial Number không được vượt quá 30 ký tự!";
             return false;
         }
         
-        // Validate Description (min 10, max 100)
+        // Validate Model (min 3 characters)
+        if (model.length < 3) {
+            formMessage.textContent = "❌ Model phải có ít nhất 3 ký tự!";
+            return false;
+        }
+        
+        if (model.length > 50) {
+            formMessage.textContent = "❌ Model không được vượt quá 50 ký tự!";
+            return false;
+        }
+        
+        // Validate Description (10-100 characters)
         if (description.length < 10) {
             formMessage.textContent = "❌ Mô tả phải có ít nhất 10 ký tự!";
             return false;
@@ -966,9 +994,9 @@ body {
             return false;
         }
         
-        // Validate Unit Price (0 < price < 10,000,000)
-        if (isNaN(unitPrice) || unitPrice <= 0 || unitPrice >= 10000000) {
-            formMessage.textContent = "❌ Giá phải lớn hơn 0 và nhỏ hơn 10,000,000!";
+        // Validate Install Date (only for ADD)
+        if (actionInput === "add" && !installDate) {
+            formMessage.textContent = "❌ Vui lòng chọn ngày lắp đặt!";
             return false;
         }
         
@@ -976,11 +1004,11 @@ body {
     }
 
     // ========== DELETE FUNCTION ==========
-    function confirmDelete(partId) {
-        if (confirm("Bạn có chắc muốn xóa Part ID = " + partId + " ?")) {
+    function confirmDelete(equipmentId) {
+        if (confirm("Bạn có chắc muốn xóa Equipment ID = " + equipmentId + " ?")) {
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = 'numberPart';
+            form.action = 'numberEquipment';
 
             const actionInput = document.createElement('input');
             actionInput.type = 'hidden';
@@ -989,8 +1017,8 @@ body {
 
             const idInput = document.createElement('input');
             idInput.type = 'hidden';
-            idInput.name = 'partId';
-            idInput.value = partId;
+            idInput.name = 'equipmentId';
+            idInput.value = equipmentId;
 
             form.appendChild(actionInput);
             form.appendChild(idInput);
@@ -1108,30 +1136,52 @@ body {
             });
         }
 
-        // Real-time character counter for Part Name
-        const partNameInput = document.getElementById("partName");
-        if (partNameInput) {
-            partNameInput.addEventListener("input", function() {
+        // Real-time character counter for Serial Number
+        const serialNumberInput = document.getElementById("serialNumber");
+        if (serialNumberInput) {
+            serialNumberInput.addEventListener("input", function() {
                 const length = this.value.length;
                 const formMessage = document.getElementById("formMessage");
                 
                 if (length === 0) {
                     formMessage.textContent = "";
                 } else if (length < 3) {
-                    formMessage.textContent = `⚠️ Tên Part: Còn thiếu ${3 - length} ký tự`;
+                    formMessage.textContent = `⚠️ Serial Number: Còn thiếu ${3 - length} ký tự`;
                     formMessage.style.color = "#ff9800";
                 } else if (length > 30) {
-                    formMessage.textContent = `❌ Tên Part: Vượt quá ${length - 30} ký tự`;
+                    formMessage.textContent = `❌ Serial Number: Vượt quá ${length - 30} ký tự`;
                     formMessage.style.color = "#dc3545";
                 } else {
-                    formMessage.textContent = `✓ Tên Part: ${length}/30 ký tự`;
+                    formMessage.textContent = `✓ Serial Number: ${length}/30 ký tự`;
+                    formMessage.style.color = "#28a745";
+                }
+            });
+        }
+
+        // Real-time character counter for Model
+        const modelInput = document.getElementById("model");
+        if (modelInput) {
+            modelInput.addEventListener("input", function() {
+                const length = this.value.length;
+                const formMessage = document.getElementById("formMessage");
+                
+                if (length === 0) {
+                    formMessage.textContent = "";
+                } else if (length < 3) {
+                    formMessage.textContent = `⚠️ Model: Còn thiếu ${3 - length} ký tự`;
+                    formMessage.style.color = "#ff9800";
+                } else if (length > 50) {
+                    formMessage.textContent = `❌ Model: Vượt quá ${length - 50} ký tự`;
+                    formMessage.style.color = "#dc3545";
+                } else {
+                    formMessage.textContent = `✓ Model: ${length}/50 ký tự`;
                     formMessage.style.color = "#28a745";
                 }
             });
         }
 
         // Real-time character counter for Description
-        const descriptionInput = document.getElementById("partDescription");
+        const descriptionInput = document.getElementById("description");
         if (descriptionInput) {
             descriptionInput.addEventListener("input", function() {
                 const length = this.value.length;
@@ -1165,10 +1215,7 @@ body {
     });
         </script>
 
-        <%
-            // Xóa message sau khi đã hiển thị
-            session.removeAttribute("successMessage");
-            session.removeAttribute("errorMessage");
-        %>
+        <c:remove var="successMessage" scope="session" />
+        <c:remove var="errorMessage" scope="session" />
     </body>
 </html>
