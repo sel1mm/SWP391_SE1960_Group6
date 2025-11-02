@@ -11,10 +11,12 @@ import java.util.Map;
 
 /**
  * DAO for Equipment operations with Category support.
- * Modified to include categoryId, categoryName, and username in queries.
+ * Complete version combining both implementations.
  */
 public class EquipmentDAO extends DBContext {
 
+    // ==================== BASIC CRUD OPERATIONS ====================
+    
     /**
      * Get all equipment with category and user information
      */
@@ -39,36 +41,6 @@ public class EquipmentDAO extends DBContext {
         } catch (Exception ex) {
             System.out.println("❌ Error in getAllEquipment: " + ex.getMessage());
             ex.printStackTrace();
-        }
-
-        return list;
-    }
-
-    /**
-     * Get equipment with inventory status information
-     */
-    public List<EquipmentWithStatus> getEquipmentWithStatus() {
-        List<EquipmentWithStatus> list = new ArrayList<>();
-        String sql = "SELECT e.equipmentId, e.serialNumber, e.model, e.description, " +
-                     "       e.installDate, e.categoryId, c.categoryName, " +
-                     "       e.lastUpdatedBy, e.lastUpdatedDate, a.username, " +
-                     "       'Active' as status, 'Building' as location, 0.0 as unitPrice " +
-                     "FROM Equipment e " +
-                     "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
-                     "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId " +
-                     "ORDER BY e.lastUpdatedDate DESC, e.equipmentId DESC";
-
-        try (PreparedStatement ps = connection.prepareStatement(sql); 
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                EquipmentWithStatus e = mapResultSetToEquipmentWithStatus(rs);
-                list.add(e);
-            }
-
-        } catch (Exception e) {
-            System.out.println("❌ Error in getEquipmentWithStatus: " + e.getMessage());
-            e.printStackTrace();
         }
 
         return list;
@@ -125,6 +97,94 @@ public class EquipmentDAO extends DBContext {
         }
         return null;
     }
+
+    /**
+     * Insert new equipment
+     */
+    public boolean insertEquipment(Equipment equipment) throws SQLException {
+        String sql = "INSERT INTO Equipment (serialNumber, model, description, installDate, " +
+                     "categoryId, lastUpdatedBy, lastUpdatedDate) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, equipment.getSerialNumber());
+            ps.setString(2, equipment.getModel());
+            ps.setString(3, equipment.getDescription());
+            ps.setDate(4, equipment.getInstallDate() != null ? Date.valueOf(equipment.getInstallDate()) : null);
+            
+            if (equipment.getCategoryId() != null) {
+                ps.setInt(5, equipment.getCategoryId());
+            } else {
+                ps.setNull(5, Types.INTEGER);
+            }
+            
+            ps.setInt(6, equipment.getLastUpdatedBy());
+            ps.setDate(7, equipment.getLastUpdatedDate() != null ? Date.valueOf(equipment.getLastUpdatedDate()) : null);
+
+            int affectedRows = ps.executeUpdate();
+            
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        equipment.setEquipmentId(generatedKeys.getInt(1));
+                    }
+                }
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error inserting equipment: " + e.getMessage());
+            throw e;
+        }
+        return false;
+    }
+
+    /**
+     * Update equipment
+     */
+    public boolean updateEquipment(Equipment equipment) throws SQLException {
+        String sql = "UPDATE Equipment SET serialNumber = ?, model = ?, description = ?, " +
+                     "installDate = ?, categoryId = ?, lastUpdatedBy = ?, lastUpdatedDate = ? " +
+                     "WHERE equipmentId = ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, equipment.getSerialNumber());
+            ps.setString(2, equipment.getModel());
+            ps.setString(3, equipment.getDescription());
+            ps.setDate(4, equipment.getInstallDate() != null ? Date.valueOf(equipment.getInstallDate()) : null);
+            
+            if (equipment.getCategoryId() != null) {
+                ps.setInt(5, equipment.getCategoryId());
+            } else {
+                ps.setNull(5, Types.INTEGER);
+            }
+            
+            ps.setInt(6, equipment.getLastUpdatedBy());
+            ps.setDate(7, equipment.getLastUpdatedDate() != null ? Date.valueOf(equipment.getLastUpdatedDate()) : null);
+            ps.setInt(8, equipment.getEquipmentId());
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("❌ Error updating equipment: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    /**
+     * Delete equipment
+     */
+    public boolean deleteEquipment(int equipmentId) throws SQLException {
+        String sql = "DELETE FROM Equipment WHERE equipmentId = ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, equipmentId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("❌ Error deleting equipment: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    // ==================== SEARCH & FILTER OPERATIONS ====================
 
     /**
      * Search equipment by model, description, serial number, or category
@@ -238,91 +298,269 @@ public class EquipmentDAO extends DBContext {
         return list;
     }
 
+    // ==================== STATUS & STATISTICS OPERATIONS ====================
+
     /**
-     * Insert new equipment
+     * Get equipment with inventory status information
      */
-    public boolean insertEquipment(Equipment equipment) throws SQLException {
-        String sql = "INSERT INTO Equipment (serialNumber, model, description, installDate, " +
-                     "categoryId, lastUpdatedBy, lastUpdatedDate) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    public List<EquipmentWithStatus> getEquipmentWithStatus() {
+        List<EquipmentWithStatus> list = new ArrayList<>();
+        String sql = "SELECT e.equipmentId, e.serialNumber, e.model, e.description, " +
+                     "       e.installDate, e.categoryId, c.categoryName, " +
+                     "       e.lastUpdatedBy, e.lastUpdatedDate, a.username, " +
+                     "       'Active' as status, 'Building' as location, 0.0 as unitPrice " +
+                     "FROM Equipment e " +
+                     "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
+                     "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId " +
+                     "ORDER BY e.lastUpdatedDate DESC, e.equipmentId DESC";
 
-        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, equipment.getSerialNumber());
-            ps.setString(2, equipment.getModel());
-            ps.setString(3, equipment.getDescription());
-            ps.setDate(4, equipment.getInstallDate() != null ? Date.valueOf(equipment.getInstallDate()) : null);
-            
-            if (equipment.getCategoryId() != null) {
-                ps.setInt(5, equipment.getCategoryId());
-            } else {
-                ps.setNull(5, Types.INTEGER);
+        try (PreparedStatement ps = connection.prepareStatement(sql); 
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                EquipmentWithStatus e = mapResultSetToEquipmentWithStatus(rs);
+                list.add(e);
             }
-            
-            ps.setInt(6, equipment.getLastUpdatedBy());
-            ps.setDate(7, equipment.getLastUpdatedDate() != null ? Date.valueOf(equipment.getLastUpdatedDate()) : null);
 
-            int affectedRows = ps.executeUpdate();
-            
-            if (affectedRows > 0) {
-                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        equipment.setEquipmentId(generatedKeys.getInt(1));
-                    }
+        } catch (Exception e) {
+            System.out.println("❌ Error in getEquipmentWithStatus: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    /**
+     * Get status for a specific equipment
+     * Returns: "Active", "Repair", or "Maintenance"
+     */
+    public String getEquipmentStatus(int equipmentId) {
+        // Check for active service request (Repair)
+        String repairSql = "SELECT COUNT(*) as cnt FROM ServiceRequest " +
+                          "WHERE equipmentId = ? AND status IN ('Pending', 'Awaiting Approval', 'Approved')";
+
+        try (PreparedStatement ps = connection.prepareStatement(repairSql)) {
+            ps.setInt(1, equipmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt("cnt") > 0) {
+                    return "Repair";
                 }
-                return true;
             }
         } catch (SQLException e) {
-            System.out.println("❌ Error inserting equipment: " + e.getMessage());
-            throw e;
+            System.out.println("❌ Error checking repair status: " + e.getMessage());
+        }
+
+        // Check for scheduled maintenance
+        String maintenanceSql = "SELECT COUNT(*) as cnt FROM MaintenanceSchedule " +
+                               "WHERE equipmentId = ? AND status = 'Scheduled' AND scheduledDate >= CURDATE()";
+
+        try (PreparedStatement ps = connection.prepareStatement(maintenanceSql)) {
+            ps.setInt(1, equipmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt("cnt") > 0) {
+                    return "Maintenance";
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error checking maintenance status: " + e.getMessage());
+        }
+
+        return "Active";
+    }
+
+    /**
+     * Check if equipmentId exists and is active
+     */
+    public boolean isValidEquipment(int equipmentId) {
+        String sql = "SELECT COUNT(*) FROM Equipment WHERE equipmentId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, equipmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error in isValidEquipment: " + e.getMessage());
         }
         return false;
     }
 
+    // ==================== CONTRACT & CUSTOMER OPERATIONS ====================
+
     /**
-     * Update equipment
+     * Get equipment by contract ID with full details
      */
-    public boolean updateEquipment(Equipment equipment) throws SQLException {
-        String sql = "UPDATE Equipment SET serialNumber = ?, model = ?, description = ?, " +
-                     "installDate = ?, categoryId = ?, lastUpdatedBy = ?, lastUpdatedDate = ? " +
-                     "WHERE equipmentId = ?";
+    public List<EquipmentWithStatus> getEquipmentByContractId(int contractId) {
+        List<EquipmentWithStatus> list = new ArrayList<>();
+        String sql = "SELECT e.equipmentId, e.serialNumber, e.model, e.description, " +
+                     "       e.installDate, e.categoryId, c.categoryName, " +
+                     "       e.lastUpdatedBy, e.lastUpdatedDate, a.username, " +
+                     "       ce.startDate, ce.endDate, ce.price " +
+                     "FROM ContractEquipment ce " +
+                     "JOIN Equipment e ON ce.equipmentId = e.equipmentId " +
+                     "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
+                     "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId " +
+                     "WHERE ce.contractId = ?";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, equipment.getSerialNumber());
-            ps.setString(2, equipment.getModel());
-            ps.setString(3, equipment.getDescription());
-            ps.setDate(4, equipment.getInstallDate() != null ? Date.valueOf(equipment.getInstallDate()) : null);
+            ps.setInt(1, contractId);
+            ResultSet rs = ps.executeQuery();
             
-            if (equipment.getCategoryId() != null) {
-                ps.setInt(5, equipment.getCategoryId());
-            } else {
-                ps.setNull(5, Types.INTEGER);
+            while (rs.next()) {
+                EquipmentWithStatus eq = new EquipmentWithStatus();
+                eq.setEquipmentId(rs.getInt("equipmentId"));
+                eq.setSerialNumber(rs.getString("serialNumber"));
+                eq.setModel(rs.getString("model"));
+                eq.setDescription(rs.getString("description"));
+                
+                Date installDate = rs.getDate("installDate");
+                if (installDate != null) {
+                    eq.setInstallDate(installDate.toLocalDate());
+                }
+                
+                // Category info
+                int categoryId = rs.getInt("categoryId");
+                if (!rs.wasNull()) {
+                    eq.setCategoryId(categoryId);
+                }
+                eq.setCategoryName(rs.getString("categoryName"));
+                
+                eq.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
+                
+                Date lastUpdatedDate = rs.getDate("lastUpdatedDate");
+                if (lastUpdatedDate != null) {
+                    eq.setLastUpdatedDate(lastUpdatedDate.toLocalDate());
+                }
+                
+                eq.setUsername(rs.getString("username"));
+                
+                // Contract info
+                Date startDate = rs.getDate("startDate");
+                if (startDate != null) {
+                    eq.setStartDate(startDate.toLocalDate());
+                }
+                
+                Date endDate = rs.getDate("endDate");
+                if (endDate != null) {
+                    eq.setEndDate(endDate.toLocalDate());
+                }
+                
+                eq.setPrice(rs.getBigDecimal("price"));
+                
+                list.add(eq);
             }
-            
-            ps.setInt(6, equipment.getLastUpdatedBy());
-            ps.setDate(7, equipment.getLastUpdatedDate() != null ? Date.valueOf(equipment.getLastUpdatedDate()) : null);
-            ps.setInt(8, equipment.getEquipmentId());
-
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.out.println("❌ Error updating equipment: " + e.getMessage());
-            throw e;
+        } catch (Exception e) {
+            System.out.println("❌ Error in getEquipmentByContractId: " + e.getMessage());
+            e.printStackTrace();
         }
+        return list;
     }
 
     /**
-     * Delete equipment
+     * Get all equipment assigned to contracts of a specific customer
      */
-    public boolean deleteEquipment(int equipmentId) throws SQLException {
-        String sql = "DELETE FROM Equipment WHERE equipmentId = ?";
+    public List<Equipment> getEquipmentByCustomerContracts(int customerId) throws SQLException {
+        List<Equipment> list = new ArrayList<>();
+        String sql = "SELECT DISTINCT e.equipmentId, e.serialNumber, e.model, e.description, " +
+                     "       e.installDate, e.categoryId, c.categoryName, " +
+                     "       e.lastUpdatedBy, e.lastUpdatedDate, a.username " +
+                     "FROM Equipment e " +
+                     "JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId " +
+                     "JOIN Contract ct ON ce.contractId = ct.contractId " +
+                     "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
+                     "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId " +
+                     "WHERE ct.customerId = ? " +
+                     "ORDER BY e.equipmentId DESC";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToEquipment(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error in getEquipmentByCustomerContracts: " + e.getMessage());
+            throw e;
+        }
+        return list;
+    }
+
+    /**
+     * Get equipment statistics by customer
+     * Returns: total, active, repair, maintenance counts
+     */
+    public Map<String, Integer> getEquipmentStatsByCustomer(int customerId) {
+        Map<String, Integer> stats = new HashMap<>();
+        stats.put("total", 0);
+        stats.put("active", 0);
+        stats.put("repair", 0);
+        stats.put("maintenance", 0);
+
+        try {
+            List<Equipment> allEquipment = getEquipmentByCustomerContracts(customerId);
+            int total = allEquipment.size();
+            int repair = 0;
+            int maintenance = 0;
+
+            for (Equipment eq : allEquipment) {
+                String status = getEquipmentStatus(eq.getEquipmentId());
+                if ("Repair".equals(status)) {
+                    repair++;
+                } else if ("Maintenance".equals(status)) {
+                    maintenance++;
+                }
+            }
+
+            int active = total - repair - maintenance;
+            if (active < 0) active = 0;
+
+            stats.put("total", total);
+            stats.put("active", active);
+            stats.put("repair", repair);
+            stats.put("maintenance", maintenance);
+
+        } catch (SQLException e) {
+            System.out.println("❌ Error in getEquipmentStatsByCustomer: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return stats;
+    }
+
+    /**
+     * Get contract ID for an equipment belonging to a customer
+     * Returns formatted contract ID (e.g., "HD001")
+     */
+    public String getContractIdForEquipment(int equipmentId, int customerId) {
+        String sql = "SELECT c.contractId FROM Contract c " +
+                     "JOIN ContractEquipment ce ON c.contractId = ce.contractId " +
+                     "WHERE ce.equipmentId = ? " +
+                     "  AND c.customerId = ? " +
+                     "  AND c.status = 'Active' " +
+                     "ORDER BY c.contractDate DESC " +
+                     "LIMIT 1";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, equipmentId);
-            return ps.executeUpdate() > 0;
+            ps.setInt(2, customerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int contractId = rs.getInt("contractId");
+                    return "HD" + String.format("%03d", contractId);
+                }
+            }
         } catch (SQLException e) {
-            System.out.println("❌ Error deleting equipment: " + e.getMessage());
-            throw e;
+            System.out.println("❌ Error getting contract ID: " + e.getMessage());
+            e.printStackTrace();
         }
+
+        return "N/A";
     }
+
+    // ==================== HELPER METHODS ====================
 
     /**
      * Map ResultSet to Equipment object (with category and username)
@@ -395,252 +633,12 @@ public class EquipmentDAO extends DBContext {
         return equipment;
     }
 
-    /**
-     * Get equipment by contract ID with full details
-     */
-    public List<EquipmentWithStatus> getEquipmentByContractId(int contractId) {
-        List<EquipmentWithStatus> list = new ArrayList<>();
-        String sql = "SELECT e.equipmentId, e.serialNumber, e.model, e.description, " +
-                     "       e.installDate, e.categoryId, c.categoryName, " +
-                     "       e.lastUpdatedBy, e.lastUpdatedDate, a.username, " +
-                     "       ce.startDate, ce.endDate, ce.price " +
-                     "FROM ContractEquipment ce " +
-                     "JOIN Equipment e ON ce.equipmentId = e.equipmentId " +
-                     "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
-                     "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId " +
-                     "WHERE ce.contractId = ?";
-
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setInt(1, contractId);
-            ResultSet rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                EquipmentWithStatus eq = new EquipmentWithStatus();
-                eq.setEquipmentId(rs.getInt("equipmentId"));
-                eq.setSerialNumber(rs.getString("serialNumber"));
-                eq.setModel(rs.getString("model"));
-                eq.setDescription(rs.getString("description"));
-                
-                Date installDate = rs.getDate("installDate");
-                if (installDate != null) {
-                    eq.setInstallDate(installDate.toLocalDate());
-                }
-                
-                // Category info
-                int categoryId = rs.getInt("categoryId");
-                if (!rs.wasNull()) {
-                    eq.setCategoryId(categoryId);
-                }
-                eq.setCategoryName(rs.getString("categoryName"));
-                
-                eq.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
-                
-                Date lastUpdatedDate = rs.getDate("lastUpdatedDate");
-                if (lastUpdatedDate != null) {
-                    eq.setLastUpdatedDate(lastUpdatedDate.toLocalDate());
-                }
-                
-                eq.setUsername(rs.getString("username"));
-                
-                // Contract info
-                Date startDate = rs.getDate("startDate");
-                if (startDate != null) {
-                    eq.setStartDate(startDate.toLocalDate());
-                }
-                
-                Date endDate = rs.getDate("endDate");
-                if (endDate != null) {
-                    eq.setEndDate(endDate.toLocalDate());
-                }
-                
-                eq.setPrice(rs.getBigDecimal("price"));
-                
-                list.add(eq);
-            }
-        } catch (Exception e) {
-            System.out.println("❌ Error in getEquipmentByContractId: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    /**
-     * Check if equipmentId exists and is active
-     */
-    public boolean isValidEquipment(int equipmentId) {
-        String sql = "SELECT COUNT(*) FROM Equipment WHERE equipmentId = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setInt(1, equipmentId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("❌ Error in isValidEquipment: " + e.getMessage());
-        }
-        return false;
-    }
-
-    /**
-     * Get all equipment assigned to contracts of a specific customer
-     */
-    public List<Equipment> getEquipmentByCustomerContracts(int customerId) throws SQLException {
-        List<Equipment> list = new ArrayList<>();
-        String sql = "SELECT DISTINCT e.equipmentId, e.serialNumber, e.model, e.description, " +
-                     "       e.installDate, e.categoryId, c.categoryName, " +
-                     "       e.lastUpdatedBy, e.lastUpdatedDate, a.username " +
-                     "FROM Equipment e " +
-                     "JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId " +
-                     "JOIN Contract ct ON ce.contractId = ct.contractId " +
-                     "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
-                     "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId " +
-                     "WHERE ct.customerId = ? " +
-                     "ORDER BY e.equipmentId DESC";
-
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setInt(1, customerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(mapResultSetToEquipment(rs));
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("❌ Error in getEquipmentByCustomerContracts: " + e.getMessage());
-            throw e;
-        }
-        return list;
-    }
-
-    /**
-     * Get equipment statistics by customer
-     */
-    public Map<String, Integer> getEquipmentStatsByCustomer(int customerId) {
-        Map<String, Integer> stats = new HashMap<>();
-        stats.put("total", 0);
-        stats.put("active", 0);
-        stats.put("repair", 0);
-        stats.put("maintenance", 0);
-
-        try {
-            List<Equipment> allEquipment = getEquipmentByCustomerContracts(customerId);
-            int total = allEquipment.size();
-            int repair = 0;
-            int maintenance = 0;
-
-            for (Equipment eq : allEquipment) {
-                String status = getEquipmentStatus(eq.getEquipmentId());
-                if ("Repair".equals(status)) {
-                    repair++;
-                } else if ("Maintenance".equals(status)) {
-                    maintenance++;
-                }
-            }
-
-            int active = total - repair - maintenance;
-            if (active < 0) active = 0;
-
-            stats.put("total", total);
-            stats.put("active", active);
-            stats.put("repair", repair);
-            stats.put("maintenance", maintenance);
-
-        } catch (SQLException e) {
-            System.out.println("❌ Error in getEquipmentStatsByCustomer: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        return stats;
-    }
-
-    /**
-     * Get status for a specific equipment
-     */
-    public String getEquipmentStatus(int equipmentId) {
-        // Check for active service request (Repair)
-        String repairSql = "SELECT COUNT(*) as cnt FROM ServiceRequest " +
-                          "WHERE equipmentId = ? AND status IN ('Pending', 'Awaiting Approval', 'Approved')";
-
-        try (PreparedStatement ps = connection.prepareStatement(repairSql)) {
-            ps.setInt(1, equipmentId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next() && rs.getInt("cnt") > 0) {
-                    return "Repair";
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("❌ Error checking repair status: " + e.getMessage());
-        }
-
-        // Check for scheduled maintenance
-        String maintenanceSql = "SELECT COUNT(*) as cnt FROM MaintenanceSchedule " +
-                               "WHERE equipmentId = ? AND status = 'Scheduled' AND scheduledDate >= CURDATE()";
-
-        try (PreparedStatement ps = connection.prepareStatement(maintenanceSql)) {
-            ps.setInt(1, equipmentId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next() && rs.getInt("cnt") > 0) {
-                    return "Maintenance";
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("❌ Error checking maintenance status: " + e.getMessage());
-        }
-
-        return "Active";
-    }
-    public String getContractIdForEquipment(int equipmentId, int customerId) {
-
-        String sql = "SELECT c.contractId FROM Contract c "
-
-                + "JOIN ContractEquipment ce ON c.contractId = ce.contractId "
-
-                + "WHERE ce.equipmentId = ? "
-
-                + "  AND c.customerId = ? "
-
-                + "  AND c.status = 'Active' "
-
-                + "ORDER BY c.contractDate DESC "
-
-                + "LIMIT 1";
-
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-
-            ps.setInt(1, equipmentId);
-
-            ps.setInt(2, customerId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-
-                if (rs.next()) {
-
-                    int contractId = rs.getInt("contractId");
-
-                    return "HD" + String.format("%03d", contractId);
-
-                }
-
-            }
-
-        } catch (SQLException e) {
-
-            System.out.println("❌ Error getting contract ID: " + e.getMessage());
-
-            e.printStackTrace();
-
-        }
-
-        return "N/A";
-
-    }
-
     // ==================== MAIN METHOD FOR TESTING ====================
     public static void main(String[] args) {
         EquipmentDAO dao = new EquipmentDAO();
         
         System.out.println("========================================");
-        System.out.println("TESTING EquipmentDAO with Category Support");
+        System.out.println("TESTING EquipmentDAO - Complete Version");
         System.out.println("========================================\n");
 
         // Test 1: Get All Equipment
@@ -677,22 +675,20 @@ public class EquipmentDAO extends DBContext {
         }
         System.out.println();
 
-        // Test 3: Search Equipment
-        System.out.println("--- Test 3: Search Equipment (keyword: 'Daikin') ---");
-        try {
-            List<Equipment> searchResults = dao.searchEquipment("Daikin", 1, 10);
-            System.out.println("✅ Found " + searchResults.size() + " result(s)");
-            
-            for (Equipment eq : searchResults) {
-                System.out.println("  - " + eq.getModel() + " [" + eq.getCategoryName() + "]");
-            }
-        } catch (SQLException e) {
-            System.out.println("❌ Error: " + e.getMessage());
-        }
+        // Test 3: Get Equipment Status
+        System.out.println("--- Test 3: Get Equipment Status (ID 1) ---");
+        String status = dao.getEquipmentStatus(1);
+        System.out.println("✅ Status: " + status);
         System.out.println();
 
-        // Test 4: Get Equipment by Category
-        System.out.println("--- Test 4: Get Equipment by Category (13 - Air Conditioning Unit) ---");
+        // Test 4: Validate Equipment
+        System.out.println("--- Test 4: Validate Equipment ---");
+        System.out.println("Equipment ID 1 valid: " + dao.isValidEquipment(1));
+        System.out.println("Equipment ID 999 valid: " + dao.isValidEquipment(999));
+        System.out.println();
+
+        // Test 5: Get Equipment by Category
+        System.out.println("--- Test 5: Get Equipment by Category (ID 13) ---");
         try {
             List<Equipment> categoryEquipment = dao.getEquipmentByCategory(13);
             System.out.println("✅ Found " + categoryEquipment.size() + " equipment(s) in category");
@@ -705,8 +701,8 @@ public class EquipmentDAO extends DBContext {
         }
         System.out.println();
 
-        // Test 5: Get Equipment Count
-        System.out.println("--- Test 5: Get Equipment Count ---");
+        // Test 6: Get Equipment Count
+        System.out.println("--- Test 6: Get Equipment Count ---");
         try {
             int totalCount = dao.getEquipmentCount(null);
             int searchCount = dao.getEquipmentCount("HVAC");
@@ -718,28 +714,75 @@ public class EquipmentDAO extends DBContext {
         }
         System.out.println();
 
-        // Test 6: Get Equipment with Status
-        System.out.println("--- Test 6: Get Equipment with Status ---");
+        // Test 7: Get Contract ID for Equipment
+        System.out.println("--- Test 7: Get Contract ID for Equipment ---");
+        System.out.println("Testing getContractIdForEquipment(equipmentId: 1, customerId: 1)");
+        String contractId1 = dao.getContractIdForEquipment(1, 1);
+        System.out.println("✅ Contract ID: " + contractId1);
+        
+        System.out.println("\nTesting getContractIdForEquipment(equipmentId: 2, customerId: 1)");
+        String contractId2 = dao.getContractIdForEquipment(2, 1);
+        System.out.println("✅ Contract ID: " + contractId2);
+        
+        System.out.println("\nTesting getContractIdForEquipment(equipmentId: 999, customerId: 1)");
+        String contractId3 = dao.getContractIdForEquipment(999, 1);
+        System.out.println("✅ Contract ID: " + contractId3 + " (Should be N/A)");
+        
+        System.out.println("\nTesting getContractIdForEquipment(equipmentId: 1, customerId: 999)");
+        String contractId4 = dao.getContractIdForEquipment(1, 999);
+        System.out.println("✅ Contract ID: " + contractId4 + " (Should be N/A)");
+        System.out.println();
+
+        // Test 8: Get Equipment by Customer Contracts
+        System.out.println("--- Test 8: Get Equipment by Customer Contracts (customerId: 1) ---");
         try {
-            List<EquipmentWithStatus> equipmentWithStatus = dao.getEquipmentWithStatus();
-            System.out.println("✅ Found " + equipmentWithStatus.size() + " equipment(s) with status");
+            List<Equipment> customerEquipment = dao.getEquipmentByCustomerContracts(1);
+            System.out.println("✅ Found " + customerEquipment.size() + " equipment(s) for customer");
             
-            if (!equipmentWithStatus.isEmpty()) {
-                EquipmentWithStatus first = equipmentWithStatus.get(0);
-                System.out.println("First Equipment: " + first.getModel());
-                System.out.println("  - Status: " + first.getStatus());
-                System.out.println("  - Location: " + first.getLocation());
-                System.out.println("  - Category: " + first.getCategoryName());
+            for (Equipment eq : customerEquipment) {
+                String contractId = dao.getContractIdForEquipment(eq.getEquipmentId(), 1);
+                System.out.println("  - Equipment ID: " + eq.getEquipmentId() + 
+                                 " | Model: " + eq.getModel() + 
+                                 " | Contract: " + contractId);
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.out.println("❌ Error: " + e.getMessage());
         }
         System.out.println();
 
-        // Test 7: Validate Equipment
-        System.out.println("--- Test 7: Validate Equipment ---");
-        System.out.println("Equipment ID 1 valid: " + dao.isValidEquipment(1));
-        System.out.println("Equipment ID 999 valid: " + dao.isValidEquipment(999));
+        // Test 9: Get Equipment Statistics by Customer
+        System.out.println("--- Test 9: Get Equipment Statistics by Customer (customerId: 1) ---");
+        Map<String, Integer> stats = dao.getEquipmentStatsByCustomer(1);
+        System.out.println("✅ Total: " + stats.get("total"));
+        System.out.println("✅ Active: " + stats.get("active"));
+        System.out.println("✅ Repair: " + stats.get("repair"));
+        System.out.println("✅ Maintenance: " + stats.get("maintenance"));
+        System.out.println();
+
+        // Test 10: Get Equipment by Contract ID
+        System.out.println("--- Test 10: Get Equipment by Contract ID (contractId: 1) ---");
+        List<EquipmentWithStatus> contractEquipment = dao.getEquipmentByContractId(1);
+        System.out.println("✅ Found " + contractEquipment.size() + " equipment(s) in contract");
+        
+        for (EquipmentWithStatus eq : contractEquipment) {
+            System.out.println("  - " + eq.getModel() + 
+                             " | Serial: " + eq.getSerialNumber() + 
+                             " | Price: " + eq.getPrice());
+        }
+        System.out.println();
+
+        // Test 11: Search Equipment with Pagination
+        System.out.println("--- Test 11: Search Equipment (keyword: 'Air', page: 1, size: 5) ---");
+        try {
+            List<Equipment> searchResults = dao.searchEquipment("Air", 1, 5);
+            System.out.println("✅ Found " + searchResults.size() + " result(s)");
+            
+            for (Equipment eq : searchResults) {
+                System.out.println("  - " + eq.getModel() + " [" + eq.getCategoryName() + "]");
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error: " + e.getMessage());
+        }
         System.out.println();
 
         System.out.println("========================================");
