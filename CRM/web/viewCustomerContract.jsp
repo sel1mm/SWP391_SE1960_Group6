@@ -170,7 +170,8 @@
                                 <select name="status" class="form-select">
                                     <option value="">Tất cả</option>
                                     <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>Active</option>
-                                    <option value="Inactive" ${param.status == 'Inactive' ? 'selected' : ''}>Inactive</option>
+                                    <option value="Completed" ${param.status == 'Completed' ? 'selected' : ''}>Completed</option>
+                                    <option value="Cancelled" ${param.status == 'Cancelled' ? 'selected' : ''}>Cancelled</option>
                                 </select>
                             </div>
 
