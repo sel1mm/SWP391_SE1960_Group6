@@ -487,18 +487,16 @@ td {
         
         <form action="storekeeper" method="POST">
             <div class="container">
-                <div class="sidebar">
+                  <div class="sidebar">
                     <div class="sidebar navbar nav-container2">
                         <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
                         <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
                         <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
-                        <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
-                        <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
+                        <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
+                        <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị </span></a>
                         <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
-                        <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
-                        <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
-                        <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
-                        <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiệt bị</span></a>
+                        <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết linh kiện</span></a>
+                         <a href="category" class="active"><i class="fas fa-tags"></i><span>Quản lý danh mục</span></a>
                         <a href="logout" style="margin-top: auto; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-weight: 500;">
                             <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
                         </a>
@@ -508,7 +506,7 @@ td {
                 <div class="content">
                     <!--Một số KPI của storekeeper-->
                     <section>
-                        <h2>Inventory Management KPIs</h2>
+                        <h2>Chỉ số quản lý kho</h2>
                         
                         <div class="kpi-container">
                             <div class="kpi-card">

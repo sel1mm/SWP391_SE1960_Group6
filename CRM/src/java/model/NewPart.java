@@ -3,7 +3,7 @@ package model;
 import java.time.LocalDate;
 
 /**
- * NewPart - Model cho bảng Part với Quantity
+ * NewPart - Model cho bảng Part với Quantity và Category
  * @author Admin
  */
 public class NewPart {
@@ -12,103 +12,137 @@ public class NewPart {
     private String description;
     private double unitPrice;
     private int quantity; // Tổng số lượng đếm từ PartDetail
+    private Integer categoryId; // NULL-able, dùng Integer thay vì int
+    private String categoryName; // JOIN với Category
     private int lastUpdatedBy;
     private LocalDate lastUpdatedDate;
     private String userName; // JOIN với Account
-
+    
     // Constructor mặc định
     public NewPart() {
     }
-
-    // Constructor đầy đủ (có quantity)
+    
+    // Constructor đầy đủ (có tất cả thuộc tính)
     public NewPart(int partId, String partName, String description, double unitPrice, 
-                   int quantity, int lastUpdatedBy, LocalDate lastUpdatedDate, String userName) {
+                   int quantity, Integer categoryId, String categoryName,
+                   int lastUpdatedBy, LocalDate lastUpdatedDate, String userName) {
         this.partId = partId;
         this.partName = partName;
         this.description = description;
         this.unitPrice = unitPrice;
         this.quantity = quantity;
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
         this.lastUpdatedBy = lastUpdatedBy;
         this.lastUpdatedDate = lastUpdatedDate;
         this.userName = userName;
     }
-
-    // Constructor không có quantity (dùng khi thêm mới Part)
+    
+    // Constructor không có quantity và categoryName (dùng khi thêm mới Part)
     public NewPart(String partName, String description, double unitPrice, 
-                   int lastUpdatedBy, LocalDate lastUpdatedDate) {
+                   Integer categoryId, int lastUpdatedBy, LocalDate lastUpdatedDate) {
         this.partName = partName;
         this.description = description;
         this.unitPrice = unitPrice;
+        this.categoryId = categoryId;
         this.lastUpdatedBy = lastUpdatedBy;
         this.lastUpdatedDate = lastUpdatedDate;
         this.quantity = 0; // Mặc định = 0 khi tạo mới
     }
-
+    
+    // Constructor cho update (có partId, không có quantity và userName)
+    public NewPart(int partId, String partName, String description, double unitPrice, 
+                   Integer categoryId, int lastUpdatedBy, LocalDate lastUpdatedDate) {
+        this.partId = partId;
+        this.partName = partName;
+        this.description = description;
+        this.unitPrice = unitPrice;
+        this.categoryId = categoryId;
+        this.lastUpdatedBy = lastUpdatedBy;
+        this.lastUpdatedDate = lastUpdatedDate;
+    }
+    
     // Getters and Setters
     public int getPartId() {
         return partId;
     }
-
+    
     public void setPartId(int partId) {
         this.partId = partId;
     }
-
+    
     public String getPartName() {
         return partName;
     }
-
+    
     public void setPartName(String partName) {
         this.partName = partName;
     }
-
+    
     public String getDescription() {
         return description;
     }
-
+    
     public void setDescription(String description) {
         this.description = description;
     }
-
+    
     public double getUnitPrice() {
         return unitPrice;
     }
-
+    
     public void setUnitPrice(double unitPrice) {
         this.unitPrice = unitPrice;
     }
-
+    
     public int getQuantity() {
         return quantity;
     }
-
+    
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
-
+    
+    public Integer getCategoryId() {
+        return categoryId;
+    }
+    
+    public void setCategoryId(Integer categoryId) {
+        this.categoryId = categoryId;
+    }
+    
+    public String getCategoryName() {
+        return categoryName;
+    }
+    
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+    
     public int getLastUpdatedBy() {
         return lastUpdatedBy;
     }
-
+    
     public void setLastUpdatedBy(int lastUpdatedBy) {
         this.lastUpdatedBy = lastUpdatedBy;
     }
-
+    
     public LocalDate getLastUpdatedDate() {
         return lastUpdatedDate;
     }
-
+    
     public void setLastUpdatedDate(LocalDate lastUpdatedDate) {
         this.lastUpdatedDate = lastUpdatedDate;
     }
-
+    
     public String getUserName() {
         return userName;
     }
-
+    
     public void setUserName(String userName) {
         this.userName = userName;
     }
-
+    
     @Override
     public String toString() {
         return "NewPart{" +
@@ -117,6 +151,8 @@ public class NewPart {
                 ", description='" + description + '\'' +
                 ", unitPrice=" + unitPrice +
                 ", quantity=" + quantity +
+                ", categoryId=" + categoryId +
+                ", categoryName='" + categoryName + '\'' +
                 ", lastUpdatedBy=" + lastUpdatedBy +
                 ", lastUpdatedDate=" + lastUpdatedDate +
                 ", userName='" + userName + '\'' +

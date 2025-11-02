@@ -260,7 +260,7 @@ body {
     transform: translateY(-1px);
 }
 
-/* TABLE */
+/* TABLE - ✅ CẬP NHẬT CHO 11 CỘT */
 .stats-table {
     width: 100%;
     background: white;
@@ -268,6 +268,7 @@ body {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    table-layout: fixed;
 }
 
 .stats-table thead tr {
@@ -283,11 +284,28 @@ body {
     color: #333;
 }
 
+/* ✅ COLUMN WIDTHS - 12 CỘT */
+.stats-table thead th:nth-child(1) { width: 3%; }   /* ID */
+.stats-table thead th:nth-child(2) { width: 9%; }   /* Serial Number */
+.stats-table thead th:nth-child(3) { width: 9%; }   /* Part Name */
+.stats-table thead th:nth-child(4) { width: 8%; }   /* Category */
+.stats-table thead th:nth-child(5) { width: 7%; }   /* Hành động */
+.stats-table thead th:nth-child(6) { width: 7%; }   /* Trạng thái cũ */
+.stats-table thead th:nth-child(7) { width: 7%; }   /* Trạng thái mới */
+.stats-table thead th:nth-child(8) { width: 9%; }   /* Location */
+.stats-table thead th:nth-child(9) { width: 8%; }   /* Người thực hiện */
+.stats-table thead th:nth-child(10) { width: 11%; } /* Thời gian */
+.stats-table thead th:nth-child(11) { width: 11%; } /* Ghi chú */
+.stats-table thead th:nth-child(12) { width: 11%; } /* Action - MỚI */
+
 .stats-table tbody td {
     padding: 12px 16px;
     border-bottom: 1px solid #e0e0e0;
     font-size: 13px;
     color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .stats-table tbody tr:hover {
@@ -296,6 +314,204 @@ body {
 
 .stats-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+/* Hover để xem full text cho Ghi chú */
+.stats-table tbody td:nth-child(11):hover {
+    white-space: normal;
+    overflow: visible;
+    word-wrap: break-word;
+    background-color: #fffbea;
+}
+
+/* BUTTON DETAILS */
+.btn-details {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.btn-details:hover {
+    background: #138496;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(23,162,184,0.3);
+}
+
+/* MODAL */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-container {
+    background: white;
+    border-radius: 12px;
+    width: 600px;
+    max-width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { 
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to { 
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 25px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(255,255,255,0.3);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.detail-section {
+    margin-bottom: 20px;
+}
+
+.detail-section h4 {
+    color: #667eea;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #666;
+    font-size: 13px;
+}
+
+.detail-value {
+    color: #333;
+    font-size: 13px;
+    word-wrap: break-word;
+}
+
+.detail-value strong {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.status-change-flow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.status-change-flow .arrow {
+    color: #667eea;
+    font-size: 20px;
+}
+
+.modal-footer {
+    padding: 15px 25px;
+    background: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-close-modal {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-close-modal:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
 }
 
 /* STATUS BADGES */
@@ -312,7 +528,7 @@ body {
     color: #155724;
 }
 
-.status-badge.fault {
+.status-badge.fault, .status-badge.faulty {
     background: #f8d7da;
     color: #721c24;
 }
@@ -420,27 +636,25 @@ body {
     <div class="container">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div>
+            <div class="sidebar navbar nav-container2">
                 <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
                 <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
                 <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
-                <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
-                <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
-                <a href="PartDetailHistoryServlet" class="active"><i class="fas fa-history"></i><span>Lịch sử thiết bị</span></a>
-                <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
-                <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
-                <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
-                <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiết bị</span></a>
+                <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
+                <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị </span></a>
+                <a href="PartDetailHistoryServlet" class="active"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
+                <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết linh kiện</span></a>
+                 <a href="category" class="active"><i class="fas fa-tags"></i><span>Quản lý danh mục</span></a>
+                <a href="logout" style="margin-top: auto; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-weight: 500;">
+                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                </a>
             </div>
-            <a href="logout" style="background: rgba(255, 255, 255, 0.1); border-top: 1px solid rgba(255,255,255,0.2); text-align: center; font-weight: 600;">
-                <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
-            </a>
         </div>
 
         <!-- Content -->
         <div class="content">
             <div class="page-header">
-                <h2><i class="fas fa-history"></i> Lịch sử thiết bị</h2>
+                <h2><i class="fas fa-history"></i> Lịch sử linh kiện</h2>
                 <button class="btn-export" onclick="window.print()">
                     <i class="fas fa-print"></i> In báo cáo
                 </button>
@@ -502,7 +716,7 @@ body {
                 </form>
             </div>
 
-            <!-- History Table -->
+            <!-- History Table - ✅ THÊM CỘT ACTION -->
             <h3 class="section-title">
                 <i class="fas fa-list"></i> 
                 Lịch sử chi tiết
@@ -514,6 +728,7 @@ body {
                         <th>ID</th>
                         <th>Serial Number</th>
                         <th>Part Name</th>
+                        <th>Category</th>
                         <th>Hành động</th>
                         <th>Trạng thái cũ</th>
                         <th>Trạng thái mới</th>
@@ -521,6 +736,7 @@ body {
                         <th>Người thực hiện</th>
                         <th>Thời gian</th>
                         <th>Ghi chú</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -531,6 +747,18 @@ body {
                                     <td>${item.historyId}</td>
                                     <td><strong>${item.serialNumber}</strong></td>
                                     <td>${item.partName}</td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${not empty item.categoryName}">
+                                                <span style="background: #e7f3ff; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; color: #0066cc;">
+                                                    ${item.categoryName}
+                                                </span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span style="color: #999; font-style: italic;">N/A</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
                                     <td>
                                         <c:choose>
                                             <c:when test="${empty item.oldStatus}">
@@ -565,15 +793,31 @@ body {
                                     <td>
                                         <fmt:formatDate value="${item.changedDate}" pattern="dd/MM/yyyy HH:mm:ss"/>
                                     </td>
-                                    <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
+                                    <td>
                                         ${item.notes}
+                                    </td>
+                                    <td>
+                                        <button class="btn-details" 
+                                                data-history-id="${item.historyId}"
+                                                data-serial="${item.serialNumber}"
+                                                data-part-name="${item.partName}"
+                                                data-category="${item.categoryName != null ? item.categoryName : 'N/A'}"
+                                                data-old-status="${empty item.oldStatus ? 'Mới tạo' : item.oldStatus}"
+                                                data-new-status="${item.newStatus}"
+                                                data-location="${item.location}"
+                                                data-username="${item.username}"
+                                                data-time="<fmt:formatDate value='${item.changedDate}' pattern='dd/MM/yyyy HH:mm:ss'/>"
+                                                data-notes="${item.notes}"
+                                                data-action-type="${empty item.oldStatus ? 'add' : 'update'}">
+                                            <i class="fas fa-info-circle"></i> Details
+                                        </button>
                                     </td>
                                 </tr>
                             </c:forEach>
                         </c:when>
                         <c:otherwise>
                             <tr>
-                                <td colspan="10">
+                                <td colspan="12">
                                     <div class="no-data">
                                         <i class="fas fa-inbox"></i>
                                         <p>Không có dữ liệu lịch sử</p>
@@ -584,24 +828,259 @@ body {
                     </c:choose>
                 </tbody>
             </table>
+
+            <!-- ✅ MODAL DETAILS -->
+            <div class="modal-overlay" id="detailsModal">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-info-circle"></i> Chi tiết lịch sử</h3>
+                        <button class="modal-close" onclick="closeModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Thông tin cơ bản -->
+                        <div class="detail-section">
+                            <h4><i class="fas fa-clipboard-list"></i> Thông tin cơ bản</h4>
+                            <div class="detail-grid">
+                                <div class="detail-label">History ID:</div>
+                                <div class="detail-value" id="modal-historyId">-</div>
+                                
+                                <div class="detail-label">Serial Number:</div>
+                                <div class="detail-value"><strong id="modal-serialNumber">-</strong></div>
+                                
+                                <div class="detail-label">Part Name:</div>
+                                <div class="detail-value" id="modal-partName">-</div>
+                                
+                                <div class="detail-label">Category:</div>
+                                <div class="detail-value" id="modal-category">-</div>
+                                
+                                <div class="detail-label">Location:</div>
+                                <div class="detail-value" id="modal-location">-</div>
+                            </div>
+                        </div>
+
+                        <!-- Thông tin thay đổi -->
+                        <div class="detail-section">
+                            <h4><i class="fas fa-exchange-alt"></i> Thông tin thay đổi</h4>
+                            <div class="detail-grid">
+                                <div class="detail-label">Loại hành động:</div>
+                                <div class="detail-value" id="modal-actionType">-</div>
+                                
+                                <div class="detail-label" style="grid-column: 1 / -1;">Trạng thái:</div>
+                                <div style="grid-column: 1 / -1;">
+                                    <div class="status-change-flow">
+                                        <span id="modal-oldStatus">-</span>
+                                        <span class="arrow"><i class="fas fa-arrow-right"></i></span>
+                                        <span id="modal-newStatus">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thông tin người thực hiện -->
+                        <div class="detail-section">
+                            <h4><i class="fas fa-user-clock"></i> Thông tin người thực hiện</h4>
+                            <div class="detail-grid">
+                                <div class="detail-label">Người thực hiện:</div>
+                                <div class="detail-value"><i class="fas fa-user"></i> <span id="modal-username">-</span></div>
+                                
+                                <div class="detail-label">Thời gian:</div>
+                                <div class="detail-value"><i class="fas fa-clock"></i> <span id="modal-time">-</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Ghi chú -->
+                        <div class="detail-section">
+                            <h4><i class="fas fa-sticky-note"></i> Ghi chú</h4>
+                            <div class="detail-grid">
+                                <div style="grid-column: 1 / -1;">
+                                    <div class="detail-value" id="modal-notes" style="white-space: pre-wrap;">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-close-modal" onclick="closeModal()">
+                            <i class="fas fa-times"></i> Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Auto set default dates if empty
+        // ========== MODAL FUNCTIONS ==========
+        function showDetails(historyId, serialNumber, partName, category, oldStatus, newStatus, location, username, time, notes, actionType) {
+            // Set basic info
+            document.getElementById('modal-historyId').textContent = historyId;
+            document.getElementById('modal-serialNumber').textContent = serialNumber;
+            document.getElementById('modal-partName').textContent = partName || '-';
+            document.getElementById('modal-category').innerHTML = category !== 'N/A' 
+                ? '<span style="background: #e7f3ff; padding: 4px 10px; border-radius: 6px; font-weight: 500; color: #0066cc;">' + category + '</span>'
+                : '<span style="color: #999; font-style: italic;">N/A</span>';
+            document.getElementById('modal-location').textContent = location || '-';
+            
+            // Set action type
+            const actionBadge = actionType === 'add' 
+                ? '<span class="action-badge add"><i class="fas fa-plus"></i> Thêm mới</span>'
+                : '<span class="action-badge update"><i class="fas fa-edit"></i> Cập nhật</span>';
+            document.getElementById('modal-actionType').innerHTML = actionBadge;
+            
+            // Set status change
+            const oldStatusClass = oldStatus.toLowerCase().replace(/\s+/g, '');
+            const newStatusClass = newStatus.toLowerCase().replace(/\s+/g, '');
+            
+            document.getElementById('modal-oldStatus').innerHTML = 
+                '<span class="status-badge ' + oldStatusClass + '">' + oldStatus + '</span>';
+            document.getElementById('modal-newStatus').innerHTML = 
+                '<span class="status-badge ' + newStatusClass + '">' + newStatus + '</span>';
+            
+            // Set user and time
+            document.getElementById('modal-username').textContent = username || '-';
+            document.getElementById('modal-time').textContent = time || '-';
+            
+            // Set notes
+            document.getElementById('modal-notes').textContent = notes || 'Không có ghi chú';
+            
+            // Show modal
+            document.getElementById('detailsModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('detailsModal').classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside
         document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('detailsModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeModal();
+                    }
+                });
+            }
+        });
+
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+    <script>
+        // ========== MODAL FUNCTIONS ==========
+        function showDetails(button) {
+            // Get data from button attributes
+            const historyId = button.getAttribute('data-history-id');
+            const serialNumber = button.getAttribute('data-serial');
+            const partName = button.getAttribute('data-part-name');
+            const category = button.getAttribute('data-category');
+            const oldStatus = button.getAttribute('data-old-status');
+            const newStatus = button.getAttribute('data-new-status');
+            const location = button.getAttribute('data-location');
+            const username = button.getAttribute('data-username');
+            const time = button.getAttribute('data-time');
+            const notes = button.getAttribute('data-notes');
+            const actionType = button.getAttribute('data-action-type');
+            
+            console.log('=== Modal Data ===');
+            console.log('History ID:', historyId);
+            console.log('Serial:', serialNumber);
+            console.log('Category:', category);
+            console.log('Notes:', notes);
+            
+            // Set basic info
+            document.getElementById('modal-historyId').textContent = historyId || '-';
+            document.getElementById('modal-serialNumber').textContent = serialNumber || '-';
+            document.getElementById('modal-partName').textContent = partName || '-';
+            
+            // Set category
+            const categoryEl = document.getElementById('modal-category');
+            if (category && category !== 'N/A' && category !== 'null') {
+                categoryEl.innerHTML = '<span style="background: #e7f3ff; padding: 4px 10px; border-radius: 6px; font-weight: 500; color: #0066cc;">' + category + '</span>';
+            } else {
+                categoryEl.innerHTML = '<span style="color: #999; font-style: italic;">N/A</span>';
+            }
+            
+            document.getElementById('modal-location').textContent = location || '-';
+            
+            // Set action type
+            const actionBadge = actionType === 'add' 
+                ? '<span class="action-badge add"><i class="fas fa-plus"></i> Thêm mới</span>'
+                : '<span class="action-badge update"><i class="fas fa-edit"></i> Cập nhật</span>';
+            document.getElementById('modal-actionType').innerHTML = actionBadge;
+            
+            // Set status change
+            const oldStatusClass = oldStatus.toLowerCase().replace(/\s+/g, '');
+            const newStatusClass = newStatus.toLowerCase().replace(/\s+/g, '');
+            
+            document.getElementById('modal-oldStatus').innerHTML = 
+                '<span class="status-badge ' + oldStatusClass + '">' + oldStatus + '</span>';
+            document.getElementById('modal-newStatus').innerHTML = 
+                '<span class="status-badge ' + newStatusClass + '">' + newStatus + '</span>';
+            
+            // Set user and time
+            document.getElementById('modal-username').textContent = username || '-';
+            document.getElementById('modal-time').textContent = time || '-';
+            
+            // Set notes
+            document.getElementById('modal-notes').textContent = notes || 'Không có ghi chú';
+            
+            // Show modal
+            document.getElementById('detailsModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('detailsModal').classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Event delegation for Details buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click event to all detail buttons
+            document.querySelectorAll('.btn-details').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    showDetails(this);
+                });
+            });
+            
+            // Close modal when clicking outside
+            const modal = document.getElementById('detailsModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeModal();
+                    }
+                });
+            }
+            
+            // Auto set default dates if empty
             const fromDate = document.querySelector('input[name="fromDate"]');
             const toDate = document.querySelector('input[name="toDate"]');
             
-            if (!fromDate.value) {
+            if (fromDate && !fromDate.value) {
                 const date = new Date();
                 date.setDate(1); // First day of month
                 fromDate.value = date.toISOString().split('T')[0];
             }
             
-            if (!toDate.value) {
+            if (toDate && !toDate.value) {
                 const date = new Date();
                 toDate.value = date.toISOString().split('T')[0];
+            }
+        });
+
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
             }
         });
     </script>

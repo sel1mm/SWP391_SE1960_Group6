@@ -1,5 +1,5 @@
 <%-- 
-    Document   : partDetail (COMPLETE FIXED VERSION)
+    Document   : partDetail (WITH CATEGORY SUPPORT)
     Author     : Admin
 --%>
 
@@ -168,6 +168,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .search-input, .filter-select {
@@ -233,7 +234,7 @@ body {
     box-shadow: 0 2px 6px rgba(40,167,69,0.3);
 }
 
-/* TABLE */
+/* TABLE - CẬP NHẬT CHO 9 CỘT */
 .inventory-table {
     width: 100%;
     margin: 0 auto;
@@ -243,6 +244,7 @@ body {
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     border: 1px solid #e0e0e0;
+    table-layout: fixed;
 }
 
 .inventory-table thead tr th {
@@ -255,20 +257,25 @@ body {
     border-bottom: 2px solid #dee2e6;
 }
 
-.inventory-table thead tr th:nth-child(1) { width: 5%; }
-.inventory-table thead tr th:nth-child(2) { width: 5%; }
-.inventory-table thead tr th:nth-child(3) { width: 15%; }
-.inventory-table thead tr th:nth-child(4) { width: 10%; }
-.inventory-table thead tr th:nth-child(5) { width: 15%; }
-.inventory-table thead tr th:nth-child(6) { width: 15%; }
-.inventory-table thead tr th:nth-child(7) { width: 19%; }
-.inventory-table thead tr th:nth-child(8) { width: 18%; }
+/* ✅ COLUMN WIDTHS - 9 CỘT */
+.inventory-table thead tr th:nth-child(1) { width: 6%; }  /* PartDetailId */
+.inventory-table thead tr th:nth-child(2) { width: 5%; }  /* PartId */
+.inventory-table thead tr th:nth-child(3) { width: 10%; } /* Category */
+.inventory-table thead tr th:nth-child(4) { width: 13%; } /* SerialNumber */
+.inventory-table thead tr th:nth-child(5) { width: 9%; }  /* Status */
+.inventory-table thead tr th:nth-child(6) { width: 13%; } /* Location */
+.inventory-table thead tr th:nth-child(7) { width: 10%; } /* LastUpdatedBy */
+.inventory-table thead tr th:nth-child(8) { width: 10%; } /* LastUpdatedDate */
+.inventory-table thead tr th:nth-child(9) { width: 24%; } /* Action */
 
 .inventory-table tbody td {
     padding: 12px 16px;
     border-bottom: 1px solid #e0e0e0;
     font-size: 13px;
     color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .inventory-table tbody tr:hover {
@@ -279,14 +286,8 @@ body {
     border-bottom: none;
 }
 
-.inventory-table tbody td:nth-child(3) {
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.inventory-table tbody td:nth-child(3):hover {
+/* Hover để xem full text cho Location */
+.inventory-table tbody td:nth-child(6):hover {
     white-space: normal;
     overflow: visible;
     word-wrap: break-word;
@@ -306,7 +307,8 @@ body {
     gap: 6px;
     font-size: 13px;
     font-weight: 500;
-    margin-bottom: 5px;
+    width: 100%;
+    justify-content: center;
 }
 
 .btn-edit {
@@ -327,6 +329,14 @@ body {
     background: #c82333;
     transform: translateY(-1px);
     box-shadow: 0 2px 6px rgba(220,53,69,0.3);
+}
+
+/* Action column button layout */
+.inventory-table tbody td:nth-child(9) > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: stretch;
 }
 
 /* PAGINATION */
@@ -543,7 +553,7 @@ body {
                 <div class="nav-links">
                     <a href="#"><i class="fas fa-envelope"></i> Tin nhắn</a>
                     <a href="#"><i class="fas fa-bell"></i> Thông báo</a>
-                    <a href="login" class="btn-login">Xin chào ${sessionScope.username}</a>
+                    <a href="login" class="btn-login">Xin chào ${sessionScope.session_login.fullName}</a>
                 </div>
             </div>
         </nav>
@@ -551,21 +561,19 @@ body {
         <div class="container">
             <!-- Sidebar -->
             <div class="sidebar">
-                <div>
+                <div class="sidebar navbar nav-container2">
                     <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
-                   <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
+                    <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
                     <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
-                    <a href="numberInventory"><i class="fas fa-boxes"></i><span>Số lượng tồn kho</span></a>
-                    <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách hàng tồn kho</span></a>
+                    <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
+                    <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị </span></a>
                     <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
-                    <a href="partRequest"><i class="fas fa-tools"></i><span>Yêu cầu thiết bị</span></a>
-                    <a href="#"><i class="fas fa-file-invoice"></i><span>Danh sách hóa đơn</span></a>
-                    <a href="#"><i class="fas fa-wrench"></i><span>Báo cáo sửa chữa</span></a>
                     <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết thiết bị</span></a>
+                     <a href="category" class="active"><i class="fas fa-tags"></i><span>Quản lý danh mục</span></a>
+                    <a href="logout" style="margin-top: auto; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-weight: 500;">
+                        <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                    </a>
                 </div>
-                <a href="logout" style="background: rgba(255, 255, 255, 0.1); border-top: 1px solid rgba(255,255,255,0.2); text-align: center; font-weight: 600;">
-                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
-                </a>
             </div>
 
             <!-- Content -->
@@ -596,11 +604,24 @@ body {
                         </div>
 
                         <div class="filter-group">
+                            <!-- ✅ FILTER BY CATEGORY -->
+                            <select name="categoryFilter" class="filter-select" onchange="this.form.submit()">
+                                <option value="">-- All Categories --</option>
+                                <c:forEach items="${categories}" var="cat">
+                                    <option value="${cat.categoryId}" ${param.categoryFilter == cat.categoryId ? 'selected' : ''}>
+                                        ${cat.categoryName}
+                                    </option>
+                                </c:forEach>
+                            </select>
+
+                            <!-- FILTER BY COLUMN -->
                             <select name="filter" class="filter-select" onchange="this.form.submit()">
-                                <option value="">-- Filter by --</option>
+                                <option value="">-- Sort by --</option>
                                 <option value="partId" ${param.filter == 'partId' ? 'selected' : ''}>By Part ID</option>
                                 <option value="inventoryId" ${param.filter == 'inventoryId' ? 'selected' : ''}>By PartDetail ID</option>
+                                <option value="category" ${param.filter == 'category' ? 'selected' : ''}>By Category</option>
                                 <option value="partName" ${param.filter == 'partName' ? 'selected' : ''}>By Serial Name</option>
+                                <option value="status" ${param.filter == 'status' ? 'selected' : ''}>By Status</option>
                             </select>
 
                             <button type="button" class="btn-new" onclick="openPartDetailForm('new')">
@@ -610,12 +631,13 @@ body {
                     </form>
                 </div>
 
-                <!-- Table -->
+                <!-- Table - ✅ THÊM CỘT CATEGORY -->
                 <table class="inventory-table">
                     <thead>
                         <tr>
                             <th>PartDetailId</th>
                             <th>PartId</th>
+                            <th>Category</th>
                             <th>SerialNumber</th>
                             <th>Status</th>
                             <th>Location</th>
@@ -629,25 +651,29 @@ body {
                             <tr>
                                 <td>${ls.partDetailId}</td>
                                 <td>${ls.partId}</td>
+                                <td>${ls.categoryName != null ? ls.categoryName : 'N/A'}</td>
                                 <td>${ls.serialNumber}</td>
                                 <td>${ls.status}</td>
                                 <td>${ls.location}</td>
                                 <td>${ls.username}</td>
                                 <td>${ls.lastUpdatedDate}</td>
                                 <td>
-                                    <button type="button" class="btn-edit" 
-                                            onclick="openPartDetailForm('edit',
-                                                            '${ls.partDetailId}',
-                                                            '${ls.partId}',
-                                                            '${ls.serialNumber}',
-                                                            '${ls.status}',
-                                                            '${ls.location}')">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <button type="button" class="btn-delete" 
-                                            onclick="confirmDelete(${ls.partDetailId})">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
+                                    <!-- ✅ BUTTON LAYOUT DỌC -->
+                                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                                        <button type="button" class="btn-edit" 
+                                                onclick="openPartDetailForm('edit',
+                                                                '${ls.partDetailId}',
+                                                                '${ls.partId}',
+                                                                '${ls.serialNumber}',
+                                                                '${ls.status}',
+                                                                '${ls.location}')">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button type="button" class="btn-delete" 
+                                                onclick="confirmDelete(${ls.partDetailId})">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -655,52 +681,52 @@ body {
                 </table>
 
                 <!-- FORM POPUP -->
-             <div class="form-overlay" id="partDetailFormOverlay">
-    <div class="form-container">
-        <h2 id="partDetailFormTitle">Add New Part Detail</h2>
-        <form action="partDetail" method="POST" id="partDetailForm" onsubmit="return validatePartDetailForm()">
-            <input type="hidden" name="action" id="partDetailAction" value="add">
-            <input type="hidden" name="partDetailId" id="partDetailId">
-            <input type="hidden" name="oldStatus" id="oldStatus">
+                <div class="form-overlay" id="partDetailFormOverlay">
+                    <div class="form-container">
+                        <h2 id="partDetailFormTitle">Add New Part Detail</h2>
+                        <form action="partDetail" method="POST" id="partDetailForm" onsubmit="return validatePartDetailForm()">
+                            <input type="hidden" name="action" id="partDetailAction" value="add">
+                            <input type="hidden" name="partDetailId" id="partDetailId">
+                            <input type="hidden" name="oldStatus" id="oldStatus">
 
-            <label>Part ID *</label>
-            <input type="number" name="partId" id="partId" required min="1">
+                            <label>Part ID *</label>
+                            <input type="number" name="partId" id="partId" required min="1">
 
-            <label>Serial Number * (Format: AAA-XXX-YYYY)</label>
-            <input type="text" name="serialNumber" id="serialNumber" required 
-                   maxlength="13" placeholder="VD: SNK-001-2024"
-                   pattern="[A-Z]{3}-\d{3}-\d{4}"
-                   title="Format: AAA-XXX-YYYY (VD: SNK-001-2024)">
-            <small style="color: #666; font-size: 12px;">Ví dụ: SNK-001-2024, PRD-123-2025</small>
+                            <label>Serial Number * (Format: AAA-XXX-YYYY)</label>
+                            <input type="text" name="serialNumber" id="serialNumber" required 
+                                   maxlength="13" placeholder="VD: SNK-001-2024"
+                                   pattern="[A-Z]{3}-\d{3}-\d{4}"
+                                   title="Format: AAA-XXX-YYYY (VD: SNK-001-2024)">
+                            <small style="color: #666; font-size: 12px;">Ví dụ: SNK-001-2024, PRD-123-2025</small>
 
-            <label>Status *</label>
-            <select name="status" id="status" required>
-                <option value="InUse">In Use</option>
-                <option value="Faulty">Faulty</option>
-                <option value="Retired">Retired</option>
-                <option value="Available">Available</option>
-            </select>
-            <small id="statusWarning" style="color: #dc3545; font-size: 12px; display: none;">
-                ⚠️ Lưu ý: Sau khi chuyển sang In Use, không thể thay đổi trạng thái nữa!
-            </small>
+                            <label>Status *</label>
+                            <select name="status" id="status" required>
+                                <option value="InUse">In Use</option>
+                                <option value="Faulty">Faulty</option>
+                                <option value="Retired">Retired</option>
+                                <option value="Available">Available</option>
+                            </select>
+                            <small id="statusWarning" style="color: #dc3545; font-size: 12px; display: none;">
+                                ⚠️ Lưu ý: Sau khi chuyển sang In Use, không thể thay đổi trạng thái nữa!
+                            </small>
 
-            <label>Location * (Tối thiểu 5 ký tự)</label>
-            <input type="text" name="location" id="location" required 
-                   minlength="5" maxlength="50" placeholder="Nhập vị trí (ít nhất 5 ký tự)">
+                            <label>Location * (Tối thiểu 5 ký tự)</label>
+                            <input type="text" name="location" id="location" required 
+                                   minlength="5" maxlength="50" placeholder="Nhập vị trí (ít nhất 5 ký tự)">
 
-            <p id="partDetailFormMessage"></p>
+                            <p id="partDetailFormMessage"></p>
 
-            <div class="form-buttons">
-                <button type="submit" class="btn-save">
-                    <i class="fas fa-save"></i> Save
-                </button>
-                <button type="button" class="btn-cancel" onclick="closePartDetailForm()">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+                            <div class="form-buttons">
+                                <button type="submit" class="btn-save">
+                                    <i class="fas fa-save"></i> Save
+                                </button>
+                                <button type="button" class="btn-cancel" onclick="closePartDetailForm()">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
 
                 <!-- Pagination -->
                 <div class="pagination">
@@ -715,7 +741,7 @@ body {
             </div>
         </div>
 
-      <script>
+        <script>
     // ========== FORM FUNCTIONS ==========
     function openPartDetailForm(mode, partDetailId = '', partId = '', serialNumber = '', status = 'InUse', location = '') {
         const overlay = document.getElementById("partDetailFormOverlay");
@@ -739,12 +765,10 @@ body {
             document.getElementById("location").value = "";
             document.getElementById("oldStatus").value = "";
             
-            // Ẩn option Available khi tạo mới
             statusSelect.innerHTML = `
-                
                 <option value="Faulty">Faulty</option>
                 <option value="Retired">Retired</option>
-            <option value="Available">Available</option>
+                <option value="Available">Available</option>
             `;
             statusSelect.value = "Available";
             statusSelect.disabled = false;
@@ -758,7 +782,6 @@ body {
             document.getElementById("location").value = location;
             document.getElementById("oldStatus").value = status;
             
-            // Nếu status hiện tại là Use - KHÓA không cho sửa
             if (status === 'InUse') {
                 statusSelect.innerHTML = `<option value="InUse">InUse (Locked)</option>`;
                 statusSelect.value = "InUse";
@@ -767,15 +790,12 @@ body {
                 formMessage.textContent = "⚠️ Trạng thái InUse không thể thay đổi!";
                 formMessage.style.color = "#dc3545";
                 
-                // Disable tất cả các trường khi status = Available
                 document.getElementById("partId").disabled = true;
                 document.getElementById("serialNumber").disabled = true;
                 document.getElementById("location").disabled = true;
                 
             } else {
-                // Hiển thị tất cả options bao gồm Available
                 statusSelect.innerHTML = `
-                    
                     <option value="Faulty">Faulty</option>
                     <option value="Retired">Retired</option>
                     <option value="Available">Available</option>
@@ -783,7 +803,6 @@ body {
                 statusSelect.value = status;
                 statusSelect.disabled = false;
                 
-                // Enable lại các trường
                 document.getElementById("partId").disabled = false;
                 document.getElementById("serialNumber").disabled = false;
                 document.getElementById("location").disabled = false;
@@ -807,14 +826,12 @@ body {
         formMessage.textContent = "";
         formMessage.style.color = "#dc3545";
         
-        // Validate Serial Number format: AAA-XXX-YYYY
         const serialPattern = /^[A-Z]{3}-\d{3}-\d{4}$/;
         if (!serialPattern.test(serialNumber)) {
             formMessage.textContent = "❌ Serial Number phải theo định dạng: AAA-XXX-YYYY (VD: SNK-001-2024)";
             return false;
         }
         
-        // Validate Location (min 5 chars)
         if (location.length < 5) {
             formMessage.textContent = "❌ Location phải có ít nhất 5 ký tự!";
             return false;
@@ -825,13 +842,11 @@ body {
             return false;
         }
         
-        // Kiểm tra nếu đang ở chế độ edit và status cũ là Available
         if (oldStatus === 'InUse') {
             formMessage.textContent = "❌ Không thể chỉnh sửa Part Detail có trạng thái InUse!";
             return false;
         }
         
-        // Cảnh báo khi chuyển sang Available
         if (status === 'InUse' && oldStatus !== 'InUse') {
             const confirmed = confirm("⚠️ CẢNH BÁO: Sau khi chuyển sang trạng thái InUse, bạn sẽ KHÔNG thể thay đổi lại!\n\nBạn có chắc chắn muốn tiếp tục?");
             if (!confirmed) {
@@ -879,7 +894,7 @@ body {
         const rows = Array.from(tableBody.rows);
 
         const filteredRows = rows.filter(row => {
-            return Array.from(row.cells).slice(0, 7)
+            return Array.from(row.cells).slice(0, 8)
                     .some(td => td.innerText.toLowerCase().includes(keyword));
         });
 
@@ -953,10 +968,8 @@ body {
 
     // ========== EVENT LISTENERS ==========
     document.addEventListener("DOMContentLoaded", function() {
-        // Initialize table on page load
         renderPartDetailTable();
 
-        // Search input listener
         const searchInput = document.querySelector(".search-input");
         if (searchInput) {
             searchInput.addEventListener("input", () => {
@@ -965,7 +978,6 @@ body {
             });
         }
 
-        // Form overlay click to close
         const formOverlay = document.getElementById("partDetailFormOverlay");
         if (formOverlay) {
             formOverlay.addEventListener('click', function (e) {
@@ -975,7 +987,6 @@ body {
             });
         }
 
-        // Real-time validation for Serial Number
         const serialInput = document.getElementById("serialNumber");
         if (serialInput) {
             serialInput.addEventListener("input", function() {
@@ -997,7 +1008,6 @@ body {
             });
         }
 
-        // Real-time validation for Location
         const locationInput = document.getElementById("location");
         if (locationInput) {
             locationInput.addEventListener("input", function() {
@@ -1019,7 +1029,6 @@ body {
             });
         }
 
-        // Warning when selecting Available status
         const statusSelect = document.getElementById("status");
         const statusWarning = document.getElementById("statusWarning");
         if (statusSelect && statusWarning) {
@@ -1032,7 +1041,6 @@ body {
             });
         }
 
-        // Auto-hide success/error messages after 5 seconds
         const messages = document.querySelectorAll(".success-message, .error-message");
         messages.forEach(function(msg) {
             setTimeout(function() {
@@ -1045,7 +1053,6 @@ body {
     });
 </script>
         <%
-            // Xóa message sau khi đã hiển thị
             session.removeAttribute("successMessage");
             session.removeAttribute("errorMessage");
         %>

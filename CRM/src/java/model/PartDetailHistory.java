@@ -3,7 +3,7 @@ package model;
 import java.sql.Timestamp;
 
 /**
- * Model class cho bảng PartDetailStatusHistory
+ * Model class cho bảng PartDetailStatusHistory - với thông tin Category
  */
 public class PartDetailHistory {
     private int historyId;
@@ -19,6 +19,10 @@ public class PartDetailHistory {
     private String serialNumber;
     private String location;
     private String partName;
+    
+    // Category information (JOIN từ PartDetail -> Part -> Category)
+    private Integer categoryId; // NULL-able
+    private String categoryName; // Tên category để hiển thị
     
     // Overview fields
     private int totalCount;
@@ -38,6 +42,26 @@ public class PartDetailHistory {
         this.changedBy = changedBy;
         this.changedDate = changedDate;
         this.notes = notes;
+    }
+    
+    // Constructor đầy đủ với category
+    public PartDetailHistory(int historyId, int partDetailId, String oldStatus, String newStatus, 
+                            int changedBy, Timestamp changedDate, String notes,
+                            String username, String serialNumber, String location, 
+                            String partName, Integer categoryId, String categoryName) {
+        this.historyId = historyId;
+        this.partDetailId = partDetailId;
+        this.oldStatus = oldStatus;
+        this.newStatus = newStatus;
+        this.changedBy = changedBy;
+        this.changedDate = changedDate;
+        this.notes = notes;
+        this.username = username;
+        this.serialNumber = serialNumber;
+        this.location = location;
+        this.partName = partName;
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
     }
 
     // Getters and Setters
@@ -129,6 +153,22 @@ public class PartDetailHistory {
         this.partName = partName;
     }
 
+    public Integer getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Integer categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
     public int getTotalCount() {
         return totalCount;
     }
@@ -165,7 +205,13 @@ public class PartDetailHistory {
                 ", notes='" + notes + '\'' +
                 ", username='" + username + '\'' +
                 ", serialNumber='" + serialNumber + '\'' +
+                ", location='" + location + '\'' +
                 ", partName='" + partName + '\'' +
+                ", categoryId=" + categoryId +
+                ", categoryName='" + categoryName + '\'' +
+                ", totalCount=" + totalCount +
+                ", addedCount=" + addedCount +
+                ", changedCount=" + changedCount +
                 '}';
     }
 }
