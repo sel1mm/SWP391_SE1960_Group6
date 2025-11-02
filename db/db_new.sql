@@ -1,4 +1,3 @@
-
 -- 1. Role & Account
 --  Role
 CREATE TABLE Role (
@@ -2142,6 +2141,407 @@ SET endDate = NULL
 WHERE taskId IN (207,208,209,210)
   AND status = 'Assigned';
 
+-- LamTB
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS PartDetailStatusHistory;
+DROP TABLE IF EXISTS PartDetail;
+DROP TABLE IF EXISTS Part;
+DROP TABLE IF EXISTS Equipment;
+DROP TABLE IF EXISTS Category;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Bảng Category với phân loại rõ ràng
+CREATE TABLE Category (
+    categoryId INT AUTO_INCREMENT PRIMARY KEY,
+    categoryName VARCHAR(50) NOT NULL UNIQUE,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('Equipment', 'Part')),
+    INDEX idx_category_type (type)
+);
+
+-- Bảng Part - Linh kiện/phụ tùng (không thể hoạt động độc lập)
+CREATE TABLE Part (
+    partId INT AUTO_INCREMENT PRIMARY KEY,
+    partName VARCHAR(100) NOT NULL,
+    description VARCHAR(255),
+    unitPrice DECIMAL(12,2),
+    categoryId INT NULL,
+    lastUpdatedBy INT NOT NULL,
+    lastUpdatedDate DATE NOT NULL,
+    FOREIGN KEY (categoryId) REFERENCES Category(categoryId),
+    FOREIGN KEY (lastUpdatedBy) REFERENCES Account(accountId)
+);
+
+-- Bảng PartDetail - Chi tiết từng linh kiện cụ thể
+CREATE TABLE PartDetail (
+    partDetailId INT AUTO_INCREMENT PRIMARY KEY,
+    partId INT NOT NULL,
+    serialNumber VARCHAR(100) UNIQUE NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('Available','InUse','Faulty','Retired')),
+    location VARCHAR(255),
+    categoryId INT NULL,
+    lastUpdatedBy INT NOT NULL,
+    lastUpdatedDate DATE NOT NULL,
+    FOREIGN KEY (partId) REFERENCES Part(partId),
+    FOREIGN KEY (categoryId) REFERENCES Category(categoryId),
+    FOREIGN KEY (lastUpdatedBy) REFERENCES Account(accountId)
+);
+
+-- Bảng lịch sử thay đổi trạng thái PartDetail
+CREATE TABLE PartDetailStatusHistory (
+    historyId INT AUTO_INCREMENT PRIMARY KEY,
+    partDetailId INT NOT NULL,
+    oldStatus VARCHAR(20),
+    newStatus VARCHAR(20) NOT NULL,
+    changedBy INT NOT NULL,
+    changedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    notes VARCHAR(255),
+    categoryId INT NULL,
+    FOREIGN KEY (partDetailId) REFERENCES PartDetail(partDetailId) ON DELETE CASCADE,
+    FOREIGN KEY (categoryId) REFERENCES Category(categoryId),
+    FOREIGN KEY (changedBy) REFERENCES Account(accountId)
+);
+
+-- Bảng Equipment - Thiết bị hoàn chỉnh (có thể hoạt động độc lập)
+CREATE TABLE Equipment (
+    equipmentId INT AUTO_INCREMENT PRIMARY KEY,
+    serialNumber VARCHAR(100) UNIQUE NOT NULL,
+    model VARCHAR(100),
+    description VARCHAR(255),
+    installDate DATE,
+    categoryId INT NULL,
+    lastUpdatedBy INT NOT NULL,
+    lastUpdatedDate DATE NOT NULL,
+    FOREIGN KEY (categoryId) REFERENCES Category(categoryId),
+    FOREIGN KEY (lastUpdatedBy) REFERENCES Account(accountId)
+);
+
+-- ========================================
+-- TRIGGERS để kiểm tra categoryId type
+-- ========================================
+
+DELIMITER //
+
+-- Trigger kiểm tra Part categoryId phải là type='Part'
+CREATE TRIGGER trg_part_category_check_insert
+BEFORE INSERT ON Part
+FOR EACH ROW
+BEGIN
+    DECLARE cat_type VARCHAR(20);
+    
+    IF NEW.categoryId IS NOT NULL THEN
+        SELECT type INTO cat_type FROM Category WHERE categoryId = NEW.categoryId;
+        
+        IF cat_type != 'Part' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Part categoryId must be of type Part';
+        END IF;
+    END IF;
+END//
+
+CREATE TRIGGER trg_part_category_check_update
+BEFORE UPDATE ON Part
+FOR EACH ROW
+BEGIN
+    DECLARE cat_type VARCHAR(20);
+    
+    IF NEW.categoryId IS NOT NULL THEN
+        SELECT type INTO cat_type FROM Category WHERE categoryId = NEW.categoryId;
+        
+        IF cat_type != 'Part' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Part categoryId must be of type Part';
+        END IF;
+    END IF;
+END//
+
+-- Trigger kiểm tra PartDetail categoryId phải là type='Part'
+CREATE TRIGGER trg_partdetail_category_check_insert
+BEFORE INSERT ON PartDetail
+FOR EACH ROW
+BEGIN
+    DECLARE cat_type VARCHAR(20);
+    
+    IF NEW.categoryId IS NOT NULL THEN
+        SELECT type INTO cat_type FROM Category WHERE categoryId = NEW.categoryId;
+        
+        IF cat_type != 'Part' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'PartDetail categoryId must be of type Part';
+        END IF;
+    END IF;
+END//
+
+CREATE TRIGGER trg_partdetail_category_check_update
+BEFORE UPDATE ON PartDetail
+FOR EACH ROW
+BEGIN
+    DECLARE cat_type VARCHAR(20);
+    
+    IF NEW.categoryId IS NOT NULL THEN
+        SELECT type INTO cat_type FROM Category WHERE categoryId = NEW.categoryId;
+        
+        IF cat_type != 'Part' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'PartDetail categoryId must be of type Part';
+        END IF;
+    END IF;
+END//
+
+-- Trigger kiểm tra PartDetailStatusHistory categoryId phải là type='Part'
+CREATE TRIGGER trg_history_category_check_insert
+BEFORE INSERT ON PartDetailStatusHistory
+FOR EACH ROW
+BEGIN
+    DECLARE cat_type VARCHAR(20);
+    
+    IF NEW.categoryId IS NOT NULL THEN
+        SELECT type INTO cat_type FROM Category WHERE categoryId = NEW.categoryId;
+        
+        IF cat_type != 'Part' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'PartDetailStatusHistory categoryId must be of type Part';
+        END IF;
+    END IF;
+END//
+
+CREATE TRIGGER trg_history_category_check_update
+BEFORE UPDATE ON PartDetailStatusHistory
+FOR EACH ROW
+BEGIN
+    DECLARE cat_type VARCHAR(20);
+    
+    IF NEW.categoryId IS NOT NULL THEN
+        SELECT type INTO cat_type FROM Category WHERE categoryId = NEW.categoryId;
+        
+        IF cat_type != 'Part' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'PartDetailStatusHistory categoryId must be of type Part';
+        END IF;
+    END IF;
+END//
+
+-- Trigger kiểm tra Equipment categoryId phải là type='Equipment'
+CREATE TRIGGER trg_equipment_category_check_insert
+BEFORE INSERT ON Equipment
+FOR EACH ROW
+BEGIN
+    DECLARE cat_type VARCHAR(20);
+    
+    IF NEW.categoryId IS NOT NULL THEN
+        SELECT type INTO cat_type FROM Category WHERE categoryId = NEW.categoryId;
+        
+        IF cat_type != 'Equipment' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Equipment categoryId must be of type Equipment';
+        END IF;
+    END IF;
+END//
+
+CREATE TRIGGER trg_equipment_category_check_update
+BEFORE UPDATE ON Equipment
+FOR EACH ROW
+BEGIN
+    DECLARE cat_type VARCHAR(20);
+    
+    IF NEW.categoryId IS NOT NULL THEN
+        SELECT type INTO cat_type FROM Category WHERE categoryId = NEW.categoryId;
+        
+        IF cat_type != 'Equipment' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Equipment categoryId must be of type Equipment';
+        END IF;
+    END IF;
+END//
+
+DELIMITER ;
+
+-- ========================================
+-- DỮ LIỆU MẪU
+-- ========================================
+
+-- Categories cho Part (linh kiện/phụ tùng)
+INSERT INTO Category VALUES (1, 'HVAC Components', 'Part');
+INSERT INTO Category VALUES (2, 'Pump Components', 'Part');
+INSERT INTO Category VALUES (3, 'Electrical Components', 'Part');
+INSERT INTO Category VALUES (4, 'Elevator Components', 'Part');
+INSERT INTO Category VALUES (5, 'Cooling Components', 'Part');
+
+-- Categories cho Equipment (thiết bị hoàn chỉnh)
+INSERT INTO Category VALUES (6, 'HVAC System', 'Equipment');
+INSERT INTO Category VALUES (7, 'Industrial Pump', 'Equipment');
+INSERT INTO Category VALUES (8, 'Power System', 'Equipment');
+INSERT INTO Category VALUES (9, 'Lighting System', 'Equipment');
+INSERT INTO Category VALUES (10, 'Control System', 'Equipment');
+INSERT INTO Category VALUES (11, 'Elevator System', 'Equipment');
+INSERT INTO Category VALUES (12, 'Fire Protection System', 'Equipment');
+INSERT INTO Category VALUES (13, 'Air Conditioning Unit', 'Equipment');
+
+-- Part: Các linh kiện/phụ tùng cho thiết bị tòa nhà
+INSERT INTO Part (partId, partName, description, unitPrice, categoryId, lastUpdatedBy, lastUpdatedDate) VALUES
+-- HVAC Components (Category 1)
+(1, 'Air Filter HEPA', 'High efficiency air filter for HVAC system', 850.00, 1, 2, '2025-10-10'),
+(2, 'Compressor Motor', '3HP compressor motor for AC unit', 4500.00, 1, 2, '2025-10-10'),
+(3, 'Evaporator Coil', 'Copper evaporator coil for cooling', 3200.00, 1, 2, '2025-10-10'),
+(4, 'Condenser Fan Blade', 'Metal fan blade for condenser unit', 680.00, 1, 2, '2025-10-10'),
+(5, 'Thermostat Controller', 'Digital thermostat for temperature control', 1250.00, 1, 2, '2025-10-10'),
+
+-- Pump Components (Category 2)
+(6, 'Pump Impeller', 'Stainless steel impeller for water pump', 2100.00, 2, 2, '2025-10-10'),
+(7, 'Mechanical Seal', 'High-pressure mechanical seal for pump', 890.00, 2, 2, '2025-10-10'),
+(8, 'Pump Motor Bearing', 'Heavy duty bearing for pump motor', 560.00, 2, 2, '2025-10-10'),
+(9, 'Pressure Gauge', 'Digital pressure gauge 0-10 bar', 450.00, 2, 2, '2025-10-10'),
+(10, 'Check Valve', 'Non-return valve for water system', 720.00, 2, 2, '2025-10-10'),
+
+-- Electrical Components (Category 3)
+(11, 'Circuit Breaker 3P', 'Three-phase circuit breaker 100A', 1850.00, 3, 2, '2025-10-10'),
+(12, 'Contactor 50A', 'Magnetic contactor for motor control', 980.00, 3, 2, '2025-10-10'),
+(13, 'Power Cable 3x16mm', 'Three-core power cable per meter', 145.00, 3, 2, '2025-10-10'),
+(14, 'LED Panel Light', 'LED panel 600x600mm 40W', 520.00, 3, 2, '2025-10-10'),
+(15, 'Emergency Light Battery', 'Backup battery for emergency lighting', 780.00, 3, 2, '2025-10-10'),
+
+-- Elevator Components (Category 4)
+(16, 'Elevator Door Motor', 'AC motor for automatic door system', 5600.00, 4, 2, '2025-10-10'),
+(17, 'Steel Wire Rope', 'High tensile steel rope for elevator', 3200.00, 4, 2, '2025-10-10'),
+(18, 'Limit Switch', 'Safety limit switch for elevator', 890.00, 4, 2, '2025-10-10'),
+(19, 'Elevator Control Board', 'Main control PCB for elevator system', 7500.00, 4, 2, '2025-10-10'),
+(20, 'Guide Rail Roller', 'Polyurethane roller for guide rail', 650.00, 4, 2, '2025-10-10'),
+
+-- Cooling Components (Category 5)
+(21, 'Cooling Tower Fill', 'PVC cooling tower fill material', 1200.00, 5, 2, '2025-10-10'),
+(22, 'Water Spray Nozzle', 'Brass spray nozzle for cooling tower', 280.00, 5, 2, '2025-10-10'),
+(23, 'Refrigerant R410A', 'Refrigerant gas cylinder 13.6kg', 2800.00, 5, 2, '2025-10-10'),
+(24, 'Expansion Valve', 'Thermostatic expansion valve', 1450.00, 5, 2, '2025-10-10'),
+(25, 'Fan Motor 380V', 'Three-phase fan motor 1.5KW', 3200.00, 5, 2, '2025-10-10');
+
+-- PartDetail: Chi tiết linh kiện
+INSERT INTO PartDetail VALUES (1, 1, 'HEPA-FLT-001', 'Available', 'Main Warehouse', 1, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (2, 1, 'HEPA-FLT-002', 'InUse', 'Floor 10 HVAC Room', 1, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (3, 2, 'COMP-MTR-001', 'Available', 'Main Warehouse', 1, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (4, 2, 'COMP-MTR-002', 'InUse', 'Rooftop AC Unit 2', NULL, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (5, 3, 'EVAP-COIL-001', 'Available', 'Main Warehouse', 1, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (6, 3, 'EVAP-COIL-002', 'Faulty', 'Maintenance Workshop', 1, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (7, 4, 'FAN-BLD-001', 'Available', 'Main Warehouse', 1, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (8, 4, 'FAN-BLD-002', 'InUse', 'Basement Chiller Room', NULL, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (9, 5, 'THERMO-001', 'Available', 'Main Warehouse', 1, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (10, 5, 'THERMO-002', 'InUse', 'Floor 5 Control Room', 1, 2, '2025-10-10');
+
+-- Pump Components
+INSERT INTO PartDetail VALUES (11, 6, 'IMPEL-001', 'Available', 'Main Warehouse', 2, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (12, 6, 'IMPEL-002', 'InUse', 'Basement Water Pump Room', 2, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (13, 7, 'MECH-SEAL-001', 'Available', 'Main Warehouse', 2, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (14, 7, 'MECH-SEAL-002', 'Retired', 'Disposal Area', NULL, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (15, 8, 'BEARING-001', 'Available', 'Main Warehouse', 2, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (16, 8, 'BEARING-002', 'InUse', 'Floor 2 Pump Station', 2, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (17, 9, 'GAUGE-001', 'Available', 'Main Warehouse', 2, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (18, 9, 'GAUGE-002', 'Faulty', 'Maintenance Workshop', NULL, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (19, 10, 'VALVE-001', 'Available', 'Main Warehouse', 2, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (20, 10, 'VALVE-002', 'InUse', 'Main Water Line Floor B1', 2, 2, '2025-10-10');
+
+-- Electrical Components
+INSERT INTO PartDetail VALUES (21, 11, 'CB-3P-001', 'Available', 'Main Warehouse', 3, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (22, 11, 'CB-3P-002', 'InUse', 'Main Electrical Panel Floor 1', 3, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (23, 12, 'CONT-001', 'Available', 'Main Warehouse', 3, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (24, 12, 'CONT-002', 'InUse', 'Pump Control Cabinet B1', NULL, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (25, 13, 'PWR-CBL-001', 'Available', 'Main Warehouse', 3, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (26, 13, 'PWR-CBL-002', 'Available', 'Main Warehouse', 3, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (27, 14, 'LED-PNL-001', 'Available', 'Main Warehouse', 3, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (28, 14, 'LED-PNL-002', 'InUse', 'Floor 8 Office Area', NULL, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (29, 15, 'EMER-BAT-001', 'Available', 'Main Warehouse', 3, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (30, 15, 'EMER-BAT-002', 'InUse', 'Emergency Exit Floor 3', 3, 2, '2025-10-10');
+
+-- Elevator Components
+INSERT INTO PartDetail VALUES (31, 16, 'ELEV-MTR-001', 'Available', 'Main Warehouse', 4, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (32, 16, 'ELEV-MTR-002', 'InUse', 'Elevator A Machine Room', 4, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (33, 17, 'WIRE-ROPE-001', 'Available', 'Main Warehouse', 4, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (34, 17, 'WIRE-ROPE-002', 'InUse', 'Elevator B Shaft', NULL, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (35, 18, 'LMT-SW-001', 'Available', 'Main Warehouse', 4, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (36, 18, 'LMT-SW-002', 'InUse', 'Elevator C Top Floor', 4, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (37, 19, 'ELEV-PCB-001', 'Available', 'Main Warehouse', NULL, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (38, 19, 'ELEV-PCB-002', 'InUse', 'Elevator A Control Room', 4, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (39, 20, 'GUIDE-ROLL-001', 'Available', 'Main Warehouse', 4, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (40, 20, 'GUIDE-ROLL-002', 'InUse', 'Elevator B Guide Rail', 4, 2, '2025-10-10');
+
+-- Cooling Components
+INSERT INTO PartDetail VALUES (41, 21, 'COOL-FILL-001', 'Available', 'Main Warehouse', 5, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (42, 21, 'COOL-FILL-002', 'InUse', 'Rooftop Cooling Tower 1', 5, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (43, 22, 'SPRAY-NOZ-001', 'Available', 'Main Warehouse', 5, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (44, 22, 'SPRAY-NOZ-002', 'InUse', 'Rooftop Cooling Tower 2', NULL, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (45, 23, 'REFRIG-001', 'Available', 'Main Warehouse', 5, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (46, 23, 'REFRIG-002', 'Available', 'Main Warehouse', 5, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (47, 24, 'EXP-VLV-001', 'Available', 'Main Warehouse', 5, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (48, 24, 'EXP-VLV-002', 'InUse', 'AC Unit Floor 12', 5, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (49, 25, 'FAN-MTR-001', 'Available', 'Main Warehouse', 5, 2, '2025-10-10');
+INSERT INTO PartDetail VALUES (50, 25, 'FAN-MTR-002', 'InUse', 'Chiller Room Basement', 5, 2, '2025-10-10');
+
+-- Equipment: Thiết bị hoàn chỉnh cho tòa nhà
+INSERT INTO Equipment (equipmentId, serialNumber, model, description, installDate, categoryId, lastUpdatedBy, lastUpdatedDate) VALUES
+-- Air Conditioning Units (Category 13)
+(1, 'AC001-2024', 'Daikin VRV IV', 'Máy lạnh trung tâm - Tầng 1-5', '2024-01-15', 13, 2, '2024-01-15'),
+(2, 'AC002-2024', 'Mitsubishi City Multi', 'Máy lạnh trung tâm - Tầng 6-10', '2024-02-01', 13, 2, '2024-02-01'),
+(3, 'AC003-2024', 'LG Multi V5', 'Máy lạnh VRV - Tầng hầm', '2024-02-15', 13, 2, '2024-02-15'),
+(4, 'AC004-2024', 'Panasonic ECOi', 'Máy lạnh trung tâm - Văn phòng chính', '2024-03-01', NULL, 2, '2024-03-01'),
+
+-- Water Pumps (Category 7)
+(5, 'PUMP001-2024', 'Grundfos CR32-4', 'Máy bơm nước sinh hoạt tầng 1-10', '2024-01-20', 7, 2, '2024-01-20'),
+(6, 'PUMP002-2024', 'Pentax CM50-200A', 'Máy bơm cấp nước tòa nhà', '2024-02-10', 7, 2, '2024-02-10'),
+(7, 'PUMP003-2024', 'Ebara 3M 32-160', 'Máy bơm chữa cháy', '2024-03-05', 7, 2, '2024-03-05'),
+
+-- Power Systems (Category 8)
+(8, 'ELEC001-2024', 'Schneider Prisma Plus', 'Tủ điện tổng tòa nhà', '2024-01-10', 8, 2, '2024-01-10'),
+(9, 'ELEC002-2024', 'ABB ACH580', 'Biến tần điều khiển bơm nước', '2024-03-20', 8, 2, '2024-03-20'),
+(10, 'UPS001-2024', 'APC Symmetra 20KVA', 'Bộ lưu điện tòa nhà', '2024-02-15', 8, 2, '2024-02-15'),
+(11, 'GEN001-2024', 'Cummins C150D5', 'Máy phát điện dự phòng 150KVA', '2024-01-25', 8, 2, '2024-01-25'),
+
+-- HVAC Systems (Category 6)
+(12, 'HVAC001-2024', 'Carrier 30XA', 'Hệ thống điều hòa trung tâm chiller', '2024-03-15', 6, 2, '2024-03-15'),
+(13, 'HVAC002-2024', 'Trane RTAC 375', 'Máy lạnh công suất lớn', '2024-03-20', 6, 2, '2024-03-20'),
+(14, 'AHU001-2024', 'York Air Handler', 'Dàn xử lý không khí tầng 5', '2024-04-10', 6, 2, '2024-04-10'),
+
+-- Elevator Systems (Category 11)
+(15, 'ELEV001-2024', 'Otis Gen2', 'Thang máy hành khách - Khối A', '2024-04-15', 11, 2, '2024-04-15'),
+(16, 'ELEV002-2024', 'Mitsubishi NEXIEZ-MRL', 'Thang máy hành khách - Khối B', '2024-05-10', 11, 2, '2024-05-10'),
+(17, 'ELEV003-2024', 'KONE MonoSpace 500', 'Thang máy chở hàng', '2024-05-20', 11, 2, '2024-05-20'),
+
+-- Fire Protection Systems (Category 12)
+(18, 'FIRE001-2024', 'Hochiki Fire Panel', 'Tủ trung tâm báo cháy', '2024-06-01', 12, 2, '2024-06-01'),
+(19, 'SPRNK001-2024', 'Viking Sprinkler System', 'Hệ thống sprinkler phòng cháy', '2024-06-15', 12, 2, '2024-06-15'),
+
+-- Control Systems (Category 10)
+(20, 'BMS001-2024', 'Siemens Desigo CC', 'Hệ thống quản lý tòa nhà BMS', '2024-07-01', 10, 2, '2024-07-01'),
+(21, 'ACCESS001-2024', 'Honeywell Pro-Watch', 'Hệ thống kiểm soát ra vào', '2024-07-15', 10, 2, '2024-07-15'),
+
+-- Cooling Systems (Category 6)
+(22, 'COOL001-2024', 'BAC Cooling Tower', 'Tháp giải nhiệt 500 RT', '2024-08-01', 6, 2, '2024-08-01'),
+(23, 'CHILLER001-2024', 'York YCIV Chiller', 'Máy làm lạnh nước 400 RT', '2024-08-15', 6, 2, '2024-08-15'),
+
+-- Lighting Systems (Category 9)
+(24, 'LIGHT001-2024', 'Philips SmartBright', 'Hệ thống chiếu sáng thông minh', '2024-09-01', 9, 2, '2024-09-01'),
+(25, 'LIGHT002-2024', 'Osram LED System', 'Hệ thống đèn LED tòa nhà', '2024-09-15', 9, 2, '2024-09-15');
+
+-- ====================================================================
+-- BỔ SUNG EQUIPMENT (Tiếp nối sau các bản ghi hiện có)
+-- ====================================================================
+
+INSERT INTO Equipment (equipmentId, serialNumber, model, description, installDate, categoryId, lastUpdatedBy, lastUpdatedDate) VALUES
+-- Air Conditioning Units (Category 13)
+(26, 'AC005-2024', 'Daikin FTKC25UAVMV', 'Máy lạnh 1HP - Phòng khách', '2024-01-15', 13, 2, '2024-01-15'),
+(27, 'AC006-2024', 'Panasonic CU-N9VKH-8', 'Máy lạnh 1.5HP - Phòng ngủ chính', '2024-02-01', 13, 2, '2024-02-01'),
+(28, 'AC007-2024', 'Mitsubishi MSY-JP25VF', 'Máy lạnh 1HP - Phòng làm việc', '2024-02-15', 13, 2, '2024-02-15'),
+(29, 'AC008-2024', 'LG V10ENW', 'Máy lạnh 1.5HP - Phòng khách lớn', '2024-03-01', 13, 2, '2024-03-01'),
+
+-- Water Pumps (Category 7)
+(30, 'PUMP004-2024', 'Grundfos CM3-4', 'Máy bơm nước sinh hoạt', '2024-01-20', 7, 2, '2024-01-20'),
+(31, 'PUMP005-2024', 'Pentax CM32-160A', 'Máy bơm nước công nghiệp', '2024-02-10', 7, 2, '2024-02-10'),
+
+-- Power Systems (Category 8)
+(32, 'ELEC003-2024', 'Schneider Electric Panel', 'Tủ điện chính', '2024-01-10', 8, 2, '2024-01-10'),
+(33, 'ELEC004-2024', 'ABB Motor Drive', 'Biến tần điều khiển motor', '2024-02-20', 8, 2, '2024-02-20'),
+
+-- HVAC Systems (Category 6)
+(34, 'HVAC003-2024', 'Carrier AquaEdge 19XR', 'Hệ thống điều hòa trung tâm', '2024-03-15', 6, 2, '2024-03-15'),
+(35, 'HVAC004-2024', 'Trane RTAC', 'Máy lạnh công nghiệp', '2024-03-20', 6, 2, '2024-03-20');
+
+
 COMMIT;
 
 
@@ -2461,3 +2861,145 @@ LEFT JOIN ContractEquipment ce ON c.contractId = ce.contractId
 WHERE ce.contractId IS NULL;
 
 SET SQL_SAFE_UPDATES = 1;
+
+CREATE TABLE ContractAppendix (
+    appendixId INT AUTO_INCREMENT PRIMARY KEY,
+    contractId INT NOT NULL,
+    appendixType ENUM('AddEquipment', 'RepairPart', 'ExtendTerm', 'Other') NOT NULL,
+    appendixName VARCHAR(255),
+    description TEXT,
+    effectiveDate DATE DEFAULT (CURRENT_DATE),
+    totalAmount DECIMAL(18,2) DEFAULT 0,
+    status ENUM('Draft','Approved','Archived') DEFAULT 'Approved',
+    fileAttachment VARCHAR(255),
+    createdBy INT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (contractId) REFERENCES Contract(contractId)
+);
+
+
+CREATE TABLE ContractAppendixEquipment (
+    appendixEquipId INT AUTO_INCREMENT PRIMARY KEY,
+    appendixId INT NOT NULL,
+    equipmentId INT NOT NULL,
+    unitPrice DECIMAL(18,2),
+    note TEXT,
+    FOREIGN KEY (appendixId) REFERENCES ContractAppendix(appendixId),
+    FOREIGN KEY (equipmentId) REFERENCES Equipment(equipmentId)
+);
+
+
+CREATE TABLE ContractAppendixPart (
+    appendixPartId INT AUTO_INCREMENT PRIMARY KEY,
+    appendixId INT NOT NULL,
+    equipmentId INT NOT NULL,
+    partId INT NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    unitPrice DECIMAL(18,2),
+    totalPrice DECIMAL(18,2) GENERATED ALWAYS AS (quantity * unitPrice) STORED,
+    repairReportId INT,
+    paymentStatus ENUM('Unpaid','Paid') DEFAULT 'Paid',
+    approvedByCustomer BOOLEAN DEFAULT TRUE,
+    approvalDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    note TEXT,
+    FOREIGN KEY (appendixId) REFERENCES ContractAppendix(appendixId),
+    FOREIGN KEY (equipmentId) REFERENCES Equipment(equipmentId),
+    FOREIGN KEY (partId) REFERENCES Part(partId),
+    FOREIGN KEY (repairReportId) REFERENCES RepairReport(reportId)
+);
+
+
+CREATE TABLE RepairReportDetail (
+    detailId INT AUTO_INCREMENT PRIMARY KEY,
+    reportId INT NOT NULL,
+    partId INT NOT NULL,
+    quantity INT NOT NULL,
+    unitPrice DECIMAL(12,2),
+    FOREIGN KEY (reportId) REFERENCES RepairReport(reportId),
+    FOREIGN KEY (partId) REFERENCES Part(partId)
+);
+
+ALTER TABLE RepairReportDetail
+ADD COLUMN partDetailId INT NULL,
+ADD FOREIGN KEY (partDetailId) REFERENCES PartDetail(partDetailId);
+
+DELIMITER $$
+
+CREATE TRIGGER trg_add_parts_to_contract_appendix
+AFTER UPDATE ON RepairReport
+FOR EACH ROW
+BEGIN
+    DECLARE v_contractId INT;
+    DECLARE v_equipmentId INT;
+    DECLARE v_appendixId INT;
+    DECLARE v_total DECIMAL(18,2);
+
+    -- Chỉ thực hiện khi báo giá đã được duyệt và thanh toán (Approved)
+    IF NEW.quotationStatus = 'Approved' AND OLD.quotationStatus <> 'Approved' THEN
+
+        -- Lấy thông tin hợp đồng và thiết bị từ ServiceRequest
+        SELECT contractId, equipmentId
+        INTO v_contractId, v_equipmentId
+        FROM ServiceRequest
+        WHERE requestId = NEW.requestId;
+
+        -- Tính tổng giá trị part trong báo giá
+        SELECT SUM(quantity * unitPrice)
+        INTO v_total
+        FROM RepairReportDetail
+        WHERE reportId = NEW.reportId;
+
+        -- Tạo phụ lục hợp đồng (loại RepairPart)
+        INSERT INTO ContractAppendix (
+            contractId,
+            appendixType,
+            appendixName,
+            description,
+            effectiveDate,
+            totalAmount,
+            status
+        )
+        VALUES (
+            v_contractId,
+            'RepairPart',
+            CONCAT('Phụ lục thay thế linh kiện từ báo giá #', NEW.reportId),
+            'Tự động tạo khi khách hàng đồng ý và thanh toán báo giá sửa chữa',
+            CURDATE(),
+            IFNULL(v_total, 0),
+            'Approved'
+        );
+
+        SET v_appendixId = LAST_INSERT_ID();
+
+        -- Ghi danh sách part vào phụ lục hợp đồng
+        INSERT INTO ContractAppendixPart (
+            appendixId,
+            equipmentId,
+            partId,
+            quantity,
+            unitPrice,
+            repairReportId,
+            paymentStatus,
+            approvedByCustomer,
+            approvalDate,
+            note
+        )
+        SELECT
+            v_appendixId,
+            v_equipmentId,
+            d.partId,
+            d.quantity,
+            d.unitPrice,
+            NEW.reportId,
+            'Paid',  -- vì đã Approved = đã thanh toán
+            TRUE,
+            NOW(),
+            'Tự động ghi nhận từ báo giá đã duyệt & thanh toán'
+        FROM RepairReportDetail d
+        WHERE d.reportId = NEW.reportId;
+    END IF;
+END$$
+
+DELIMITER ;
+
+
