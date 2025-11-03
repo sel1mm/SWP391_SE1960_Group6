@@ -1,0 +1,620 @@
+{
+  "Role": {
+    "columns": {
+      "roleId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "roleName": "VARCHAR(50) NOT NULL UNIQUE"
+    },
+    "foreignKeys": []
+  },
+  "Account": {
+    "columns": {
+      "accountId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "username": "VARCHAR(50) NOT NULL UNIQUE",
+      "passwordHash": "VARCHAR(255) NOT NULL",
+      "fullName": "VARCHAR(100)",
+      "email": "VARCHAR(100) UNIQUE",
+      "phone": "VARCHAR(20) UNIQUE",
+      "status": "VARCHAR(20) NOT NULL DEFAULT 'Active' CHECK (status IN ('Active','Inactive'))",
+      "createdAt": "DATETIME DEFAULT CURRENT_TIMESTAMP",
+      "updatedAt": "DATETIME"
+    },
+    "foreignKeys": []
+  },
+  "AccountRole": {
+    "columns": {
+      "accountId": "INT NOT NULL",
+      "roleId": "INT NOT NULL"
+    },
+    "primaryKey": ["accountId", "roleId"],
+    "foreignKeys": [
+      {"column": "accountId", "references": "Account(accountId)"},
+      {"column": "roleId", "references": "Role(roleId)"}
+    ]
+  },
+  "AccountProfile": {
+    "columns": {
+      "profileId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "accountId": "INT UNIQUE NOT NULL",
+      "address": "VARCHAR(255)",
+      "dateOfBirth": "DATE",
+      "avatarUrl": "VARCHAR(255)",
+      "nationalId": "VARCHAR(50) UNIQUE",
+      "verified": "BIT NOT NULL DEFAULT 0",
+      "extraData": "VARCHAR(255)"
+    },
+    "foreignKeys": [
+      {"column": "accountId", "references": "Account(accountId)"}
+    ]
+  },
+  "Contract": {
+    "columns": {
+      "contractId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "customerId": "INT NOT NULL",
+      "contractDate": "DATE NOT NULL",
+      "contractType": "VARCHAR(50) NOT NULL",
+      "status": "VARCHAR(50) NOT NULL CHECK (status IN ('Active','Completed','Cancelled'))",
+      "details": "VARCHAR(255)"
+    },
+    "foreignKeys": [
+      {"column": "customerId", "references": "Account(accountId)"}
+    ]
+  },
+  "Equipment": {
+    "columns": {
+      "equipmentId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "serialNumber": "VARCHAR(100) UNIQUE NOT NULL",
+      "model": "VARCHAR(100)",
+      "description": "VARCHAR(255)",
+      "installDate": "DATE",
+      "categoryId": "INT NULL",
+      "lastUpdatedBy": "INT NOT NULL",
+      "lastUpdatedDate": "DATE NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "categoryId", "references": "Category(categoryId)"},
+      {"column": "lastUpdatedBy", "references": "Account(accountId)"}
+    ]
+  },
+  "ContractEquipment": {
+    "columns": {
+      "contractEquipmentId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "contractId": "INT NOT NULL",
+      "equipmentId": "INT NOT NULL",
+      "startDate": "DATE NOT NULL",
+      "endDate": "DATE",
+      "quantity": "INT NOT NULL DEFAULT 1 CHECK (quantity > 0)",
+      "price": "DECIMAL(12,2)"
+    },
+    "unique": ["contractId", "equipmentId"],
+    "foreignKeys": [
+      {"column": "contractId", "references": "Contract(contractId)"},
+      {"column": "equipmentId", "references": "Equipment(equipmentId)"}
+    ]
+  },
+  "ServiceRequest": {
+    "columns": {
+      "requestId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "contractId": "INT NULL",
+      "equipmentId": "INT NULL",
+      "createdBy": "INT NOT NULL",
+      "description": "VARCHAR(255)",
+      "priorityLevel": "VARCHAR(20) NOT NULL DEFAULT 'Normal'",
+      "requestDate": "DATE NOT NULL",
+      "status": "VARCHAR(50) NOT NULL",
+      "requestType": "VARCHAR(20) NOT NULL DEFAULT 'Service'"
+    },
+    "foreignKeys": [
+      {"column": "contractId", "references": "Contract(contractId)"},
+      {"column": "equipmentId", "references": "Equipment(equipmentId)"},
+      {"column": "createdBy", "references": "Account(accountId)"}
+    ]
+  },
+  "RequestApproval": {
+    "columns": {
+      "approvalId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "requestId": "INT NOT NULL UNIQUE",
+      "approvedBy": "INT NOT NULL",
+      "approvalDate": "DATE NOT NULL",
+      "decision": "VARCHAR(20) NOT NULL",
+      "note": "VARCHAR(255)"
+    },
+    "foreignKeys": [
+      {"column": "requestId", "references": "ServiceRequest(requestId)"},
+      {"column": "approvedBy", "references": "Account(accountId)"}
+    ]
+  },
+  "Priority": {
+    "columns": {
+      "priorityId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "priorityName": "VARCHAR(50) NOT NULL",
+      "priorityLevel": "INT NOT NULL",
+      "description": "VARCHAR(255)"
+    },
+    "foreignKeys": []
+  },
+  "MaintenanceSchedule": {
+    "columns": {
+      "scheduleId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "requestId": "INT",
+      "contractId": "INT",
+      "equipmentId": "INT",
+      "assignedTo": "INT NOT NULL",
+      "scheduledDate": "DATE NOT NULL",
+      "scheduleType": "VARCHAR(20) NOT NULL",
+      "recurrenceRule": "VARCHAR(100)",
+      "status": "VARCHAR(50) NOT NULL",
+      "priorityId": "INT NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "requestId", "references": "ServiceRequest(requestId)"},
+      {"column": "contractId", "references": "Contract(contractId)"},
+      {"column": "equipmentId", "references": "Equipment(equipmentId)"},
+      {"column": "assignedTo", "references": "Account(accountId)"},
+      {"column": "priorityId", "references": "Priority(priorityId)"}
+    ]
+  },
+  "WorkTask": {
+    "columns": {
+      "taskId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "requestId": "INT",
+      "scheduleId": "INT",
+      "technicianId": "INT NOT NULL",
+      "taskType": "VARCHAR(50) NOT NULL",
+      "taskDetails": "VARCHAR(255)",
+      "startDate": "DATE",
+      "endDate": "DATE",
+      "status": "VARCHAR(50) NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "requestId", "references": "ServiceRequest(requestId)"},
+      {"column": "scheduleId", "references": "MaintenanceSchedule(scheduleId)"},
+      {"column": "technicianId", "references": "Account(accountId)"}
+    ]
+  },
+  "RepairResult": {
+    "columns": {
+      "resultId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "taskId": "INT NOT NULL",
+      "details": "VARCHAR(255)",
+      "completionDate": "DATE",
+      "technicianId": "INT NOT NULL",
+      "status": "VARCHAR(50) NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "taskId", "references": "WorkTask(taskId)"},
+      {"column": "technicianId", "references": "Account(accountId)"}
+    ]
+  },
+  "Part": {
+    "columns": {
+      "partId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "partName": "VARCHAR(100) NOT NULL",
+      "description": "VARCHAR(255)",
+      "unitPrice": "DECIMAL(12,2)",
+      "categoryId": "INT NULL",
+      "lastUpdatedBy": "INT NOT NULL",
+      "lastUpdatedDate": "DATE NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "categoryId", "references": "Category(categoryId)"},
+      {"column": "lastUpdatedBy", "references": "Account(accountId)"}
+    ]
+  },
+  "PartDetail": {
+    "columns": {
+      "partDetailId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "partId": "INT NOT NULL",
+      "serialNumber": "VARCHAR(100) UNIQUE NOT NULL",
+      "status": "VARCHAR(20) NOT NULL CHECK (status IN ('Available','InUse','Faulty','Retired'))",
+      "location": "VARCHAR(255)",
+      "categoryId": "INT NULL",
+      "lastUpdatedBy": "INT NOT NULL",
+      "lastUpdatedDate": "DATE NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "partId", "references": "Part(partId)"},
+      {"column": "categoryId", "references": "Category(categoryId)"},
+      {"column": "lastUpdatedBy", "references": "Account(accountId)"}
+    ]
+  },
+  "Inventory": {
+    "columns": {
+      "inventoryId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "partId": "INT NOT NULL UNIQUE",
+      "quantity": "INT NOT NULL CHECK (quantity >= 0)",
+      "lastUpdatedBy": "INT NOT NULL",
+      "lastUpdatedDate": "DATE NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "partId", "references": "Part(partId)"},
+      {"column": "lastUpdatedBy", "references": "Account(accountId)"}
+    ]
+  },
+  "StockTransaction": {
+    "columns": {
+      "transactionId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "partId": "INT NOT NULL",
+      "transactionType": "VARCHAR(20) NOT NULL CHECK (transactionType IN ('Import','Export'))",
+      "quantity": "INT NOT NULL CHECK (quantity > 0)",
+      "transactionDate": "DATE NOT NULL",
+      "performedBy": "INT NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "partId", "references": "Part(partId)"},
+      {"column": "performedBy", "references": "Account(accountId)"}
+    ]
+  },
+  "PartsRequest": {
+    "columns": {
+      "partsRequestId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "taskId": "INT NOT NULL",
+      "requestDate": "DATE NOT NULL",
+      "status": "VARCHAR(20) NOT NULL CHECK (status IN ('Pending','Approved','Rejected','Completed'))",
+      "handledBy": "INT",
+      "handledDate": "DATE"
+    },
+    "foreignKeys": [
+      {"column": "taskId", "references": "WorkTask(taskId)"},
+      {"column": "handledBy", "references": "Account(accountId)"}
+    ]
+  },
+  "PartsRequestDetail": {
+    "columns": {
+      "requestDetailId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "partsRequestId": "INT NOT NULL",
+      "partId": "INT NOT NULL",
+      "quantityRequested": "INT NOT NULL CHECK (quantityRequested > 0)",
+      "quantityIssued": "INT CHECK (quantityIssued >= 0)"
+    },
+    "foreignKeys": [
+      {"column": "partsRequestId", "references": "PartsRequest(partsRequestId)"},
+      {"column": "partId", "references": "Part(partId)"}
+    ]
+  },
+  "Invoice": {
+    "columns": {
+      "invoiceId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "contractId": "INT NOT NULL",
+      "issueDate": "DATE NOT NULL",
+      "dueDate": "DATE",
+      "totalAmount": "DECIMAL(12,2) NOT NULL",
+      "status": "VARCHAR(50) NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "contractId", "references": "Contract(contractId)"}
+    ]
+  },
+  "InvoiceDetail": {
+    "columns": {
+      "invoiceDetailId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "invoiceId": "INT NOT NULL",
+      "description": "VARCHAR(255)",
+      "amount": "DECIMAL(12,2) NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "invoiceId", "references": "Invoice(invoiceId)"}
+    ]
+  },
+  "RepairReport": {
+    "columns": {
+      "reportId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "requestId": "INT NOT NULL",
+      "technicianId": "INT",
+      "details": "VARCHAR(255)",
+      "diagnosis": "VARCHAR(255)",
+      "estimatedCost": "DECIMAL(12,2)",
+      "quotationStatus": "VARCHAR(50) DEFAULT 'Pending'",
+      "repairDate": "DATE",
+      "invoiceDetailId": "INT"
+    },
+    "foreignKeys": [
+      {"column": "requestId", "references": "ServiceRequest(requestId)"},
+      {"column": "technicianId", "references": "Account(accountId)"},
+      {"column": "invoiceDetailId", "references": "InvoiceDetail(invoiceDetailId)"}
+    ]
+  },
+  "Payment": {
+    "columns": {
+      "paymentId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "invoiceId": "INT UNIQUE",
+      "amount": "DECIMAL(12,2) NOT NULL",
+      "paymentDate": "DATE",
+      "status": "VARCHAR(50) NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "invoiceId", "references": "Invoice(invoiceId)"}
+    ]
+  },
+  "PaymentTransaction": {
+    "columns": {
+      "transactionId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "paymentId": "INT NOT NULL",
+      "accountId": "INT NOT NULL",
+      "amount": "DECIMAL(12,2) NOT NULL",
+      "method": "VARCHAR(50) NOT NULL",
+      "transactionDate": "DATE NOT NULL",
+      "status": "VARCHAR(50) NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "paymentId", "references": "Payment(paymentId)"},
+      {"column": "accountId", "references": "Account(accountId)"}
+    ]
+  },
+  "VnpayTransaction": {
+    "columns": {
+      "vnpayId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "transactionId": "INT NOT NULL",
+      "vnpayRef": "VARCHAR(100) NOT NULL",
+      "responseCode": "VARCHAR(10)"
+    },
+    "foreignKeys": [
+      {"column": "transactionId", "references": "PaymentTransaction(transactionId)"}
+    ]
+  },
+  "SupportTicket": {
+    "columns": {
+      "ticketId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "customerId": "INT NOT NULL",
+      "supportStaffId": "INT NOT NULL",
+      "contractId": "INT",
+      "equipmentId": "INT",
+      "description": "VARCHAR(255)",
+      "response": "VARCHAR(255)",
+      "createdDate": "DATE NOT NULL",
+      "closedDate": "DATE"
+    },
+    "foreignKeys": [
+      {"column": "customerId", "references": "Account(accountId)"},
+      {"column": "supportStaffId", "references": "Account(accountId)"},
+      {"column": "contractId", "references": "Contract(contractId)"},
+      {"column": "equipmentId", "references": "Equipment(equipmentId)"}
+    ]
+  },
+  "Notification": {
+    "columns": {
+      "notificationId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "accountId": "INT NOT NULL",
+      "notificationType": "VARCHAR(50) NOT NULL",
+      "contractEquipmentId": "INT",
+      "message": "VARCHAR(255) NOT NULL",
+      "createdAt": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "status": "VARCHAR(20) NOT NULL"
+    },
+    "foreignKeys": [
+      {"column": "accountId", "references": "Account(accountId)"},
+      {"column": "contractEquipmentId", "references": "ContractEquipment(contractEquipmentId)"}
+    ]
+  },
+  "TechnicianSkill": {
+    "columns": {
+      "skillId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "skillName": "VARCHAR(100) NOT NULL UNIQUE",
+      "description": "VARCHAR(255)",
+      "category": "VARCHAR(50)",
+      "createdAt": "DATETIME DEFAULT CURRENT_TIMESTAMP",
+      "updatedAt": "DATETIME"
+    },
+    "foreignKeys": []
+  },
+  "TechnicianSkillAssignment": {
+    "columns": {
+      "assignmentId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "technicianId": "INT NOT NULL",
+      "skillId": "INT NOT NULL",
+      "proficiencyLevel": "VARCHAR(20) NOT NULL",
+      "certificationDate": "DATE",
+      "expiryDate": "DATE",
+      "isActive": "BIT NOT NULL DEFAULT 1"
+    },
+    "unique": ["technicianId", "skillId"],
+    "foreignKeys": [
+      {"column": "technicianId", "references": "Account(accountId)"},
+      {"column": "skillId", "references": "TechnicianSkill(skillId)"}
+    ]
+  },
+  "TechnicianWorkload": {
+    "columns": {
+      "workloadId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "technicianId": "INT NOT NULL UNIQUE",
+      "maxConcurrentTasks": "INT NOT NULL DEFAULT 5",
+      "currentActiveTasks": "INT NOT NULL DEFAULT 0",
+      "totalCompletedTasks": "INT NOT NULL DEFAULT 0",
+      "averageCompletionTime": "DECIMAL(10,2)",
+      "lastAssignedDate": "DATETIME",
+      "lastUpdated": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP"
+    },
+    "foreignKeys": [
+      {"column": "technicianId", "references": "Account(accountId)"}
+    ]
+  },
+  "TechnicianAvailability": {
+    "columns": {
+      "availabilityId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "technicianId": "INT NOT NULL",
+      "availableDate": "DATE NOT NULL",
+      "startTime": "TIME NOT NULL",
+      "endTime": "TIME NOT NULL",
+      "availabilityType": "VARCHAR(20) NOT NULL",
+      "reason": "VARCHAR(255)",
+      "createdBy": "INT NOT NULL",
+      "createdAt": "DATETIME DEFAULT CURRENT_TIMESTAMP"
+    },
+    "foreignKeys": [
+      {"column": "technicianId", "references": "Account(accountId)"},
+      {"column": "createdBy", "references": "Account(accountId)"}
+    ]
+  },
+  "WorkAssignment": {
+    "columns": {
+      "assignmentId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "taskId": "INT NOT NULL",
+      "assignedBy": "INT NOT NULL",
+      "assignedTo": "INT NOT NULL",
+      "assignmentDate": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "assignmentReason": "VARCHAR(500)",
+      "estimatedDuration": "DECIMAL(10,2)",
+      "requiredSkills": "VARCHAR(255)",
+      "priority": "VARCHAR(20) NOT NULL",
+      "acceptedByTechnician": "BIT DEFAULT 0",
+      "acceptedAt": "DATETIME"
+    },
+    "foreignKeys": [
+      {"column": "taskId", "references": "WorkTask(taskId)"},
+      {"column": "assignedBy", "references": "Account(accountId)"},
+      {"column": "assignedTo", "references": "Account(accountId)"}
+    ]
+  },
+  "ReportReview": {
+    "columns": {
+      "reviewId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "reportId": "INT NOT NULL",
+      "resultId": "INT",
+      "reviewedBy": "INT NOT NULL",
+      "reviewDate": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "reviewStatus": "VARCHAR(20) NOT NULL",
+      "rating": "INT",
+      "feedback": "VARCHAR(1000)",
+      "actionRequired": "VARCHAR(500)",
+      "followUpRequired": "BIT DEFAULT 0",
+      "followUpDate": "DATE",
+      "technicalCompliance": "BIT",
+      "qualityScore": "DECIMAL(5,2)"
+    },
+    "unique": ["reportId"],
+    "foreignKeys": [
+      {"column": "reportId", "references": "RepairReport(reportId)"},
+      {"column": "resultId", "references": "RepairResult(resultId)"},
+      {"column": "reviewedBy", "references": "Account(accountId)"}
+    ]
+  },
+  "TechnicianPerformance": {
+    "columns": {
+      "performanceId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "technicianId": "INT NOT NULL",
+      "evaluationPeriod": "VARCHAR(20) NOT NULL",
+      "tasksCompleted": "INT NOT NULL DEFAULT 0",
+      "tasksOnTime": "INT NOT NULL DEFAULT 0",
+      "tasksLate": "INT NOT NULL DEFAULT 0",
+      "averageCompletionTime": "DECIMAL(10,2)",
+      "averageQualityScore": "DECIMAL(5,2)",
+      "customerSatisfactionScore": "DECIMAL(5,2)",
+      "performanceScore": "DECIMAL(5,2)",
+      "evaluatedBy": "INT NOT NULL",
+      "evaluatedAt": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "comments": "VARCHAR(500)"
+    },
+    "unique": ["technicianId", "evaluationPeriod"],
+    "foreignKeys": [
+      {"column": "technicianId", "references": "Account(accountId)"},
+      {"column": "evaluatedBy", "references": "Account(accountId)"}
+    ]
+  },
+  "ScheduleNotification": {
+    "columns": {
+      "notificationId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "scheduleId": "INT NOT NULL",
+      "recipientId": "INT NOT NULL",
+      "notificationType": "VARCHAR(50) NOT NULL",
+      "sentAt": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+      "sentBy": "INT NOT NULL",
+      "deliveryMethod": "VARCHAR(20) NOT NULL",
+      "deliveryStatus": "VARCHAR(20) NOT NULL",
+      "readAt": "DATETIME"
+    },
+    "foreignKeys": [
+      {"column": "scheduleId", "references": "MaintenanceSchedule(scheduleId)"},
+      {"column": "recipientId", "references": "Account(accountId)"},
+      {"column": "sentBy", "references": "Account(accountId)"}
+    ]
+  },
+  "EquipmentServiceRequirement": {
+    "columns": {
+      "requirementId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "equipmentId": "INT NOT NULL",
+      "skillId": "INT NOT NULL",
+      "minimumProficiency": "VARCHAR(20) NOT NULL",
+      "isMandatory": "BIT NOT NULL DEFAULT 1"
+    },
+    "unique": ["equipmentId", "skillId"],
+    "foreignKeys": [
+      {"column": "equipmentId", "references": "Equipment(equipmentId)"},
+      {"column": "skillId", "references": "TechnicianSkill(skillId)"}
+    ]
+  },
+  "Category": {
+    "columns": {
+      "categoryId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "categoryName": "VARCHAR(50) NOT NULL UNIQUE",
+      "type": "VARCHAR(20) NOT NULL CHECK (type IN ('Equipment','Part'))"
+    },
+    "indexes": ["idx_category_type"],
+    "foreignKeys": []
+  },
+  "ContractAppendix": {
+    "columns": {
+      "appendixId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "contractId": "INT NOT NULL",
+      "appendixType": "ENUM('AddEquipment','RepairPart','ExtendTerm','Other') NOT NULL",
+      "appendixName": "VARCHAR(255)",
+      "description": "TEXT",
+      "effectiveDate": "DATE DEFAULT CURRENT_DATE",
+      "totalAmount": "DECIMAL(18,2) DEFAULT 0",
+      "status": "ENUM('Draft','Approved','Archived') DEFAULT 'Approved'",
+      "fileAttachment": "VARCHAR(255)",
+      "createdBy": "INT",
+      "createdAt": "DATETIME DEFAULT CURRENT_TIMESTAMP"
+    },
+    "foreignKeys": [
+      {"column": "contractId", "references": "Contract(contractId)"},
+      {"column": "createdBy", "references": "Account(accountId)"}
+    ]
+  },
+  "ContractAppendixEquipment": {
+    "columns": {
+      "appendixEquipId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "appendixId": "INT NOT NULL",
+      "equipmentId": "INT NOT NULL",
+      "unitPrice": "DECIMAL(18,2)",
+      "note": "TEXT"
+    },
+    "foreignKeys": [
+      {"column": "appendixId", "references": "ContractAppendix(appendixId)"},
+      {"column": "equipmentId", "references": "Equipment(equipmentId)"}
+    ]
+  },
+  "ContractAppendixPart": {
+    "columns": {
+      "appendixPartId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "appendixId": "INT NOT NULL",
+      "equipmentId": "INT NOT NULL",
+      "partId": "INT NOT NULL",
+      "quantity": "INT NOT NULL DEFAULT 1",
+      "unitPrice": "DECIMAL(18,2)",
+      "totalPrice": "DECIMAL(18,2) GENERATED ALWAYS AS (quantity * unitPrice) STORED",
+      "repairReportId": "INT",
+      "paymentStatus": "ENUM('Unpaid','Paid') DEFAULT 'Paid'",
+      "approvedByCustomer": "BOOLEAN DEFAULT TRUE",
+      "approvalDate": "DATETIME DEFAULT CURRENT_TIMESTAMP",
+      "note": "TEXT"
+    },
+    "foreignKeys": [
+      {"column": "appendixId", "references": "ContractAppendix(appendixId)"},
+      {"column": "equipmentId", "references": "Equipment(equipmentId)"},
+      {"column": "partId", "references": "Part(partId)"},
+      {"column": "repairReportId", "references": "RepairReport(reportId)"}
+    ]
+  },
+  "RepairReportDetail": {
+    "columns": {
+      "detailId": "INT AUTO_INCREMENT PRIMARY KEY",
+      "reportId": "INT NOT NULL",
+      "partId": "INT NOT NULL",
+      "quantity": "INT NOT NULL",
+      "unitPrice": "DECIMAL(12,2)"
+    },
+    "foreignKeys": [
+      {"column": "reportId", "references": "RepairReport(reportId)"},
+      {"column": "partId", "references": "Part(partId)"}
+    ]
+  }
+}

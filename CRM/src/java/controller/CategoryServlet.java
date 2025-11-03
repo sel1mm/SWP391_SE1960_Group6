@@ -12,12 +12,13 @@ import model.Account;
 import model.Category;
 
 /**
- * CategoryServlet - Quản lý Category CRUD operations
+ * CategoryServlet - Quản lý Category CRUD operations với sort và pagination
  * @author Admin
  */
 public class CategoryServlet extends HttpServlet {
     
     private CategoryDAO dao = new CategoryDAO();
+    private static final int RECORDS_PER_PAGE = 10;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -31,22 +32,55 @@ public class CategoryServlet extends HttpServlet {
             return;
         }
 
-        // Lấy filter parameter
+        // Lấy filter by Type parameter
         String typeFilter = request.getParameter("typeFilter");
         
-        List<Category> categoryList;
-        
-        if (typeFilter != null && !typeFilter.isEmpty()) {
-            // Filter by type
-            categoryList = dao.getCategoriesByType(typeFilter);
-            System.out.println("Filtered by type: " + typeFilter + " (" + categoryList.size() + " results)");
-        } else {
-            // Get all categories
-            categoryList = dao.getAllCategories();
-            System.out.println("Loaded all categories: " + categoryList.size());
+        // Lấy sort parameter
+        String sortBy = request.getParameter("sortBy");
+        if (sortBy == null || sortBy.isEmpty()) {
+            sortBy = "id-asc"; // Default sort
         }
         
+        // Lấy page parameter
+        String pageStr = request.getParameter("page");
+        int currentPage = 1;
+        try {
+            if (pageStr != null && !pageStr.isEmpty()) {
+                currentPage = Integer.parseInt(pageStr);
+                if (currentPage < 1) currentPage = 1;
+            }
+        } catch (NumberFormatException e) {
+            currentPage = 1;
+        }
+        
+        // Get sorted and filtered categories
+        List<Category> allCategories = dao.getCategoriesSortedAndFiltered(sortBy, typeFilter);
+        
+        // Calculate pagination
+        int totalRecords = allCategories.size();
+        int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
+        
+        // Ensure currentPage is within bounds
+        if (currentPage > totalPages && totalPages > 0) {
+            currentPage = totalPages;
+        }
+        
+        // Get records for current page
+        int startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
+        int endIndex = Math.min(startIndex + RECORDS_PER_PAGE, totalRecords);
+        
+        List<Category> categoryList = allCategories.subList(startIndex, endIndex);
+        
+        System.out.println("Sort: " + sortBy + ", Type filter: " + typeFilter + ", Total: " + totalRecords + ", Page: " + currentPage + "/" + totalPages);
+        
+        // Set attributes
         request.setAttribute("categoryList", categoryList);
+        request.setAttribute("currentPage", currentPage);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalRecords", totalRecords);
+        request.setAttribute("sortBy", sortBy);
+        request.setAttribute("typeFilter", typeFilter != null ? typeFilter : "");
+        
         request.getRequestDispatcher("category.jsp").forward(request, response);
     }
 
@@ -56,10 +90,6 @@ public class CategoryServlet extends HttpServlet {
         
         HttpSession session = request.getSession();
         Account acc = (Account) session.getAttribute("session_login");
-        
-        // Xóa message cũ
-        session.removeAttribute("successMessage");
-        session.removeAttribute("errorMessage");
         
         // Kiểm tra đăng nhập
         if (acc == null) {
@@ -108,8 +138,8 @@ public class CategoryServlet extends HttpServlet {
                     return;
                 }
                 
-                if (!type.equals("Part") && !type.equals("Product")) {
-                    session.setAttribute("errorMessage", "Invalid type! Must be 'Part' or 'Product'");
+                if (!type.equals("Part") && !type.equals("Equipment")) {
+                    session.setAttribute("errorMessage", "Invalid type! Must be 'Part' or 'Equipment'");
                     response.sendRedirect("category");
                     return;
                 }
@@ -186,8 +216,8 @@ public class CategoryServlet extends HttpServlet {
                     return;
                 }
                 
-                if (!type.equals("Part") && !type.equals("Product")) {
-                    session.setAttribute("errorMessage", "Invalid type! Must be 'Part' or 'Product'");
+                if (!type.equals("Part") && !type.equals("Equipment")) {
+                    session.setAttribute("errorMessage", "Invalid type! Must be 'Part' or 'Equipment'");
                     response.sendRedirect("category");
                     return;
                 }
@@ -292,6 +322,6 @@ public class CategoryServlet extends HttpServlet {
 
     @Override
     public String getServletInfo() {
-        return "Category Servlet - Manages category CRUD operations";
+        return "Category Servlet - Manages category CRUD operations with sorting and pagination";
     }
 }

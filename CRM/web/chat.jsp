@@ -249,32 +249,43 @@
             scrollToBottom();
 
             // Gửi request đến servlet
-         fetch('AskGeminiServlet', {
+     // Gửi request đến servlet (phiên bản pipeline 1.3)
+fetch('AskGeminiServlet', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: 'q=' + encodeURIComponent(message)
 })
-.then(response => response.json())
+.then(response => {
+    // response là JSON (200) hoặc có error message (200 với error field)
+    return response.json();
+})
 .then(data => {
     typingIndicator.classList.remove('show');
-    
-//    if (data.success) {
-//        addMessage('ai', data.reply);
-//    } else if (data.error) {
-//        addMessage('error', data.error);
-//    } else {
-//        addMessage('error', 'Có lỗi xảy ra, vui lòng thử lại');
-//    }
-  if (data.candidates && data.candidates.length > 0) {
-        const reply = data.candidates[0].content.parts[0].text;
-         
-        addMessage('ai', reply);
-    } else if (data.error) {
+
+    // Nếu server trả lỗi
+    if (data.error) {
         addMessage('error', data.error);
-    } else {
-        addMessage('error', 'Không nhận được phản hồi từ AI');
+        return;
+    }
+
+    // 1) Hiển thị câu trả lời dạng natural language (nếu có)
+    if (data.ai_answer) {
+        addMessage('ai', data.ai_answer);
+    } else if (data.generated_sql && (!data.result || !data.result.rows || data.result.rows.length === 0)) {
+        // nếu không có ai_answer nhưng có SQL thì show SQL
+        addMessage('ai', 'SQL được sinh: ' + data.generated_sql);
+    }
+
+    // 2) Hiển thị bảng kết quả (nếu có)
+    if (data.result && Array.isArray(data.result.columns)) {
+        addTableResult(data.result);
+    }
+
+    // 3) (Tùy chọn) show generated_sql bên dưới (để debug)
+    if (data.generated_sql) {
+        addMessage('ai', '🔎 Generated SQL: ' + data.generated_sql);
     }
 })
 .catch(error => {
@@ -288,6 +299,68 @@
     messageInput.focus();
 });
         }
+function addTableResult(result) {
+    // result: { columns: [...], rows: [ {col1:val, col2:val}, ... ] }
+    const cols = result.columns || [];
+    const rows = result.rows || [];
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message ai';
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+
+    // tạo table
+    const table = document.createElement('table');
+    table.style.borderCollapse = 'collapse';
+    table.style.width = '100%';
+    table.style.maxWidth = '420px';
+    table.style.fontSize = '13px';
+
+    // style th/td
+    const thStyle = "padding:6px 8px;border-bottom:1px solid #eee;text-align:left;font-weight:600;";
+    const tdStyle = "padding:6px 8px;border-bottom:1px solid #f1f1f1;";
+
+    // header
+    const thead = document.createElement('thead');
+    const trh = document.createElement('tr');
+    cols.forEach(col => {
+        const th = document.createElement('th');
+        th.textContent = col;
+        th.setAttribute('style', thStyle);
+        trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+
+    // body
+    const tbody = document.createElement('tbody');
+    rows.forEach(rowObj => {
+        const tr = document.createElement('tr');
+        cols.forEach(col => {
+            const td = document.createElement('td');
+            const val = rowObj[col];
+            td.textContent = (val === null || typeof val === 'undefined') ? 'NULL' : String(val);
+            td.setAttribute('style', tdStyle);
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    // nếu không có row nào
+    if (rows.length === 0) {
+        const empty = document.createElement('div');
+        empty.textContent = 'Không có dữ liệu.';
+        contentDiv.appendChild(empty);
+    } else {
+        contentDiv.appendChild(table);
+    }
+
+    messageDiv.appendChild(contentDiv);
+    chatMessages.appendChild(messageDiv);
+    scrollToBottom();
+}
 
         function addMessage(type, content) {
             const messageDiv = document.createElement('div');

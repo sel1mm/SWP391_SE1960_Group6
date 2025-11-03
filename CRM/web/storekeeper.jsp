@@ -1,667 +1,521 @@
-<%-- 
-    Document   : customer
-    Created on : Oct 10, 2025, 12:30:40 AM
-    Author     : Admin
---%>
-
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
-
-
-
-
-
+<%@ page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-           
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        
-        <title>CRM System - Quản lý Khách hàng Chuyên nghiệp</title>
-        <style>
-           * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>CRM System - Quản lý Kho</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f5f5f5;
-    color: #333;
-    line-height: 1.6;
-    min-height: 100vh;
-}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
 
-/* Navigation Bar */
-.navbar {
-    background: #000000;
-    padding: 1rem 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    width: 100%;
-}
+        /* Sidebar - Full Height */
+        .sidebar {
+            width: 220px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #000000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+            z-index: 1001;
+        }
 
-.nav-container {
-    max-width: 100%;
-    padding: 0 2rem;
-    margin: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+        .sidebar-logo {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 65px;
+        }
 
-.logo {
-    color: white;
-    font-size: 24px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding-top: 10px;
+        }
 
-.nav-links {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-}
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
 
-.nav-links a {
-    color: white;
-    text-decoration: none;
-    font-weight: 400;
-    font-size: 14px;
-    transition: all 0.3s;
-    padding: 8px 16px;
-    border-radius: 4px;
-}
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(255,255,255,0.08);
+            border-left: 3px solid white;
+        }
 
-.nav-links a:hover {
-    background: rgba(255,255,255,0.1);
-}
+        .sidebar a i {
+            min-width: 18px;
+            text-align: center;
+            font-size: 16px;
+        }
 
-.btn-login {
-    background: transparent;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-weight: 400;
-}
+        .sidebar .logout-btn {
+            margin-top: auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            font-weight: 500;
+        }
 
-/* Sidebar */
-.sidebar {
-    width: 220px;
-    min-height: calc(100vh - 65px);
-    position: fixed;
-    top: 65px;
-    left: 0;
-    background: #000000;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
-}
+        /* Top Navbar - Right Side Only */
+        .navbar {
+            background: #f5f5f5;
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 220px;
+            right: 0;
+            z-index: 1000;
+            height: 65px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
 
-.sidebar a {
-    color: white;
-    text-decoration: none;
-    padding: 12px 20px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.2s;
-    border-left: 3px solid transparent;
-}
+        .user-info {
+            color: #2c5f6f;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 8px 20px;
+            background: #d4f1f4;
+            border-radius: 6px;
+            border: 1px solid #b8e6e9;
+        }
 
-.sidebar a:hover {
-    background: rgba(255,255,255,0.08);
-    border-left: 3px solid white;
-}
+        /* Main Content */
+        .container {
+            margin-left: 220px;
+            margin-top: 65px;
+            min-height: calc(100vh - 65px);
+        }
 
-.sidebar a i {
-    min-width: 18px;
-    text-align: center;
-    font-size: 16px;
-}
+        .content {
+            padding: 30px 40px;
+            background: #f5f5f5;
+        }
 
-.container {
-    display: flex;
-    margin-top: 0;
-    width: 100%;
-}
+        .content h2 {
+            margin: 0 0 30px 0;
+            color: #333;
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-.content {
-    margin-left: 220px;
-    padding: 30px 40px;
-    min-height: calc(100vh - 65px);
-    width: calc(100% - 220px);
-    background: #f5f5f5;
-}
+        .content h2::before {
+            content: '⚙️';
+            font-size: 32px;
+        }
 
-.content h2 {
-    margin: 0 0 30px 0;
-    color: #333;
-    text-align: left;
-    font-size: 28px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+        /* KPI Cards */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
 
-.content h2::before {
-    content: '⚙️';
-    font-size: 32px;
-}
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
 
-/* Welcome Banner */
-.welcome-banner {
-    background: linear-gradient(135deg, #d4f1f4 0%, #b8e6e9 100%);
-    padding: 24px 30px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-    border-left: 4px solid #5bc0de;
-}
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
 
-.welcome-banner h3 {
-    color: #2c5f6f;
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+        .kpi-card h3 {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
 
-.welcome-banner h3::before {
-    content: 'ℹ️';
-    font-size: 24px;
-}
+        .kpi-card p {
+            font-size: 26px;
+            font-weight: 600;
+            margin: 0;
+            color: #333;
+        }
 
-.welcome-banner p {
-    color: #3d7080;
-    font-size: 14px;
-    margin: 0;
-}
+        /* Chart Container */
+        .chart-container {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            margin-bottom: 40px;
+        }
 
-/* KPI Cards */
-.kpi-container {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-top: 30px;
-    margin-bottom: 40px;
-}
+        .chart-container > p {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 20px 0;
+            color: #333;
+        }
 
-.kpi-card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    text-align: left;
-    border: 1px solid #e0e0e0;
-    transition: all 0.3s;
-}
+        .card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+        }
 
-.kpi-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
+        #inventoryChart {
+            width: 180px !important;
+            height: 180px !important;
+        }
 
-.kpi-card h3 {
-    font-size: 13px;
-    color: #666;
-    margin-bottom: 12px;
-    font-weight: 500;
-}
+        .legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
-.kpi-card p {
-    font-size: 26px;
-    font-weight: 600;
-    margin: 0;
-    color: #333;
-}
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #666;
+        }
 
-/* Section Headers */
-section > p:first-child,
-section > h3:first-child {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #e0e0e0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
 
-section > p:first-child::before,
-section > h3:first-child::before {
-    content: '📊';
-    font-size: 20px;
-}
+        .label-value {
+            font-weight: 600;
+            font-size: 15px;
+            color: #333;
+            margin-left: auto;
+        }
 
-/* Status Container */
-.status-container {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 30px;
-    margin-top: 30px;
-    margin-bottom: 40px;
-}
+        /* List Container */
+        .list-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
 
-.status-container > div {
-    background: white;
-    padding: 24px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border: 1px solid #e0e0e0;
-}
+        .left-list, .right-list {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
 
-.status-container p {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0 0 20px 0;
-    color: #333;
-    text-align: left;
-}
+        .left-list::after, .right-list::after {
+            content: "";
+            display: block;
+            clear: both;
+        }
 
-#inventoryChart {
-    width: 180px !important;
-    height: 180px !important;
-}
+        .title {
+            float: left;
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+        }
 
-#inventoryChart2 {
-    width: 180px !important;
-    height: 180px !important;
-}
+        .more {
+            float: right;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.3s;
+            font-weight: 400;
+        }
 
-.card {
-    margin: 0;
-    background: transparent;
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 30px;
-    width: 100%;
-}
+        .more:hover {
+            color: #333;
+        }
 
-.legend {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+        }
 
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    color: #666;
-}
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 13px;
+        }
 
-.color-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-}
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
 
-.label-value {
-    font-weight: 600;
-    font-size: 15px;
-    color: #333;
-    margin-left: auto;
-}
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
 
-/* List Container */
-.list-container {
-    padding: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    margin-top: 30px;
-    gap: 30px;
-}
+        tr:hover {
+            background-color: #f0f0f0;
+        }
 
-.left-list, .right-list {
-    background: white;
-    padding: 24px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border: 1px solid #e0e0e0;
-}
+        td {
+            color: #666;
+        }
 
-.left-list p, .right-list p {
-    color: #333;
-    font-weight: 600;
-    font-size: 16px;
-}
+        .empty-row {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Full Height -->
+    <div class="sidebar">
+        <div class="sidebar-logo">CRM System</div>
+        <div class="sidebar-menu">
+            <a href="storekeeper" class="active"><i class="fas fa-home"></i><span>Trang chủ</span></a>
+            <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
+            <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
+            <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
+            <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị</span></a>
+            <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
+            <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết linh kiện</span></a>
+            <a href="category"><i class="fas fa-tags"></i><span>Quản lý danh mục</span></a>
+        </div>
+        <a href="logout" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+        </a>
+    </div>
 
-.left-list p.title, 
-.right-list p.title {
-    float: left;
-    font-weight: 600;
-    font-size: 16px;
-    color: #333;
-}
+    <!-- Top Navbar (Right Side Only) -->
+    <nav class="navbar">
+        <div class="user-info">
+            Xin chào ${sessionScope.username}
+        </div>
+    </nav>
 
-.left-list p.more,
-.right-list p.more {
-    float: right;
-    font-size: 13px;
-    color: #666;
-    cursor: pointer;
-    transition: color 0.3s;
-    font-weight: 400;
-}
-
-.left-list p.more:hover,
-.right-list p.more:hover {
-    color: #333;
-}
-
-.left-list::after,
-.right-list::after {
-    content: "";
-    display: block;
-    clear: both;
-}
-
-.list-container table {
-    width: 100%;
-    margin-top: 20px;
-}
-
-.list-container p {
-    margin-bottom: 10px;
-}
-
-/* Table Styles */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-    background-color: white;
-}
-
-th, td {
-    border: 1px solid #e0e0e0;
-    padding: 10px 12px;
-    text-align: left;
-    font-size: 13px;
-}
-
-th {
-    background-color: #f8f9fa;
-    color: #333;
-    font-weight: 600;
-    border-bottom: 2px solid #dee2e6;
-}
-
-tr:nth-child(even) {
-    background-color: #fafafa;
-}
-
-tr:hover {
-    background-color: #f0f0f0;
-}
-
-td {
-    color: #666;
-}
-
-/* Footer */
-.footer {
-    background: #000000;
-    color: white;
-    padding: 60px 20px 30px;
-    margin-top: 60px;
-}
-
-.footer-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
-    margin-bottom: 40px;
-}
-
-.footer-section h3 {
-    font-size: 16px;
-    margin-bottom: 20px;
-    font-weight: 600;
-}
-
-.footer-section ul {
-    list-style: none;
-}
-
-.footer-section ul li {
-    margin-bottom: 12px;
-}
-
-.footer-section a {
-    color: #adb5bd;
-    text-decoration: none;
-    transition: all 0.3s;
-    font-size: 14px;
-}
-
-.footer-section a:hover {
-    color: white;
-    padding-left: 5px;
-}
-
-.footer-bottom {
-    text-align: center;
-    padding-top: 30px;
-    border-top: 1px solid #495057;
-    color: #adb5bd;
-    font-size: 14px;
-}
-        </style>
-    </head>
-    <body>
-        <nav class="navbar">
-            <div class="nav-container">
-                <div class="logo">CRM System</div>
-                <div class="nav-links">
-                    <a href="#"><i class="fas fa-envelope"></i> Tin nhắn</a>
-                    <a href="#"><i class="fas fa-bell"></i> Thông báo</a>
-                    <a href="#contact">Avatar</a>
-                    <a href="login" class="btn-login">Xin chào ${sessionScope.username}</a>
-                </div>
-            </div>
-        </nav>
-        
-        <form action="storekeeper" method="POST">
-            <div class="container">
-                  <div class="sidebar">
-                    <div class="sidebar navbar nav-container2">
-                        <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
-                        <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
-                        <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
-                        <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
-                        <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị </span></a>
-                        <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
-                        <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết linh kiện</span></a>
-                         <a href="category" class="active"><i class="fas fa-tags"></i><span>Quản lý danh mục</span></a>
-                        <a href="logout" style="margin-top: auto; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-weight: 500;">
-                            <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
-                        </a>
+    <!-- Main Content -->
+    <div class="container">
+        <div class="content">
+            <!-- KPI Section -->
+            <section>
+                <h2>Chỉ số quản lý kho</h2>
+                
+                <div class="kpi-container">
+                    <div class="kpi-card">
+                        <h3>Tổng số loại thiết bị trong kho</h3>
+                        <p>${totalEquipmentTypes}</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Tổng số loại linh kiện trong kho</h3>
+                        <p>${totalPartTypes}</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Tổng số loại linh kiện sắp hết</h3>
+                        <p>${lowStockCount}</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Tổng số linh kiện sẵn sàng trong kho</h3>
+                        <p>${availableCount}</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Tổng số linh kiện bị hỏng trong kho</h3>
+                        <p>${faultyCount}</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Tổng số linh kiện đang được sử dụng</h3>
+                        <p>${inUseCount}</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>% Tổng số linh kiện sẵn sàng</h3>
+                        <p>${availablePercent}%</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>% Số lượng linh kiện ngừng dùng</h3>
+                        <p>${retiredPercent}%</p>
                     </div>
                 </div>
-                
-                <div class="content">
-                    <!--Một số KPI của storekeeper-->
-                    <section>
-                        <h2>Chỉ số quản lý kho</h2>
-                        
-                        <div class="kpi-container">
-                            <div class="kpi-card">
-                                <h3>Trung bình thời gian hoàn thành sửa chữa</h3>
-                                <p>1.2</p>
-                            </div>
-                            <div class="kpi-card">
-                                <h3>Tỉ lệ sử dụng vật dụng trên tổng tồn kho</h3>
-                                <p>$341,678</p>
-                            </div>
-                            <div class="kpi-card">
-                                <h3>Số lượng công việc trễ hạn</h3>
-                                <p>$412,343</p>
-                            </div>
-                            <div class="kpi-card">
-                                <h3>Tỉ lệ thiết bị được cấp đúng yêu cầu</h3>
-                                <p>95.5%</p>
-                            </div>
-                            <div class="kpi-card">
-                                <h3>Số báo cáo chờ xác nhận</h3>
-                                <p>16.5</p>
-                            </div>
-                            <div class="kpi-card">
-                                <h3>Tổng số lượng thiết bị trong kho</h3>
-                                <p>14.2</p>
-                            </div>
-                            <div class="kpi-card">
-                                <h3>% công việc xong đúng kế hoạch</h3>
-                                <p>94.5%</p>
-                            </div>
-                            <div class="kpi-card">
-                                <h3>Số lượng vật tư sắp hết</h3>
-                                <p>2.3%</p>
-                            </div>
-                        </div>
-                    </section>
-                    
-                    <!--Thống kê-->
-                    <section>
-                        <div class="status-container">
-                            <div>
-                                <p>Thiết bị</p>
-                                <div class="card">
-                                    <canvas id="inventoryChart" width="100" height="100"></canvas>
-                                    <div class="legend">
-                                        <div class="legend-item"><span class="color-dot" style="background:#00b894;"></span> In Stock Items <span class="label-value">134</span></div>
-                                        <div class="legend-item"><span class="color-dot" style="background:#6c5ce7;"></span> Out of Stock Items <span class="label-value">7</span></div>
-                                        <div class="legend-item"><span class="color-dot" style="background:#fdcb6e;"></span> Low Stock Items <span class="label-value">3</span></div>
-                                        <div class="legend-item"><span class="color-dot" style="background:#d63031;"></span> Dead Stock Items <span class="label-value">1</span></div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <p>Yêu cầu</p>
-                                <div class="card">
-                                    <canvas id="inventoryChart2" width="100" height="100"></canvas>
-                                    <div class="legend">
-                                        <div class="legend-item"><span class="color-dot" style="background:#f0ad4e;"></span> Pending Requests <span class="label-value">12</span></div>
-                                        <div class="legend-item"><span class="color-dot" style="background:#0275d8;"></span> Approved Requests <span class="label-value">24</span></div>
-                                        <div class="legend-item"><span class="color-dot" style="background:#d9534f;"></span> Rejected Requests <span class="label-value">5</span></div>
-                                        <div class="legend-item"><span class="color-dot" style="background:#5cb85c;"></span> Completed Requests <span class="label-value">18</span></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    
-                    <section>
-                        <div class="list-container">
-                            <div class="left-list">
-                                <p class="title">Thiết bị được sử dụng nhiều</p>
-                                <p class="more">Xem thêm <i class="fa-solid fa-arrow-right"></i></p>
-                                <table border="1">
-                                    <thead>
-                                        <tr>
-                                            <th>InventoryId</th>
-                                            <th>PartId</th>
-                                            <th>PartName</th>
-                                            <th>Quantity</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <div class="right-list">
-                                <p class="title">Thiết bị sắp hết</p>
-                                <p class="more">Xem thêm <i class="fa-solid fa-arrow-right"></i></p>
-                                <table border="1">
-                                    <thead>
-                                        <tr>
-                                            <th>PartID</th>
-                                            <th>PartName</th>
-                                            <th>Description</th>
-                                            <th>Unit Price</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </div>
-        </form>
-
-        <script>
-            const ctx = document.getElementById('inventoryChart').getContext('2d');
-            new Chart(ctx, {  
-                type: 'doughnut',
-                data: {
-                    labels: ['In Stock', 'Out of Stock', 'Low Stock', 'Dead Stock'],
-                    datasets: [{
-                        data: [134, 7, 3, 1],
-                        backgroundColor: ['#00b894', '#6c5ce7', '#fdcb6e', '#d63031'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    cutout: '70%',
-                    plugins: { legend: { display: false } }
-                }
-            });
+            </section>
             
-            const ltx = document.getElementById('inventoryChart2').getContext('2d');
-            new Chart(ltx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Pending', 'Approved', 'Rejected', 'Completed'],
-                    datasets: [{
-                        data: [12, 24, 5, 18],
-                        backgroundColor: ['#f0ad4e', '#0275d8', '#d9534f', '#5cb85c'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    cutout: '70%',
-                    plugins: { legend: { display: false } }
-                }
-            });
-        </script>
-    </body>
+            <!-- Chart Section -->
+            <section>
+                <div class="chart-container">
+                    <p>Tình trạng linh kiện</p>
+                    <div class="card">
+                        <canvas id="inventoryChart"></canvas>
+                        <div class="legend">
+                            <div class="legend-item">
+                                <span class="color-dot" style="background:#00b894;"></span> 
+                                Linh kiện có sẵn
+                                <span class="label-value">${chartInStock}</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-dot" style="background:#6c5ce7;"></span> 
+                                Linh kiện hết hàng
+                                <span class="label-value">${chartOutOfStock}</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-dot" style="background:#fdcb6e;"></span> 
+                                Linh kiện sắp hết
+                                <span class="label-value">${chartLowStock}</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-dot" style="background:#d63031;"></span> 
+                                Linh kiện ngừng dùng
+                                <span class="label-value">${chartDeadStock}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tables Section -->
+            <section>
+                <div class="list-container">
+                    <div class="left-list">
+                        <p class="title">Linh kiện sắp hết</p>
+                        <a href="numberPart" class="more">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
+                        <table border="1">
+                            <thead>
+                                <tr>
+                                    <th>Part ID</th>
+                                    <th>Tên linh kiện</th>
+                                    <th>Danh mục</th>
+                                    <th>Số lượng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:choose>
+                                    <c:when test="${not empty lowStockParts}">
+                                        <c:forEach var="part" items="${lowStockParts}">
+                                            <tr>
+                                                <td>${part.partId}</td>
+                                                <td>${part.partName}</td>
+                                                <td>${part.categoryName != null ? part.categoryName : 'N/A'}</td>
+                                                <td>${part.quantity}</td>
+                                            </tr>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <tr>
+                                            <td colspan="4" class="empty-row">Không có linh kiện sắp hết</td>
+                                        </tr>
+                                    </c:otherwise>
+                                </c:choose>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="right-list">
+                        <p class="title">Những linh kiện được sử dụng nhiều</p>
+                        <a href="numberPart" class="more">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
+                        <table border="1">
+                            <thead>
+                                <tr>
+                                    <th>Part ID</th>
+                                    <th>Tên linh kiện</th>
+                                    <th>Danh mục</th>
+                                    <th>Đang dùng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:choose>
+                                    <c:when test="${not empty mostUsedParts}">
+                                        <c:forEach var="part" items="${mostUsedParts}">
+                                            <tr>
+                                                <td>${part.partId}</td>
+                                                <td>${part.partName}</td>
+                                                <td>${part.categoryName != null ? part.categoryName : 'N/A'}</td>
+                                                <td>${part.quantity}</td>
+                                            </tr>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <tr>
+                                            <td colspan="4" class="empty-row">Không có dữ liệu</td>
+                                        </tr>
+                                    </c:otherwise>
+                                </c:choose>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Chart: Equipment Status - DỮ LIỆU THẬT TỪ SERVER
+        const ctx = document.getElementById('inventoryChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Có sẵn', 'Hết hàng', 'Sắp hết', 'Ngừng dùng'],
+                datasets: [{
+                    data: [
+                        ${chartInStock}, 
+                        ${chartOutOfStock}, 
+                        ${chartLowStock}, 
+                        ${chartDeadStock}
+                    ],
+                    backgroundColor: ['#00b894', '#6c5ce7', '#fdcb6e', '#d63031'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '70%',
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+</body>
 </html>

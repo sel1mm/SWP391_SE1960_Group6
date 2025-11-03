@@ -59,8 +59,7 @@ public class ListNumberEquipmentServlet extends HttpServlet {
         Account acc = (Account) session.getAttribute("session_login");
         
         // Xóa message cũ
-        session.removeAttribute("successMessage");
-        session.removeAttribute("errorMessage");
+   
         
         // Kiểm tra đăng nhập
         if (acc == null) {

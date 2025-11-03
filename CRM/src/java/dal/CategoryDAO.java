@@ -277,6 +277,127 @@ public class CategoryDAO extends DBContext {
         
         return list;
     }
+    // ===================================================================
+// THÊM METHOD NÀY VÀO FILE CategoryDAO.java
+// ===================================================================
+
+/**
+ * Lấy danh sách Category với sắp xếp
+ * @param sortBy - Kiểu sắp xếp: "id-asc", "id-desc", "name-asc", "name-desc"
+ * @return List<Category>
+ */
+public List<Category> getCategoriesSorted(String sortBy) {
+    List<Category> list = new ArrayList<>();
+    
+    try {
+        StringBuilder sql = new StringBuilder("SELECT * FROM Category");
+        
+        // Xác định ORDER BY clause
+        switch (sortBy) {
+            case "id-desc":
+                sql.append(" ORDER BY CategoryId DESC");
+                break;
+            case "name-asc":
+                sql.append(" ORDER BY CategoryName ASC");
+                break;
+            case "name-desc":
+                sql.append(" ORDER BY CategoryName DESC");
+                break;
+            case "id-asc":
+            default:
+                sql.append(" ORDER BY CategoryId ASC");
+                break;
+        }
+        
+        PreparedStatement ps = connection.prepareStatement(sql.toString());
+        ResultSet rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            Category category = new Category(
+                rs.getInt("CategoryId"),
+                rs.getString("CategoryName"),
+                rs.getString("Type")
+            );
+            list.add(category);
+        }
+        
+        System.out.println("✅ Sorted categories (" + sortBy + "): " + list.size() + " results");
+        
+    } catch (SQLException e) {
+        System.out.println("❌ Error in getCategoriesSorted: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    return list;
+}
+
+// ===================================================================
+// HẾT - Thêm method trên vào CategoryDAO.java
+// ===================================================================// Thêm method này vào CategoryDAO class
+
+/**
+ /**
+ * Lấy danh sách Category với sắp xếp và filter theo Type
+ * @param sortBy - Kiểu sắp xếp: "id-asc", "id-desc", "name-asc", "name-desc"
+ * @param typeFilter - Filter theo Type: "Part", "Equipment", hoặc "" (tất cả)
+ * @return List<Category>
+ */
+public List<Category> getCategoriesSortedAndFiltered(String sortBy, String typeFilter) {
+    List<Category> list = new ArrayList<>();
+    
+    try {
+        StringBuilder sql = new StringBuilder("SELECT * FROM Category");
+        
+        // Thêm WHERE clause nếu có filter by Type
+        if (typeFilter != null && !typeFilter.trim().isEmpty()) {
+            sql.append(" WHERE Type = ?");
+        }
+        
+        // Xác định ORDER BY clause
+        switch (sortBy) {
+            case "id-desc":
+                sql.append(" ORDER BY CategoryId DESC");
+                break;
+            case "name-asc":
+                sql.append(" ORDER BY CategoryName ASC");
+                break;
+            case "name-desc":
+                sql.append(" ORDER BY CategoryName DESC");
+                break;
+            case "id-asc":
+            default:
+                sql.append(" ORDER BY CategoryId ASC");
+                break;
+        }
+        
+        PreparedStatement ps = connection.prepareStatement(sql.toString());
+        
+        // Set parameter nếu có filter
+        if (typeFilter != null && !typeFilter.trim().isEmpty()) {
+            ps.setString(1, typeFilter);
+        }
+        
+        ResultSet rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            Category category = new Category(
+                rs.getInt("CategoryId"),
+                rs.getString("CategoryName"),
+                rs.getString("Type")
+            );
+            list.add(category);
+        }
+        
+        System.out.println("✅ Categories (sort: " + sortBy + ", type: " + typeFilter + "): " + list.size() + " results");
+        
+    } catch (SQLException e) {
+        System.out.println("❌ Error in getCategoriesSortedAndFiltered: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    return list;
+}
+    
 
     /**
      * GET CATEGORY STATISTICS

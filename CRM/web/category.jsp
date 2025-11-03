@@ -6,653 +6,922 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>CRM System - Category Management</title>
+    <title>CRM System - Quản lý danh mục</title>
 
     <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', 'Segoe UI', sans-serif;
-    background: #f5f7fa;
-    color: #333;
-    line-height: 1.6;
-}
-
-/* NAVBAR */
-.navbar {
-    background: #000000;
-    padding: 1rem 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-
-.nav-container {
-    max-width: 100%;
-    padding: 0 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo {
-    color: white;
-    font-size: 24px;
-    font-weight: 600;
-}
-
-.nav-links {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-}
-
-.nav-links a {
-    color: white;
-    text-decoration: none;
-    font-weight: 400;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    padding: 8px 16px;
-    border-radius: 4px;
-}
-
-.nav-links a:hover {
-    background: rgba(255,255,255,0.1);
-}
-
-/* SIDEBAR */
-.sidebar {
-    width: 220px;
-    min-height: calc(100vh - 65px);
-    position: fixed;
-    top: 65px;
-    left: 0;
-    background: #000000;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
-}
-
-.sidebar a {
-    color: white;
-    text-decoration: none;
-    padding: 12px 20px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.2s ease;
-    font-weight: 400;
-    border-left: 3px solid transparent;
-}
-
-.sidebar a:hover, .sidebar a.active {
-    background: rgba(255,255,255,0.08);
-    border-left: 3px solid white;
-}
-
-/* CONTENT */
-.content {
-    margin-left: 220px;
-    padding: 40px;
-    min-height: calc(100vh - 65px);
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-.page-header h2 {
-    color: #1a202c;
-    font-size: 32px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.btn-add-new {
-    background: #3b82f6;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-add-new:hover {
-    background: #2563eb;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59,130,246,0.4);
-}
-
-/* FILTER SECTION */
-.filter-section {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    margin-bottom: 24px;
-}
-
-.filter-group {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-.filter-group label {
-    font-weight: 600;
-    color: #4b5563;
-    font-size: 14px;
-}
-
-.filter-select {
-    padding: 10px 16px;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 14px;
-    outline: none;
-    background: white;
-    transition: all 0.2s;
-    cursor: pointer;
-    min-width: 200px;
-}
-
-.filter-select:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-}
-
-/* MESSAGES */
-.message {
-    padding: 16px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-weight: 500;
-    animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.message.success {
-    background: #d1fae5;
-    color: #065f46;
-    border: 1px solid #6ee7b7;
-}
-
-.message.error {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fca5a5;
-}
-
-/* TABLE */
-.table-container {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-.category-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.category-table thead {
-    background: #f9fafb;
-    border-bottom: 2px solid #e5e7eb;
-}
-
-.category-table thead th {
-    padding: 16px 20px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 13px;
-    color: #374151;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.category-table tbody td {
-    padding: 16px 20px;
-    border-bottom: 1px solid #f3f4f6;
-    font-size: 14px;
-    color: #6b7280;
-}
-
-.category-table tbody tr {
-    transition: all 0.2s;
-}
-
-.category-table tbody tr:hover {
-    background: #f9fafb;
-}
-
-.category-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-/* TYPE BADGE */
-.type-badge {
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.type-badge.part {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.type-badge.product {
-    background: #fce7f3;
-    color: #9f1239;
-}
-
-/* ACTION BUTTONS */
-.action-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.btn-icon {
-    width: 36px;
-    height: 36px;
-    border: 2px solid;
-    background: white;
-    border-radius: 8px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    font-size: 14px;
-}
-
-.btn-edit {
-    border-color: #3b82f6;
-    color: #3b82f6;
-}
-
-.btn-edit:hover {
-    background: #3b82f6;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(59,130,246,0.3);
-}
-
-.btn-delete {
-    border-color: #ef4444;
-    color: #ef4444;
-}
-
-.btn-delete:hover {
-    background: #ef4444;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(239,68,68,0.3);
-}
-
-/* MODAL */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(4px);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-    animation: fadeIn 0.3s ease;
-}
-
-.modal-overlay.show {
-    display: flex;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.modal-container {
-    background: white;
-    border-radius: 16px;
-    width: 500px;
-    max-width: 95%;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-    animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(50px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.modal-header {
-    padding: 24px 28px;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modal-header h3 {
-    font-size: 20px;
-    font-weight: 700;
-    color: #1a202c;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.modal-close {
-    background: #f3f4f6;
-    border: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 18px;
-    color: #6b7280;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.modal-close:hover {
-    background: #e5e7eb;
-    color: #1f2937;
-    transform: rotate(90deg);
-}
-
-.modal-body {
-    padding: 28px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.form-group label .required {
-    color: #ef4444;
-}
-
-.form-group input,
-.form-group select {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-}
-
-.form-message {
-    font-size: 13px;
-    margin-top: 12px;
-    text-align: center;
-    min-height: 20px;
-    font-weight: 500;
-}
-
-.modal-footer {
-    padding: 20px 28px;
-    background: #f9fafb;
-    border-top: 1px solid #e5e7eb;
-    border-radius: 0 0 16px 16px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-}
-
-.btn-modal {
-    padding: 10px 24px;
-    border-radius: 8px;
-    border: none;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-save {
-    background: #3b82f6;
-    color: white;
-}
-
-.btn-save:hover {
-    background: #2563eb;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59,130,246,0.4);
-}
-
-.btn-cancel {
-    background: #e5e7eb;
-    color: #374151;
-}
-
-.btn-cancel:hover {
-    background: #d1d5db;
-}
-
-/* NO DATA */
-.no-data {
-    text-align: center;
-    padding: 60px 20px;
-    color: #9ca3af;
-}
-
-.no-data i {
-    font-size: 64px;
-    margin-bottom: 16px;
-    display: block;
-    opacity: 0.5;
-}
-
-.no-data p {
-    font-size: 16px;
-    font-weight: 500;
-}
-
-/* RESPONSIVE */
-@media (max-width: 900px) {
-    .content {
-        margin-left: 0;
-        padding: 20px;
-    }
-    .sidebar {
-        display: none;
-    }
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-    }
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 220px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #000000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+            z-index: 1001;
+        }
+
+        .sidebar-logo {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 65px;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding-top: 10px;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(255,255,255,0.08);
+            border-left: 3px solid white;
+        }
+
+        .sidebar a i {
+            min-width: 18px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .sidebar .logout-btn {
+            margin-top: auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .navbar {
+            background: #f5f5f5;
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 220px;
+            right: 0;
+            z-index: 1000;
+            height: 65px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .user-info {
+            color: #2c5f6f;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 8px 20px;
+            background: #d4f1f4;
+            border-radius: 6px;
+            border: 1px solid #b8e6e9;
+        }
+
+        .container {
+            margin-left: 220px;
+            margin-top: 65px;
+            min-height: calc(100vh - 65px);
+        }
+
+        .content {
+            padding: 30px 40px;
+            background: #f5f5f5;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-header h2 {
+            color: #333;
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-add-new {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-add-new:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(40,167,69,0.3);
+        }
+
+        /* FILTER & SORT SECTION */
+        .sort-section {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sort-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .sort-group label {
+            font-weight: 600;
+            color: #666;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sort-select {
+            padding: 9px 36px 9px 14px;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            background: #fafafa;
+            transition: all 0.2s;
+            cursor: pointer;
+            min-width: 200px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        .sort-select:focus {
+            border-color: #999;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+            background-color: white;
+        }
+
+        .total-count {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .total-count strong {
+            color: #007bff;
+            font-size: 16px;
+        }
+
+        /* TABLE */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .category-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .category-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .category-table thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .category-table tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .category-table tbody tr {
+            transition: all 0.2s;
+        }
+
+        .category-table tbody tr:hover {
+            background: #f0f0f0;
+        }
+
+        .category-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .type-badge.part {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .type-badge.equipment {
+            background: #fce7f3;
+            color: #9f1239;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .btn-edit {
+            background: #007bff;
+        }
+
+        .btn-edit:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,123,255,0.3);
+        }
+
+        .btn-delete {
+            background: #dc3545;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(220,53,69,0.3);
+        }
+
+        /* PAGINATION */
+        .pagination-container {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .pagination a, .pagination span {
+            padding: 8px 14px;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            font-size: 14px;
+            transition: all 0.2s;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .pagination a:hover {
+            background: #f0f0f0;
+            border-color: #999;
+        }
+
+        .pagination .active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+            font-weight: 600;
+        }
+
+        .pagination .disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* DELETE CONFIRMATION MODAL */
+        .delete-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .delete-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delete-modal-icon {
+            font-size: 50px;
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+
+        .delete-modal h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+
+        .delete-modal p {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .delete-modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-confirm-delete, .btn-cancel-delete {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-confirm-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-confirm-delete:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(220,53,69,0.4);
+        }
+
+        .btn-cancel-delete {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-cancel-delete:hover {
+            background: #5a6268;
+        }
+
+        /* MODAL FORM */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-container {
+            background: white;
+            border-radius: 8px;
+            width: 480px;
+            max-width: 95%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: #f3f4f6;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group label .required {
+            color: #dc3545;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #999;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+            background: white;
+        }
+
+        .form-message {
+            font-size: 13px;
+            margin-top: 12px;
+            text-align: center;
+            min-height: 20px;
+            font-weight: 500;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-modal {
+            padding: 9px 18px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-save {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(40,167,69,0.3);
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .no-data i {
+            font-size: 64px;
+            margin-bottom: 16px;
+            display: block;
+            opacity: 0.5;
+        }
+
+        .no-data p {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 900px) {
+            .content {
+                padding: 20px;
+                margin-left: 0;
+                width: 100%;
+            }
+            .sidebar {
+                display: none;
+            }
+            .navbar {
+                left: 0;
+            }
+            .container {
+                margin-left: 0;
+            }
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            .sort-section {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+            .pagination-container {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">CRM System</div>
-            <div class="nav-links">
-                <a href="#"><i class="fas fa-envelope"></i> Tin nhắn</a>
-                <a href="#"><i class="fas fa-bell"></i> Thông báo</a>
-                <a href="login">Xin chào ${sessionScope.session_login.fullName}</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Sidebar -->
     <div class="sidebar">
-        <div>
-            <a href="storekeeper"><i class="fas fa-user-cog"></i><span>Trang chủ</span></a>
+        <div class="sidebar-logo">CRM System</div>
+        <div class="sidebar-menu">
+            <a href="storekeeper"><i class="fas fa-home"></i><span>Trang chủ</span></a>
             <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
             <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
             <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
-            <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị </span></a>
+            <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị</span></a>
             <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
             <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết linh kiện</span></a>
             <a href="category" class="active"><i class="fas fa-tags"></i><span>Quản lý danh mục</span></a>
         </div>
-        <a href="logout" style="background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-weight: 500;">
+        <a href="logout" class="logout-btn">
             <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
         </a>
     </div>
 
-    <!-- Content -->
-    <div class="content">
-        <div class="page-header">
-            <h2><i class="fas fa-tags"></i> Quản lý danh mục</h2>
-            <button class="btn-add-new" onclick="openModal('add')">
-                <i class="fas fa-plus"></i> Add New Category
-            </button>
+    <nav class="navbar">
+        <div class="user-info">
+            Xin chào ${sessionScope.username}
         </div>
+    </nav>
 
-        <!-- Messages -->
-        <c:if test="${not empty successMessage}">
-            <div class="message success">
-                <i class="fas fa-check-circle"></i> ${successMessage}
+    <div class="container">
+        <div class="content">
+            <div class="page-header">
+                <h2><i class="fas fa-tags"></i> Quản lý danh mục</h2>
+                <button class="btn-add-new" onclick="openModal('add')">
+                    <i class="fas fa-plus"></i> Add New Category
+                </button>
             </div>
-        </c:if>
-        <c:if test="${not empty errorMessage}">
-            <div class="message error">
-                <i class="fas fa-exclamation-circle"></i> ${errorMessage}
+
+            <c:if test="${not empty sessionScope.successMessage}">
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    ${sessionScope.successMessage}
+                </div>
+            </c:if>
+            
+            <c:if test="${not empty sessionScope.errorMessage}">
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    ${sessionScope.errorMessage}
+                </div>
+            </c:if>
+
+            <!-- Filter & Sort Section -->
+            <div class="sort-section">
+                <div class="sort-group">
+                    <label><i class="fas fa-filter"></i> Type:</label>
+                    <select class="sort-select" id="typeFilter" style="min-width: 150px;">
+                        <option value="">All Types</option>
+                        <option value="Part" ${typeFilter == 'Part' ? 'selected' : ''}>Part</option>
+                        <option value="Equipment" ${typeFilter == 'Equipment' ? 'selected' : ''}>Equipment</option>
+                    </select>
+                    
+                    <label style="margin-left: 20px;"><i class="fas fa-sort"></i> Sort by:</label>
+                    <select class="sort-select" id="sortBy">
+                        <option value="id-asc" ${sortBy == 'id-asc' ? 'selected' : ''}>ID (Ascending)</option>
+                        <option value="id-desc" ${sortBy == 'id-desc' ? 'selected' : ''}>ID (Descending)</option>
+                        <option value="name-asc" ${sortBy == 'name-asc' ? 'selected' : ''}>Name (Ascending)</option>
+                        <option value="name-desc" ${sortBy == 'name-desc' ? 'selected' : ''}>Name (Descending)</option>
+                    </select>
+                </div>
+                <div class="total-count">
+                    Total: <strong>${totalRecords}</strong> categories
+                </div>
             </div>
-        </c:if>
 
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <form action="category" method="GET" class="filter-group">
-                <label><i class="fas fa-filter"></i> Filter by Type:</label>
-                <select name="typeFilter" class="filter-select" onchange="this.form.submit()">
-                    <option value="">All Categories</option>
-                    <option value="Part" ${param.typeFilter == 'Part' ? 'selected' : ''}>Part</option>
-                    <option value="Product" ${param.typeFilter == 'Product' ? 'selected' : ''}>Product</option>
-                </select>
-            </form>
-        </div>
-
-        <!-- Table -->
-        <div class="table-container">
-            <table class="category-table">
-                <thead>
-                    <tr>
-                        <th style="width: 10%;">ID</th>
-                        <th style="width: 40%;">Category Name</th>
-                        <th style="width: 25%;">Type</th>
-                        <th style="width: 25%;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:choose>
-                        <c:when test="${not empty categoryList}">
-                            <c:forEach items="${categoryList}" var="cat">
+            <!-- Table -->
+            <div class="table-container">
+                <table class="category-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;">ID</th>
+                            <th style="width: 40%;">Category Name</th>
+                            <th style="width: 25%;">Type</th>
+                            <th style="width: 25%;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <c:choose>
+                            <c:when test="${not empty categoryList}">
+                                <c:forEach items="${categoryList}" var="cat">
+                                    <tr>
+                                        <td>${cat.categoryId}</td>
+                                        <td><strong>${cat.categoryName}</strong></td>
+                                        <td>
+                                            <span class="type-badge ${cat.type.toLowerCase()}">
+                                                ${cat.type}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon btn-edit" 
+                                                        data-id="${cat.categoryId}"
+                                                        data-name="${cat.categoryName}"
+                                                        data-type="${cat.type}"
+                                                        title="Edit Category">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                                <button class="btn-icon btn-delete" 
+                                                        data-id="${cat.categoryId}"
+                                                        data-name="${cat.categoryName}"
+                                                        title="Delete Category">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
                                 <tr>
-                                    <td>${cat.categoryId}</td>
-                                    <td><strong>${cat.categoryName}</strong></td>
-                                    <td>
-                                        <span class="type-badge ${cat.type.toLowerCase()}">
-                                            ${cat.type}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-icon btn-edit" 
-                                                    data-id="${cat.categoryId}"
-                                                    data-name="${cat.categoryName}"
-                                                    data-type="${cat.type}"
-                                                    title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn-icon btn-delete" 
-                                                    data-id="${cat.categoryId}"
-                                                    data-name="${cat.categoryName}"
-                                                    title="Delete">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                    <td colspan="4">
+                                        <div class="no-data">
+                                            <i class="fas fa-inbox"></i>
+                                            <p>No categories found</p>
                                         </div>
                                     </td>
                                 </tr>
-                            </c:forEach>
-                        </c:when>
-                        <c:otherwise>
-                            <tr>
-                                <td colspan="4">
-                                    <div class="no-data">
-                                        <i class="fas fa-inbox"></i>
-                                        <p>No categories found</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </c:otherwise>
-                    </c:choose>
-                </tbody>
-            </table>
+                            </c:otherwise>
+                        </c:choose>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <c:if test="${totalPages > 1}">
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        Showing page <strong>${currentPage}</strong> of <strong>${totalPages}</strong>
+                    </div>
+                    
+                    <div class="pagination">
+                        <c:if test="${currentPage > 1}">
+                            <a href="?page=1&sortBy=${sortBy}&typeFilter=${typeFilter}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </c:if>
+                        <c:if test="${currentPage == 1}">
+                            <span class="disabled">
+                                <i class="fas fa-angle-double-left"></i>
+                            </span>
+                        </c:if>
+                        
+                        <c:if test="${currentPage > 1}">
+                            <a href="?page=${currentPage - 1}&sortBy=${sortBy}&typeFilter=${typeFilter}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </c:if>
+                        <c:if test="${currentPage == 1}">
+                            <span class="disabled">
+                                <i class="fas fa-angle-left"></i>
+                            </span>
+                        </c:if>
+                        
+                        <c:forEach begin="1" end="${totalPages}" var="i">
+                            <c:if test="${i >= currentPage - 2 && i <= currentPage + 2}">
+                                <c:choose>
+                                    <c:when test="${i == currentPage}">
+                                        <span class="active">${i}</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a href="?page=${i}&sortBy=${sortBy}&typeFilter=${typeFilter}">${i}</a>
+                                    </c:otherwise>
+                                </c:choose>
+                            </c:if>
+                        </c:forEach>
+                        
+                        <c:if test="${currentPage < totalPages}">
+                            <a href="?page=${currentPage + 1}&sortBy=${sortBy}&typeFilter=${typeFilter}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </c:if>
+                        <c:if test="${currentPage == totalPages}">
+                            <span class="disabled">
+                                <i class="fas fa-angle-right"></i>
+                            </span>
+                        </c:if>
+                        
+                        <c:if test="${currentPage < totalPages}">
+                            <a href="?page=${totalPages}&sortBy=${sortBy}&typeFilter=${typeFilter}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </c:if>
+                        <c:if test="${currentPage == totalPages}">
+                            <span class="disabled">
+                                <i class="fas fa-angle-double-right"></i>
+                            </span>
+                        </c:if>
+                    </div>
+                </div>
+            </c:if>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div class="delete-modal" id="deleteModal">
+        <div class="delete-modal-content">
+            <div class="delete-modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3>Xác nhận xóa</h3>
+            <p id="deleteModalMessage">Bạn có chắc muốn xóa category này?</p>
+            <small style="color: #999; display: block; margin-bottom: 20px;">
+                <i class="fas fa-info-circle"></i> Lưu ý: Xóa sẽ thất bại nếu có Parts/Equipments đang sử dụng category này.
+            </small>
+            <div class="delete-modal-buttons">
+                <button type="button" class="btn-confirm-delete" onclick="confirmDeleteAction()">
+                    <i class="fas fa-check"></i> Xác nhận
+                </button>
+                <button type="button" class="btn-cancel-delete" onclick="closeDeleteModal()">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+            </div>
         </div>
     </div>
 
@@ -682,7 +951,7 @@ body {
                         <select name="type" id="categoryType" required>
                             <option value="">-- Select Type --</option>
                             <option value="Part">Part</option>
-                            <option value="Product">Product</option>
+                            <option value="Equipment">Equipment</option>
                         </select>
                     </div>
 
@@ -702,7 +971,58 @@ body {
     </div>
 
     <script>
-        // ========== MODAL FUNCTIONS ==========
+        let deleteCategoryId = null;
+        let deleteCategoryName = '';
+
+        // SHOW DELETE MODAL
+       // SHOW DELETE MODAL - FIXED
+function showDeleteModal(categoryId, categoryName) {
+    const id = String(categoryId);
+    const name = String(categoryName);
+    
+    deleteCategoryId = categoryId;
+    deleteCategoryName = categoryName;
+    
+    const modal = document.getElementById("deleteModal");
+    const message = document.getElementById("deleteModalMessage");
+    
+    // Dùng nối chuỗi thay vì template literal
+    message.innerHTML = 'Bạn có chắc muốn xóa category:<br><strong>"' + name + '"</strong> (ID: ' + id + ')?';
+    
+    modal.style.display = "flex";
+}
+
+        // CLOSE DELETE MODAL
+        function closeDeleteModal() {
+            document.getElementById("deleteModal").style.display = "none";
+            deleteCategoryId = null;
+            deleteCategoryName = '';
+        }
+
+        // CONFIRM DELETE ACTION
+        function confirmDeleteAction() {
+            if (deleteCategoryId) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'category';
+
+                const actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                actionInput.value = 'delete';
+
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'categoryId';
+                idInput.value = deleteCategoryId;
+
+                form.appendChild(actionInput);
+                form.appendChild(idInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
         function openModal(mode, categoryId = '', categoryName = '', type = '') {
             const modal = document.getElementById('categoryModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -710,7 +1030,7 @@ body {
             const formMessage = document.getElementById('formMessage');
             
             formMessage.textContent = '';
-            formMessage.style.color = '#ef4444';
+            formMessage.style.color = '#dc3545';
             
             if (mode === 'add') {
                 modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Add New Category';
@@ -762,32 +1082,17 @@ body {
             return true;
         }
 
-        function deleteCategory(categoryId, categoryName) {
-            if (confirm('Are you sure you want to delete "' + categoryName + '"?\n\nNote: This will fail if there are Parts/Products using this category.')) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = 'category';
-
-                const actionInput = document.createElement('input');
-                actionInput.type = 'hidden';
-                actionInput.name = 'action';
-                actionInput.value = 'delete';
-
-                const idInput = document.createElement('input');
-                idInput.type = 'hidden';
-                idInput.name = 'categoryId';
-                idInput.value = categoryId;
-
-                form.appendChild(actionInput);
-                form.appendChild(idInput);
-                document.body.appendChild(form);
-                form.submit();
-            }
+        function applyFilters() {
+            const typeFilter = document.getElementById('typeFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            window.location.href = 'category?typeFilter=' + typeFilter + '&sortBy=' + sortBy;
         }
 
-        // ========== EVENT LISTENERS ==========
         document.addEventListener('DOMContentLoaded', function() {
-            // Edit button click
+            // Apply filters on change
+            document.getElementById('typeFilter').addEventListener('change', applyFilters);
+            document.getElementById('sortBy').addEventListener('change', applyFilters);
+
             document.querySelectorAll('.btn-edit').forEach(function(button) {
                 button.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
@@ -797,16 +1102,14 @@ body {
                 });
             });
 
-            // Delete button click
             document.querySelectorAll('.btn-delete').forEach(function(button) {
                 button.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
                     const name = this.getAttribute('data-name');
-                    deleteCategory(id, name);
+                    showDeleteModal(id, name);
                 });
             });
 
-            // Close modal when clicking outside
             const modal = document.getElementById('categoryModal');
             if (modal) {
                 modal.addEventListener('click', function(e) {
@@ -816,7 +1119,15 @@ body {
                 });
             }
 
-            // Real-time validation for category name
+            const deleteModal = document.getElementById('deleteModal');
+            if (deleteModal) {
+                deleteModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeDeleteModal();
+                    }
+                });
+            }
+
             const categoryNameInput = document.getElementById('categoryName');
             if (categoryNameInput) {
                 categoryNameInput.addEventListener('input', function() {
@@ -830,31 +1141,30 @@ body {
                         formMessage.style.color = '#f59e0b';
                     } else if (length > 50) {
                         formMessage.textContent = `❌ Exceeded by ${length - 50} character(s)`;
-                        formMessage.style.color = '#ef4444';
+                        formMessage.style.color = '#dc3545';
                     } else {
                         formMessage.textContent = `✓ ${length}/50 characters`;
-                        formMessage.style.color = '#10b981';
+                        formMessage.style.color = '#28a745';
                     }
                 });
             }
 
-            // Auto-hide messages after 5 seconds
-            const messages = document.querySelectorAll('.message');
-            messages.forEach(function(msg) {
-                setTimeout(function() {
-                    msg.style.opacity = '0';
-                    msg.style.transform = 'translateY(-20px)';
-                    setTimeout(function() {
-                        msg.style.display = 'none';
-                    }, 300);
-                }, 5000);
-            });
-
-            // Close modal with ESC key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeModal();
+                    closeDeleteModal();
                 }
+            });
+
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 500);
+                }, 5000);
             });
         });
     </script>
