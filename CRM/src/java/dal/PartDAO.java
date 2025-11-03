@@ -17,81 +17,170 @@ public class PartDAO extends DBContext {
     /**
      * CREATE: Thêm mới một Part VÀ TẠO INVENTORY MẶC ĐỊNH
      */
-    public boolean addPart(NewPart part) {
-        PreparedStatement psPart = null;
-        PreparedStatement psInventory = null;
+public boolean addPart(NewPart part) {
+    PreparedStatement psPart = null;
+    ResultSet generatedKeys = null;
+    
+    try {
+        // ✅ KIỂM TRA CONNECTION
+        if (connection == null || connection.isClosed()) {
+            System.out.println("❌ Connection is null or closed");
+            return false;
+        }
         
-        try {
-            connection.setAutoCommit(false);
-            
-            // 1. Thêm Part mới
-            String sqlPart = "INSERT INTO Part (partName, description, unitPrice, categoryId, " +
-                           "lastUpdatedBy, lastUpdatedDate) VALUES (?, ?, ?, ?, ?, ?)";
-            psPart = connection.prepareStatement(sqlPart, Statement.RETURN_GENERATED_KEYS);
-            psPart.setString(1, part.getPartName());
-            psPart.setString(2, part.getDescription());
-            psPart.setDouble(3, part.getUnitPrice());
-            
-            // Handle categoryId (can be NULL)
-            if (part.getCategoryId() != null) {
-                psPart.setInt(4, part.getCategoryId());
-            } else {
-                psPart.setNull(4, Types.INTEGER);
-            }
-            
-            psPart.setInt(5, part.getLastUpdatedBy());
-            
-            if (part.getLastUpdatedDate() != null) {
-                psPart.setDate(6, Date.valueOf(part.getLastUpdatedDate()));
-            } else {
-                psPart.setDate(6, Date.valueOf(LocalDate.now()));
-            }
-            
-            int affectedRows = psPart.executeUpdate();
-            
-            if (affectedRows > 0) {
-                // Lấy partId vừa tạo
-                ResultSet rs = psPart.getGeneratedKeys();
-                if (rs.next()) {
-                    int newPartId = rs.getInt(1);
-                    
-                    // 2. Tạo Inventory với quantity = 0
-                    String sqlInventory = "INSERT INTO Inventory (partId, quantity, lastUpdatedBy, lastUpdatedDate) " +
-                                        "VALUES (?, 0, ?, ?)";
-                    psInventory = connection.prepareStatement(sqlInventory);
-                    psInventory.setInt(1, newPartId);
-                    psInventory.setInt(2, part.getLastUpdatedBy());
-                    psInventory.setDate(3, Date.valueOf(LocalDate.now()));
-                    psInventory.executeUpdate();
-                    
-                    connection.commit();
-                    System.out.println("✅ Đã tạo Part ID=" + newPartId + " (Category: " + part.getCategoryId() + ") và Inventory");
-                    return true;
-                }
-            }
-            
+        // ✅ KIỂM TRA DỮ LIỆU ĐẦU VÀO
+        if (part == null) {
+            System.out.println("❌ Part object is null");
+            return false;
+        }
+        
+        if (part.getPartName() == null || part.getPartName().trim().isEmpty()) {
+            System.out.println("❌ Part name is required");
+            return false;
+        }
+        
+        if (part.getLastUpdatedBy() <= 0) {
+            System.out.println("❌ Invalid lastUpdatedBy: " + part.getLastUpdatedBy());
+            return false;
+        }
+        
+        // ✅ VALIDATE UNIT PRICE
+        if (part.getUnitPrice() <= 0) {
+            System.out.println("❌ Invalid unit price: " + part.getUnitPrice());
+            return false;
+        }
+        
+        System.out.println("=== START ADD PART ===");
+        System.out.println("Part Name: " + part.getPartName());
+        System.out.println("Description: " + part.getDescription());
+        System.out.println("Unit Price: " + part.getUnitPrice());
+        System.out.println("Category ID: " + part.getCategoryId());
+        System.out.println("Last Updated By: " + part.getLastUpdatedBy());
+        
+        connection.setAutoCommit(false);
+        System.out.println("✅ Transaction started");
+        
+        // Thêm Part mới
+        String sqlPart = "INSERT INTO Part (partName, description, unitPrice, categoryId, " +
+                       "lastUpdatedBy, lastUpdatedDate) VALUES (?, ?, ?, ?, ?, ?)";
+        psPart = connection.prepareStatement(sqlPart, Statement.RETURN_GENERATED_KEYS);
+        
+        // 1. Part Name - ALWAYS REQUIRED
+        psPart.setString(1, part.getPartName().trim());
+        
+        // 2. Description - ALWAYS REQUIRED (based on servlet validation)
+        if (part.getDescription() != null && !part.getDescription().trim().isEmpty()) {
+            psPart.setString(2, part.getDescription().trim());
+        } else {
+            System.out.println("⚠️ Description is empty, setting NULL");
+            psPart.setNull(2, Types.VARCHAR);
+        }
+        
+        // 3. ✅ FIXED: Unit Price - ALWAYS SET VALUE (never NULL)
+        psPart.setDouble(3, part.getUnitPrice());
+        System.out.println("✅ Set unitPrice: " + part.getUnitPrice());
+        
+        // 4. Category ID - CAN BE NULL
+        if (part.getCategoryId() != null && part.getCategoryId() > 0) {
+            psPart.setInt(4, part.getCategoryId());
+            System.out.println("✅ Set categoryId: " + part.getCategoryId());
+        } else {
+            psPart.setNull(4, Types.INTEGER);
+            System.out.println("✅ Set categoryId: NULL");
+        }
+        
+        // 5. Last Updated By - ALWAYS REQUIRED
+        psPart.setInt(5, part.getLastUpdatedBy());
+        
+        // 6. Last Updated Date - ALWAYS SET
+        if (part.getLastUpdatedDate() != null) {
+            psPart.setDate(6, Date.valueOf(part.getLastUpdatedDate()));
+        } else {
+            psPart.setDate(6, Date.valueOf(LocalDate.now()));
+        }
+        
+        System.out.println("📝 Executing INSERT Part query...");
+        int affectedRows = psPart.executeUpdate();
+        System.out.println("✅ Part INSERT affected rows: " + affectedRows);
+        
+        if (affectedRows == 0) {
+            System.out.println("❌ INSERT Part failed - no rows affected");
             connection.rollback();
             return false;
-            
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-            System.out.println("❌ Lỗi khi thêm Part và Inventory: " + e.getMessage());
-            e.printStackTrace();
+        }
+        
+        // ✅ LẤY GENERATED KEY
+        generatedKeys = psPart.getGeneratedKeys();
+        if (!generatedKeys.next()) {
+            System.out.println("❌ Failed to get generated Part ID");
+            connection.rollback();
             return false;
-        } finally {
-            try {
-                if (psPart != null) psPart.close();
-                if (psInventory != null) psInventory.close();
-                connection.setAutoCommit(true);
-            } catch (SQLException e) {
-                e.printStackTrace();
+        }
+        
+        int newPartId = generatedKeys.getInt(1);
+        System.out.println("✅ New Part ID created: " + newPartId);
+        
+        connection.commit();
+        System.out.println("✅✅✅ TRANSACTION COMMITTED - Part ID=" + newPartId + 
+                         " (Category: " + part.getCategoryId() + ") created successfully!");
+        return true;
+        
+    } catch (SQLException e) {
+        System.out.println("❌❌❌ SQL EXCEPTION OCCURRED ❌❌❌");
+        System.out.println("Error Message: " + e.getMessage());
+        System.out.println("SQL State: " + e.getSQLState());
+        System.out.println("Error Code: " + e.getErrorCode());
+        
+        try {
+            if (connection != null) {
+                connection.rollback();
+                System.out.println("🔄 Transaction rolled back");
             }
+        } catch (SQLException ex) {
+            System.out.println("❌ Rollback error: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+        
+        e.printStackTrace();
+        return false;
+        
+    } catch (Exception e) {
+        System.out.println("❌❌❌ UNEXPECTED EXCEPTION ❌❌❌");
+        System.out.println("Error: " + e.getMessage());
+        
+        try {
+            if (connection != null) {
+                connection.rollback();
+                System.out.println("🔄 Transaction rolled back");
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+        e.printStackTrace();
+        return false;
+        
+    } finally {
+        try {
+            // ✅ ĐÓNG RESOURCES THEO THỨ TỰ ĐÚNG
+            if (generatedKeys != null) {
+                generatedKeys.close();
+                System.out.println("🔒 ResultSet closed");
+            }
+            if (psPart != null) {
+                psPart.close();
+                System.out.println("🔒 psPart closed");
+            }
+            if (connection != null) {
+                connection.setAutoCommit(true);
+                System.out.println("🔒 AutoCommit restored");
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error closing resources: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+}
 
     /**
      * READ: Lấy thông tin 1 part theo id (với category)
@@ -156,7 +245,23 @@ public class PartDAO extends DBContext {
         }
         return list;
     }
-
+public int getZeroQuantityPartsCount() {
+    String sql = "SELECT COUNT(*) AS zero_qty_parts " +
+                 "FROM Part p " +
+                 "WHERE NOT EXISTS ( " +
+                 "  SELECT 1 FROM PartDetail pd WHERE pd.partId = p.partId " +
+                 ")";
+    try (PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+            return rs.getInt("zero_qty_parts");
+        }
+    } catch (SQLException ex) {
+        // Nếu muốn im lặng hoàn toàn khi lỗi, bỏ dòng dưới
+        ex.printStackTrace();
+    }
+    return 0;
+}
     /**
      * GET Parts by Category
      */
@@ -452,7 +557,18 @@ public class PartDAO extends DBContext {
         
         return categoryCount;
     }
-
+public int getPartCount() {
+        String sql = "SELECT COUNT(*) FROM Part";
+        try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return 0;
+    }
     // ==================== MAIN METHOD FOR TESTING ====================
     public static void main(String[] args) {
         PartDAO dao = new PartDAO();

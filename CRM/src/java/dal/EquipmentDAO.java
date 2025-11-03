@@ -48,7 +48,16 @@ public class EquipmentDAO extends DBContext {
 
         return list;
     }
-
+public int getEquipmentCount() {
+    String sql = "SELECT COUNT(*) FROM Equipment";
+    try (PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) return rs.getInt(1);
+    } catch (SQLException ex) {
+        ex.printStackTrace();
+    }
+    return 0;
+}
     /**
      * Find equipment by ID with category and user info
      */

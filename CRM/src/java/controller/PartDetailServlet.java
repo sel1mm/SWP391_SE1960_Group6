@@ -73,13 +73,16 @@ public class PartDetailServlet extends HttpServlet {
                 String status = request.getParameter("status");
                 String location = request.getParameter("location");
                 
-                if (serialNumber == null || serialNumber.trim().isEmpty()) {
+                // ✅ Trim dữ liệu đầu vào
+                if (serialNumber != null) serialNumber = serialNumber.trim();
+                if (status != null) status = status.trim();
+                if (location != null) location = location.trim();
+                
+                if (serialNumber == null || serialNumber.isEmpty()) {
                     session.setAttribute("errorMessage", "Serial Number không được để trống!");
                     response.sendRedirect("partDetail");
                     return;
                 }
-                
-                serialNumber = serialNumber.trim();
                 
                 String serialPattern = "^[A-Z]{3}-\\d{3}-\\d{4}$";
                 if (!serialNumber.matches(serialPattern)) {
@@ -100,13 +103,11 @@ public class PartDetailServlet extends HttpServlet {
                     return;
                 }
                 
-                if (location == null || location.trim().isEmpty()) {
+                if (location == null || location.isEmpty()) {
                     session.setAttribute("errorMessage", "Location không được để trống!");
                     response.sendRedirect("partDetail");
                     return;
                 }
-                
-                location = location.trim();
                 
                 if (location.length() < 5) {
                     session.setAttribute("errorMessage", "Location phải có ít nhất 5 ký tự!");
@@ -120,12 +121,13 @@ public class PartDetailServlet extends HttpServlet {
                     return;
                 }
                 
-                if (status == null || status.trim().isEmpty()) {
+                if (status == null || status.isEmpty()) {
                     session.setAttribute("errorMessage", "Status không được để trống!");
                     response.sendRedirect("partDetail");
                     return;
                 }
                 
+                // ✅ Khi ADD, KHÔNG CHO PHÉP tạo mới với trạng thái InUse
                 if ("InUse".equalsIgnoreCase(status)) {
                     session.setAttribute("errorMessage", "Không thể tạo Part Detail với trạng thái InUse!");
                     response.sendRedirect("partDetail");
@@ -210,19 +212,23 @@ public class PartDetailServlet extends HttpServlet {
                 String location = request.getParameter("location");
                 String oldStatus = part.getStatus();
                 
+                // ✅ Trim dữ liệu đầu vào
+                if (serialNumber != null) serialNumber = serialNumber.trim();
+                if (newStatus != null) newStatus = newStatus.trim();
+                if (location != null) location = location.trim();
+                
+                // ✅ KHÔNG CHO PHÉP EDIT nếu trạng thái hiện tại là InUse
                 if ("InUse".equalsIgnoreCase(oldStatus)) {
-                    session.setAttribute("errorMessage", "⚠️ Không thể thay đổi trạng thái khi Part Detail đã ở trạng thái InUse!");
+                    session.setAttribute("errorMessage", "⚠️ Không thể chỉnh sửa Part Detail khi đã ở trạng thái InUse!");
                     response.sendRedirect("partDetail");
                     return;
                 }
                 
-                if (serialNumber == null || serialNumber.trim().isEmpty()) {
+                if (serialNumber == null || serialNumber.isEmpty()) {
                     session.setAttribute("errorMessage", "Serial Number không được để trống!");
                     response.sendRedirect("partDetail");
                     return;
                 }
-                
-                serialNumber = serialNumber.trim();
                 
                 String serialPattern = "^[A-Z]{3}-\\d{3}-\\d{4}$";
                 if (!serialNumber.matches(serialPattern)) {
@@ -247,13 +253,11 @@ public class PartDetailServlet extends HttpServlet {
                     return;
                 }
                 
-                if (location == null || location.trim().isEmpty()) {
+                if (location == null || location.isEmpty()) {
                     session.setAttribute("errorMessage", "Location không được để trống!");
                     response.sendRedirect("partDetail");
                     return;
                 }
-                
-                location = location.trim();
                 
                 if (location.length() < 5) {
                     session.setAttribute("errorMessage", "Location phải có ít nhất 5 ký tự!");
@@ -293,8 +297,9 @@ public class PartDetailServlet extends HttpServlet {
                         System.out.println("✅ History saved: " + notes);
                     }
                     
+                    // ✅ Cảnh báo nếu chuyển sang InUse
                     if ("InUse".equalsIgnoreCase(newStatus)) {
-                        session.setAttribute("successMessage", "⚠️ Cập nhật thành công! Lưu ý: Trạng thái InUse không thể thay đổi.");
+                        session.setAttribute("successMessage", "⚠️ Cập nhật thành công! Lưu ý: Trạng thái InUse không thể thay đổi sau này.");
                     } else {
                         session.setAttribute("successMessage", "Cập nhật thành công!");
                     }
@@ -361,6 +366,9 @@ public class PartDetailServlet extends HttpServlet {
         String filter = request.getParameter("filter");
         String categoryFilter = request.getParameter("categoryFilter");
 
+        // ✅ Trim keyword
+        if (keyword != null) keyword = keyword.trim();
+
         // ✅ FILTER BY CATEGORY TRƯỚC
         if (categoryFilter != null && !categoryFilter.isEmpty()) {
             try {
@@ -373,8 +381,8 @@ public class PartDetailServlet extends HttpServlet {
         }
 
         // Search theo keyword
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            String keywordLower = keyword.toLowerCase().trim();
+        if (keyword != null && !keyword.isEmpty()) {
+            String keywordLower = keyword.toLowerCase();
             System.out.println("Searching with keyword: " + keywordLower);
             
             list = list.stream()
