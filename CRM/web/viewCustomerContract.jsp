@@ -81,6 +81,51 @@
             left: 0;
             margin-top: 5px;
         }
+        
+        .appendix-item {
+            border-left: 3px solid #0d6efd;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .equipment-selection {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+
+        .equipment-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .equipment-item:hover {
+            background: #f8f9fa;
+        }
+
+        .equipment-item .form-check {
+            margin-bottom: 0;
+        }
+
+        .equipment-item .form-check-label {
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .category-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
     </style>
 </head>
 
@@ -331,7 +376,7 @@
                                             <div class="btn-group">
                                                 <button class="btn btn-sm btn-outline-dark" 
                                                         title="Xem chi tiết"
-                                                        onclick="viewContractDetails('${contract.contractId}')">
+                                                        onclick="viewContractDetailsWithAppendix('${contract.contractId}')">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                                 
@@ -340,6 +385,12 @@
                                                         onclick="viewEquipmentList('${contract.contractId}')">
                                                     <i class="fas fa-tools"></i>
                                                 </button>
+                                                    
+                                                    <button class="btn btn-sm btn-outline-warning" 
+                                                            title="Thêm phụ lục"
+                                                            onclick="openAddAppendixModal('${contract.contractId}', '${contract.customerName}')">
+                                                        <i class="fas fa-file-medical"></i>
+                                                    </button>
 
                                                 <c:if test="${not empty contract.documentUrl}">
                                                     <button class="btn btn-sm btn-outline-success" 
@@ -443,6 +494,14 @@
                     <tr><th>Email</th><td id="detail-customerEmail"></td></tr>
                     <tr><th>Số điện thoại</th><td id="detail-customerPhone"></td></tr>
                 </table>
+                
+                <h6 class="fw-bold mb-3 mt-4">
+                    <i class="fas fa-file-medical"></i> Phụ lục hợp đồng 
+                    (<span id="appendixCount">0</span>)
+                </h6>
+                <div id="appendixListContainer">
+                    <p class="text-muted">Chưa có phụ lục nào</p>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -510,7 +569,7 @@
 
 <!-- Modal: Create Contract -->
 <div class="modal fade" id="createContractModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-dark text-white">
                 <h5 class="modal-title">
@@ -519,32 +578,425 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <form id="createContractForm">
+            <form id="createContractForm" enctype="multipart/form-data">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Loại hợp đồng</label>
-                        <select name="contractType" class="form-select" required>
-                            <option value="">-- Chọn loại --</option>
-                            <option value="Rental">Rental</option>
-                            <option value="Purchase">Purchase</option>
-                            <option value="Maintenance">Maintenance</option>
-                        </select>
-                    </div>
+                    <div class="row">
+                        <!-- Cột trái: Thông tin hợp đồng -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-file-contract"></i> Thông tin hợp đồng
+                            </h6>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Chi tiết hợp đồng</label>
-                        <textarea name="details" class="form-control" rows="3" placeholder="Nhập chi tiết hợp đồng..." required></textarea>
-                    </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Khách hàng <span class="text-danger">*</span>
+                                </label>
+                                <select name="customerId" id="contract-customerSelect" class="form-select" required>
+                                    <option value="">-- Chọn khách hàng --</option>
+                                    <c:forEach var="c" items="${customerList}">
+                                        <option value="${c.accountId}">${c.fullName} (${c.email})</option>
+                                    </c:forEach>
+                                </select>
+                                <div class="invalid-feedback">Vui lòng chọn khách hàng</div>
+                            </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Ngày ký hợp đồng</label>
-                        <input type="date" name="contractDate" class="form-control" required>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Loại hợp đồng <span class="text-danger">*</span>
+                                </label>
+                                <select name="contractType" class="form-select" required>
+                                    <option value="">-- Chọn loại --</option>
+                                    <option value="Warranty">Bảo hành</option>
+                                    <option value="Maintenance">Bảo trì</option>
+                                    <option value="Sales">Mua bán</option>
+                                </select>
+                                <div class="invalid-feedback">Vui lòng chọn loại hợp đồng</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Ngày ký hợp đồng <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" 
+                                       name="contractDate" 
+                                       id="contractDate"
+                                       class="form-control" 
+                                       max="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>"
+                                       required>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> Ngày ký không được ở tương lai
+                                </small>
+                                <div class="invalid-feedback">Vui lòng chọn ngày ký hợp lệ</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Trạng thái <span class="text-danger">*</span>
+                                </label>
+                                <select name="status" class="form-select" required>
+                                    <option value="Active" selected>Active</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Chi tiết hợp đồng <span class="text-danger">*</span>
+                                </label>
+                                <textarea name="details" 
+                                          id="contract-details"
+                                          class="form-control" 
+                                          rows="3" 
+                                          placeholder="Nhập chi tiết hợp đồng..." 
+                                          required
+                                          minlength="10"
+                                          maxlength="255"></textarea>
+                                <small class="text-muted">
+                                    <span id="contract-detailsCount">0</span>/255 ký tự (tối thiểu 10)
+                                </small>
+                                <div class="invalid-feedback">Chi tiết phải từ 10-255 ký tự</div>
+                            </div>
+                        </div>
+
+                        <!-- Cột phải: Chọn thiết bị -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-tools"></i> Chọn thiết bị <span class="text-danger">*</span>
+                            </h6>
+
+                            <div class="mb-3">
+                                <input type="text" 
+                                       id="contract-equipmentSearch" 
+                                       class="form-control" 
+                                       placeholder="🔍 Tìm kiếm thiết bị...">
+                            </div>
+
+                            <div class="equipment-selection" id="contract-equipmentList">
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-info-circle"></i> Vui lòng chọn khách hàng trước
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <h6 class="fw-bold">
+                                    Thiết bị đã chọn (<span id="contract-selectedCount">0</span>)
+                                    <span class="text-danger">*</span>
+                                </h6>
+                                <div id="contract-selectedEquipmentList" 
+                                     class="border rounded p-2" 
+                                     style="min-height: 100px; max-height: 300px; overflow-y: auto;">
+                                    <p class="text-muted text-center mb-0">Chưa có thiết bị nào được chọn</p>
+                                </div>
+                                <div class="invalid-feedback d-block" id="contract-equipmentError"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-dark">Lưu hợp đồng</button>
+                    <button type="submit" class="btn btn-dark">
+                        <i class="fas fa-save me-1"></i> Lưu hợp đồng
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Contract Appendix -->
+<div class="modal fade" id="addAppendixModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-medical me-2"></i> Thêm Phụ Lục Hợp Đồng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="addAppendixForm">
+                <input type="hidden" id="appendix-contractId" name="contractId">
+                
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Hợp đồng: <strong id="appendix-contractInfo"></strong>
+                    </div>
+
+                    <div class="row">
+                        <!-- Thông tin phụ lục -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-clipboard"></i> Thông tin phụ lục
+                            </h6>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Loại phụ lục <span class="text-danger">*</span></label>
+                                <select name="appendixType" class="form-select" required>
+                                    <option value="">-- Chọn loại --</option>
+                                    <option value="AddEquipment">Thêm thiết bị</option>
+                                    <option value="Other">Khác</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Tên phụ lục <span class="text-danger">*</span></label>
+                                <input type="text" name="appendixName" class="form-control" 
+                                       placeholder="VD: Phụ lục 01 - Thêm thiết bị máy in" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Mô tả</label>
+                                <textarea name="description" class="form-control" rows="3" 
+                                          placeholder="Mô tả chi tiết về phụ lục..."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Ngày hiệu lực <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" 
+                                       name="effectiveDate" 
+                                       class="form-control" 
+                                       min="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>"
+                                       value="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>"
+                                       required>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> Ngày hiệu lực không được nhỏ hơn ngày hiện tại
+                                </small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Trạng thái</label>
+                                <select name="status" class="form-select">
+                                    <option value="Draft">Bản nháp</option>
+                                    <option value="Approved" selected>Đã duyệt</option>
+                                    <option value="Archived">Lưu trữ</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-file-upload"></i> File đính kèm 
+                                    <span class="text-danger">*</span>
+                                    <small class="text-muted">(PDF, Word, Excel - Max 10MB)</small>
+                                </label>
+                                <input type="file" 
+                                       name="fileAttachment" 
+                                       id="fileAttachment" 
+                                       class="form-control" 
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx"
+                                       required>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> Bắt buộc phải chọn file. Định dạng hỗ trợ: PDF, DOC, DOCX, XLS, XLSX
+                                </small>
+                                <div id="filePreview" class="mt-2"></div>
+                            </div>
+                        </div>
+
+                        <!-- Chọn thiết bị -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-tools"></i> Chọn thiết bị thêm vào
+                            </h6>
+
+                            <div class="mb-3">
+                                <input type="text" id="equipmentSearch" class="form-control" 
+                                       placeholder="🔍 Tìm kiếm thiết bị (Model, Serial Number)...">
+                            </div>
+
+                            <div class="equipment-selection" id="equipmentList">
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-spinner fa-spin"></i> Đang tải danh sách thiết bị...
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <h6 class="fw-bold">Thiết bị đã chọn (<span id="selectedCount">0</span>)</h6>
+                                <div id="selectedEquipmentList" class="border rounded p-2" style="min-height: 100px;">
+                                    <p class="text-muted text-center mb-0">Chưa có thiết bị nào được chọn</p>
+                                </div>
+                            </div>
+
+                            <!-- <div class="mt-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-dollar-sign"></i> Tổng giá trị 
+                                    <span class="badge bg-success" id="totalAmountDisplay">0 VNĐ</span>
+                                </label>
+                                <input type="number" name="totalAmount" class="form-control" 
+                                       step="0.01" min="0" placeholder="0.00" readonly 
+                                       style="background-color: #f8f9fa;">
+                                <small class="text-muted">Tự động tính từ thiết bị đã chọn</small>
+                            </div> -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-dark">
+                        <i class="fas fa-save me-1"></i> Lưu phụ lục
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+                                       
+<!-- Modal: Edit Contract Appendix -->
+<div class="modal fade" id="editAppendixModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i> Chỉnh Sửa Phụ Lục Hợp Đồng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="editAppendixForm" enctype="multipart/form-data">
+                <input type="hidden" id="edit-appendixId" name="appendixId">
+                
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Bạn chỉ có thể chỉnh sửa phụ lục trong vòng 15 ngày kể từ ngày tạo
+                    </div>
+
+                    <div class="row">
+                        <!-- Thông tin phụ lục -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-clipboard"></i> Thông tin phụ lục
+                            </h6>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Loại phụ lục <span class="text-danger">*</span>
+                                </label>
+                                <select name="appendixType" id="edit-appendixType" class="form-select" required>
+                                    <option value="">-- Chọn loại --</option>
+                                    <option value="AddEquipment">Thêm thiết bị</option>
+                                    <option value="Other">Khác</option>
+                                </select>
+                                <div class="invalid-feedback">Vui lòng chọn loại phụ lục</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Tên phụ lục <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       name="appendixName" 
+                                       id="edit-appendixName" 
+                                       class="form-control" 
+                                       minlength="1"
+                                       maxlength="255"
+                                       required>
+                                <div class="invalid-feedback">Vui lòng nhập tên phụ lục (1-255 ký tự)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Mô tả <span class="text-danger">*</span>
+                                </label>
+                                <textarea name="description" 
+                                          id="edit-description" 
+                                          class="form-control" 
+                                          rows="3"
+                                          minlength="1"
+                                          maxlength="1000"
+                                          required></textarea>
+                                <small class="text-muted">
+                                    <span id="edit-charCount">0</span>/1000 ký tự
+                                </small>
+                                <div class="invalid-feedback">Vui lòng nhập mô tả (1-1000 ký tự)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Ngày hiệu lực <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" 
+                                       name="effectiveDate" 
+                                       id="edit-effectiveDate" 
+                                       class="form-control" 
+                                       min="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>"
+                                       required>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> Ngày hiệu lực không được nhỏ hơn ngày hiện tại
+                                </small>
+                                <div class="invalid-feedback">Ngày hiệu lực không hợp lệ</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Trạng thái</label>
+                                <select name="status" id="edit-status" class="form-select">
+                                    <option value="Draft">Bản nháp</option>
+                                    <option value="Approved">Đã duyệt</option>
+                                    <option value="Archived">Lưu trữ</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-file-upload"></i> File đính kèm <span class="text-danger">*</span>
+                                    <small class="text-muted">(PDF, Word, Excel - Max 10MB)</small>
+                                </label>
+                                <input type="file" 
+                                       name="fileAttachment" 
+                                       id="edit-fileAttachment" 
+                                       class="form-control" 
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> Bắt buộc chọn file mới hoặc giữ file hiện tại
+                                </small>
+                                <div id="edit-filePreview" class="mt-2"></div>
+                                <div id="edit-currentFile" class="mt-2"></div>
+                                <div class="invalid-feedback" id="edit-fileError"></div>
+                            </div>
+                        </div>
+
+                        <!-- Chọn thiết bị -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-tools"></i> Chọn thiết bị <span class="text-danger">*</span>
+                            </h6>
+
+                            <div class="mb-3">
+                                <input type="text" id="edit-equipmentSearch" class="form-control" 
+                                       placeholder="🔍 Tìm kiếm thiết bị...">
+                            </div>
+
+                            <div class="equipment-selection" id="edit-equipmentList">
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <h6 class="fw-bold">
+                                    Thiết bị đã chọn (<span id="edit-selectedCount">0</span>) 
+                                    <span class="text-danger">*</span>
+                                </h6>
+                                <div id="edit-selectedEquipmentList" 
+                                     class="border rounded p-2" 
+                                     style="min-height: 100px; max-height: 200px; overflow-y: auto;">
+                                    <p class="text-muted text-center mb-0">Chưa có thiết bị nào được chọn</p>
+                                </div>
+                                <div class="invalid-feedback d-block" id="edit-equipmentError"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-dark">
+                        <i class="fas fa-save me-1"></i> Cập nhật
+                    </button>
                 </div>
             </form>
         </div>
@@ -797,6 +1249,1766 @@ document.getElementById("createContractForm").addEventListener("submit", async f
         });
     }
 });
+
+// Biến global để lưu danh sách thiết bị đã chọn và danh sách đầy đủ
+let selectedEquipment = [];
+let allEquipment = [];
+
+// Mở modal thêm phụ lục
+// Reset form khi mở modal
+async function openAddAppendixModal(contractId, customerName) {
+    console.log('===== OPEN ADD APPENDIX MODAL =====');
+    console.log('Received contractId:', contractId, 'Type:', typeof contractId);
+    console.log('Received customerName:', customerName);
+    
+    if (!contractId || contractId === 'undefined' || contractId === 'null') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Contract ID không hợp lệ. Vui lòng thử lại.',
+            confirmButtonColor: '#000'
+        });
+        console.error('Invalid contractId:', contractId);
+        return;
+    }
+    
+    // Reset
+    selectedEquipment = [];
+    allEquipment = [];
+    
+    // Reset form
+    const form = document.getElementById('addAppendixForm');
+    if (form) {
+        form.reset();
+    }
+    
+    // Clear file preview
+    clearFileInput();
+    
+    // SET contractId vào hidden input
+    const hiddenInput = document.getElementById('appendix-contractId');
+    if (hiddenInput) {
+        hiddenInput.value = contractId;
+        console.log('✓ Set hidden input value:', hiddenInput.value);
+    } else {
+        console.error('✗ Không tìm thấy hidden input #appendix-contractId');
+    }
+    
+    // Hiển thị thông tin hợp đồng
+    const infoSpan = document.getElementById('appendix-contractInfo');
+    if (infoSpan) {
+        infoSpan.innerText = '#' + contractId + ' - ' + customerName;
+        console.log('✓ Set info span:', infoSpan.innerText);
+    } else {
+        console.error('✗ Không tìm thấy span #appendix-contractInfo');
+    }
+    
+    // Reset search
+    const searchInput = document.getElementById('equipmentSearch');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    
+    // Set ngày hiệu lực mặc định là hôm nay
+    const effectiveDateInput = document.querySelector('input[name="effectiveDate"]');
+    if (effectiveDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        effectiveDateInput.value = today;
+    }
+    
+    // Load equipment
+    console.log('Loading available equipment...');
+    await loadAvailableEquipment();
+    
+    // Show modal
+    const modalElement = document.getElementById('addAppendixModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        console.log('✓ Modal shown');
+    } else {
+        console.error('✗ Không tìm thấy modal #addAppendixModal');
+    }
+    
+    console.log('===== END OPEN MODAL =====');
+}
+
+// Load danh sách thiết bị
+async function loadAvailableEquipment() {
+    const container = document.getElementById('equipmentList');
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const response = await fetch("/" + ctx + "/getAvailableEquipment");
+        
+        if (!response.ok) throw new Error("Không thể tải danh sách thiết bị");
+        
+        const data = await response.json();
+        
+        if (data.equipment && data.equipment.length > 0) {
+            allEquipment = data.equipment;
+            renderEquipmentList(allEquipment);
+        } else {
+            container.innerHTML = '<p class="text-center text-muted">Không có thiết bị khả dụng</p>';
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        container.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách thiết bị</div>';
+    }
+}
+
+// Render danh sách thiết bị
+function renderEquipmentList(equipmentList) {
+    const container = document.getElementById('equipmentList');
+    
+    if (!equipmentList || equipmentList.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">Không tìm thấy thiết bị nào</p>';
+        return;
+    }
+    
+    let html = '';
+    equipmentList.forEach(function(eq) {
+        const categoryBadgeClass = eq.categoryType === 'Equipment' ? 'bg-primary' : 'bg-secondary';
+        
+        html += '<div class="equipment-item" data-id="' + eq.equipmentId + '" data-category="' + (eq.categoryId || '') + '">' +
+            '<div class="form-check">' +
+            '<input class="form-check-input equipment-checkbox" ' +
+            'type="checkbox" ' +
+            'value="' + eq.equipmentId + '" ' +
+            'data-model="' + (eq.model || '') + '" ' +
+            'data-serial="' + (eq.serialNumber || '') + '" ' +
+            'onchange="toggleEquipment(this)">' +
+            '<label class="form-check-label">' +
+            '<strong>' + (eq.model || 'N/A') + '</strong> - <code>' + (eq.serialNumber || 'N/A') + '</code>' +
+            (eq.categoryName ? '<span class="badge category-badge ' + categoryBadgeClass + ' ms-2">' + eq.categoryName + '</span>' : '') +
+            '<br><small class="text-muted">' + (eq.description || '') + '</small>' +
+            '</label>' +
+            '</div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+// Toggle chọn thiết bị
+function toggleEquipment(checkbox) {
+    const equipmentId = checkbox.value;
+    const model = checkbox.dataset.model;
+    const serial = checkbox.dataset.serial;
+    
+    if (checkbox.checked) {
+        selectedEquipment.push({
+            equipmentId: equipmentId,
+            model: model,
+            serialNumber: serial
+        });
+    } else {
+        selectedEquipment = selectedEquipment.filter(function(e) {
+            return e.equipmentId !== equipmentId;
+        });
+    }
+    
+    updateSelectedEquipmentDisplay();
+    // Xóa dòng: updateTotalAmount();
+}
+
+// Cập nhật hiển thị thiết bị đã chọn
+function updateSelectedEquipmentDisplay() {
+    const container = document.getElementById('selectedEquipmentList');
+    const countSpan = document.getElementById('selectedCount');
+    
+    countSpan.innerText = selectedEquipment.length;
+    
+    if (selectedEquipment.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center mb-0">Chưa có thiết bị nào được chọn</p>';
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    selectedEquipment.forEach(function(eq, index) {
+        html += '<div class="list-group-item d-flex justify-content-between align-items-center py-2">' +
+            '<div class="flex-grow-1">' +
+            '<strong>' + (index + 1) + '. ' + eq.model + '</strong>' +
+            '<br><small class="text-muted">' + eq.serialNumber + '</small>' +
+            '</div>' +
+            '<button type="button" class="btn btn-sm btn-danger" ' +
+            'onclick="removeEquipment(\'' + eq.equipmentId + '\')">' +
+            '<i class="fas fa-times"></i>' +
+            '</button>' +
+            '</div>';
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+// Cập nhật tổng giá trị
+//function updateTotalAmount() {
+//    let total = 0;
+//    selectedEquipment.forEach(function(eq) {
+//        total += eq.price || 0;
+//    });
+//    
+//    const totalInput = document.querySelector('input[name="totalAmount"]');
+//    if (totalInput) {
+//        totalInput.value = total.toFixed(2);
+//        
+//        // Hiển thị tổng tiền bằng VNĐ format
+//        const totalDisplay = document.getElementById('totalAmountDisplay');
+//        if (totalDisplay) {
+//            totalDisplay.innerText = total.toLocaleString('vi-VN') + ' VNĐ';
+//        }
+//    }
+//}
+
+// Xóa thiết bị khỏi danh sách đã chọn
+function removeEquipment(equipmentId) {
+    selectedEquipment = selectedEquipment.filter(function(e) {
+        return e.equipmentId !== equipmentId;
+    });
+    
+    // Bỏ check checkbox
+    const checkbox = document.querySelector('.equipment-checkbox[value="' + equipmentId + '"]');
+    if (checkbox) checkbox.checked = false;
+    
+    updateSelectedEquipmentDisplay();
+//    updateTotalAmount();
+}
+
+// Tìm kiếm thiết bị
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('equipmentSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const keyword = e.target.value.toLowerCase();
+            filterEquipment();
+        });
+    }
+});
+
+function filterEquipment() {
+    const keyword = document.getElementById('equipmentSearch').value.toLowerCase();
+    
+    let filtered = allEquipment;
+    
+    // Filter by keyword
+    if (keyword) {
+        filtered = filtered.filter(function(eq) {
+            const model = (eq.model || '').toLowerCase();
+            const serial = (eq.serialNumber || '').toLowerCase();
+            const desc = (eq.description || '').toLowerCase();
+            return model.includes(keyword) || serial.includes(keyword) || desc.includes(keyword);
+        });
+    }
+    
+    renderEquipmentList(filtered);
+    
+    // Restore checked state
+    selectedEquipment.forEach(function(selected) {
+        const checkbox = document.querySelector('.equipment-checkbox[value="' + selected.equipmentId + '"]');
+        if (checkbox) checkbox.checked = true;
+    });
+}
+
+// Submit form thêm phụ lục
+//document.getElementById('addAppendixForm').addEventListener('submit', async function(e) {
+//    e.preventDefault();
+//    
+//    console.log('===== SUBMIT ADD APPENDIX FORM =====');
+//    
+//    // Lấy contractId từ hidden input
+//    const contractIdInput = document.getElementById('appendix-contractId');
+//    const contractId = contractIdInput ? contractIdInput.value : null;
+//    
+//    console.log('Contract ID from hidden input:', contractId);
+//    console.log('Type:', typeof contractId);
+//    console.log('Is empty?', !contractId || contractId.trim() === '');
+//    
+//    // Validate contractId
+//    if (!contractId || contractId.trim() === '') {
+//        Swal.fire({
+//            icon: 'error',
+//            title: 'Lỗi',
+//            text: 'Contract ID không được để trống. Vui lòng đóng modal và thử lại.',
+//            confirmButtonColor: '#000'
+//        });
+//        console.error('✗ Contract ID is empty!');
+//        return;
+//    }
+//    
+//    // Validate equipment selection
+//    if (selectedEquipment.length === 0) {
+//        Swal.fire({
+//            icon: 'warning',
+//            title: 'Chưa chọn thiết bị',
+//            text: 'Vui lòng chọn ít nhất một thiết bị để thêm vào phụ lục',
+//            confirmButtonColor: '#000'
+//        });
+//        console.warn('✗ No equipment selected');
+//        return;
+//    }
+//    
+//    console.log('Selected equipment count:', selectedEquipment.length);
+//    console.log('Selected equipment:', selectedEquipment);
+//    
+//    // Tạo FormData
+//    const formData = new FormData(this);
+//    
+//    // ĐẢM BẢO contractId được thêm vào
+//    formData.set('contractId', contractId.trim());
+//    
+//    // Thêm equipment IDs
+//    const equipmentIds = selectedEquipment.map(e => parseInt(e.equipmentId));
+//    formData.append('equipmentIds', JSON.stringify(equipmentIds));
+//    
+//    // Debug: Log tất cả form data
+//    console.log('===== FORM DATA =====');
+//    for (let pair of formData.entries()) {
+//        console.log(pair[0] + ':', pair[1]);
+//    }
+//    console.log('=====================');
+//    
+//    try {
+//        const ctx = window.location.pathname.split("/")[1];
+//        const url = "/" + ctx + "/addContractAppendix";
+//        
+//        console.log('Sending POST to:', url);
+//        
+//        const response = await fetch(url, {
+//            method: 'POST',
+//            body: formData
+//        });
+//        
+//        console.log('Response status:', response.status);
+//        
+//        const result = await response.json();
+//        console.log('Response result:', result);
+//        
+//        if (result.success) {
+//            Swal.fire({
+//                icon: 'success',
+//                title: 'Thành công!',
+//                text: result.message || 'Đã thêm phụ lục hợp đồng thành công',
+//                confirmButtonColor: '#000'
+//            }).then(function() {
+//                const modalElement = document.getElementById('addAppendixModal');
+//                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+//                if (modalInstance) {
+//                    modalInstance.hide();
+//                }
+//                window.location.reload();
+//            });
+//        } else {
+//            Swal.fire({
+//                icon: 'error',
+//                title: 'Thất bại!',
+//                text: result.message || 'Không thể thêm phụ lục',
+//                confirmButtonColor: '#000'
+//            });
+//        }
+//    } catch (error) {
+//        console.error('✗ Error:', error);
+//        Swal.fire({
+//            icon: 'error',
+//            title: 'Lỗi hệ thống',
+//            text: 'Không thể kết nối đến server: ' + error.message,
+//            confirmButtonColor: '#000'
+//        });
+//    }
+//    
+//    console.log('===== END SUBMIT =====');
+//});
+
+// Các function khác giữ nguyên
+async function viewContractDetailsWithAppendix(contractId) {
+    viewContractDetails(contractId);
+    
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const response = await fetch("/" + ctx + "/getContractAppendix?contractId=" + contractId);
+        
+        if (!response.ok) throw new Error("Không thể tải phụ lục");
+        
+        const data = await response.json();
+        const container = document.getElementById('appendixListContainer');
+        const countSpan = document.getElementById('appendixCount');
+        
+        if (data.appendixes && data.appendixes.length > 0) {
+            countSpan.innerText = data.appendixes.length;
+            
+            let html = '';
+            data.appendixes.forEach(function(app) {
+                const statusBadge = app.status === 'Approved' ? 'bg-success' :
+                                  app.status === 'Draft' ? 'bg-warning' : 'bg-secondary';
+                const typeLabel = app.appendixType === 'AddEquipment' ? 'Thêm thiết bị' :
+                                app.appendixType === 'RepairPart' ? 'Thay linh kiện' :
+                                app.appendixType === 'ExtendTerm' ? 'Gia hạn' : 'Khác';
+                
+                html += '<div class="appendix-item">' +
+                    '<div class="d-flex justify-content-between align-items-start">' +
+                    '<div class="flex-grow-1">' +
+                    '<h6 class="mb-1">' +
+                    '<i class="fas fa-file-alt"></i> ' + app.appendixName +
+                    '<span class="badge ' + statusBadge + ' ms-2">' + app.status + '</span>' +
+                    '<span class="badge bg-info ms-1">' + typeLabel + '</span>' +
+                    '</h6>' +
+                    '<p class="mb-1 text-muted small">' + (app.description || 'Không có mô tả') + '</p>' +
+                    '<p class="mb-1">' +
+                    '<i class="fas fa-calendar"></i> Hiệu lực: <strong>' + app.effectiveDate + '</strong> | ' +
+                    '<i class="fas fa-tools"></i> Số thiết bị: <strong>' + (app.equipmentCount || 0) + '</strong>' +
+                    '</p>' +
+                    '</div>' +
+                    '<div class="btn-group">' +
+                    // NÚT XEM FILE
+                    (app.fileAttachment ? 
+                        '<a href="' + app.fileAttachment + '" target="_blank" class="btn btn-sm btn-outline-success" title="Xem file đính kèm">' +
+                        '<i class="fas fa-file-download"></i>' +
+                        '</a>' : '') +
+                    // NÚT XEM THIẾT BỊ
+                    '<button type="button" class="btn btn-sm btn-outline-info" ' +
+                    'onclick="viewAppendixEquipment(' + app.appendixId + ')" ' +
+                    'title="Xem thiết bị">' +
+                    '<i class="fas fa-list"></i>' +
+                    '</button>' +
+                    // NÚT SỬA (chỉ hiện nếu canEdit = true)
+                    (app.canEdit ? 
+                        '<button type="button" class="btn btn-sm btn-outline-warning" ' +
+                        'onclick="openEditAppendixModal(' + app.appendixId + ')" ' +
+                        'title="Chỉnh sửa">' +
+                        '<i class="fas fa-edit"></i>' +
+                        '</button>' : '') +
+                    // NÚT XÓA (chỉ hiện nếu canEdit = true)
+                    (app.canEdit ? 
+                        '<button type="button" class="btn btn-sm btn-outline-danger" ' +
+                        'onclick="deleteAppendix(' + app.appendixId + ')" ' +
+                        'title="Xóa">' +
+                        '<i class="fas fa-trash"></i>' +
+                        '</button>' : '') +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+            });
+            
+            container.innerHTML = html;
+        } else {
+            countSpan.innerText = '0';
+            container.innerHTML = '<p class="text-muted">Chưa có phụ lục nào</p>';
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        document.getElementById('appendixListContainer').innerHTML = 
+            '<div class="alert alert-warning">Không thể tải danh sách phụ lục</div>';
+    }
+}
+
+async function viewEquipmentList(contractId) {
+    const modal = new bootstrap.Modal(document.getElementById("equipmentListModal"));
+    modal.show();
+
+    const content = document.getElementById("equipmentListContent");
+    
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const response = await fetch("/" + ctx + "/getContractEquipment?contractId=" + contractId);
+        
+        if (!response.ok) throw new Error("Không thể tải danh sách thiết bị");
+        
+        const data = await response.json();
+        
+        if (data.equipment && data.equipment.length > 0) {
+            let html = '<div class="table-responsive">' +
+                      '<table class="table table-hover">' +
+                      '<thead class="table-light">' +
+                      '<tr>' +
+                      '<th>#</th>' +
+                      '<th>Model</th>' +
+                      '<th>Serial Number</th>' +
+                      '<th>Mô tả</th>' +
+                      '<th>Nguồn</th>' +
+                      '</tr>' +
+                      '</thead><tbody>';
+            
+            data.equipment.forEach((eq, index) => {
+                // Xác định nguồn: nếu có startDate thì là Contract, không thì là Appendix
+                const source = eq.startDate ? 'Hợp đồng' : 'Phụ lục';
+                const sourceBadge = eq.startDate ? 'bg-primary' : 'bg-warning';
+                
+                html += '<tr>' +
+                       '<td>' + (index + 1) + '</td>' +
+                       '<td><strong>' + eq.model + '</strong></td>' +
+                       '<td><code>' + eq.serialNumber + '</code></td>' +
+                       '<td>' + (eq.description || '-') + '</td>' +
+                       '<td><span class="badge ' + sourceBadge + '">' + source + '</span></td>' +
+                       '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            content.innerHTML = html;
+        } else {
+            content.innerHTML = '<div class="text-center py-4">' +
+                              '<i class="fas fa-box-open fa-3x text-muted mb-3"></i>' +
+                              '<h5 class="text-muted">Không có thiết bị nào</h5>' +
+                              '</div>';
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        content.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách thiết bị</div>';
+    }
+}
+
+async function viewAppendixEquipment(appendixId) {
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const response = await fetch("/" + ctx + "/getAppendixEquipment?appendixId=" + appendixId);
+        
+        if (!response.ok) throw new Error("Không thể tải thiết bị");
+        
+        const data = await response.json();
+        
+        let html = '<div class="mt-2"><h6>Danh sách thiết bị:</h6><ul class="list-group">';
+        
+        if (data.equipment && data.equipment.length > 0) {
+            data.equipment.forEach(function(eq, index) {
+                html += '<li class="list-group-item">' +
+                    '<strong>' + (index + 1) + '. ' + (eq.model || 'N/A') + '</strong> - ' + (eq.serialNumber || 'N/A') +
+                    (eq.description ? '<br><small class="text-muted">' + eq.description + '</small>' : '') +
+                    (eq.note ? '<br><small class="text-success">Ghi chú: ' + eq.note + '</small>' : '') +
+                    '</li>';
+            });
+        } else {
+            html += '<li class="list-group-item text-muted">Không có thiết bị nào</li>';
+        }
+        
+        html += '</ul></div>';
+        
+        Swal.fire({
+            title: 'Thiết bị trong phụ lục',
+            html: html,
+            width: 600,
+            confirmButtonColor: '#000'
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Không thể tải danh sách thiết bị',
+            confirmButtonColor: '#000'
+        });
+    }
+}
+
+// ===== SINGLE FORM SUBMIT HANDLER =====
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('addAppendixForm');
+    
+    if (!form) {
+        console.error('Form #addAppendixForm not found!');
+        return;
+    }
+    
+    console.log('Registering submit handler for addAppendixForm');
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('===== FORM SUBMIT EVENT =====');
+        
+        // 1. Kiểm tra hidden input
+        const hiddenInput = document.getElementById('appendix-contractId');
+        console.log('Hidden input element:', hiddenInput);
+        console.log('Hidden input value:', hiddenInput ? hiddenInput.value : 'NOT FOUND');
+        console.log('Hidden input name:', hiddenInput ? hiddenInput.name : 'NOT FOUND');
+        
+        const contractId = hiddenInput ? hiddenInput.value : null;
+        
+        // 2. Validate contractId
+        if (!contractId || contractId.trim() === '') {
+            console.error('ERROR: contractId is empty!');
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Contract ID không được để trống',
+                confirmButtonColor: '#000'
+            });
+            return;
+        }
+        
+        console.log('✓ contractId validated:', contractId);
+        
+        // 3. Validate ngày hiệu lực
+        const effectiveDateInput = document.querySelector('input[name="effectiveDate"]');
+        if (effectiveDateInput && effectiveDateInput.value) {
+            const effectiveDate = new Date(effectiveDateInput.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (effectiveDate < today) {
+                console.error('ERROR: Effective date is in the past!');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Ngày không hợp lệ',
+                    text: 'Ngày hiệu lực không được nhỏ hơn ngày hiện tại',
+                    confirmButtonColor: '#000'
+                });
+                effectiveDateInput.focus();
+                return;
+            }
+        }
+        
+        console.log('✓ effectiveDate validated');
+        
+        // 4. Validate file đính kèm - BẮT BUỘC
+        const fileInput = document.getElementById('fileAttachment');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            console.error('ERROR: No file selected!');
+            Swal.fire({
+                icon: 'error',
+                title: 'Thiếu file đính kèm',
+                text: 'Vui lòng chọn file đính kèm (PDF, Word hoặc Excel)',
+                confirmButtonColor: '#000'
+            });
+            if (fileInput) fileInput.focus();
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        console.log('✓ File selected:', file.name, file.size, 'bytes');
+        
+        // Validate file type
+        const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+        const fileName = file.name.toLowerCase();
+        const isValidType = allowedExtensions.some(ext => fileName.endsWith(ext));
+        
+        if (!isValidType) {
+            console.error('ERROR: Invalid file type!');
+            Swal.fire({
+                icon: 'error',
+                title: 'Loại file không hợp lệ',
+                text: 'Chỉ chấp nhận file PDF, Word (DOC/DOCX) hoặc Excel (XLS/XLSX)',
+                confirmButtonColor: '#000'
+            });
+            fileInput.focus();
+            return;
+        }
+        
+        console.log('✓ File type validated');
+        
+        // Validate file size (max 10MB)
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            console.error('ERROR: File too large!');
+            Swal.fire({
+                icon: 'error',
+                title: 'File quá lớn',
+                text: 'Kích thước file không được vượt quá 10MB',
+                confirmButtonColor: '#000'
+            });
+            fileInput.focus();
+            return;
+        }
+        
+        console.log('✓ File size validated');
+        
+        // 5. Validate equipment selection
+        if (!selectedEquipment || selectedEquipment.length === 0) {
+            console.warn('WARNING: No equipment selected');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Chưa chọn thiết bị',
+                text: 'Vui lòng chọn ít nhất một thiết bị',
+                confirmButtonColor: '#000'
+            });
+            return;
+        }
+        
+        console.log('✓ Equipment count:', selectedEquipment.length);
+        
+        // 6. Tạo FormData
+        const formData = new FormData(form);
+        
+        // 7. ĐẢM BẢO contractId được set
+        formData.set('contractId', contractId.trim());
+        
+        // 8. Thêm equipment IDs
+        const equipmentIds = selectedEquipment.map(e => parseInt(e.equipmentId));
+        formData.append('equipmentIds', JSON.stringify(equipmentIds));
+        
+        // 9. Log FormData
+        console.log('===== FormData entries =====');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(key + ': [File]', value.name, value.size, 'bytes');
+            } else {
+                console.log(key + ':', value);
+            }
+        }
+        
+        const contractIdFromForm = formData.get('contractId');
+        console.log('contractId from FormData:', contractIdFromForm);
+        console.log('contractId type:', typeof contractIdFromForm);
+        console.log('contractId isEmpty:', !contractIdFromForm || contractIdFromForm.trim() === '');
+        console.log('================================');
+        
+        // 10. Gửi request
+        try {
+            const ctx = window.location.pathname.split("/")[1];
+            const url = "/" + ctx + "/addContractAppendix";
+            
+            console.log('Sending POST to:', url);
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
+            const result = await response.json();
+            console.log('Response data:', result);
+            
+            if (result.success) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: result.message || 'Đã thêm phụ lục thành công',
+                    confirmButtonColor: '#000'
+                });
+                
+                // Close modal
+                const modalElement = document.getElementById('addAppendixModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+                
+                // Reload page
+                window.location.reload();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Thất bại!',
+                    text: result.message || 'Không thể thêm phụ lục',
+                    confirmButtonColor: '#000'
+                });
+            }
+        } catch (error) {
+            console.error('ERROR:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi hệ thống',
+                text: error.message,
+                confirmButtonColor: '#000'
+            });
+        }
+        
+        console.log('===== END FORM SUBMIT =====');
+    });
+    
+    console.log('✓ Submit handler registered successfully');
+});
+
+// ===== REAL-TIME DATE VALIDATION =====
+document.addEventListener('DOMContentLoaded', function() {
+    const effectiveDateInput = document.querySelector('#addAppendixModal input[name="effectiveDate"]');
+    
+    if (effectiveDateInput) {
+        // Set min date to today
+        const today = new Date().toISOString().split('T')[0];
+        effectiveDateInput.setAttribute('min', today);
+        
+        // Validate on change
+        effectiveDateInput.addEventListener('change', function(e) {
+            const selectedDate = new Date(e.target.value);
+            const todayDate = new Date();
+            todayDate.setHours(0, 0, 0, 0);
+            
+            if (selectedDate < todayDate) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Cảnh báo',
+                    text: 'Ngày hiệu lực không được nhỏ hơn ngày hiện tại',
+                    confirmButtonColor: '#000'
+                });
+                // Reset về ngày hôm nay
+                e.target.value = today;
+            }
+        });
+        
+        console.log('✓ Date validation registered');
+    }
+});
+
+// ===== FILE PREVIEW =====
+// ===== FILE PREVIEW WITH VALIDATION =====
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileAttachment');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('filePreview');
+            
+            if (file) {
+                // Kiểm tra file type
+                const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+                const fileName = file.name.toLowerCase();
+                const isValidType = allowedExtensions.some(ext => fileName.endsWith(ext));
+                
+                if (!isValidType) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Loại file không hợp lệ',
+                        text: 'Chỉ chấp nhận file PDF, Word (DOC/DOCX) hoặc Excel (XLS/XLSX)',
+                        confirmButtonColor: '#000'
+                    });
+                    fileInput.value = '';
+                    preview.innerHTML = '';
+                    return;
+                }
+                
+                // Kiểm tra kích thước (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'File quá lớn',
+                        text: 'Vui lòng chọn file nhỏ hơn 10MB',
+                        confirmButtonColor: '#000'
+                    });
+                    fileInput.value = '';
+                    preview.innerHTML = '';
+                    return;
+                }
+                
+                // Hiển thị thông tin file
+                const fileIcon = getFileIcon(file.name);
+                preview.innerHTML = '<div class="alert alert-success">' +
+                    '<i class="' + fileIcon + ' me-2"></i>' +
+                    '<strong>' + file.name + '</strong> ' +
+                    '<small>(' + formatFileSize(file.size) + ')</small>' +
+                    '<button type="button" class="btn btn-sm btn-link text-danger float-end" onclick="clearFileInput()">' +
+                    '<i class="fas fa-times"></i> Xóa' +
+                    '</button>' +
+                    '</div>';
+            } else {
+                preview.innerHTML = '';
+            }
+        });
+    }
+});
+
+function clearFileInput() {
+    const fileInput = document.getElementById('fileAttachment');
+    const preview = document.getElementById('filePreview');
+    if (fileInput) fileInput.value = '';
+    if (preview) preview.innerHTML = '';
+}
+
+function getFileIcon(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    switch(ext) {
+        case 'pdf': return 'fas fa-file-pdf text-danger';
+        case 'doc':
+        case 'docx': return 'fas fa-file-word text-primary';
+        case 'xls':
+        case 'xlsx': return 'fas fa-file-excel text-success';
+        default: return 'fas fa-file';
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// ===== EDIT APPENDIX =====
+let editSelectedEquipment = [];
+let editAllEquipment = [];
+let editHasCurrentFile = false; // Biến để track xem có file hiện tại không
+
+async function openEditAppendixModal(appendixId) {
+    console.log('===== OPEN EDIT APPENDIX MODAL =====');
+    console.log('Appendix ID:', appendixId);
+    
+    editSelectedEquipment = [];
+    editAllEquipment = [];
+    editHasCurrentFile = false;
+    
+    // Reset validation
+    const form = document.getElementById('editAppendixForm');
+    if (form) {
+        form.classList.remove('was-validated');
+        // Clear all error messages
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+    }
+    
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const response = await fetch("/" + ctx + "/getAppendixDetails?appendixId=" + appendixId);
+        
+        if (!response.ok) throw new Error("Không thể tải thông tin phụ lục");
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: data.message,
+                confirmButtonColor: '#000'
+            });
+            return;
+        }
+        
+        const appendix = data.appendix;
+        const equipment = data.equipment || [];
+        
+        // Fill form
+        document.getElementById('edit-appendixId').value = appendix.appendixId;
+        document.getElementById('edit-appendixType').value = appendix.appendixType;
+        document.getElementById('edit-appendixName').value = appendix.appendixName;
+        
+        const descriptionTextarea = document.getElementById('edit-description');
+        descriptionTextarea.value = appendix.description || '';
+        updateEditCharCount(); // Cập nhật số ký tự
+        
+        document.getElementById('edit-effectiveDate').value = appendix.effectiveDate;
+        document.getElementById('edit-status').value = appendix.status;
+        
+        // Hiển thị file hiện tại
+        const currentFileDiv = document.getElementById('edit-currentFile');
+        if (appendix.fileAttachment) {
+            editHasCurrentFile = true;
+            const fileIcon = getFileIcon(appendix.fileAttachment);
+            const fileName = appendix.fileAttachment.split('/').pop();
+            currentFileDiv.innerHTML = '<div class="alert alert-success">' +
+                '<i class="' + fileIcon + ' me-2"></i>' +
+                '<strong>File hiện tại:</strong> ' + fileName +
+                '<br><small class="text-muted">Để trống nếu không muốn thay đổi file</small>' +
+                '</div>';
+        } else {
+            editHasCurrentFile = false;
+            currentFileDiv.innerHTML = '<div class="alert alert-warning">' +
+                '<i class="fas fa-exclamation-triangle me-2"></i>' +
+                '<strong>Chưa có file đính kèm</strong> - Vui lòng chọn file mới' +
+                '</div>';
+        }
+        
+        // Load available equipment
+        await loadEditAvailableEquipment();
+        
+        // Pre-select equipment
+        editSelectedEquipment = equipment.map(eq => ({
+            equipmentId: eq.equipmentId.toString(),
+            model: eq.model,
+            serialNumber: eq.serialNumber
+        }));
+        
+        updateEditSelectedEquipmentDisplay();
+        
+        // Check checkboxes
+        editSelectedEquipment.forEach(selected => {
+            const checkbox = document.querySelector('#edit-equipmentList .equipment-checkbox[value="' + selected.equipmentId + '"]');
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('editAppendixModal')).show();
+        
+    } catch (error) {
+        console.error("Error:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Không thể tải thông tin phụ lục',
+            confirmButtonColor: '#000'
+        });
+    }
+}
+
+async function loadEditAvailableEquipment() {
+    const container = document.getElementById('edit-equipmentList');
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const response = await fetch("/" + ctx + "/getAvailableEquipment");
+        
+        if (!response.ok) throw new Error("Không thể tải danh sách thiết bị");
+        
+        const data = await response.json();
+        
+        if (data.equipment && data.equipment.length > 0) {
+            editAllEquipment = data.equipment;
+            renderEditEquipmentList(editAllEquipment);
+        } else {
+            container.innerHTML = '<p class="text-center text-muted">Không có thiết bị khả dụng</p>';
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        container.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách thiết bị</div>';
+    }
+}
+
+function renderEditEquipmentList(equipmentList) {
+    const container = document.getElementById('edit-equipmentList');
+    
+    if (!equipmentList || equipmentList.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">Không tìm thấy thiết bị nào</p>';
+        return;
+    }
+    
+    let html = '';
+    equipmentList.forEach(function(eq) {
+        const categoryBadgeClass = eq.categoryType === 'Equipment' ? 'bg-primary' : 'bg-secondary';
+        
+        html += '<div class="equipment-item" data-id="' + eq.equipmentId + '">' +
+            '<div class="form-check">' +
+            '<input class="form-check-input equipment-checkbox" ' +
+            'type="checkbox" ' +
+            'value="' + eq.equipmentId + '" ' +
+            'data-model="' + (eq.model || '') + '" ' +
+            'data-serial="' + (eq.serialNumber || '') + '" ' +
+            'onchange="toggleEditEquipment(this)">' +
+            '<label class="form-check-label">' +
+            '<strong>' + (eq.model || 'N/A') + '</strong> - <code>' + (eq.serialNumber || 'N/A') + '</code>' +
+            (eq.categoryName ? '<span class="badge category-badge ' + categoryBadgeClass + ' ms-2">' + eq.categoryName + '</span>' : '') +
+            '<br><small class="text-muted">' + (eq.description || '') + '</small>' +
+            '</label>' +
+            '</div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function toggleEditEquipment(checkbox) {
+    const equipmentId = checkbox.value;
+    const model = checkbox.dataset.model;
+    const serial = checkbox.dataset.serial;
+    
+    if (checkbox.checked) {
+        editSelectedEquipment.push({
+            equipmentId: equipmentId,
+            model: model,
+            serialNumber: serial
+        });
+    } else {
+        editSelectedEquipment = editSelectedEquipment.filter(function(e) {
+            return e.equipmentId !== equipmentId;
+        });
+    }
+    
+    updateEditSelectedEquipmentDisplay();
+    
+    // Clear error message khi có thiết bị được chọn
+    if (editSelectedEquipment.length > 0) {
+        document.getElementById('edit-equipmentError').style.display = 'none';
+    }
+}
+
+function updateEditSelectedEquipmentDisplay() {
+    const container = document.getElementById('edit-selectedEquipmentList');
+    const countSpan = document.getElementById('edit-selectedCount');
+    
+    countSpan.innerText = editSelectedEquipment.length;
+    
+    if (editSelectedEquipment.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center mb-0">Chưa có thiết bị nào được chọn</p>';
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    editSelectedEquipment.forEach(function(eq, index) {
+        html += '<div class="list-group-item d-flex justify-content-between align-items-center py-2">' +
+            '<div class="flex-grow-1">' +
+            '<strong>' + (index + 1) + '. ' + eq.model + '</strong>' +
+            '<br><small class="text-muted">' + eq.serialNumber + '</small>' +
+            '</div>' +
+            '<button type="button" class="btn btn-sm btn-danger" ' +
+            'onclick="removeEditEquipment(\'' + eq.equipmentId + '\')">' +
+            '<i class="fas fa-times"></i>' +
+            '</button>' +
+            '</div>';
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+function removeEditEquipment(equipmentId) {
+    editSelectedEquipment = editSelectedEquipment.filter(function(e) {
+        return e.equipmentId !== equipmentId;
+    });
+    
+    const checkbox = document.querySelector('#edit-equipmentList .equipment-checkbox[value="' + equipmentId + '"]');
+    if (checkbox) checkbox.checked = false;
+    
+    updateEditSelectedEquipmentDisplay();
+}
+
+// ===== CHARACTER COUNT FOR DESCRIPTION =====
+function updateEditCharCount() {
+    const textarea = document.getElementById('edit-description');
+    const countSpan = document.getElementById('edit-charCount');
+    if (textarea && countSpan) {
+        countSpan.innerText = textarea.value.length;
+        
+        // Đổi màu khi gần đến giới hạn
+        if (textarea.value.length > 900) {
+            countSpan.classList.add('text-danger');
+        } else if (textarea.value.length > 700) {
+            countSpan.classList.add('text-warning');
+            countSpan.classList.remove('text-danger');
+        } else {
+            countSpan.classList.remove('text-danger', 'text-warning');
+        }
+    }
+}
+
+// ===== FILE PREVIEW FOR EDIT =====
+document.addEventListener('DOMContentLoaded', function() {
+    const editFileInput = document.getElementById('edit-fileAttachment');
+    if (editFileInput) {
+        editFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('edit-filePreview');
+            const errorDiv = document.getElementById('edit-fileError');
+            
+            if (file) {
+                // Validate file type
+                const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+                const fileName = file.name.toLowerCase();
+                const isValidType = allowedExtensions.some(ext => fileName.endsWith(ext));
+                
+                if (!isValidType) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Loại file không hợp lệ',
+                        text: 'Chỉ chấp nhận file PDF, Word (DOC/DOCX) hoặc Excel (XLS/XLSX)',
+                        confirmButtonColor: '#000'
+                    });
+                    editFileInput.value = '';
+                    preview.innerHTML = '';
+                    errorDiv.innerText = 'Loại file không hợp lệ';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+                
+                // Validate file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'File quá lớn',
+                        text: 'Vui lòng chọn file nhỏ hơn 10MB',
+                        confirmButtonColor: '#000'
+                    });
+                    editFileInput.value = '';
+                    preview.innerHTML = '';
+                    errorDiv.innerText = 'File quá lớn (tối đa 10MB)';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+                
+                // Show preview
+                const fileIcon = getFileIcon(file.name);
+                preview.innerHTML = '<div class="alert alert-info">' +
+                    '<i class="' + fileIcon + ' me-2"></i>' +
+                    '<strong>File mới:</strong> ' + file.name + ' ' +
+                    '<small>(' + formatFileSize(file.size) + ')</small>' +
+                    '<button type="button" class="btn btn-sm btn-link text-danger float-end" onclick="clearEditFileInput()">' +
+                    '<i class="fas fa-times"></i> Xóa' +
+                    '</button>' +
+                    '</div>';
+                
+                errorDiv.style.display = 'none';
+            } else {
+                preview.innerHTML = '';
+            }
+        });
+    }
+    
+    // Character counter for edit description
+    const editDescTextarea = document.getElementById('edit-description');
+    if (editDescTextarea) {
+        editDescTextarea.addEventListener('input', updateEditCharCount);
+    }
+});
+
+function clearEditFileInput() {
+    const fileInput = document.getElementById('edit-fileAttachment');
+    const preview = document.getElementById('edit-filePreview');
+    if (fileInput) fileInput.value = '';
+    if (preview) preview.innerHTML = '';
+}
+
+// ===== EDIT FORM VALIDATION & SUBMIT =====
+document.addEventListener('DOMContentLoaded', function() {
+    const editForm = document.getElementById('editAppendixForm');
+    
+    if (editForm) {
+        editForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('=== EDIT FORM SUBMIT ===');
+            
+            let isValid = true;
+            const errorMessages = [];
+            
+            // 1. Validate Equipment Selection
+            if (editSelectedEquipment.length === 0) {
+                isValid = false;
+                errorMessages.push('Vui lòng chọn ít nhất một thiết bị');
+                const errorDiv = document.getElementById('edit-equipmentError');
+                errorDiv.innerText = 'Vui lòng chọn ít nhất một thiết bị';
+                errorDiv.style.display = 'block';
+            } else {
+                document.getElementById('edit-equipmentError').style.display = 'none';
+            }
+            
+            // 2. Validate Description (1-1000 chars)
+            const descTextarea = document.getElementById('edit-description');
+            const descValue = descTextarea.value.trim();
+            if (descValue.length < 1 || descValue.length > 1000) {
+                isValid = false;
+                errorMessages.push('Mô tả phải từ 1-1000 ký tự');
+                descTextarea.classList.add('is-invalid');
+            } else {
+                descTextarea.classList.remove('is-invalid');
+            }
+            
+            // 3. Validate Effective Date
+            const effectiveDateInput = document.getElementById('edit-effectiveDate');
+            if (effectiveDateInput.value) {
+                const effectiveDate = new Date(effectiveDateInput.value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                if (effectiveDate < today) {
+                    isValid = false;
+                    errorMessages.push('Ngày hiệu lực không được nhỏ hơn ngày hiện tại');
+                    effectiveDateInput.classList.add('is-invalid');
+                } else {
+                    effectiveDateInput.classList.remove('is-invalid');
+                }
+            }
+            
+            // 4. Validate File (phải có file hiện tại HOẶC chọn file mới)
+            const fileInput = document.getElementById('edit-fileAttachment');
+            const hasNewFile = fileInput.files && fileInput.files.length > 0;
+            
+            if (!editHasCurrentFile && !hasNewFile) {
+                isValid = false;
+                errorMessages.push('Vui lòng chọn file đính kèm');
+                const errorDiv = document.getElementById('edit-fileError');
+                errorDiv.innerText = 'Vui lòng chọn file đính kèm';
+                errorDiv.style.display = 'block';
+            } else {
+                document.getElementById('edit-fileError').style.display = 'none';
+            }
+            
+            // 5. HTML5 validation
+            if (!editForm.checkValidity()) {
+                isValid = false;
+                editForm.classList.add('was-validated');
+            }
+            
+            // Show errors if any
+            if (!isValid) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Thông tin chưa hợp lệ',
+                    html: errorMessages.join('<br>'),
+                    confirmButtonColor: '#000'
+                });
+                return;
+            }
+            
+            // All validations passed, proceed with submission
+            const formData = new FormData(editForm);
+            const equipmentIds = editSelectedEquipment.map(e => parseInt(e.equipmentId));
+            formData.append('equipmentIds', JSON.stringify(equipmentIds));
+            
+            try {
+                const ctx = window.location.pathname.split("/")[1];
+                const url = "/" + ctx + "/updateContractAppendix";
+                
+                console.log('Sending POST to:', url);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Response status:', response.status);
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('Content-Type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Response is not JSON:', text.substring(0, 500));
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi server',
+                        text: 'Server trả về lỗi. Vui lòng kiểm tra console.',
+                        confirmButtonColor: '#000'
+                    });
+                    return;
+                }
+                
+                const result = await response.json();
+                console.log('Response data:', result);
+                
+                if (result.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công!',
+                        text: result.message,
+                        confirmButtonColor: '#000'
+                    });
+                    
+                    bootstrap.Modal.getInstance(document.getElementById('editAppendixModal')).hide();
+                    window.location.reload();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Thất bại!',
+                        text: result.message,
+                        confirmButtonColor: '#000'
+                    });
+                }
+            } catch (error) {
+                console.error('ERROR:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi hệ thống',
+                    text: 'Không thể kết nối: ' + error.message,
+                    confirmButtonColor: '#000'
+                });
+            }
+        });
+    }
+});
+
+// ===== DELETE APPENDIX =====
+async function deleteAppendix(appendixId) {
+    const result = await Swal.fire({
+        title: 'Xác nhận xóa',
+        text: 'Bạn có chắc chắn muốn xóa phụ lục này? Hành động này không thể hoàn tác!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Xóa',
+        cancelButtonText: 'Hủy'
+    });
+    
+    if (!result.isConfirmed) return;
+    
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const formData = new FormData();
+        formData.append('appendixId', appendixId);
+        
+        const response = await fetch("/" + ctx + "/deleteContractAppendix", {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Đã xóa!',
+                text: data.message,
+                confirmButtonColor: '#000'
+            });
+            
+            window.location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: data.message,
+                confirmButtonColor: '#000'
+            });
+        }
+    } catch (error) {
+        console.error('ERROR:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi hệ thống',
+            text: error.message,
+            confirmButtonColor: '#000'
+        });
+    }
+}
+
+
+// ===== TẠO HỢP ĐỒNG MỚI =====
+let contractSelectedEquipment = [];
+let contractAllEquipment = [];
+
+// Character counter cho details
+document.addEventListener('DOMContentLoaded', function() {
+    const detailsTextarea = document.getElementById('contract-details');
+    if (detailsTextarea) {
+        detailsTextarea.addEventListener('input', function() {
+            const count = this.value.length;
+            document.getElementById('contract-detailsCount').innerText = count;
+            
+            if (count < 10 || count > 255) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
+    
+    // Date validation
+    const contractDateInput = document.getElementById('contractDate');
+    if (contractDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        contractDateInput.setAttribute('max', today);
+        
+        contractDateInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const todayDate = new Date();
+            todayDate.setHours(0, 0, 0, 0);
+            
+            if (selectedDate > todayDate) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Ngày không hợp lệ',
+                    text: 'Ngày ký hợp đồng không được ở tương lai',
+                    confirmButtonColor: '#000'
+                });
+                this.value = today;
+            }
+        });
+    }
+});
+
+// Khi chọn khách hàng, load thiết bị available
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'contract-customerSelect') {
+        const customerId = e.target.value;
+        contractSelectedEquipment = [];
+        
+        if (!customerId) {
+            document.getElementById('contract-equipmentList').innerHTML = 
+                '<div class="text-center text-muted py-4">' +
+                '<i class="fas fa-info-circle"></i> Vui lòng chọn khách hàng trước' +
+                '</div>';
+            updateContractSelectedEquipmentDisplay();
+            return;
+        }
+        
+        loadContractAvailableEquipment(customerId);
+    }
+});
+
+async function loadContractAvailableEquipment(customerId) {
+    const container = document.getElementById('contract-equipmentList');
+    container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+    
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const response = await fetch("/" + ctx + "/getAvailableEquipmentForCustomer?customerId=" + customerId);
+        
+        if (!response.ok) throw new Error("Không thể tải danh sách thiết bị");
+        
+        const data = await response.json();
+        
+        if (data.equipment && data.equipment.length > 0) {
+            contractAllEquipment = data.equipment;
+            renderContractEquipmentList(contractAllEquipment);
+        } else {
+            container.innerHTML = '<p class="text-center text-muted">Không có thiết bị khả dụng cho khách hàng này</p>';
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        container.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách thiết bị</div>';
+    }
+}
+
+function renderContractEquipmentList(equipmentList) {
+    const container = document.getElementById('contract-equipmentList');
+    
+    if (!equipmentList || equipmentList.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">Không tìm thấy thiết bị nào</p>';
+        return;
+    }
+    
+    let html = '';
+    equipmentList.forEach(function(eq) {
+        html += '<div class="equipment-item" data-id="' + eq.equipmentId + '">' +
+            '<div class="form-check">' +
+            '<input class="form-check-input contract-equipment-checkbox" ' +
+            'type="checkbox" ' +
+            'value="' + eq.equipmentId + '" ' +
+            'data-model="' + (eq.model || '') + '" ' +
+            'data-serial="' + (eq.serialNumber || '') + '" ' +
+            'onchange="toggleContractEquipment(this)">' +
+            '<label class="form-check-label">' +
+            '<strong>' + (eq.model || 'N/A') + '</strong> - <code>' + (eq.serialNumber || 'N/A') + '</code>' +
+            '<br><small class="text-muted">' + (eq.description || '') + '</small>' +
+            '</label>' +
+            '</div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function toggleContractEquipment(checkbox) {
+    const equipmentId = checkbox.value;
+    const model = checkbox.dataset.model;
+    const serial = checkbox.dataset.serial;
+    
+    if (checkbox.checked) {
+        contractSelectedEquipment.push({
+            equipmentId: equipmentId,
+            model: model,
+            serialNumber: serial
+        });
+    } else {
+        contractSelectedEquipment = contractSelectedEquipment.filter(function(e) {
+            return e.equipmentId !== equipmentId;
+        });
+    }
+    
+    updateContractSelectedEquipmentDisplay();
+    
+    // Clear error message
+    if (contractSelectedEquipment.length > 0) {
+        document.getElementById('contract-equipmentError').style.display = 'none';
+    }
+}
+
+function updateContractSelectedEquipmentDisplay() {
+    const container = document.getElementById('contract-selectedEquipmentList');
+    const countSpan = document.getElementById('contract-selectedCount');
+    
+    countSpan.innerText = contractSelectedEquipment.length;
+    
+    if (contractSelectedEquipment.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center mb-0">Chưa có thiết bị nào được chọn</p>';
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    contractSelectedEquipment.forEach(function(eq, index) {
+        html += '<div class="list-group-item d-flex justify-content-between align-items-center py-2">' +
+            '<div class="flex-grow-1">' +
+            '<strong>' + (index + 1) + '. ' + eq.model + '</strong>' +
+            '<br><small class="text-muted">' + eq.serialNumber + '</small>' +
+            '</div>' +
+            '<button type="button" class="btn btn-sm btn-danger" ' +
+            'onclick="removeContractEquipment(\'' + eq.equipmentId + '\')">' +
+            '<i class="fas fa-times"></i>' +
+            '</button>' +
+            '</div>';
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+function removeContractEquipment(equipmentId) {
+    contractSelectedEquipment = contractSelectedEquipment.filter(function(e) {
+        return e.equipmentId !== equipmentId;
+    });
+    
+    const checkbox = document.querySelector('.contract-equipment-checkbox[value="' + equipmentId + '"]');
+    if (checkbox) checkbox.checked = false;
+    
+    updateContractSelectedEquipmentDisplay();
+}
+
+// Search equipment
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('contract-equipmentSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            filterContractEquipment();
+        });
+    }
+});
+
+function filterContractEquipment() {
+    const keyword = document.getElementById('contract-equipmentSearch').value.toLowerCase();
+    
+    let filtered = contractAllEquipment;
+    
+    if (keyword) {
+        filtered = filtered.filter(function(eq) {
+            const model = (eq.model || '').toLowerCase();
+            const serial = (eq.serialNumber || '').toLowerCase();
+            const desc = (eq.description || '').toLowerCase();
+            return model.includes(keyword) || serial.includes(keyword) || desc.includes(keyword);
+        });
+    }
+    
+    renderContractEquipmentList(filtered);
+    
+    // Restore checked state
+    contractSelectedEquipment.forEach(function(selected) {
+        const checkbox = document.querySelector('.contract-equipment-checkbox[value="' + selected.equipmentId + '"]');
+        if (checkbox) checkbox.checked = true;
+    });
+}
+
+// Submit form
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('createContractForm');
+    
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            let isValid = true;
+            const errorMessages = [];
+            
+            // 1. Validate Customer
+            const customerSelect = document.getElementById('contract-customerSelect');
+            if (!customerSelect.value) {
+                isValid = false;
+                errorMessages.push('Vui lòng chọn khách hàng');
+                customerSelect.classList.add('is-invalid');
+            } else {
+                customerSelect.classList.remove('is-invalid');
+            }
+            
+            // 2. Validate Details (10-255 chars, không chỉ space)
+            const detailsTextarea = document.getElementById('contract-details');
+            const details = detailsTextarea.value.trim();
+            if (details.length < 10 || details.length > 255) {
+                isValid = false;
+                errorMessages.push('Chi tiết hợp đồng phải từ 10-255 ký tự');
+                detailsTextarea.classList.add('is-invalid');
+            } else {
+                detailsTextarea.classList.remove('is-invalid');
+            }
+            
+            // 3. Validate Date
+            const contractDateInput = document.getElementById('contractDate');
+            if (contractDateInput.value) {
+                const selectedDate = new Date(contractDateInput.value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                if (selectedDate > today) {
+                    isValid = false;
+                    errorMessages.push('Ngày ký hợp đồng không được ở tương lai');
+                    contractDateInput.classList.add('is-invalid');
+                } else {
+                    contractDateInput.classList.remove('is-invalid');
+                }
+            }
+            
+            // 4. Validate Equipment Selection
+            if (contractSelectedEquipment.length === 0) {
+                isValid = false;
+                errorMessages.push('Vui lòng chọn ít nhất một thiết bị');
+                const errorDiv = document.getElementById('contract-equipmentError');
+                errorDiv.innerText = 'Vui lòng chọn ít nhất một thiết bị';
+                errorDiv.style.display = 'block';
+            } else {
+                document.getElementById('contract-equipmentError').style.display = 'none';
+            }
+            
+            // 5. HTML5 validation
+            if (!form.checkValidity()) {
+                isValid = false;
+                form.classList.add('was-validated');
+            }
+            
+            if (!isValid) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Thông tin chưa hợp lệ',
+                    html: errorMessages.join('<br>'),
+                    confirmButtonColor: '#000'
+                });
+                return;
+            }
+            
+            // All validations passed
+            const formData = new FormData(form);
+            const equipmentIds = contractSelectedEquipment.map(e => parseInt(e.equipmentId));
+            formData.append('equipmentIds', JSON.stringify(equipmentIds));
+            
+            try {
+                const ctx = window.location.pathname.split("/")[1];
+                const response = await fetch("/" + ctx + "/createContract", {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công!',
+                        text: result.message || 'Đã tạo hợp đồng thành công',
+                        confirmButtonColor: '#000'
+                    });
+                    
+                    const modalElement = document.getElementById('createContractModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                    
+                    window.location.reload();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Thất bại!',
+                        text: result.message || 'Không thể tạo hợp đồng',
+                        confirmButtonColor: '#000'
+                    });
+                }
+            } catch (error) {
+                console.error('ERROR:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi hệ thống',
+                    text: error.message,
+                    confirmButtonColor: '#000'
+                });
+            }
+        });
+    }
+});
+
+// Reset modal when opening
+function openCreateContractModal() {
+    const form = document.getElementById('createContractForm');
+    if (form) {
+        form.reset();
+        form.classList.remove('was-validated');
+    }
+    
+    contractSelectedEquipment = [];
+    contractAllEquipment = [];
+    
+    document.getElementById('contract-equipmentList').innerHTML = 
+        '<div class="text-center text-muted py-4">' +
+        '<i class="fas fa-info-circle"></i> Vui lòng chọn khách hàng trước' +
+        '</div>';
+    
+    updateContractSelectedEquipmentDisplay();
+    
+    document.getElementById('contract-detailsCount').innerText = '0';
+    document.getElementById('contract-equipmentError').style.display = 'none';
+    
+    new bootstrap.Modal(document.getElementById('createContractModal')).show();
+}
 
 </script>
 </body>

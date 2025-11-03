@@ -400,26 +400,39 @@
         <form method="post" id="createRequestForm" action="createServiceRequest">
             <div class="modal-content">
                 <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i> Tạo Yêu Cầu Dịch Vụ</h5>
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i> Tạo Yêu Cầu Dịch Vụ
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
 
                 <div class="modal-body">
-                    <h6 class="fw-bold mb-3">Thông tin khách hàng</h6>
+                    <!-- Khách hàng -->
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-user"></i> Thông tin khách hàng
+                    </h6>
                     <div class="mb-3">
-                        <label>Khách hàng <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">
+                            Khách hàng <span class="text-danger">*</span>
+                        </label>
                         <select name="customerId" id="customerSelect" class="form-select" required>
                             <option value="">-- Chọn khách hàng --</option>
                             <c:forEach var="c" items="${customerList}">
                                 <option value="${c.accountId}">${c.fullName} (${c.email})</option>
                             </c:forEach>
                         </select>
+                        <div class="invalid-feedback">Vui lòng chọn khách hàng</div>
                     </div>
 
-                    <h6 class="fw-bold mb-3">Thiết bị liên quan</h6>
+                    <!-- Thiết bị -->
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-tools"></i> Thiết bị liên quan
+                    </h6>
                     <div class="mb-3">
-                        <label>Thiết bị <span class="text-danger">*</span></label>
-                        <!-- Dropdown multiple -->
+                        <label class="form-label fw-bold">
+                            Thiết bị <span class="text-danger">*</span>
+                        </label>
+                        
                         <div class="dropdown w-100">
                             <button class="btn btn-outline-dark dropdown-toggle w-100 text-start" 
                                     type="button" 
@@ -432,40 +445,68 @@
                             <ul class="dropdown-menu w-100 p-2" 
                                 id="equipmentDropdownList"
                                 style="max-height: 300px; overflow-y: auto;">
-                                <!-- Thiết bị sẽ được đổ bằng JS -->
+                                <li class="px-3 text-muted">Vui lòng chọn khách hàng trước</li>
                             </ul>
                         </div>
 
-                        <!-- ✅ Phần hiển thị thiết bị đã chọn -->
+                        <!-- Hiển thị thiết bị đã chọn -->
                         <div id="selectedEquipmentDisplay" class="mt-3"></div>
 
-                        <input type="hidden" name="equipmentIds" id="equipmentIds">
+                        <input type="hidden" name="equipmentIds" id="equipmentIds" required>
+                        
+                        <div class="invalid-feedback d-block" id="equipmentError" style="display: none;">
+                            Vui lòng chọn ít nhất một thiết bị
+                        </div>
+                        
                         <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Bạn có thể chọn nhiều thiết bị cùng lúc
+                            <i class="fas fa-info-circle"></i> Bao gồm thiết bị từ hợp đồng chính và phụ lục
                         </small>
                     </div>
 
-                    <h6 class="fw-bold mb-3">Loại yêu cầu</h6>
+                    <!-- Loại yêu cầu -->
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-clipboard-list"></i> Loại yêu cầu
+                    </h6>
                     <div class="mb-3">
-                        <select name="requestType" class="form-select" required>
+                        <select name="requestType" id="requestType" class="form-select" required>
+                            <option value="">-- Chọn loại yêu cầu --</option>
                             <option value="Service">Service</option>
                             <option value="Warranty">Warranty</option>
                         </select>
+                        <div class="invalid-feedback">Vui lòng chọn loại yêu cầu</div>
                     </div>
 
-                    <h6 class="fw-bold mb-3">Mức độ ưu tiên</h6>
+                    <!-- Mức độ ưu tiên -->
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-exclamation-triangle"></i> Mức độ ưu tiên
+                    </h6>
                     <div class="mb-3">
-                        <select name="priorityLevel" class="form-select" required>
+                        <select name="priorityLevel" id="priorityLevel" class="form-select" required>
+                            <option value="">-- Chọn mức độ --</option>
                             <option value="Normal">Normal</option>
                             <option value="High">High</option>
                             <option value="Urgent">Urgent</option>
                         </select>
+                        <div class="invalid-feedback">Vui lòng chọn mức độ ưu tiên</div>
                     </div>
 
-                    <h6 class="fw-bold mb-3">Mô tả yêu cầu</h6>
+                    <!-- Mô tả -->
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-comment-alt"></i> Mô tả yêu cầu
+                    </h6>
                     <div class="mb-3">
-                        <textarea name="description" class="form-control" rows="3" maxlength="1000"
-                                  placeholder="Mô tả chi tiết vấn đề khách hàng gặp phải..." required></textarea>
+                        <textarea name="description" 
+                                  id="requestDescription"
+                                  class="form-control" 
+                                  rows="3" 
+                                  minlength="10"
+                                  maxlength="1000"
+                                  placeholder="Mô tả chi tiết vấn đề khách hàng gặp phải..." 
+                                  required></textarea>
+                        <small class="text-muted">
+                            <span id="descriptionCount">0</span>/1000 ký tự (tối thiểu 10)
+                        </small>
+                        <div class="invalid-feedback">Mô tả phải từ 10-1000 ký tự</div>
                     </div>
                 </div>
 
@@ -692,7 +733,6 @@ function viewDetails(id) {
     const get = name => row.dataset[name] || "(Không có thông tin)";
     const type = get("requesttype");
 
-    // Gán dữ liệu
     document.getElementById("detail-requestId").innerText = "#" + id;
     document.getElementById("detail-customer").innerText = get("customer");
     document.getElementById("detail-customerEmail").innerText = get("customeremail");
@@ -708,7 +748,6 @@ function viewDetails(id) {
     document.getElementById("detail-equipmentDesc").innerText = get("equipmentdesc");
     document.getElementById("detail-description").innerText = get("description");
 
-    // Ẩn/hiện các dòng liên quan đến hợp đồng & thiết bị
     document.querySelectorAll(".info-only").forEach(rowEl => {
         if (type === "InformationUpdate") {
             rowEl.style.display = "none";
@@ -717,10 +756,8 @@ function viewDetails(id) {
         }
     });
 
-    // Hiển thị modal
     new bootstrap.Modal(document.getElementById("viewRequestModal")).show();
 }
-
 
 function forwardRequest(id) {
     Swal.fire({
@@ -735,10 +772,9 @@ function forwardRequest(id) {
         if (result.isConfirmed) {
             try {
                 const res = await fetch(
-    'updateRequestStatus?requestId=' + id + '&status=' + encodeURIComponent('Awaiting Approval'),
-    { method: 'GET' }
-);
-
+                    'updateRequestStatus?requestId=' + id + '&status=' + encodeURIComponent('Awaiting Approval'),
+                    { method: 'GET' }
+                );
 
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -775,10 +811,9 @@ function cancelRequest(id) {
         if (result.isConfirmed) {
             try {
                 const res = await fetch(
-    'updateRequestStatus?requestId=' + id + '&status=' + encodeURIComponent('Rejected'),
-    { method: 'GET' }
-);
-
+                    'updateRequestStatus?requestId=' + id + '&status=' + encodeURIComponent('Rejected'),
+                    { method: 'GET' }
+                );
 
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -801,8 +836,6 @@ function cancelRequest(id) {
         }
     });
 }
-
-
 
 async function editCustomerInfo(requestId) {
     console.log("🟩 RequestID nhận được:", requestId);
@@ -838,7 +871,6 @@ async function editCustomerInfo(requestId) {
         const account = data.account;
         const profile = data.profile || {};
 
-        // ✅ Đổ dữ liệu account
         document.getElementById("editId").value = account.accountId;
         document.getElementById("editUsername").value = account.username;
         document.getElementById("editFullName").value = account.fullName;
@@ -850,7 +882,6 @@ async function editCustomerInfo(requestId) {
         document.getElementById("editConfirmPasswordGroup").classList.add("d-none");
         document.getElementById("editRequestId").value = requestId;
 
-        // ✅ Đổ dữ liệu profile
         if (document.getElementById("editAddress"))
             document.getElementById("editAddress").value = profile.address || "";
 
@@ -868,7 +899,6 @@ async function editCustomerInfo(requestId) {
         
         document.querySelectorAll("#editUserForm .error-message").forEach(el => el.style.display = "none");
 
-        // ✅ Hiển thị modal
         const modal = new bootstrap.Modal(document.getElementById("editUserModal"));
         modal.show();
 
@@ -883,117 +913,307 @@ async function editCustomerInfo(requestId) {
     }
 }
 
+// ===== TẠO YÊU CẦU DỊCH VỤ - CHỈ ĐĂNG KÝ 1 LẦN =====
+document.addEventListener("DOMContentLoaded", function() {
+    // Character counter
+    const descriptionTextarea = document.getElementById('requestDescription');
+    if (descriptionTextarea) {
+        descriptionTextarea.addEventListener('input', function() {
+            const count = this.value.length;
+            document.getElementById('descriptionCount').innerText = count;
+            
+            if (count < 10 || count > 1000) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
 
-document.addEventListener("change", function (e) {
-    if (e.target && e.target.id === "customerSelect") {
-        const customerId = e.target.value;
-        console.log("Selected customerId:", customerId);
-        if (!customerId) return;
+    // ===== LOAD THIẾT BỊ KHI CHỌN KHÁCH HÀNG =====
+    const customerSelect = document.getElementById('customerSelect');
+    if (customerSelect) {
+        customerSelect.addEventListener('change', function() {
+            const customerId = this.value;
+            console.log("Selected customerId:", customerId);
+            
+            // Reset
+            document.getElementById('equipmentIds').value = '';
+            document.getElementById('selectedEquipmentDisplay').innerHTML = '';
+            document.getElementById('equipmentError').style.display = 'none';
+            
+            const dropdownList = document.getElementById("equipmentDropdownList");
+            const dropdownBtn = document.getElementById('equipmentDropdown');
+            
+            if (!customerId) {
+                dropdownList.innerHTML = "<li class='px-3 text-muted'>Vui lòng chọn khách hàng trước</li>";
+                dropdownBtn.innerHTML = '<i class="fas fa-list"></i> -- Chọn thiết bị --';
+                return;
+            }
+            
+            dropdownList.innerHTML = "<li class='px-3 text-muted'><i class='fas fa-spinner fa-spin'></i> Đang tải...</li>";
+            
+            const ctx = window.location.pathname.split("/")[1]; 
+            const url = "/" + ctx + "/loadContractsAndEquipment?customerId=" + encodeURIComponent(customerId);
+            console.log("🔗 Fetch URL:", url);
 
-const ctx = window.location.pathname.split("/")[1]; 
-const url = "/" + ctx + "/loadContractsAndEquipment?customerId=" + encodeURIComponent(customerId);
-        console.log("🔗 Fetch URL:", url);
+            fetch(url)
+                .then(res => {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                })
+                .then(data => {
+                    console.log("✅ Data thiết bị:", data);
+                    dropdownList.innerHTML = "";
 
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                console.log("✅ Data thiết bị:", data);
-                const dropdownList = document.getElementById("equipmentDropdownList");
-                dropdownList.innerHTML = "";
-
-                if (data.equipment && data.equipment.length > 0) {
-                    data.equipment.forEach(eq => {
-                        const li = document.createElement("li");
-                        li.innerHTML =
-                            '<div class="form-check px-3">' +
-                                '<input class="form-check-input equipment-checkbox" ' +
-                                       'type="checkbox" ' +
-                                       'value="' + eq.equipmentId + '" ' +
-                                       'id="equip-' + eq.equipmentId + '">' +
-                                '<label class="form-check-label" for="equip-' + eq.equipmentId + '">' +
-                                    eq.model + ' (' + eq.serialNumber + ')' +
-                                '</label>' +
-                            '</div>';
-                        dropdownList.appendChild(li);
+                    if (data.equipment && data.equipment.length > 0) {
+                        data.equipment.forEach(eq => {
+                            const li = document.createElement("li");
+                            li.innerHTML =
+                                '<div class="form-check px-3">' +
+                                    '<input class="form-check-input equipment-checkbox" ' +
+                                           'type="checkbox" ' +
+                                           'value="' + eq.equipmentId + '" ' +
+                                           'id="equip-' + eq.equipmentId + '" ' +
+                                           'data-model="' + (eq.model || '') + '" ' +
+                                           'data-serial="' + (eq.serialNumber || '') + '">' +
+                                    '<label class="form-check-label w-100" for="equip-' + eq.equipmentId + '">' +
+                                        '<strong>' + (eq.model || 'N/A') + '</strong> - ' +
+                                        '<code>' + (eq.serialNumber || 'N/A') + '</code>' +
+                                        (eq.description ? '<br><small class="text-muted">' + eq.description + '</small>' : '') +
+                                    '</label>' +
+                                '</div>';
+                            dropdownList.appendChild(li);
+                        });
+                    } else {
+                        dropdownList.innerHTML = "<li class='px-3 text-muted'>Không có thiết bị nào</li>";
+                        dropdownBtn.innerHTML = '<i class="fas fa-list"></i> -- Không có thiết bị --';
+                    }
+                })
+                .catch(err => {
+                    console.error("❌ Lỗi load thiết bị:", err);
+                    dropdownList.innerHTML = "<li class='px-3 text-danger'>Lỗi: " + err.message + "</li>";
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi tải thiết bị',
+                        text: 'Không thể tải danh sách thiết bị. Vui lòng thử lại.',
+                        confirmButtonColor: '#000'
                     });
-                     updateSelectedEquipment();
-                } else {
-                    dropdownList.innerHTML = "<li class='px-3 text-muted'>Không có thiết bị nào.</li>";
-                }
-            })
-            .catch(err => console.error("❌ Lỗi load thiết bị:", err));
+                });
+        });
     }
-});
 
-
-// Lắng nghe khi chọn/bỏ chọn checkbox thiết bị
-document.addEventListener("change", function (e) {
-    if (e.target.classList.contains("equipment-checkbox")) {
-        updateSelectedEquipment();
-    }
-});
-
-// ✅ Hàm cập nhật hiển thị thiết bị đã chọn
-function updateSelectedEquipment() {
-    const checkboxes = document.querySelectorAll('.equipment-checkbox:checked');
-    const display = document.getElementById('selectedEquipmentDisplay');
-    const dropdownBtn = document.getElementById('equipmentDropdown');
-    
-    // Lấy danh sách ID đã chọn
-    const selected = Array.from(checkboxes).map(cb => cb.value);
-    document.getElementById('equipmentIds').value = selected.join(',');
-    
-    // Cập nhật text button dropdown
-    if (selected.length > 0) {
-        dropdownBtn.innerHTML = `<i class="fas fa-check-circle text-success"></i> Đã chọn ${selected.length} thiết bị`;
-    } else {
-        dropdownBtn.innerHTML = '<i class="fas fa-list"></i> -- Chọn thiết bị --';
-    }
-    
-    // Hiển thị danh sách thiết bị đã chọn
-    if (checkboxes.length === 0) {
-        display.innerHTML = '';
-        return;
-    }
-    
-    let html = '<div class="alert alert-info mb-0">' +
-               '<strong><i class="fas fa-tools"></i> Đã chọn ' + checkboxes.length + ' thiết bị:</strong>' +
-               '<ul class="mb-0 mt-2 ps-3">';
-    
-    checkboxes.forEach(cb => {
-        const label = document.querySelector('label[for="' + cb.id + '"]');
-        if (label) {
-            const equipmentText = label.textContent.trim();
-            html += '<li>' + equipmentText + '</li>';
+    // ===== CẬP NHẬT THIẾT BỊ ĐÃ CHỌN =====
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('equipment-checkbox')) {
+            updateSelectedEquipment();
         }
     });
-    
-    html += '</ul></div>';
-    display.innerHTML = html;
-}
 
-// ✅ Cập nhật listener khi chọn thiết bị
-document.addEventListener("change", function (e) {
-    if (e.target.classList.contains("equipment-checkbox")) {
-        updateSelectedEquipment();
+    function updateSelectedEquipment() {
+        const checkboxes = document.querySelectorAll('.equipment-checkbox:checked');
+        const display = document.getElementById('selectedEquipmentDisplay');
+        const dropdownBtn = document.getElementById('equipmentDropdown');
+        const errorDiv = document.getElementById('equipmentError');
+        
+        const selected = Array.from(checkboxes).map(cb => cb.value);
+        document.getElementById('equipmentIds').value = selected.join(',');
+        
+        // ✅ ẨN ERROR KHI ĐÃ CHỌN
+        if (selected.length > 0) {
+            errorDiv.style.display = 'none';
+        }
+        
+        if (selected.length > 0) {
+            dropdownBtn.innerHTML = '<i class="fas fa-check-circle text-success"></i> Đã chọn ' + selected.length + ' thiết bị';
+        } else {
+            dropdownBtn.innerHTML = '<i class="fas fa-list"></i> -- Chọn thiết bị --';
+        }
+        
+        if (checkboxes.length === 0) {
+            display.innerHTML = '';
+            return;
+        }
+        
+        let html = '<div class="alert alert-info mb-0">' +
+                   '<strong><i class="fas fa-tools"></i> Đã chọn ' + checkboxes.length + ' thiết bị:</strong>' +
+                   '<ul class="mb-0 mt-2 ps-3">';
+        
+        checkboxes.forEach(cb => {
+            const model = cb.dataset.model || 'N/A';
+            const serial = cb.dataset.serial || 'N/A';
+            html += '<li><strong>' + model + '</strong> - <code>' + serial + '</code></li>';
+        });
+        
+        html += '</ul></div>';
+        display.innerHTML = html;
+    }
+
+    // ===== SUBMIT FORM - CHỈ 1 LẦN =====
+    let formSubmitted = false;
+    const form = document.getElementById("createRequestForm");
+
+    if (form) {
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (formSubmitted) {
+                console.log('⚠️ Form đang được xử lý...');
+                return;
+            }
+            
+            let isValid = true;
+            const errorMessages = [];
+            
+            // 1. Validate Customer
+            const customerSelectVal = document.getElementById('customerSelect');
+            if (!customerSelectVal.value) {
+                isValid = false;
+                errorMessages.push('Vui lòng chọn khách hàng');
+                customerSelectVal.classList.add('is-invalid');
+            } else {
+                customerSelectVal.classList.remove('is-invalid');
+            }
+            
+            // 2. Validate Equipment
+            const equipmentIds = document.getElementById('equipmentIds').value;
+            const errorDiv = document.getElementById('equipmentError');
+            if (!equipmentIds || equipmentIds.trim() === '') {
+                isValid = false;
+                errorMessages.push('Vui lòng chọn ít nhất một thiết bị');
+                errorDiv.style.display = 'block';
+            } else {
+                errorDiv.style.display = 'none';
+            }
+            
+            // 3. Validate Request Type
+            const requestType = document.getElementById('requestType');
+            if (!requestType.value) {
+                isValid = false;
+                errorMessages.push('Vui lòng chọn loại yêu cầu');
+                requestType.classList.add('is-invalid');
+            } else {
+                requestType.classList.remove('is-invalid');
+            }
+            
+            // 4. Validate Priority Level
+            const priorityLevel = document.getElementById('priorityLevel');
+            if (!priorityLevel.value) {
+                isValid = false;
+                errorMessages.push('Vui lòng chọn mức độ ưu tiên');
+                priorityLevel.classList.add('is-invalid');
+            } else {
+                priorityLevel.classList.remove('is-invalid');
+            }
+            
+            // 5. Validate Description
+            const description = document.getElementById('requestDescription');
+            const descValue = description.value.trim();
+            if (descValue.length < 10 || descValue.length > 1000) {
+                isValid = false;
+                errorMessages.push('Mô tả phải từ 10-1000 ký tự');
+                description.classList.add('is-invalid');
+            } else {
+                description.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Thông tin chưa hợp lệ',
+                    html: errorMessages.join('<br>'),
+                    confirmButtonColor: '#000'
+                });
+                return;
+            }
+            
+            formSubmitted = true;
+            const formData = new FormData(this);
+
+            try {
+                const res = await fetch("createServiceRequest", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await res.json();
+                console.log("✅ Kết quả:", result);
+
+                if (result.success) {
+                    errorDiv.style.display = 'none';
+                    
+                    await Swal.fire({
+                        icon: "success",
+                        title: "Thành công!",
+                        text: result.message,
+                        confirmButtonColor: "#000"
+                    });
+                    
+                    const modal = bootstrap.Modal.getInstance(document.getElementById("createRequestModal"));
+                    if (modal) modal.hide();
+                    
+                    window.location.reload();
+                } else {
+                    formSubmitted = false;
+                    Swal.fire({
+                        icon: "error",
+                        title: "Thất bại!",
+                        text: result.message,
+                        confirmButtonColor: "#000"
+                    });
+                }
+
+            } catch (err) {
+                formSubmitted = false;
+                console.error("❌ Lỗi:", err);
+                Swal.fire({
+                    icon: "error",
+                    title: "Lỗi!",
+                    text: "Không thể gửi yêu cầu. Vui lòng thử lại.",
+                    confirmButtonColor: "#000"
+                });
+            }
+        });
+    }
+
+    // Reset modal khi đóng
+    const modalElement = document.getElementById('createRequestModal');
+    if (modalElement) {
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            formSubmitted = false; // ✅ RESET FLAG
+            
+            if (form) {
+                form.reset();
+                form.classList.remove('was-validated');
+            }
+            
+            document.getElementById('equipmentIds').value = '';
+            document.getElementById('selectedEquipmentDisplay').innerHTML = '';
+            document.getElementById('equipmentError').style.display = 'none';
+            document.getElementById('descriptionCount').innerText = '0';
+            document.getElementById('equipmentDropdown').innerHTML = '<i class="fas fa-list"></i> -- Chọn thiết bị --';
+            document.getElementById('equipmentDropdownList').innerHTML = "<li class='px-3 text-muted'>Vui lòng chọn khách hàng trước</li>";
+            
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        });
     }
 });
 
-
-// ✅ Khi mở modal, ẩn toàn bộ thông báo lỗi
+// ===== EDIT CUSTOMER FORM =====
 document.addEventListener("DOMContentLoaded", function () {
-    console.log("✅ DOM loaded, khởi tạo các listener validate...");
-
     const editForm = document.getElementById("editUserForm");
+    if (!editForm) return;
+    
     const step1 = document.getElementById("step1");
     const step2 = document.getElementById("step2");
     const nextBtn = document.getElementById("nextStep");
     const prevBtn = document.getElementById("prevStep");
     const submitBtn = document.getElementById("submitBtn");
 
-    /* ========== Ẩn/hiện confirm password ========== */
     const editPassword = document.getElementById("editPassword");
     const confirmGroup = document.getElementById("editConfirmPasswordGroup");
+    
     if (editPassword) {
         editPassword.addEventListener("input", function () {
             if (this.value.trim() !== "") confirmGroup.classList.remove("d-none");
@@ -1004,7 +1224,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    /* ========== Hàm kiểm tra mật khẩu khớp ========== */
     function checkEditPasswordMatch() {
         const pass = document.getElementById("editPassword").value.trim();
         const confirm = document.getElementById("editConfirmPassword").value.trim();
@@ -1019,60 +1238,51 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    /* ========== Validate Step 1 ========== */
     function validateStep1() {
-    let valid = true;
-    const fullName = document.getElementById("editFullName");
-    const email = document.getElementById("editEmail");
-    const phone = document.getElementById("editPhone");
-    const password = document.getElementById("editPassword");
-    const confirmPassword = document.getElementById("editConfirmPassword");
+        let valid = true;
+        const fullName = document.getElementById("editFullName");
+        const email = document.getElementById("editEmail");
+        const phone = document.getElementById("editPhone");
+        const password = document.getElementById("editPassword");
 
-    const namePattern = /^[A-Za-zÀ-ỹ\s]{2,50}$/;
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    const phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
-    const passwordPattern = /^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$/;
+        const namePattern = /^[A-Za-zÀ-ỹ\s]{2,50}$/;
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const phonePattern = /^(03|05|07|08|09)[0-9]{8}$/;
+        const passwordPattern = /^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$/;
 
-    // Họ tên
-    if (!namePattern.test(fullName.value.trim())) {
-        document.getElementById("editFullNameError").style.display = "block";
-        valid = false;
-    } else document.getElementById("editFullNameError").style.display = "none";
-
-    // Email
-    if (!emailPattern.test(email.value.trim())) {
-        document.getElementById("editEmailError").style.display = "block";
-        valid = false;
-    } else document.getElementById("editEmailError").style.display = "none";
-
-    // Số điện thoại
-    if (!phonePattern.test(phone.value.trim())) {
-        document.getElementById("editPhoneError").style.display = "block";
-        valid = false;
-    } else document.getElementById("editPhoneError").style.display = "none";
-
-    // Mật khẩu
-    if (password.value.trim() !== "") {
-        if (!passwordPattern.test(password.value.trim())) {
-            document.getElementById("editPasswordError").textContent = "Mật khẩu không hợp lệ (6–30 ký tự, không chứa khoảng trắng)";
-            document.getElementById("editPasswordError").style.display = "block";
+        if (!namePattern.test(fullName.value.trim())) {
+            document.getElementById("editFullNameError").style.display = "block";
             valid = false;
+        } else document.getElementById("editFullNameError").style.display = "none";
+
+        if (!emailPattern.test(email.value.trim())) {
+            document.getElementById("editEmailError").style.display = "block";
+            valid = false;
+        } else document.getElementById("editEmailError").style.display = "none";
+
+        if (!phonePattern.test(phone.value.trim())) {
+            document.getElementById("editPhoneError").style.display = "block";
+            valid = false;
+        } else document.getElementById("editPhoneError").style.display = "none";
+
+        if (password.value.trim() !== "") {
+            if (!passwordPattern.test(password.value.trim())) {
+                document.getElementById("editPasswordError").textContent = "Mật khẩu không hợp lệ (6–30 ký tự)";
+                document.getElementById("editPasswordError").style.display = "block";
+                valid = false;
+            } else {
+                document.getElementById("editPasswordError").style.display = "none";
+            }
+
+            if (!checkEditPasswordMatch()) valid = false;
         } else {
             document.getElementById("editPasswordError").style.display = "none";
+            document.getElementById("editConfirmPasswordError").style.display = "none";
         }
 
-        // Xác nhận mật khẩu
-        if (!checkEditPasswordMatch()) valid = false;
-    } else {
-        document.getElementById("editPasswordError").style.display = "none";
-        document.getElementById("editConfirmPasswordError").style.display = "none";
+        return valid;
     }
 
-    return valid;
-}
-
-
-    /* ========== Validate Step 2 ========== */
     function validateStep2() {
         let valid = true;
         const nationalId = document.getElementById("editNationalId").value.trim();
@@ -1084,7 +1294,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return valid;
     }
 
-    /* ========== Nút Tiếp → ========== */
     nextBtn.addEventListener("click", function () {
         if (validateStep1()) {
             step1.classList.add("d-none");
@@ -1096,13 +1305,12 @@ document.addEventListener("DOMContentLoaded", function () {
             Swal.fire({
                 icon: 'error',
                 title: 'Thông tin chưa hợp lệ!',
-                text: 'Vui lòng kiểm tra lại trước khi tiếp tục.',
+                text: 'Vui lòng kiểm tra lại.',
                 confirmButtonColor: '#000'
             });
         }
     });
 
-    /* ========== Nút Quay lại ← ========== */
     prevBtn.addEventListener("click", function () {
         step2.classList.add("d-none");
         step1.classList.remove("d-none");
@@ -1111,95 +1319,38 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.classList.add("d-none");
     });
 
-    /* ========== Nút Gửi form ========== */
-    editForm.addEventListener("submit", function (e) {
+    editForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        
         if (!validateStep1() || !validateStep2()) {
-            e.preventDefault();
             Swal.fire({
                 icon: 'error',
                 title: 'Thông tin chưa hợp lệ!',
-                text: 'Vui lòng kiểm tra lại trước khi cập nhật!',
                 confirmButtonColor: '#000'
             });
+            return;
         }
-    });
-});
-
-// Sau khi submit form thành công, cập nhật trạng thái request
-document.getElementById("editUserForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-
-    try {
-        // ✅ Context path JSP sẽ render đúng (ví dụ: /MyCRMSystem)
-        const res = await fetch(`${pageContext.request.contextPath}/viewCustomerRequest`, {
-    method: "POST",
-    body: formData
-});
-
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const result = await res.json();
-
-        if (result.success) {
-            Swal.fire({
-                icon: "success",
-                title: "Thành công!",
-                text: result.message,
-                confirmButtonColor: "#000"
-            }).then(() => window.location.reload());
-        } else {
-            Swal.fire({
-                icon: "error",
-                title: "Thất bại!",
-                text: result.message,
-                confirmButtonColor: "#000"
-            });
-        }
-    } catch (err) {
-        console.error("❌ Lỗi khi gửi request:", err);
-        Swal.fire({
-            icon: "error",
-            title: "Thất bại!",
-            text: "Không thể gửi dữ liệu đến server!",
-            confirmButtonColor: "#000"
-        });
-    }
-});
-
-
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("createRequestForm");
-
-    form.addEventListener("submit", async function (e) {
-        e.preventDefault(); // ❌ chặn form reload
+        
         const formData = new FormData(this);
 
         try {
-            // Gửi form qua servlet
-            const res = await fetch("createServiceRequest", {
+            const ctx = window.location.pathname.split("/")[1];
+            const res = await fetch("/" + ctx + "/viewCustomerRequest", {
                 method: "POST",
                 body: formData
             });
 
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const result = await res.json();
-            console.log("✅ Kết quả trả về:", result);
 
             if (result.success) {
-                // ✅ Hiện thông báo thành công ngay
                 Swal.fire({
                     icon: "success",
                     title: "Thành công!",
                     text: result.message,
                     confirmButtonColor: "#000"
-                }).then(() => {
-                    // Đóng modal + refresh list
-                    const modal = bootstrap.Modal.getInstance(document.getElementById("createRequestModal"));
-                    modal.hide();
-                    window.location.reload();
-                });
+                }).then(() => window.location.reload());
             } else {
-                // ❌ Hiện thông báo lỗi
                 Swal.fire({
                     icon: "error",
                     title: "Thất bại!",
@@ -1207,19 +1358,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     confirmButtonColor: "#000"
                 });
             }
-
         } catch (err) {
-            console.error("❌ Lỗi khi gửi yêu cầu:", err);
+            console.error("❌ Lỗi:", err);
             Swal.fire({
                 icon: "error",
-                title: "Lỗi!",
-                text: "Không thể gửi yêu cầu. Vui lòng thử lại.",
+                title: "Thất bại!",
+                text: "Không thể gửi dữ liệu!",
                 confirmButtonColor: "#000"
             });
         }
     });
 });
-
 </script>
 </body>
 </html>
