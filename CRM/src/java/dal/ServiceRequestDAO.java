@@ -1523,13 +1523,22 @@ public class ServiceRequestDAO extends MyDAO {
         String sql = """
         SELECT sr.*, 
                a.fullName AS customerName, a.email AS customerEmail, a.phone AS customerPhone,
-               c.contractType, c.status AS contractStatus,
+               COALESCE(c.contractType, c2.contractType) AS contractType, 
+               COALESCE(c.status, c2.status) AS contractStatus,
                e.model AS equipmentModel, e.serialNumber, e.description AS equipmentDescription,
                tech.fullName AS technicianName
         FROM ServiceRequest sr
         LEFT JOIN Account a ON sr.createdBy = a.accountId
-        LEFT JOIN Contract c ON sr.contractId = c.contractId
         LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId
+        
+        -- Join với hợp đồng chính (qua sr.contractId)
+        LEFT JOIN Contract c ON sr.contractId = c.contractId
+        
+        -- Join với hợp đồng từ phụ lục (qua equipmentId)
+        LEFT JOIN ContractAppendixEquipment cae ON e.equipmentId = cae.equipmentId
+        LEFT JOIN ContractAppendix ca ON cae.appendixId = ca.appendixId
+        LEFT JOIN Contract c2 ON ca.contractId = c2.contractId
+        
         LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId
         LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId
         ORDER BY sr.requestDate DESC
@@ -1543,7 +1552,13 @@ public class ServiceRequestDAO extends MyDAO {
                 while (rs.next()) {
                     ServiceRequest sr = new ServiceRequest();
                     sr.setRequestId(rs.getInt("requestId"));
-                    sr.setContractId(rs.getInt("contractId"));
+
+                    // Handle nullable contractId
+                    int contractId = rs.getInt("contractId");
+                    if (!rs.wasNull()) {
+                        sr.setContractId(contractId);
+                    }
+
                     sr.setEquipmentId(rs.getInt("equipmentId"));
                     sr.setCreatedBy(rs.getInt("createdBy"));
                     sr.setDescription(rs.getString("description"));
@@ -1555,8 +1570,11 @@ public class ServiceRequestDAO extends MyDAO {
                     sr.setCustomerName(rs.getString("customerName"));
                     sr.setCustomerEmail(rs.getString("customerEmail"));
                     sr.setCustomerPhone(rs.getString("customerPhone"));
+
+                    // ✅ Lấy từ COALESCE - ưu tiên hợp đồng chính, fallback sang phụ lục
                     sr.setContractType(rs.getString("contractType"));
                     sr.setContractStatus(rs.getString("contractStatus"));
+
                     sr.setEquipmentModel(rs.getString("equipmentModel"));
                     sr.setEquipmentDescription(rs.getString("equipmentDescription"));
                     sr.setSerialNumber(rs.getString("serialNumber"));
@@ -1588,13 +1606,22 @@ public class ServiceRequestDAO extends MyDAO {
         StringBuilder sql = new StringBuilder("""
         SELECT sr.*, 
                a.fullName AS customerName, a.email AS customerEmail, a.phone AS customerPhone,
-               c.contractType, c.status AS contractStatus,
+               COALESCE(c.contractType, c2.contractType) AS contractType, 
+               COALESCE(c.status, c2.status) AS contractStatus,
                e.model AS equipmentModel, e.serialNumber, e.description AS equipmentDescription,
                tech.fullName AS technicianName
         FROM ServiceRequest sr
         LEFT JOIN Account a ON sr.createdBy = a.accountId
-        LEFT JOIN Contract c ON sr.contractId = c.contractId
         LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId
+        
+        -- Join với hợp đồng chính
+        LEFT JOIN Contract c ON sr.contractId = c.contractId
+        
+        -- Join với hợp đồng từ phụ lục
+        LEFT JOIN ContractAppendixEquipment cae ON e.equipmentId = cae.equipmentId
+        LEFT JOIN ContractAppendix ca ON cae.appendixId = ca.appendixId
+        LEFT JOIN Contract c2 ON ca.contractId = c2.contractId
+        
         LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId
         LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId
         WHERE 1=1
@@ -1603,8 +1630,9 @@ public class ServiceRequestDAO extends MyDAO {
         List<Object> params = new ArrayList<>();
 
         if (keyword != null && !keyword.isEmpty()) {
-            sql.append(" AND (a.fullName LIKE ? OR e.model LIKE ? OR sr.description LIKE ? OR c.contractId LIKE ?)");
+            sql.append(" AND (a.fullName LIKE ? OR e.model LIKE ? OR sr.description LIKE ? OR e.serialNumber LIKE ? OR CAST(COALESCE(c.contractId, c2.contractId) AS CHAR) LIKE ?)");
             String like = "%" + keyword + "%";
+            params.add(like);
             params.add(like);
             params.add(like);
             params.add(like);
@@ -1644,7 +1672,13 @@ public class ServiceRequestDAO extends MyDAO {
                 while (rs.next()) {
                     ServiceRequest sr = new ServiceRequest();
                     sr.setRequestId(rs.getInt("requestId"));
-                    sr.setContractId(rs.getInt("contractId"));
+
+                    // Handle nullable contractId
+                    int contractId = rs.getInt("contractId");
+                    if (!rs.wasNull()) {
+                        sr.setContractId(contractId);
+                    }
+
                     sr.setEquipmentId(rs.getInt("equipmentId"));
                     sr.setCreatedBy(rs.getInt("createdBy"));
                     sr.setDescription(rs.getString("description"));
@@ -1656,8 +1690,11 @@ public class ServiceRequestDAO extends MyDAO {
                     sr.setCustomerName(rs.getString("customerName"));
                     sr.setCustomerEmail(rs.getString("customerEmail"));
                     sr.setCustomerPhone(rs.getString("customerPhone"));
+
+                    // ✅ Lấy từ COALESCE
                     sr.setContractType(rs.getString("contractType"));
                     sr.setContractStatus(rs.getString("contractStatus"));
+
                     sr.setEquipmentModel(rs.getString("equipmentModel"));
                     sr.setEquipmentDescription(rs.getString("equipmentDescription"));
                     sr.setSerialNumber(rs.getString("serialNumber"));
@@ -1983,37 +2020,93 @@ public class ServiceRequestDAO extends MyDAO {
 
     }
 
-    public List<ServiceRequest> getRequestsByContractIdWithEquipment(int contractId) {
+    /**
+     * Lấy tất cả yêu cầu liên quan đến hợp đồng BAO GỒM CẢ: - Yêu cầu của thiết
+     * bị trong hợp đồng chính (qua ContractEquipment) - Yêu cầu của thiết bị
+     * trong phụ lục (qua ContractAppendixEquipment)
+     */
+    public List<ServiceRequest> getRequestsByContractIdWithEquipment(int contractId) throws SQLException {
         List<ServiceRequest> list = new ArrayList<>();
+
         String sql = """
-        SELECT sr.*, 
-               e.model AS equipmentModel, 
-               e.serialNumber AS equipmentSerial
+        SELECT DISTINCT sr.*, 
+               a.fullName AS customerName, a.email AS customerEmail, a.phone AS customerPhone,
+               COALESCE(c.contractType, c2.contractType) AS contractType, 
+               COALESCE(c.status, c2.status) AS contractStatus,
+               e.model AS equipmentModel, e.serialNumber, e.description AS equipmentDescription,
+               tech.fullName AS technicianName
         FROM ServiceRequest sr
+        LEFT JOIN Account a ON sr.createdBy = a.accountId
         LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId
-        WHERE sr.contractId = ?
+        
+        -- Join với hợp đồng chính
+        LEFT JOIN Contract c ON sr.contractId = c.contractId
+        
+        -- Join với hợp đồng từ phụ lục
+        LEFT JOIN ContractAppendixEquipment cae ON e.equipmentId = cae.equipmentId
+        LEFT JOIN ContractAppendix ca ON cae.appendixId = ca.appendixId
+        LEFT JOIN Contract c2 ON ca.contractId = c2.contractId
+        
+        LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId
+        LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId
+        
+        WHERE (
+            -- Yêu cầu của thiết bị trong hợp đồng chính
+            sr.contractId = ?
+            OR
+            -- Yêu cầu của thiết bị trong phụ lục của hợp đồng này
+            EXISTS (
+                SELECT 1 
+                FROM ContractAppendixEquipment cae2
+                JOIN ContractAppendix ca2 ON cae2.appendixId = ca2.appendixId
+                WHERE cae2.equipmentId = sr.equipmentId
+                AND ca2.contractId = ?
+            )
+        )
         ORDER BY sr.requestDate DESC
     """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, contractId);
+            ps.setInt(2, contractId);
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     ServiceRequest sr = new ServiceRequest();
                     sr.setRequestId(rs.getInt("requestId"));
-                    sr.setRequestType(rs.getString("requestType"));
-                    sr.setPriorityLevel(rs.getString("priorityLevel"));
-                    sr.setStatus(rs.getString("status"));
+
+                    // Handle nullable contractId
+                    int cId = rs.getInt("contractId");
+                    if (!rs.wasNull()) {
+                        sr.setContractId(cId);
+                    }
+
+                    sr.setEquipmentId(rs.getInt("equipmentId"));
+                    sr.setCreatedBy(rs.getInt("createdBy"));
                     sr.setDescription(rs.getString("description"));
+                    sr.setPriorityLevel(rs.getString("priorityLevel"));
                     sr.setRequestDate(rs.getTimestamp("requestDate"));
+                    sr.setStatus(rs.getString("status"));
+                    sr.setRequestType(rs.getString("requestType"));
+
+                    sr.setCustomerName(rs.getString("customerName"));
+                    sr.setCustomerEmail(rs.getString("customerEmail"));
+                    sr.setCustomerPhone(rs.getString("customerPhone"));
+
+                    // ✅ Lấy từ COALESCE
+                    sr.setContractType(rs.getString("contractType"));
+                    sr.setContractStatus(rs.getString("contractStatus"));
+
                     sr.setEquipmentModel(rs.getString("equipmentModel"));
-                    sr.setSerialNumber(rs.getString("equipmentSerial"));
+                    sr.setEquipmentDescription(rs.getString("equipmentDescription"));
+                    sr.setSerialNumber(rs.getString("serialNumber"));
+                    sr.setTechnicianName(rs.getString("technicianName"));
+
                     list.add(sr);
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
+
         return list;
     }
 

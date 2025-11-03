@@ -168,32 +168,49 @@ public class ViewCustomerRequest extends HttpServlet {
     }
 
     /**
-     * Return JSON (contracts + equipment) for given customerId
+     * Return JSON (contracts + equipment) for given customerId Bao gồm cả thiết
+     * bị từ hợp đồng chính và phụ lục
      */
     private void handleLoadContractsAndEquipment(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+
         String customerIdStr = request.getParameter("customerId");
-        response.setContentType("application/json");
+        response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
         try {
+            if (customerIdStr == null || customerIdStr.trim().isEmpty()) {
+                out.print("{\"error\": \"Customer ID không được để trống\"}");
+                return;
+            }
+
             int customerId = Integer.parseInt(customerIdStr.trim());
+
+            // Lấy hợp đồng của khách hàng
             List<Contract> contracts = contractDAO.getContractsByCustomer(customerId);
-            List<Equipment> equipment = equipmentDAO.getEquipmentByCustomerContracts(customerId);
+
+            // ✅ Lấy thiết bị từ CẢ hợp đồng chính VÀ phụ lục
+            List<Equipment> equipment = equipmentDAO.getEquipmentByCustomerContractsAndAppendix(customerId);
 
             Gson gson = new GsonBuilder()
                     .registerTypeAdapter(LocalDate.class,
-                            (JsonSerializer<LocalDate>) (date, type, context) -> new JsonPrimitive(date.toString()))
+                            (JsonSerializer<LocalDate>) (date, type, context)
+                            -> date == null ? null : new JsonPrimitive(date.toString()))
+                    .serializeNulls()
                     .create();
 
             String json = gson.toJson(new ResponseWrapper(contracts, equipment));
             out.print(json);
             out.flush();
 
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            out.print("{\"error\": \"Customer ID không hợp lệ\"}");
         } catch (Exception e) {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.print("{\"error\": \"" + e.getMessage() + "\"}");
+            out.print("{\"error\": \"" + e.getMessage().replace("\"", "\\\"") + "\"}");
         }
     }
 

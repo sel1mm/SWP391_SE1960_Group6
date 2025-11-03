@@ -9,19 +9,20 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.json.JSONObject;
 
 @WebServlet(name = "EquipmentServlet", urlPatterns = {"/equipment"})
 public class EquipmentServlet extends HttpServlet {
 
     private EquipmentDAO equipmentDAO;
     
-    private static final int PAGE_SIZE = 10; // ← THAY ĐỔI SỐ NÀY ĐỂ ĐIỀU CHỈNH
-    // ============================================
+    private static final int PAGE_SIZE = 10;
 
     @Override
     public void init() throws ServletException {
@@ -48,10 +49,67 @@ public class EquipmentServlet extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        if ("search".equals(action) || "filter".equals(action)) {
+        // ✅ XỬ LÝ ACTION LẤY THÔNG TIN SỬA CHỮA
+        if ("getRepairInfo".equals(action)) {
+            handleGetRepairInfo(request, response);
+        } else if ("search".equals(action) || "filter".equals(action)) {
             handleSearchAndFilter(request, response, customerId);
         } else {
             displayAllEquipment(request, response, customerId);
+        }
+    }
+
+    /**
+     * ✅ XỬ LÝ LẤY THÔNG TIN SỬA CHỮA THIẾT BỊ
+     */
+    private void handleGetRepairInfo(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        
+        String equipmentIdStr = request.getParameter("equipmentId");
+        
+        try (PrintWriter out = response.getWriter()) {
+            if (equipmentIdStr == null || equipmentIdStr.isEmpty()) {
+                out.print("{\"success\": false, \"message\": \"Equipment ID is required\"}");
+                return;
+            }
+            
+            int equipmentId = Integer.parseInt(equipmentIdStr);
+            System.out.println("🔍 Getting repair info for equipment: " + equipmentId);
+            
+            // Lấy thông tin sửa chữa từ DAO
+            Map<String, Object> repairInfo = equipmentDAO.getEquipmentRepairInfo(equipmentId);
+            
+            if (repairInfo != null && !repairInfo.isEmpty()) {
+                JSONObject json = new JSONObject();
+                json.put("success", true);
+                
+                JSONObject repairData = new JSONObject();
+                repairData.put("technicianName", repairInfo.get("technicianName"));
+                repairData.put("repairDate", repairInfo.get("repairDate"));
+                repairData.put("diagnosis", repairInfo.get("diagnosis"));
+                repairData.put("repairDetails", repairInfo.get("repairDetails"));
+                repairData.put("estimatedCost", repairInfo.get("estimatedCost"));
+                repairData.put("quotationStatus", repairInfo.get("quotationStatus"));
+                
+                json.put("repairInfo", repairData);
+                
+                System.out.println("✅ Repair info found: " + repairInfo.get("technicianName"));
+                out.print(json.toString());
+            } else {
+                System.out.println("⚠️ No repair info found for equipment: " + equipmentId);
+                out.print("{\"success\": false, \"message\": \"No repair information found\"}");
+            }
+            
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Invalid equipment ID: " + equipmentIdStr);
+            response.getWriter().print("{\"success\": false, \"message\": \"Invalid equipment ID\"}");
+        } catch (Exception e) {
+            System.out.println("💥 Error getting repair info: " + e.getMessage());
+            e.printStackTrace();
+            response.getWriter().print("{\"success\": false, \"message\": \"" + e.getMessage() + "\"}");
         }
     }
 
