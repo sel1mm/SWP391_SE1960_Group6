@@ -19,23 +19,41 @@ public class ContractAppendix {
     private String appendixName;
     private String description;
     private LocalDate effectiveDate;
-    private BigDecimal totalAmout;
+    private double totalAmount;
     private String status;
     private String fileAttachment;
+
+    public boolean isCanEdit() {
+        return canEdit;
+    }
+
+    public void setCanEdit(boolean canEdit) {
+        this.canEdit = canEdit;
+    }
     private int createdBy;
     private LocalDateTime createdAt;
+    private int equipmentCount;
+    private boolean canEdit;
+
+    public int getEquipmentCount() {
+        return equipmentCount;
+    }
+
+    public void setEquipmentCount(int equipmentCount) {
+        this.equipmentCount = equipmentCount;
+    }
 
     public ContractAppendix() {
     }
 
-    public ContractAppendix(int appendixId, int contractId, String appendixType, String appendixName, String description, LocalDate effectiveDate, BigDecimal totalAmout, String status, String fileAttachment, int createdBy, LocalDateTime createdAt) {
+    public ContractAppendix(int appendixId, int contractId, String appendixType, String appendixName, String description, LocalDate effectiveDate, double totalAmount, String status, String fileAttachment, int createdBy, LocalDateTime createdAt) {
         this.appendixId = appendixId;
         this.contractId = contractId;
         this.appendixType = appendixType;
         this.appendixName = appendixName;
         this.description = description;
         this.effectiveDate = effectiveDate;
-        this.totalAmout = totalAmout;
+        this.totalAmount = totalAmount;
         this.status = status;
         this.fileAttachment = fileAttachment;
         this.createdBy = createdBy;
@@ -90,12 +108,12 @@ public class ContractAppendix {
         this.effectiveDate = effectiveDate;
     }
 
-    public BigDecimal getTotalAmout() {
-        return totalAmout;
+    public double getTotalAmount() {
+        return totalAmount;
     }
 
-    public void setTotalAmout(BigDecimal totalAmout) {
-        this.totalAmout = totalAmout;
+    public void setTotalAmount(double totalAmount) {
+        this.totalAmount = totalAmount;
     }
 
     public String getStatus() {
@@ -132,7 +150,7 @@ public class ContractAppendix {
 
     @Override
     public String toString() {
-        return "ContractAppendix{" + "appendixId=" + appendixId + ", contractId=" + contractId + ", appendixType=" + appendixType + ", appendixName=" + appendixName + ", description=" + description + ", effectiveDate=" + effectiveDate + ", totalAmout=" + totalAmout + ", status=" + status + ", fileAttachment=" + fileAttachment + ", createdBy=" + createdBy + ", createdAt=" + createdAt + '}';
+        return "ContractAppendix{" + "appendixId=" + appendixId + ", contractId=" + contractId + ", appendixType=" + appendixType + ", appendixName=" + appendixName + ", description=" + description + ", effectiveDate=" + effectiveDate + ", totalAmount=" + totalAmount + ", status=" + status + ", fileAttachment=" + fileAttachment + ", createdBy=" + createdBy + ", createdAt=" + createdAt + '}';
     }
     
     
