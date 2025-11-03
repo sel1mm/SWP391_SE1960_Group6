@@ -740,7 +740,7 @@
                         <span>Yêu Cầu Dịch Vụ</span>
                         <span class="badge bg-warning">${pendingCount}</span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/contracts" class="menu-item">
+                    <a href="${pageContext.request.contextPath}/viewcontracts" class="menu-item">
                         <i class="fas fa-file-contract"></i>
                         <span>Hợp Đồng</span>
                     </a>
@@ -748,16 +748,17 @@
                         <i class="fas fa-tools"></i>
                         <span>Thiết Bị</span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/invoices" class="menu-item">
+                        <a href="${pageContext.request.contextPath}/invoices" class="menu-item">
                         <i class="fas fa-file-invoice-dollar"></i>
                         <span>Hóa Đơn</span>
                     </a>
                     <a href="${pageContext.request.contextPath}/manageProfile" class="menu-item">
                         <i class="fas fa-user-circle"></i>
                         <span>Hồ Sơ</span>
-                    </a> 
-                </div>                
+                    </a>
+                </div>  
             </div>
+
             <div class="sidebar-footer">
                 <div class="user-info">
                     <div class="user-avatar">
@@ -1119,9 +1120,7 @@
                                                     <i class="fas fa-times-circle"></i> Hủy
                                                 </button>
                                             </c:if>
-
-                                            <%-- ✅ NÚT XEM BÁO GIÁ + THANH TOÁN - 
-                                                 Khi displayStatus = "Đang Xử Lý" VÀ là đơn Equipment chưa trả --%>
+                                            <%-- ✅ NÚT XEM BÁO GIÁ - Luôn hiển thị khi đang xử lý --%>
                                             <c:if test="${displayStatus == 'Đang Xử Lý' && 
                                                           dbStatus == 'Completed' && 
                                                           paymentStatus != 'Completed' && 
@@ -1130,11 +1129,17 @@
                                                           onclick="viewQuotation(${req.requestId})">
                                                       <i class="fas fa-file-invoice"></i> Báo Giá
                                                   </button>
+                                                  <%-- ✅ NÚT THANH TOÁN - Ẩn mặc định, JavaScript sẽ kiểm tra và hiển thị --%>
                                                   <button class="btn btn-sm btn-success btn-action"
-                                                          onclick="makePayment(${req.requestId})">
+                                                          id="payBtn_${req.requestId}"
+                                                          onclick="makePayment(${req.requestId})"
+                                                          style="display: none;"
+                                                          data-request-id="${req.requestId}">
                                                       <i class="fas fa-credit-card"></i> Thanh Toán
                                                   </button>
                                             </c:if>
+
+
                                         </td>
                                     </tr>
                                 </c:forEach>
@@ -1725,9 +1730,10 @@
                     <div class="modal-footer">
                         <input type="hidden" id="quotationRequestIdHidden">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times"></i> Từ Chối
+                            <i class="fas fa-times"></i> Đóng
                         </button>
-                        <button type="button" class="btn btn-success" onclick="acceptQuotation()">
+                        <%-- ✅ NÚT ĐỒNG Ý - Ẩn mặc định, JavaScript sẽ kiểm tra và hiển thị --%>
+                        <button type="button" class="btn btn-success" id="btnAcceptQuotation" onclick="acceptQuotation()" style="display: none;">
                             <i class="fas fa-check-circle"></i> Đồng Ý & Thanh Toán
                         </button>
                     </div>
@@ -2191,6 +2197,16 @@
 
                                 // Lưu requestId cho nút "Đồng Ý"
                                 document.getElementById('quotationRequestIdHidden').value = data.requestId;
+
+                                // ✅ THÊM ĐOẠN NÀY: Kiểm tra điều kiện hiển thị nút "Đồng Ý & Thanh Toán"
+                                const btnAccept = document.getElementById('btnAcceptQuotation');
+                                if (q.quotationStatus !== 'Approved' && cost === 0) {
+                                    btnAccept.style.display = 'none';
+                                    console.log('🚫 Hidden Accept button: quotationStatus=' + q.quotationStatus + ', cost=' + cost);
+                                } else {
+                                    btnAccept.style.display = 'inline-block';
+                                    console.log('✅ Shown Accept button: quotationStatus=' + q.quotationStatus + ', cost=' + cost);
+                                }
                             }
 
                             // Mở modal
@@ -2472,6 +2488,51 @@
                 document.querySelectorAll('.equipment-checkbox').forEach(cb => cb.checked = false);
                 updateSelectedEquipment();
             });
+        </script>
+
+
+
+        <script>
+// ✅ Kiểm tra và ẩn/hiện nút thanh toán khi load trang
+            document.addEventListener('DOMContentLoaded', function () {
+                checkAllPaymentButtons();
+            });
+
+            function checkAllPaymentButtons() {
+                const paymentButtons = document.querySelectorAll('[id^="payBtn_"]');
+
+                paymentButtons.forEach(function (button) {
+                    const requestId = button.id.replace('payBtn_', '');
+                    checkQuotationAndToggleButton(requestId, button);
+                });
+            }
+
+            function checkQuotationAndToggleButton(requestId, button) {
+                fetch('${pageContext.request.contextPath}/managerServiceRequest?action=checkQuotation&requestId=' + requestId)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.success) {
+                                button.style.display = 'none';
+                                return;
+                            }
+
+                            const estimatedCost = parseFloat(data.estimatedCost || 0);
+                            const quotationStatus = data.quotationStatus;
+
+                            // ✅ Chỉ ẩn khi: quotationStatus != 'Approved' VÀ estimatedCost == 0
+                            if (quotationStatus !== 'Approved' && estimatedCost === 0) {
+                                button.style.display = 'none';
+                                console.log('🚫 Hidden payment button for request ' + requestId + ': quotationStatus=' + quotationStatus + ', cost=' + estimatedCost);
+                            } else {
+                                button.style.display = 'inline-block';
+                                console.log('✅ Shown payment button for request ' + requestId + ': quotationStatus=' + quotationStatus + ', cost=' + estimatedCost);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('❌ Error checking quotation for request ' + requestId + ':', error);
+                            button.style.display = 'none';
+                        });
+            }
         </script>
     </body>
 </html>

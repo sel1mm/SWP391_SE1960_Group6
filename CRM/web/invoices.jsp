@@ -30,11 +30,11 @@
                 left: 0;
                 height: 100vh;
                 width: 260px;
-                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+                background: #000000;
                 padding: 0;
                 transition: all 0.3s ease;
                 z-index: 1000;
-                box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+                box-shadow: 4px 0 10px rgba(0,0,0,0.1);
                 display: flex;
                 flex-direction: column;
             }
@@ -45,7 +45,7 @@
 
             .sidebar-header {
                 padding: 25px 20px;
-                background: rgba(0,0,0,0.3);
+                background: rgba(0,0,0,0.2);
                 border-bottom: 1px solid rgba(255,255,255,0.1);
             }
 
@@ -109,10 +109,9 @@
             }
 
             .menu-item.active {
-                background: linear-gradient(90deg, rgba(255,193,7,0.2), rgba(255,193,7,0.1));
+                background: rgba(255,255,255,0.15);
                 color: white;
                 border-left: 4px solid #ffc107;
-                box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
             }
 
             .menu-item i {
@@ -134,7 +133,7 @@
             .sidebar-footer {
                 padding: 20px;
                 border-top: 1px solid rgba(255,255,255,0.1);
-                background: rgba(0,0,0,0.3);
+                background: rgba(0,0,0,0.2);
             }
 
             .user-info {
@@ -763,7 +762,7 @@
 
             <div class="sidebar-menu">
                 <div class="menu-section">
-                    <a href="${pageContext.request.contextPath}/dashboard" class="menu-item">
+                    <a href="${pageContext.request.contextPath}/dashbroadCustomer.jsp" class="menu-item">
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
@@ -771,7 +770,7 @@
                         <i class="fas fa-clipboard-list"></i>
                         <span>Yêu Cầu Dịch Vụ</span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/contracts" class="menu-item">
+                    <a href="${pageContext.request.contextPath}/viewcontracts" class="menu-item">
                         <i class="fas fa-file-contract"></i>
                         <span>Hợp Đồng</span>
                     </a>
@@ -783,31 +782,9 @@
                         <i class="fas fa-file-invoice-dollar"></i>
                         <span>Hóa Đơn</span>
                     </a>
-                </div>
-
-                <div class="menu-section">
-                    <a href="${pageContext.request.contextPath}/customers" class="menu-item">
-                        <i class="fas fa-users"></i>
-                        <span>Khách Hàng</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/reports" class="menu-item">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Báo Cáo</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/maintenance" class="menu-item">
-                        <i class="fas fa-wrench"></i>
-                        <span>Bảo Trì</span>
-                    </a>
-                </div>
-
-                <div class="menu-section">
                     <a href="${pageContext.request.contextPath}/manageProfile" class="menu-item">
                         <i class="fas fa-user-circle"></i>
                         <span>Hồ Sơ</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/settings" class="menu-item">
-                        <i class="fas fa-cog"></i>
-                        <span>Cài Đặt</span>
                     </a>
                 </div>
             </div>

@@ -605,7 +605,7 @@
                         <i class="fas fa-clipboard-list"></i>
                         <span>Yêu Cầu Dịch Vụ</span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/contracts" class="menu-item">
+                    <a href="${pageContext.request.contextPath}/viewcontracts" class="menu-item">
                         <i class="fas fa-file-contract"></i>
                         <span>Hợp Đồng</span>
                     </a>
@@ -749,24 +749,63 @@
                     </div>
                 </div>
 
+
                 <!-- SEARCH BAR -->
                 <div class="search-filter-bar">
                     <form action="${pageContext.request.contextPath}/equipment" method="get" class="row g-3">
-                        <div class="col-md-10">
+                        <div class="col-md-5">
                             <div class="input-group">
                                 <input type="text" class="form-control" name="keyword" 
                                        placeholder="🔍 Tìm kiếm theo tên, serial number..." value="${keyword}">
-                                <button class="btn btn-primary" type="submit" name="action" value="search">
-                                    <i class="fas fa-search"></i> Tìm Kiếm
-                                </button>
                             </div>
                         </div>
+
+                        <!-- ✅ THÊM DROPDOWN LỌC TRẠNG THÁI -->
+                        <div class="col-md-3">
+                            <select class="form-select" name="status">
+                                <option value="">🔍 Tất cả trạng thái</option>
+                                <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>
+                                    ✅ Đang Hoạt Động
+                                </option>
+                                <option value="Repair" ${param.status == 'Repair' ? 'selected' : ''}>
+                                    🔧 Đang Sửa Chữa
+                                </option>
+                                <option value="Maintenance" ${param.status == 'Maintenance' ? 'selected' : ''}>
+                                    ⚙️ Đang Bảo Trì
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- ✅ THÊM DROPDOWN SẮP XẾP -->
                         <div class="col-md-2">
-                            <c:if test="${searchMode}">
-                                <a href="${pageContext.request.contextPath}/equipment" class="btn btn-secondary w-100">
-                                    <i class="fas fa-times"></i> Xóa Bộ Lọc
-                                </a>
-                            </c:if>
+                            <select class="form-select" name="sortBy">
+                                <option value="newest" ${param.sortBy == 'newest' ? 'selected' : ''}>
+                                    📅 Mới nhất
+                                </option>
+                                <option value="oldest" ${param.sortBy == 'oldest' ? 'selected' : ''}>
+                                    📅 Cũ nhất
+                                </option>
+                                <option value="name_asc" ${param.sortBy == 'name_asc' ? 'selected' : ''}>
+                                    🔤 Tên A-Z
+                                </option>
+                                <option value="name_desc" ${param.sortBy == 'name_desc' ? 'selected' : ''}>
+                                    🔤 Tên Z-A
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary" type="submit" name="action" value="filter">
+                                    <i class="fas fa-filter"></i> Lọc
+                                </button>
+                                <c:if test="${searchMode or not empty param.status or not empty param.sortBy}">
+                                    <a href="${pageContext.request.contextPath}/equipment" 
+                                       class="btn btn-secondary" title="Xóa bộ lọc">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </c:if>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -793,6 +832,8 @@
                                         <c:forEach var="item" items="${equipmentList}" varStatus="status">
                                             <tr>
                                                 <td><strong>${status.index + 1}</strong></td>
+
+                                                <!-- ✅ SỬA: Thêm .equipment vào -->
                                                 <td><strong>${item.equipment.model}</strong></td>
                                                 <td>${item.equipment.serialNumber}</td>
                                                 <td><span class="badge bg-primary">${item.contractId}</span></td>
@@ -844,25 +885,22 @@
                                                         <i class="fas fa-eye"></i> Chi Tiết
                                                     </button>
 
-                                                    <%-- ✅ VÔ HIỆU HÓA NÚT TẠO ĐƠN KHI THIẾT BỊ ĐANG SỬA --%>
-                                                    <c:choose>
-                                                        <c:when test="${item.status == 'Repair'}">
-                                                            <button class="btn btn-sm btn-secondary btn-action" disabled 
-                                                                    title="Thiết bị đang được sửa chữa">
-                                                                <i class="fas fa-ban"></i> Không thể tạo đơn
-                                                            </button>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <button class="btn btn-sm btn-warning btn-action"
-                                                                    data-id="${item.equipment.equipmentId}"
-                                                                    data-contract="${item.contractId}"
-                                                                    data-serial="${item.equipment.serialNumber}"
-                                                                    data-model="${item.equipment.model}"
-                                                                    onclick="createRequest(this)">
-                                                                <i class="fas fa-plus-circle"></i> Tạo Đơn
-                                                            </button>
-                                                        </c:otherwise>
-                                                    </c:choose>
+                                                    <c:if test="${item.status == 'Active'}">
+                                                        <button class="btn btn-sm btn-warning btn-action"
+                                                                data-id="${item.equipment.equipmentId}"
+                                                                data-contract="${item.contractId}"
+                                                                data-serial="${item.equipment.serialNumber}"
+                                                                data-model="${item.equipment.model}"
+                                                                onclick="createRequest(this)">
+                                                            <i class="fas fa-plus-circle"></i> Tạo Đơn
+                                                        </button>
+                                                    </c:if>
+
+                                                    <c:if test="${item.status != 'Active'}">
+                                                        <button disabled 
+                                                                title="Thiết bị đang ${item.status == 'Repair' ? 'sửa chữa' : 'bảo trì'}">
+                                                        </button>
+                                                    </c:if>                                               
                                                 </td>
                                             </tr>
                                         </c:forEach>
