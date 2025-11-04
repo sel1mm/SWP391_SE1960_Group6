@@ -22,6 +22,17 @@ public class ContractAppendix {
     private double totalAmount;
     private String status;
     private String fileAttachment;
+    private boolean canDelete;
+
+    public boolean isCanDelete() {
+        return canDelete;
+    }
+
+    public void setCanDelete(boolean canDelete) {
+        this.canDelete = canDelete;
+    }
+    
+    
 
     public boolean isCanEdit() {
         return canEdit;

@@ -5,7 +5,9 @@ import model.EquipmentWithStatus;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DAO for Contract operations. Updated to work with the final database schema.
@@ -973,8 +975,8 @@ public class ContractDAO extends MyDAO {
     }
 
     public List<Contract> getAllContractsPaged(int offset, int limit) throws SQLException {
-    List<Contract> list = new ArrayList<>();
-    String sql = """
+        List<Contract> list = new ArrayList<>();
+        String sql = """
         SELECT 
             c.contractId, 
             c.customerId, 
@@ -1005,29 +1007,28 @@ public class ContractDAO extends MyDAO {
         LIMIT ? OFFSET ?
     """;
 
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        ps.setInt(1, limit);
-        ps.setInt(2, offset);
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Contract c = new Contract();
-                c.setContractId(rs.getInt("contractId"));
-                c.setCustomerId(rs.getInt("customerId"));
-                c.setCustomerName(rs.getString("customerName"));
-                c.setCustomerEmail(rs.getString("customerEmail"));
-                c.setCustomerPhone(rs.getString("customerPhone"));
-                c.setContractDate(rs.getDate("contractDate").toLocalDate());
-                c.setContractType(rs.getString("contractType"));
-                c.setStatus(rs.getString("status"));
-                c.setDetails(rs.getString("details"));
-                c.setRequestCount(rs.getInt("requestCount"));
-                list.add(c);
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            ps.setInt(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Contract c = new Contract();
+                    c.setContractId(rs.getInt("contractId"));
+                    c.setCustomerId(rs.getInt("customerId"));
+                    c.setCustomerName(rs.getString("customerName"));
+                    c.setCustomerEmail(rs.getString("customerEmail"));
+                    c.setCustomerPhone(rs.getString("customerPhone"));
+                    c.setContractDate(rs.getDate("contractDate").toLocalDate());
+                    c.setContractType(rs.getString("contractType"));
+                    c.setStatus(rs.getString("status"));
+                    c.setDetails(rs.getString("details"));
+                    c.setRequestCount(rs.getInt("requestCount"));
+                    list.add(c);
+                }
             }
         }
+        return list;
     }
-    return list;
-}
-
 
     public int countAllContracts() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Contract";
@@ -1040,10 +1041,10 @@ public class ContractDAO extends MyDAO {
     }
 
     public List<Contract> filterContractsPaged(String keyword, String status, String contractType,
-        String fromDate, String toDate,
-        int offset, int limit) throws SQLException {
-    List<Contract> list = new ArrayList<>();
-    StringBuilder sql = new StringBuilder("""
+            String fromDate, String toDate,
+            int offset, int limit) throws SQLException {
+        List<Contract> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
         SELECT 
             c.contractId, 
             c.customerId, 
@@ -1073,65 +1074,64 @@ public class ContractDAO extends MyDAO {
         WHERE 1=1
     """);
 
-    List<Object> params = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
 
-    if (keyword != null && !keyword.isEmpty()) {
-        sql.append(" AND (a.fullName LIKE ? OR a.phone LIKE ? OR a.email LIKE ? OR c.details LIKE ?)");
-        String like = "%" + keyword + "%";
-        params.add(like);
-        params.add(like);
-        params.add(like);
-        params.add(like);
-    }
-    if (status != null && !status.isEmpty()) {
-        sql.append(" AND c.status = ?");
-        params.add(status);
-    }
-    if (contractType != null && !contractType.isEmpty()) {
-        sql.append(" AND c.contractType = ?");
-        params.add(contractType);
-    }
-    if (fromDate != null && !fromDate.isEmpty()) {
-        sql.append(" AND DATE(c.contractDate) >= ?");
-        params.add(fromDate);
-    }
-    if (toDate != null && !toDate.isEmpty()) {
-        sql.append(" AND DATE(c.contractDate) <= ?");
-        params.add(toDate);
-    }
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND (a.fullName LIKE ? OR a.phone LIKE ? OR a.email LIKE ? OR c.details LIKE ?)");
+            String like = "%" + keyword + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND c.status = ?");
+            params.add(status);
+        }
+        if (contractType != null && !contractType.isEmpty()) {
+            sql.append(" AND c.contractType = ?");
+            params.add(contractType);
+        }
+        if (fromDate != null && !fromDate.isEmpty()) {
+            sql.append(" AND DATE(c.contractDate) >= ?");
+            params.add(fromDate);
+        }
+        if (toDate != null && !toDate.isEmpty()) {
+            sql.append(" AND DATE(c.contractDate) <= ?");
+            params.add(toDate);
+        }
 
-    sql.append("""
+        sql.append("""
         ORDER BY c.contractDate DESC
         LIMIT ? OFFSET ?
     """);
 
-    params.add(limit);
-    params.add(offset);
+        params.add(limit);
+        params.add(offset);
 
-    try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
-        for (int i = 0; i < params.size(); i++) {
-            ps.setObject(i + 1, params.get(i));
-        }
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Contract c = new Contract();
-                c.setContractId(rs.getInt("contractId"));
-                c.setCustomerId(rs.getInt("customerId"));
-                c.setCustomerName(rs.getString("customerName"));
-                c.setCustomerEmail(rs.getString("customerEmail"));
-                c.setCustomerPhone(rs.getString("customerPhone"));
-                c.setContractDate(rs.getDate("contractDate").toLocalDate());
-                c.setContractType(rs.getString("contractType"));
-                c.setStatus(rs.getString("status"));
-                c.setDetails(rs.getString("details"));
-                c.setRequestCount(rs.getInt("requestCount"));
-                list.add(c);
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Contract c = new Contract();
+                    c.setContractId(rs.getInt("contractId"));
+                    c.setCustomerId(rs.getInt("customerId"));
+                    c.setCustomerName(rs.getString("customerName"));
+                    c.setCustomerEmail(rs.getString("customerEmail"));
+                    c.setCustomerPhone(rs.getString("customerPhone"));
+                    c.setContractDate(rs.getDate("contractDate").toLocalDate());
+                    c.setContractType(rs.getString("contractType"));
+                    c.setStatus(rs.getString("status"));
+                    c.setDetails(rs.getString("details"));
+                    c.setRequestCount(rs.getInt("requestCount"));
+                    list.add(c);
+                }
             }
         }
+        return list;
     }
-    return list;
-}
-
 
     public int countFilteredContracts(String keyword, String status, String contractType,
             String fromDate, String toDate) throws SQLException {
@@ -1210,28 +1210,226 @@ public class ContractDAO extends MyDAO {
         return 0;
     }
 
-// ✅ Thêm thiết bị vào hợp đồng
-    public void addEquipmentToContract(int contractId, int equipmentId, LocalDate startDate,
-            LocalDate endDate, int quantity, double price) throws SQLException {
 
-        String sql = "INSERT INTO ContractEquipment (contractId, equipmentId, startDate, endDate, quantity, price) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+    // Thêm thiết bị vào hợp đồng
+    public boolean addEquipmentToContract(int contractId, int equipmentId,
+            LocalDate contractDate) throws SQLException {
+        String sql = """
+        INSERT INTO ContractEquipment (contractId, equipmentId, startDate, endDate, quantity, price)
+        VALUES (?, ?, ?, DATE_ADD(?, INTERVAL 3 YEAR), 1, 0.0)
+    """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, contractId);
             ps.setInt(2, equipmentId);
-            ps.setDate(3, java.sql.Date.valueOf(startDate));
+            ps.setDate(3, java.sql.Date.valueOf(contractDate)); // startDate
+            ps.setDate(4, java.sql.Date.valueOf(contractDate)); // endDate = startDate + 3 years
 
-            if (endDate != null) {
-                ps.setDate(4, java.sql.Date.valueOf(endDate));
-            } else {
-                ps.setNull(4, java.sql.Types.DATE);
+            int rows = ps.executeUpdate();
+            System.out.println(" Added equipment " + equipmentId + " to contract " + contractId
+                    + " (startDate: " + contractDate + ", endDate: " + contractDate.plusYears(3) + ")");
+            return rows > 0;
+        }
+    }
+
+    // Kiểm tra xem hợp đồng có thể xóa không
+// Điều kiện:
+// 1. Hợp đồng được tạo trong vòng 15 ngày
+// 2. Không có phụ lục nào
+// 3. KHÔNG có ServiceRequest nào NGOÀI trạng thái Pending/Cancelled
+//    (tức là không có request đang được xử lý: Awaiting Approval, Approved, Completed)
+    public boolean canDeleteContract(int contractId) throws SQLException {
+        String sql = """
+    SELECT 
+        CASE 
+            WHEN c.createdDate IS NULL THEN DATEDIFF(NOW(), c.contractDate) <= 15 
+            ELSE DATEDIFF(NOW(), c.createdDate) <= 15 
+        END AS withinPeriod,
+        COUNT(DISTINCT ca.appendixId) AS appendixCount,
+        COUNT(DISTINCT sr.requestId) AS totalRequestCount,
+        COUNT(DISTINCT CASE 
+            WHEN sr.status NOT IN ('Pending', 'Cancelled') AND sr.status IS NOT NULL 
+            THEN sr.requestId 
+            ELSE NULL 
+        END) AS activeRequestCount
+    FROM Contract c
+    LEFT JOIN ContractAppendix ca ON c.contractId = ca.contractId
+    LEFT JOIN ContractEquipment ce ON c.contractId = ce.contractId
+    LEFT JOIN ServiceRequest sr ON ce.equipmentId = sr.equipmentId
+    WHERE c.contractId = ?
+    GROUP BY c.contractId, c.createdDate, c.contractDate
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    boolean withinPeriod = rs.getBoolean("withinPeriod");
+                    int appendixCount = rs.getInt("appendixCount");
+                    int totalRequestCount = rs.getInt("totalRequestCount");
+                    int activeRequestCount = rs.getInt("activeRequestCount");
+
+                    System.out.println("=== CAN DELETE CONTRACT CHECK ===");
+                    System.out.println("Contract ID: " + contractId);
+                    System.out.println("Within 15 days: " + withinPeriod);
+                    System.out.println("Appendix Count: " + appendixCount);
+                    System.out.println("Total Request Count: " + totalRequestCount);
+                    System.out.println("Active Request Count (not Pending/Cancelled): " + activeRequestCount);
+
+                    boolean canDelete = withinPeriod
+                            && appendixCount == 0
+                            && activeRequestCount == 0;
+
+                    System.out.println("Can Delete: " + canDelete);
+                    System.out.println("================================");
+                    return canDelete;
+                }
+            }
+        }
+        return false;
+    }
+
+// Xóa hợp đồng (soft delete - chuyển trạng thái thành Cancelled)
+    public boolean deleteContract(int contractId, String cancelReason, int cancelledBy) throws SQLException {
+        String sql = """
+        UPDATE Contract
+        SET status = 'Deleted',
+            cancelReason = ?,
+            cancelledBy = ?,
+            cancelledDate = NOW()
+        WHERE contractId = ?
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, cancelReason);
+            ps.setInt(2, cancelledBy);
+            ps.setInt(3, contractId);
+
+            int updated = ps.executeUpdate();
+            System.out.println("✅ Contract " + contractId + " cancelled: " + (updated > 0));
+            return updated > 0;
+        }
+    }
+
+// Xóa vĩnh viễn hợp đồng (hard delete - chỉ dùng khi thực sự cần)
+    public boolean hardDeleteContract(int contractId) throws SQLException {
+        try {
+            connection.setAutoCommit(false);
+
+            System.out.println("=== HARD DELETE CONTRACT " + contractId + " ===");
+
+            //Xóa các ServiceRequest có status Pending hoặc Cancelled
+            String deleteRequests = """
+            DELETE sr 
+            FROM ServiceRequest sr
+            INNER JOIN ContractEquipment ce ON sr.equipmentId = ce.equipmentId
+            WHERE ce.contractId = ?
+              AND sr.status IN ('Pending', 'Cancelled')
+        """;
+            try (PreparedStatement ps = connection.prepareStatement(deleteRequests)) {
+                ps.setInt(1, contractId);
+                int requestsDeleted = ps.executeUpdate();
+                System.out.println("✓ Deleted " + requestsDeleted + " Pending/Cancelled service requests");
             }
 
-            ps.setInt(5, quantity);
-            ps.setDouble(6, price);
+            //Xóa ContractEquipment (do ràng buộc khóa ngoại)
+            String deleteEquipment = """
+            DELETE FROM ContractEquipment WHERE contractId = ?
+        """;
+            try (PreparedStatement ps = connection.prepareStatement(deleteEquipment)) {
+                ps.setInt(1, contractId);
+                int equipmentDeleted = ps.executeUpdate();
+                System.out.println("✓ Deleted " + equipmentDeleted + " equipment records");
+            }
 
-            ps.executeUpdate();
+            // Xóa Contract
+            String deleteContract = """
+            DELETE FROM Contract WHERE contractId = ?
+        """;
+            try (PreparedStatement ps = connection.prepareStatement(deleteContract)) {
+                ps.setInt(1, contractId);
+                int contractDeleted = ps.executeUpdate();
+
+                if (contractDeleted > 0) {
+                    connection.commit();
+                    System.out.println("Hard delete successful for contract " + contractId);
+                    return true;
+                } else {
+                    connection.rollback();
+                    System.out.println("Contract not found or already deleted");
+                    return false;
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("✗ Error during hard delete:");
+            e.printStackTrace();
+            connection.rollback();
+            throw e;
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    public Map<String, Object> getContractDeletionInfo(int contractId) throws SQLException {
+        String sql = """
+        SELECT 
+            COUNT(DISTINCT sr.requestId) AS totalRequests,
+            COUNT(DISTINCT CASE WHEN sr.status = 'Pending' THEN sr.requestId END) AS pendingRequests,
+            COUNT(DISTINCT CASE WHEN sr.status = 'Cancelled' THEN sr.requestId END) AS cancelledRequests,
+            COUNT(DISTINCT CASE WHEN sr.status NOT IN ('Pending', 'Cancelled') THEN sr.requestId END) AS activeRequests
+        FROM Contract c
+        LEFT JOIN ContractEquipment ce ON c.contractId = ce.contractId
+        LEFT JOIN ServiceRequest sr ON ce.equipmentId = sr.equipmentId
+        WHERE c.contractId = ?
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                Map<String, Object> info = new HashMap<>();
+                if (rs.next()) {
+                    info.put("totalRequests", rs.getInt("totalRequests"));
+                    info.put("pendingRequests", rs.getInt("pendingRequests"));
+                    info.put("cancelledRequests", rs.getInt("cancelledRequests"));
+                    info.put("activeRequests", rs.getInt("activeRequests"));
+                }
+                return info;
+            }
+        }
+    }
+
+    // Tạo hợp đồng mới với createdDate = NOW()
+    public int createContractWithCreatedDate(int customerId, LocalDate contractDate,
+            String contractType, String status, String details) throws SQLException {
+
+        String sql = """
+        INSERT INTO Contract (customerId, contractDate, contractType, status, details, createdDate)
+        VALUES (?, ?, ?, ?, ?, NOW())
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, customerId);
+            ps.setDate(2, java.sql.Date.valueOf(contractDate));
+            ps.setString(3, contractType);
+            ps.setString(4, status);
+            ps.setString(5, details);
+            int affectedRows = ps.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int newId = rs.getInt(1);
+                        System.out.println("✅ Created new contract ID: " + newId);
+                        return newId;
+                    }
+                }
+            }
+
+            System.out.println("⚠️ Failed to create contract for customerId: " + customerId);
+            return -1;
         }
     }
 

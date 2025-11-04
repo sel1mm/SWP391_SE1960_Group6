@@ -2167,4 +2167,52 @@ public class ServiceRequestDAO extends MyDAO {
         return 0;
     }
 
+    /**
+     * Kiểm tra có ServiceRequest KHÔNG phải Pending cho phụ lục không (Awaiting
+     * Approval, Approved, Completed, Cancelled, Rejected)
+     */
+    public boolean hasNonPendingRequestsForAppendix(int appendixId) throws SQLException {
+        String sql = """
+        SELECT COUNT(*)
+        FROM ServiceRequest sr
+        INNER JOIN Equipment e ON sr.equipmentId = e.equipmentId
+        INNER JOIN ContractAppendixEquipment cae ON e.equipmentId = cae.equipmentId
+        WHERE cae.appendixId = ?
+          AND sr.status IN ('Awaiting Approval', 'Approved', 'Completed', 'Cancelled', 'Rejected')
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, appendixId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1);
+                    System.out.println("Appendix " + appendixId + " has " + count + " non-pending requests");
+                    return count > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Xóa các ServiceRequest có trạng thái Pending cho phụ lục
+     */
+    public void deletePendingRequestsForAppendix(int appendixId) throws SQLException {
+        String sql = """
+        DELETE sr
+        FROM ServiceRequest sr
+        INNER JOIN Equipment e ON sr.equipmentId = e.equipmentId
+        INNER JOIN ContractAppendixEquipment cae ON e.equipmentId = cae.equipmentId
+        WHERE cae.appendixId = ?
+          AND sr.status = 'Pending'
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, appendixId);
+            int deleted = ps.executeUpdate();
+            System.out.println("✅ Deleted " + deleted + " pending requests for appendix " + appendixId);
+        }
+    }
+
 }

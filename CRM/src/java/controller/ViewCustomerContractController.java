@@ -49,7 +49,9 @@ import model.Account;
     "/updateContractAppendix",
     "/deleteContractAppendix",
     "/getAvailableEquipmentForCustomer",
-    "/createContract"
+    "/createContract",
+    "/deleteContract",
+    "/getContractDeletionInfo"
 })
 public class ViewCustomerContractController extends HttpServlet {
 
@@ -91,6 +93,9 @@ public class ViewCustomerContractController extends HttpServlet {
                 case "/getAvailableEquipmentForCustomer":
                     handleGetAvailableEquipmentForCustomer(request, response);
                     break;
+                case "/getContractDeletionInfo":
+                    handleGetContractDeletionInfo(request, response);
+                    break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
@@ -101,7 +106,7 @@ public class ViewCustomerContractController extends HttpServlet {
         }
     }
 
-    // ✅ Lấy danh sách hợp đồng (full hoặc theo filter)
+    // Lấy danh sách hợp đồng (full hoặc theo filter)
     private void handleListOrSearch(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
 
@@ -149,11 +154,17 @@ public class ViewCustomerContractController extends HttpServlet {
             totalRecords = contractDAO.countAllContracts();
         }
 
+        // Thêm flag canDelete cho mỗi hợp đồng
+        for (Contract contract : contractList) {
+            boolean canDelete = contractDAO.canDeleteContract(contract.getContractId());
+            contract.setCanDelete(canDelete);
+        }
+
         int totalPages = (int) Math.ceil((double) totalRecords / recordsPerPage);
         if (totalPages == 0) {
             totalPages = 1;
         }
-        
+
         List<Account> customerList = accountDAO.getAccountsByRole("Customer");
         request.setAttribute("customerList", customerList);
 
@@ -169,7 +180,7 @@ public class ViewCustomerContractController extends HttpServlet {
         request.getRequestDispatcher("viewCustomerContract.jsp").forward(request, response);
     }
 
-    // ✅ API lấy danh sách thiết bị theo hợp đồng
+    // API lấy danh sách thiết bị theo hợp đồng
     private void handleGetContractEquipment(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         int contractId = Integer.parseInt(request.getParameter("contractId"));
@@ -180,7 +191,7 @@ public class ViewCustomerContractController extends HttpServlet {
         sendJson(response, result);
     }
 
-    // ✅ API lấy danh sách Service Request theo hợp đồng
+    // API lấy danh sách Service Request theo hợp đồng
     private void handleGetContractRequests(HttpServletRequest request, HttpServletResponse response)
             throws IOException, SQLException {
         int contractId = Integer.parseInt(request.getParameter("contractId"));
@@ -206,6 +217,37 @@ public class ViewCustomerContractController extends HttpServlet {
         out.flush();
     }
 
+    private void handleGetContractDeletionInfo(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, SQLException {
+
+        try {
+            String contractIdStr = request.getParameter("contractId");
+
+            if (contractIdStr == null || contractIdStr.trim().isEmpty()) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "Contract ID không được để trống");
+                sendJson(response, errorResult);
+                return;
+            }
+
+            int contractId = Integer.parseInt(contractIdStr.trim());
+            Map<String, Object> info = contractDAO.getContractDeletionInfo(contractId);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("info", info);
+            sendJson(response, result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "Lỗi: " + e.getMessage());
+            sendJson(response, result);
+        }
+    }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -225,6 +267,9 @@ public class ViewCustomerContractController extends HttpServlet {
                 case "/createContract":
                     handleCreateContract(request, response);
                     break;
+                case "/deleteContract":
+                    handleDeleteContract(request, response);
+                    break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
@@ -235,7 +280,7 @@ public class ViewCustomerContractController extends HttpServlet {
         }
     }
 
-    // ✅ API lấy danh sách thiết bị khả dụng (chưa gán hợp đồng hoặc có thể thêm)
+    // API lấy danh sách thiết bị khả dụng (chưa gán hợp đồng hoặc có thể thêm)
     private void handleGetAvailableEquipment(HttpServletRequest request, HttpServletResponse response)
             throws IOException, SQLException {
         List<Map<String, Object>> equipmentList = equipmentDAO.getAllAvailableEquipment();
@@ -245,7 +290,7 @@ public class ViewCustomerContractController extends HttpServlet {
         sendJson(response, result);
     }
 
-    // ✅ API thêm phụ lục hợp đồng
+    // API thêm phụ lục hợp đồng
     private void handleAddContractAppendix(HttpServletRequest request, HttpServletResponse response)
             throws IOException, SQLException {
 
@@ -267,6 +312,8 @@ public class ViewCustomerContractController extends HttpServlet {
             int contractId = Integer.parseInt(contractIdStr.trim());
 
             String appendixType = request.getParameter("appendixType");
+            System.out.println("appendixType: " + appendixType);
+
             String appendixName = request.getParameter("appendixName");
             String description = request.getParameter("description");
             if (description == null) {
@@ -296,46 +343,50 @@ public class ViewCustomerContractController extends HttpServlet {
                 String fileName = getFileName(filePart);
                 System.out.println("Uploading file: " + fileName);
 
-                // Tạo thư mục upload nếu chưa có
                 String uploadPath = getServletContext().getRealPath("") + File.separator + "uploads" + File.separator + "appendix";
                 File uploadDir = new File(uploadPath);
                 if (!uploadDir.exists()) {
                     uploadDir.mkdirs();
                 }
 
-                // Tạo tên file unique
                 String fileExtension = fileName.substring(fileName.lastIndexOf("."));
                 String uniqueFileName = "appendix_" + contractId + "_" + System.currentTimeMillis() + fileExtension;
                 String filePath = uploadPath + File.separator + uniqueFileName;
 
-                // Lưu file
                 filePart.write(filePath);
-
-                // Lưu URL (relative path)
                 fileUrl = "uploads/appendix/" + uniqueFileName;
                 System.out.println("File saved: " + fileUrl);
             }
 
+            // XỬ LÝ EQUIPMENT IDS
             String equipmentIdsJson = request.getParameter("equipmentIds");
             System.out.println("equipmentIds JSON: " + equipmentIdsJson);
 
-            if (equipmentIdsJson == null || equipmentIdsJson.trim().isEmpty()) {
-                Map<String, Object> errorResult = new HashMap<>();
-                errorResult.put("success", false);
-                errorResult.put("message", "Vui lòng chọn ít nhất một thiết bị");
-                sendJson(response, errorResult);
-                return;
+            int[] equipmentIds = null;
+
+            if (equipmentIdsJson != null && !equipmentIdsJson.trim().isEmpty()
+                    && !equipmentIdsJson.equals("[]")) {
+                Gson gson = new Gson();
+                equipmentIds = gson.fromJson(equipmentIdsJson, int[].class);
             }
 
-            Gson gson = new Gson();
-            int[] equipmentIds = gson.fromJson(equipmentIdsJson, int[].class);
-
-            if (equipmentIds == null || equipmentIds.length == 0) {
-                Map<String, Object> errorResult = new HashMap<>();
-                errorResult.put("success", false);
-                errorResult.put("message", "Vui lòng chọn ít nhất một thiết bị");
-                sendJson(response, errorResult);
-                return;
+            // ✅ VALIDATE: AddEquipment BẮT BUỘC có thiết bị
+            if ("AddEquipment".equals(appendixType)) {
+                if (equipmentIds == null || equipmentIds.length == 0) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("success", false);
+                    errorResult.put("message", "Loại phụ lục 'Thêm thiết bị' yêu cầu chọn ít nhất một thiết bị");
+                    sendJson(response, errorResult);
+                    return;
+                }
+                System.out.println("✓ AddEquipment type - Equipment count: " + equipmentIds.length);
+            } else {
+                System.out.println("ℹ Other type - Equipment not required");
+                if (equipmentIds == null || equipmentIds.length == 0) {
+                    System.out.println("  No equipment selected (OK for Other type)");
+                } else {
+                    System.out.println("  Equipment selected: " + equipmentIds.length);
+                }
             }
 
             model.Account user = (model.Account) request.getSession().getAttribute("session_login");
@@ -352,21 +403,31 @@ public class ViewCustomerContractController extends HttpServlet {
                     effectiveDate,
                     0.0,
                     status,
-                    fileUrl, // Lưu URL thay vì URL input
+                    fileUrl,
                     createdBy
             );
 
             System.out.println("Created appendix ID: " + appendixId);
 
-            // Thêm thiết bị
-            for (int equipmentId : equipmentIds) {
-                appendixDAO.addEquipmentToAppendix(appendixId, equipmentId, null, null);
-                System.out.println("Added equipment " + equipmentId + " to appendix " + appendixId);
+            // Thêm thiết bị (nếu có)
+            if (equipmentIds != null && equipmentIds.length > 0) {
+                for (int equipmentId : equipmentIds) {
+                    appendixDAO.addEquipmentToAppendix(appendixId, equipmentId, null, null);
+                    System.out.println("Added equipment " + equipmentId + " to appendix " + appendixId);
+                }
+            } else {
+                System.out.println("No equipment added (Other type appendix)");
             }
 
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
-            result.put("message", "Đã thêm phụ lục hợp đồng thành công");
+
+            if ("AddEquipment".equals(appendixType)) {
+                result.put("message", "Đã thêm phụ lục hợp đồng với " + equipmentIds.length + " thiết bị thành công");
+            } else {
+                result.put("message", "Đã thêm phụ lục thông tin thành công");
+            }
+
             result.put("appendixId", appendixId);
             sendJson(response, result);
 
@@ -375,7 +436,6 @@ public class ViewCustomerContractController extends HttpServlet {
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
             result.put("message", "Lỗi khi thêm phụ lục: " + e.getMessage());
-            result.put("stackTrace", e.getClass().getName());
             sendJson(response, result);
         }
     }
@@ -391,12 +451,22 @@ public class ViewCustomerContractController extends HttpServlet {
         return null;
     }
 
-    // ✅ API lấy danh sách phụ lục theo hợp đồng
+    // API lấy danh sách phụ lục theo hợp đồng
     private void handleGetContractAppendix(HttpServletRequest request, HttpServletResponse response)
             throws IOException, SQLException {
 
         int contractId = Integer.parseInt(request.getParameter("contractId"));
         List<ContractAppendix> appendixList = appendixDAO.getAppendixesByContractId(contractId);
+
+        // Thêm thông tin canDelete cho mỗi phụ lục
+        // Chỉ cho phép xóa nếu: trong vòng 15 ngày VÀ không có request nào khác Pending
+        for (ContractAppendix appendix : appendixList) {
+            boolean withinEditPeriod = appendixDAO.canEditAppendix(appendix.getAppendixId());
+            boolean hasNonPending = hasNonPendingServiceRequests(appendix.getAppendixId());
+
+            boolean canDelete = withinEditPeriod && !hasNonPending;
+            appendix.setCanDelete(canDelete);
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
@@ -404,7 +474,7 @@ public class ViewCustomerContractController extends HttpServlet {
         sendJson(response, result);
     }
 
-    // ✅ API lấy danh sách thiết bị trong phụ lục
+    // API lấy danh sách thiết bị trong phụ lục
     private void handleGetAppendixEquipment(HttpServletRequest request, HttpServletResponse response)
             throws IOException, SQLException {
 
@@ -417,7 +487,7 @@ public class ViewCustomerContractController extends HttpServlet {
         sendJson(response, result);
     }
 
-    // ✅ Lấy chi tiết phụ lục để edit
+    //Lấy chi tiết phụ lục để edit
     private void handleGetAppendixDetails(HttpServletRequest request, HttpServletResponse response)
             throws IOException, SQLException {
 
@@ -442,7 +512,7 @@ public class ViewCustomerContractController extends HttpServlet {
         sendJson(response, result);
     }
 
-// ✅ Cập nhật phụ lục
+// Cập nhật phụ lục
     private void handleUpdateContractAppendix(HttpServletRequest request, HttpServletResponse response)
             throws IOException, SQLException {
 
@@ -608,7 +678,7 @@ public class ViewCustomerContractController extends HttpServlet {
 
         System.out.println("=== END UPDATE APPENDIX ===");
     }
-// ✅ Xóa phụ lục
+// Xóa phụ lục
 
     private void handleDeleteContractAppendix(HttpServletRequest request, HttpServletResponse response)
             throws IOException, SQLException {
@@ -616,7 +686,9 @@ public class ViewCustomerContractController extends HttpServlet {
         try {
             int appendixId = Integer.parseInt(request.getParameter("appendixId"));
 
-            // Kiểm tra xem có thể xóa không
+            System.out.println("=== DELETE APPENDIX #" + appendixId + " ===");
+
+            // Kiểm tra xem có thể xóa không (trong vòng 15 ngày)
             if (!appendixDAO.canEditAppendix(appendixId)) {
                 Map<String, Object> errorResult = new HashMap<>();
                 errorResult.put("success", false);
@@ -625,12 +697,41 @@ public class ViewCustomerContractController extends HttpServlet {
                 return;
             }
 
+            // ✅ Lấy thông tin phụ lục để kiểm tra loại
+            ContractAppendix appendix = appendixDAO.getAppendixById(appendixId);
+            System.out.println("Appendix type: " + appendix.getAppendixType());
+            System.out.println("Equipment count: " + appendix.getEquipmentCount());
+
+            // ✅ Chỉ kiểm tra ServiceRequest nếu có thiết bị
+            if (appendix.getEquipmentCount() > 0) {
+                if (hasNonPendingServiceRequests(appendixId)) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("success", false);
+                    errorResult.put("message", "Không thể xóa phụ lục này vì có yêu cầu dịch vụ đã được xử lý (không phải Pending)");
+                    sendJson(response, errorResult);
+                    return;
+                }
+
+                // Xóa các request có trạng thái Pending
+                ServiceRequestDAO srDAO = new ServiceRequestDAO();
+                srDAO.deletePendingRequestsForAppendix(appendixId);
+                System.out.println("✓ Deleted pending requests");
+            } else {
+                System.out.println("ℹ No equipment, skip request check");
+            }
+
+            // Xóa phụ lục
             boolean deleted = appendixDAO.deleteAppendix(appendixId);
+            System.out.println("Delete result: " + deleted);
 
             Map<String, Object> result = new HashMap<>();
             if (deleted) {
                 result.put("success", true);
-                result.put("message", "Đã xóa phụ lục thành công");
+                if (appendix.getEquipmentCount() > 0) {
+                    result.put("message", "Đã xóa phụ lục và các yêu cầu Pending liên quan thành công");
+                } else {
+                    result.put("message", "Đã xóa phụ lục thông tin thành công");
+                }
             } else {
                 result.put("success", false);
                 result.put("message", "Không thể xóa phụ lục");
@@ -646,7 +747,7 @@ public class ViewCustomerContractController extends HttpServlet {
         }
     }
 
-    // ✅ Lấy danh sách thiết bị khả dụng cho khách hàng (chưa được dùng trong hợp đồng/phụ lục nào)
+    // Lấy danh sách thiết bị khả dụng cho khách hàng (chưa được dùng trong hợp đồng/phụ lục nào)
     private void handleGetAvailableEquipmentForCustomer(HttpServletRequest request, HttpServletResponse response)
             throws IOException, SQLException {
 
@@ -671,27 +772,20 @@ public class ViewCustomerContractController extends HttpServlet {
         sendJson(response, result);
     }
 
-// ✅ Tạo hợp đồng mới
+// Tạo hợp đồng mới
     private void handleCreateContract(HttpServletRequest request, HttpServletResponse response)
             throws IOException, SQLException {
 
         try {
             System.out.println("=== CREATE CONTRACT ===");
 
-            // 1. Lấy thông tin hợp đồng
             String customerIdStr = request.getParameter("customerId");
             String contractType = request.getParameter("contractType");
             String contractDateStr = request.getParameter("contractDate");
             String status = request.getParameter("status");
             String details = request.getParameter("details");
 
-            System.out.println("customerId: " + customerIdStr);
-            System.out.println("contractType: " + contractType);
-            System.out.println("contractDate: " + contractDateStr);
-            System.out.println("status: " + status);
-            System.out.println("details: " + details);
-
-            // 2. Validate
+            // Validation...
             if (customerIdStr == null || customerIdStr.trim().isEmpty()) {
                 Map<String, Object> errorResult = new HashMap<>();
                 errorResult.put("success", false);
@@ -711,7 +805,6 @@ public class ViewCustomerContractController extends HttpServlet {
             int customerId = Integer.parseInt(customerIdStr.trim());
             LocalDate contractDate = LocalDate.parse(contractDateStr);
 
-            // Kiểm tra ngày ký không được ở tương lai
             if (contractDate.isAfter(LocalDate.now())) {
                 Map<String, Object> errorResult = new HashMap<>();
                 errorResult.put("success", false);
@@ -720,10 +813,7 @@ public class ViewCustomerContractController extends HttpServlet {
                 return;
             }
 
-            // 3. Lấy danh sách thiết bị
             String equipmentIdsJson = request.getParameter("equipmentIds");
-            System.out.println("equipmentIds JSON: " + equipmentIdsJson);
-
             if (equipmentIdsJson == null || equipmentIdsJson.trim().isEmpty()) {
                 Map<String, Object> errorResult = new HashMap<>();
                 errorResult.put("success", false);
@@ -743,10 +833,10 @@ public class ViewCustomerContractController extends HttpServlet {
                 return;
             }
 
-            System.out.println("Creating contract for customer " + customerId + " with " + equipmentIds.length + " equipment");
-
-            // 4. Tạo hợp đồng
-            int contractId = contractDAO.createContractByCSS(customerId, contractDate, contractType, status, details.trim());
+            // Tạo hợp đồng với createdDate = NOW()
+            int contractId = contractDAO.createContractWithCreatedDate(
+                    customerId, contractDate, contractType, status, details.trim()
+            );
 
             System.out.println("Created contract ID: " + contractId);
 
@@ -758,22 +848,20 @@ public class ViewCustomerContractController extends HttpServlet {
                 return;
             }
 
-            // 5. Thêm thiết bị vào hợp đồng
+            // ✅ Thêm thiết bị vào hợp đồng với startDate và endDate tự động
             for (int equipmentId : equipmentIds) {
                 contractDAO.addEquipmentToContract(
                         contractId,
                         equipmentId,
-                        contractDate, // startDate = contractDate
-                        null, // endDate = null (chưa xác định)
-                        1, // quantity = 1
-                        0.0 // price = 0 (hoặc null)
+                        contractDate // Chỉ cần truyền contractDate
                 );
                 System.out.println("Added equipment " + equipmentId + " to contract " + contractId);
             }
 
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
-            result.put("message", "Đã tạo hợp đồng thành công với " + equipmentIds.length + " thiết bị");
+            result.put("message", "Đã tạo hợp đồng thành công với " + equipmentIds.length
+                    + " thiết bị (bảo hành 3 năm)");
             result.put("contractId", contractId);
             sendJson(response, result);
 
@@ -785,4 +873,78 @@ public class ViewCustomerContractController extends HttpServlet {
             sendJson(response, result);
         }
     }
+
+    private boolean hasNonPendingServiceRequests(int appendixId) throws SQLException {
+        ServiceRequestDAO srDAO = new ServiceRequestDAO();
+        return srDAO.hasNonPendingRequestsForAppendix(appendixId);
+    }
+
+    // Handler xóa cứng hợp đồng
+    private void handleDeleteContract(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, SQLException {
+
+        try {
+            String contractIdStr = request.getParameter("contractId");
+
+            if (contractIdStr == null || contractIdStr.trim().isEmpty()) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "Contract ID không được để trống");
+                sendJson(response, errorResult);
+                return;
+            }
+
+            int contractId = Integer.parseInt(contractIdStr.trim());
+
+            System.out.println("=== DELETE CONTRACT REQUEST ===");
+            System.out.println("Contract ID: " + contractId);
+
+            // Kiểm tra xem có thể xóa không
+            if (!contractDAO.canDeleteContract(contractId)) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "Không thể xóa hợp đồng này. Hợp đồng đã quá 15 ngày, có phụ lục, có yêu cầu dịch vụ hoặc đã bị hủy.");
+                sendJson(response, errorResult);
+                return;
+            }
+
+            // Xóa cứng hợp đồng
+            boolean deleted = contractDAO.hardDeleteContract(contractId);
+
+            Map<String, Object> result = new HashMap<>();
+            if (deleted) {
+                result.put("success", true);
+                result.put("message", "Đã xóa hợp đồng #" + contractId + " thành công");
+            } else {
+                result.put("success", false);
+                result.put("message", "Không thể xóa hợp đồng. Hợp đồng không tồn tại hoặc đã bị xóa.");
+            }
+            sendJson(response, result);
+
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid contract ID format:");
+            e.printStackTrace();
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "Contract ID không hợp lệ");
+            sendJson(response, result);
+
+        } catch (SQLException e) {
+            System.err.println("Database error during delete:");
+            e.printStackTrace();
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "Lỗi database: " + e.getMessage());
+            sendJson(response, result);
+
+        } catch (Exception e) {
+            System.err.println("Unexpected error during delete:");
+            e.printStackTrace();
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "Lỗi hệ thống: " + e.getMessage());
+            sendJson(response, result);
+        }
+    }
+
 }
