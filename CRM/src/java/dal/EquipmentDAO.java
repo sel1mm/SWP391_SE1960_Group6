@@ -9,15 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
-<<<<<<< Updated upstream
- * DAO for Equipment operations with Category support.
- * Complete merged version combining both implementations.
-=======
- * DAO for Equipment operations with Category support. Complete version
- * combining both implementations.
->>>>>>> Stashed changes
- */
+
 public class EquipmentDAO extends DBContext {
 
     // ==================== BASIC CRUD OPERATIONS ====================
@@ -48,16 +40,7 @@ public class EquipmentDAO extends DBContext {
 
         return list;
     }
-public int getEquipmentCount() {
-    String sql = "SELECT COUNT(*) FROM Equipment";
-    try (PreparedStatement ps = connection.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) return rs.getInt(1);
-    } catch (SQLException ex) {
-        ex.printStackTrace();
-    }
-    return 0;
-}
+
     /**
      * Find equipment by ID with category and user info
      */
@@ -571,27 +554,110 @@ public int getEquipmentCount() {
     }
 
     /**
+     * Lấy thông tin hợp đồng cho thiết bị (bao gồm cả phụ lục)
+     * @param equipmentId ID thiết bị
+     * @param customerId ID khách hàng
+     * @return EquipmentContractInfo chứa thông tin hợp đồng và nguồn
+     */
+    public EquipmentContractInfo getEquipmentContractInfo(int equipmentId, int customerId) {
+        // Kiểm tra trong ContractEquipment trước
+        String sql1 = "SELECT c.contractId, 'Contract' as source FROM Contract c "
+                + "JOIN ContractEquipment ce ON c.contractId = ce.contractId "
+                + "WHERE ce.equipmentId = ? AND c.customerId = ? "
+                + "ORDER BY c.contractDate DESC LIMIT 1";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql1)) {
+            ps.setInt(1, equipmentId);
+            ps.setInt(2, customerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int contractId = rs.getInt("contractId");
+                    return new EquipmentContractInfo(contractId, "Contract", "HD" + String.format("%03d", contractId));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error checking contract equipment: " + e.getMessage());
+        }
+
+        // Kiểm tra trong ContractAppendixEquipment
+        String sql2 = "SELECT c.contractId, 'Appendix' as source FROM Contract c "
+                + "JOIN ContractAppendix ca ON c.contractId = ca.contractId "
+                + "JOIN ContractAppendixEquipment cae ON ca.appendixId = cae.appendixId "
+                + "WHERE cae.equipmentId = ? AND c.customerId = ? "
+                + "ORDER BY ca.effectiveDate DESC LIMIT 1";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql2)) {
+            ps.setInt(1, equipmentId);
+            ps.setInt(2, customerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int contractId = rs.getInt("contractId");
+                    return new EquipmentContractInfo(contractId, "Appendix", "HD" + String.format("%03d", contractId));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error checking appendix equipment: " + e.getMessage());
+        }
+
+        // Không tìm thấy hợp đồng nào
+        return new EquipmentContractInfo(0, "None", "N/A");
+    }
+
+    /**
+     * Class chứa thông tin hợp đồng của thiết bị
+     */
+    public static class EquipmentContractInfo {
+        private int contractId;
+        private String source; // "Contract", "Appendix", "None"
+        private String formattedContractId; // "HD001", "N/A"
+
+        public EquipmentContractInfo(int contractId, String source, String formattedContractId) {
+            this.contractId = contractId;
+            this.source = source;
+            this.formattedContractId = formattedContractId;
+        }
+
+        public int getContractId() {
+            return contractId;
+        }
+
+        public String getSource() {
+            return source;
+        }
+
+        public String getFormattedContractId() {
+            return formattedContractId;
+        }
+
+        public boolean hasContract() {
+            return contractId > 0;
+        }
+    }
+
+    /**
      * Get repair information for equipment (includes technician, quotation, repair details)
      * @param equipmentId Equipment ID
      * @return Map containing repair info or null if not found
      */
     public Map<String, Object> getEquipmentRepairInfo(int equipmentId) {
         String sql = "SELECT " +
-                     "    u.full_name AS technician_name, " +
-                     "    sr.request_date AS repair_date, " +
-                     "    q.diagnosis, " +
-                     "    q.repair_details, " +
-                     "    q.estimated_cost, " +
-                     "    q.quotation_status " +
+                     "    a.fullName AS technician_name, " +
+                     "    sr.requestDate AS repair_date, " +
+                     "    rr.diagnosis, " +
+                     "    rr.details AS repair_details, " +
+                     "    rr.estimatedCost AS estimated_cost, " +
+                     "    rr.quotationStatus AS quotation_status " +
                      "FROM Equipment e " +
-                     "LEFT JOIN ServiceRequest sr ON e.equipment_id = sr.equipment_id " +
+                     "LEFT JOIN ServiceRequest sr ON e.equipmentId = sr.equipmentId " +
                      "    AND sr.status IN ('Approved', 'Completed') " +
-                     "    AND sr.request_type IN ('Service', 'Warranty') " +
-                     "LEFT JOIN Quotation q ON sr.request_id = q.request_id " +
-                     "LEFT JOIN Users u ON q.technician_id = u.user_id " +
-                     "WHERE e.equipment_id = ? " +
-                     "    AND sr.request_id IS NOT NULL " +
-                     "ORDER BY sr.request_date DESC " +
+                     "    AND sr.requestType IN ('Service', 'Warranty') " +
+                     "LEFT JOIN RepairReport rr ON sr.requestId = rr.requestId " +
+                     "LEFT JOIN Account a ON rr.technicianId = a.accountId " +
+                     "WHERE e.equipmentId = ? " +
+                     "    AND sr.requestId IS NOT NULL " +
+                     "ORDER BY sr.requestDate DESC " +
                      "LIMIT 1";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -1089,5 +1155,168 @@ public int getEquipmentCount() {
 
         return list;
     }
+
+    /**
+     * Lấy tất cả thiết bị của khách hàng với thông tin nguồn (Hợp đồng/Phụ lục)
+     * @param customerId ID của khách hàng
+     * @return Danh sách thiết bị với thông tin nguồn
+     */
+    public List<EquipmentWithSource> getEquipmentByCustomerWithSource(int customerId) throws SQLException {
+        List<EquipmentWithSource> list = new ArrayList<>();
+
+        String sql = "SELECT DISTINCT e.equipmentId, e.serialNumber, e.model, e.description, "
+                + "e.installDate, e.lastUpdatedBy, e.lastUpdatedDate, "
+                + "CASE "
+                + "  WHEN ce.equipmentId IS NOT NULL THEN 'Hợp Đồng' "
+                + "  WHEN cae.equipmentId IS NOT NULL THEN 'Phụ Lục' "
+                + "  ELSE 'Không xác định' "
+                + "END as sourceType, "
+                + "CASE "
+                + "  WHEN ce.equipmentId IS NOT NULL THEN CONCAT('HD', LPAD(c1.contractId, 3, '0')) "
+                + "  WHEN cae.equipmentId IS NOT NULL THEN CONCAT('HD', LPAD(c2.contractId, 3, '0')) "
+                + "  ELSE 'N/A' "
+                + "END as contractId "
+                + "FROM Equipment e "
+                + "LEFT JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId "
+                + "LEFT JOIN Contract c1 ON ce.contractId = c1.contractId AND c1.customerId = ? "
+                + "LEFT JOIN ContractAppendixEquipment cae ON e.equipmentId = cae.equipmentId "
+                + "LEFT JOIN ContractAppendix ca ON cae.appendixId = ca.appendixId "
+                + "LEFT JOIN Contract c2 ON ca.contractId = c2.contractId AND c2.customerId = ? "
+                + "WHERE (c1.customerId = ? OR c2.customerId = ?) "
+                + "ORDER BY sourceType, e.model, e.serialNumber";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            ps.setInt(2, customerId);
+            ps.setInt(3, customerId);
+            ps.setInt(4, customerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    EquipmentWithSource equipment = new EquipmentWithSource();
+                    equipment.setEquipmentId(rs.getInt("equipmentId"));
+                    equipment.setSerialNumber(rs.getString("serialNumber"));
+                    equipment.setModel(rs.getString("model"));
+                    equipment.setDescription(rs.getString("description"));
+                    equipment.setSourceType(rs.getString("sourceType"));
+                    equipment.setContractId(rs.getString("contractId"));
+
+                    Date installDate = rs.getDate("installDate");
+                    if (installDate != null) {
+                        equipment.setInstallDate(installDate.toLocalDate());
+                    }
+
+                    equipment.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
+
+                    Date lastUpdatedDate = rs.getDate("lastUpdatedDate");
+                    if (lastUpdatedDate != null) {
+                        equipment.setLastUpdatedDate(lastUpdatedDate.toLocalDate());
+                    }
+
+                    list.add(equipment);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    /**
+     * Inner class để chứa thông tin thiết bị với nguồn
+     */
+    public static class EquipmentWithSource {
+        private int equipmentId;
+        private String serialNumber;
+        private String model;
+        private String description;
+        private java.time.LocalDate installDate;
+        private int lastUpdatedBy;
+        private java.time.LocalDate lastUpdatedDate;
+        private String sourceType; // "Hợp Đồng" hoặc "Phụ Lục"
+        private String contractId; // Mã hợp đồng
+
+        // Getters and Setters
+        public int getEquipmentId() {
+            return equipmentId;
+        }
+
+        public void setEquipmentId(int equipmentId) {
+            this.equipmentId = equipmentId;
+        }
+
+        public String getSerialNumber() {
+            return serialNumber;
+        }
+
+        public void setSerialNumber(String serialNumber) {
+            this.serialNumber = serialNumber;
+        }
+
+        public String getModel() {
+            return model;
+        }
+
+        public void setModel(String model) {
+            this.model = model;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public java.time.LocalDate getInstallDate() {
+            return installDate;
+        }
+
+        public void setInstallDate(java.time.LocalDate installDate) {
+            this.installDate = installDate;
+        }
+
+        public int getLastUpdatedBy() {
+            return lastUpdatedBy;
+        }
+
+        public void setLastUpdatedBy(int lastUpdatedBy) {
+            this.lastUpdatedBy = lastUpdatedBy;
+        }
+
+        public java.time.LocalDate getLastUpdatedDate() {
+            return lastUpdatedDate;
+        }
+
+        public void setLastUpdatedDate(java.time.LocalDate lastUpdatedDate) {
+            this.lastUpdatedDate = lastUpdatedDate;
+        }
+
+        public String getSourceType() {
+            return sourceType;
+        }
+
+        public void setSourceType(String sourceType) {
+            this.sourceType = sourceType;
+        }
+
+        public String getContractId() {
+            return contractId;
+        }
+
+        public void setContractId(String contractId) {
+            this.contractId = contractId;
+        }
+    }
+    public int getEquipmentCount() {
+    String sql = "SELECT COUNT(*) FROM Equipment";
+    try (PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) return rs.getInt(1);
+    } catch (SQLException ex) {
+        ex.printStackTrace();
+    }
+    return 0;
+}
 
 }

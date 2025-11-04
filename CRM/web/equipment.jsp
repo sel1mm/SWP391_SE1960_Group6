@@ -589,8 +589,7 @@
             </div>
 
             <div class="sidebar-header">
-                <a href="#" class="sidebar-brand">
-                    <i class="fas fa-cube"></i>
+                <a href="#" class="sidebar-brand">                 
                     <span>CRM System</span>
                 </a>
             </div>
@@ -822,6 +821,7 @@
                                             <th>STT</th>
                                             <th>Tên Thiết Bị</th>
                                             <th>Serial Number</th>
+                                            <th>Loại</th>
                                             <th>Mã Hợp Đồng</th>
                                             <th>Ngày Lắp Đặt</th>
                                             <th>Trạng Thái</th>
@@ -836,6 +836,25 @@
                                                 <!-- ✅ SỬA: Thêm .equipment vào -->
                                                 <td><strong>${item.equipment.model}</strong></td>
                                                 <td>${item.equipment.serialNumber}</td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${item.sourceType == 'Hợp Đồng'}">
+                                                            <span class="badge bg-success">
+                                                                <i class="fas fa-file-contract"></i> Hợp Đồng
+                                                            </span>
+                                                        </c:when>
+                                                        <c:when test="${item.sourceType == 'Phụ Lục'}">
+                                                            <span class="badge bg-info">
+                                                                <i class="fas fa-file-plus"></i> Phụ Lục
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="badge bg-secondary">
+                                                                <i class="fas fa-question"></i> Không xác định
+                                                            </span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
                                                 <td><span class="badge bg-primary">${item.contractId}</span></td>
                                                 <td>
                                                     <c:choose>
@@ -881,6 +900,12 @@
                                                             data-install-date="${item.equipment.installDate}"
                                                             data-last-update="${item.equipment.lastUpdatedDate}"
                                                             data-status="${item.status}"
+                                                            data-technician-name="${item.technicianName}"
+                                                            data-repair-date="${item.repairDate}"
+                                                            data-diagnosis="${item.diagnosis}"
+                                                            data-repair-details="${item.repairDetails}"
+                                                            data-estimated-cost="${item.estimatedCost}"
+                                                            data-quotation-status="${item.quotationStatus}"
                                                             onclick="viewEquipmentDetail(this)">
                                                         <i class="fas fa-eye"></i> Chi Tiết
                                                     </button>
@@ -925,6 +950,60 @@
                             </c:otherwise>
                         </c:choose>
                     </div>
+                    
+                    <!-- PHÂN TRANG -->
+                    <c:if test="${totalPages > 1}">
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
+                                    <c:if test="${currentPage > 1}">
+                                        <a class="page-link" href="?page=${currentPage - 1}${not empty param.keyword ? '&keyword='.concat(param.keyword) : ''}${not empty param.status ? '&status='.concat(param.status) : ''}${not empty param.sortBy ? '&sortBy='.concat(param.sortBy) : ''}&action=${searchMode ? 'search' : (not empty param.status or not empty param.sortBy ? 'filter' : '')}">
+                                            <i class="fas fa-chevron-left"></i> Trước
+                                        </a>
+                                    </c:if>
+                                    <c:if test="${currentPage <= 1}">
+                                        <span class="page-link">
+                                            <i class="fas fa-chevron-left"></i> Trước
+                                        </span>
+                                    </c:if>
+                                </li>
+
+                                <c:forEach var="i" begin="1" end="${totalPages}">
+                                    <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                        <c:if test="${i != currentPage}">
+                                            <a class="page-link" href="?page=${i}${not empty param.keyword ? '&keyword='.concat(param.keyword) : ''}${not empty param.status ? '&status='.concat(param.status) : ''}${not empty param.sortBy ? '&sortBy='.concat(param.sortBy) : ''}&action=${searchMode ? 'search' : (not empty param.status or not empty param.sortBy ? 'filter' : '')}">
+                                                ${i}
+                                            </a>
+                                        </c:if>
+                                        <c:if test="${i == currentPage}">
+                                            <span class="page-link">${i}</span>
+                                        </c:if>
+                                    </li>
+                                </c:forEach>
+
+                                <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                                    <c:if test="${currentPage < totalPages}">
+                                        <a class="page-link" href="?page=${currentPage + 1}${not empty param.keyword ? '&keyword='.concat(param.keyword) : ''}${not empty param.status ? '&status='.concat(param.status) : ''}${not empty param.sortBy ? '&sortBy='.concat(param.sortBy) : ''}&action=${searchMode ? 'search' : (not empty param.status or not empty param.sortBy ? 'filter' : '')}">
+                                            Tiếp <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </c:if>
+                                    <c:if test="${currentPage >= totalPages}">
+                                        <span class="page-link">
+                                            Tiếp <i class="fas fa-chevron-right"></i>
+                                        </span>
+                                    </c:if>
+                                </li>
+                            </ul>
+                        </nav>
+
+                        <div class="text-center text-muted mb-3">
+                            <small>
+                                Trang <strong>${currentPage}</strong> của <strong>${totalPages}</strong> 
+                                | Hiển thị <strong>${fn:length(equipmentList)}</strong> thiết bị
+                            </small>
+                        </div>
+                    </c:if>
+
                 </div>
             </div>
 
@@ -1263,7 +1342,7 @@
                     }
                 }
 
-                // ========== ✅ VIEW EQUIPMENT DETAIL - GỌI AJAX LẤY THÔNG TIN SỬA CHỮA ==========
+                // ========== ✅ VIEW EQUIPMENT DETAIL - SỬ DỤNG DATA TỪ SERVLET ==========
                 function viewEquipmentDetail(button) {
                     const equipmentId = button.getAttribute('data-id');
                     const model = button.getAttribute('data-model');
@@ -1273,6 +1352,14 @@
                     const installDate = button.getAttribute('data-install-date');
                     const lastUpdate = button.getAttribute('data-last-update');
                     const status = button.getAttribute('data-status');
+                    
+                    // ✅ LẤY THÔNG TIN SỬA CHỮA TỪ DATA ATTRIBUTES
+                    const technicianName = button.getAttribute('data-technician-name');
+                    const repairDate = button.getAttribute('data-repair-date');
+                    const diagnosis = button.getAttribute('data-diagnosis');
+                    const repairDetails = button.getAttribute('data-repair-details');
+                    const estimatedCost = button.getAttribute('data-estimated-cost');
+                    const quotationStatus = button.getAttribute('data-quotation-status');
 
                     // Điền thông tin cơ bản
                     document.getElementById('viewEquipmentName').textContent = model || 'N/A';
@@ -1294,63 +1381,45 @@
                         statusBadge.innerHTML = '<i class="fas fa-cog"></i> Đang bảo trì';
                     }
 
-                    // ✅ NẾU THIẾT BỊ ĐANG SỬA CHỮA → GỌI AJAX LẤY THÔNG TIN
+                    // ✅ NẾU THIẾT BỊ ĐANG SỬA CHỮA → HIỂN THỊ THÔNG TIN SỬA CHỮA
                     const repairSection = document.getElementById('repairInfoSection');
                     if (status === 'Repair') {
                         repairSection.style.display = 'block';
 
-                        // Hiển thị loading
-                        document.getElementById('viewTechnicianName').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải...';
-                        document.getElementById('viewRepairDate').textContent = 'Đang tải...';
-                        document.getElementById('viewDiagnosis').textContent = 'Đang tải...';
-                        document.getElementById('viewRepairDetails').textContent = 'Đang tải...';
-                        document.getElementById('viewEstimatedCost').textContent = 'Đang tải...';
-                        document.getElementById('viewQuotationStatus').textContent = 'Đang tải...';
+                        // Hiển thị thông tin sửa chữa từ data attributes
+                        document.getElementById('viewTechnicianName').innerHTML = 
+                            '<i class="fas fa-user-check"></i> ' + (technicianName && technicianName !== 'null' ? technicianName : 'Chưa phân công');
+                        document.getElementById('viewRepairDate').textContent = 
+                            (repairDate && repairDate !== 'null' ? repairDate : 'N/A');
+                        document.getElementById('viewDiagnosis').textContent = 
+                            (diagnosis && diagnosis !== 'null' ? diagnosis : 'Chưa có thông tin');
+                        document.getElementById('viewRepairDetails').textContent = 
+                            (repairDetails && repairDetails !== 'null' ? repairDetails : 'Chưa có thông tin');
+                        
+                        // Format estimated cost
+                        let costText = '0 VNĐ';
+                        if (estimatedCost && estimatedCost !== 'null' && estimatedCost !== '0') {
+                            try {
+                                const cost = parseFloat(estimatedCost);
+                                costText = cost.toLocaleString('vi-VN') + ' VNĐ';
+                            } catch (e) {
+                                costText = estimatedCost + ' VNĐ';
+                            }
+                        }
+                        document.getElementById('viewEstimatedCost').textContent = costText;
 
-                        // Gọi AJAX
-                        fetch('${pageContext.request.contextPath}/equipment?action=getRepairInfo&equipmentId=' + equipmentId)
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success && data.repairInfo) {
-                                        const info = data.repairInfo;
-
-                                        document.getElementById('viewTechnicianName').innerHTML =
-                                                '<i class="fas fa-user-check"></i> ' + (info.technicianName || 'Chưa phân công');
-                                        document.getElementById('viewRepairDate').textContent = info.repairDate || 'N/A';
-                                        document.getElementById('viewDiagnosis').textContent = info.diagnosis || 'Chưa có thông tin';
-                                        document.getElementById('viewRepairDetails').textContent = info.repairDetails || 'Chưa có thông tin';
-                                        document.getElementById('viewEstimatedCost').textContent =
-                                                (info.estimatedCost ? parseFloat(info.estimatedCost).toLocaleString('vi-VN') + ' VNĐ' : '0 VNĐ');
-
-                                        const quotationStatus = document.getElementById('viewQuotationStatus');
-                                        if (info.quotationStatus === 'Approved') {
-                                            quotationStatus.textContent = '✅ Đã Duyệt';
-                                            quotationStatus.className = 'mb-0 fw-bold text-success';
-                                        } else if (info.quotationStatus === 'Pending') {
-                                            quotationStatus.textContent = '⏳ Chờ Xác Nhận';
-                                            quotationStatus.className = 'mb-0 fw-bold text-warning';
-                                        } else {
-                                            quotationStatus.textContent = info.quotationStatus || 'N/A';
-                                            quotationStatus.className = 'mb-0 fw-bold';
-                                        }
-                                    } else {
-                                        document.getElementById('viewTechnicianName').textContent = 'Không có thông tin';
-                                        document.getElementById('viewRepairDate').textContent = 'N/A';
-                                        document.getElementById('viewDiagnosis').textContent = 'Chưa có thông tin';
-                                        document.getElementById('viewRepairDetails').textContent = 'Chưa có thông tin';
-                                        document.getElementById('viewEstimatedCost').textContent = '0 VNĐ';
-                                        document.getElementById('viewQuotationStatus').textContent = 'N/A';
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error fetching repair info:', error);
-                                    document.getElementById('viewTechnicianName').textContent = 'Lỗi khi tải dữ liệu';
-                                    document.getElementById('viewRepairDate').textContent = 'N/A';
-                                    document.getElementById('viewDiagnosis').textContent = 'N/A';
-                                    document.getElementById('viewRepairDetails').textContent = 'N/A';
-                                    document.getElementById('viewEstimatedCost').textContent = '0 VNĐ';
-                                    document.getElementById('viewQuotationStatus').textContent = 'N/A';
-                                });
+                        // Format quotation status
+                        const quotationStatusElement = document.getElementById('viewQuotationStatus');
+                        if (quotationStatus === 'Approved') {
+                            quotationStatusElement.textContent = '✅ Đã Duyệt';
+                            quotationStatusElement.className = 'mb-0 fw-bold text-success';
+                        } else if (quotationStatus === 'Pending') {
+                            quotationStatusElement.textContent = '⏳ Chờ Xác Nhận';
+                            quotationStatusElement.className = 'mb-0 fw-bold text-warning';
+                        } else {
+                            quotationStatusElement.textContent = (quotationStatus && quotationStatus !== 'null' ? quotationStatus : 'N/A');
+                            quotationStatusElement.className = 'mb-0 fw-bold';
+                        }
                     } else {
                         repairSection.style.display = 'none';
                     }
@@ -1365,13 +1434,16 @@
                     const serialNumber = button.getAttribute('data-serial');
                     const equipmentName = button.getAttribute('data-model');
 
-                    // Remove "HD" prefix if exists to get clean number
-                    const cleanContractId = contractId.replace('HD', '').replace('#', '');
+                    // Xử lý contractId - cho phép cả thiết bị có và không có hợp đồng
+                    let cleanContractId = '';
+                    if (contractId && contractId !== 'N/A') {
+                        cleanContractId = contractId.replace('HD', '').replace('#', '');
+                    }
 
                     document.getElementById('requestEquipmentId').value = equipmentId;
                     document.getElementById('requestContractIdValue').value = cleanContractId;
                     document.getElementById('requestEquipmentName').value = equipmentName;
-                    document.getElementById('requestContractId').value = contractId;
+                    document.getElementById('requestContractId').value = contractId || 'N/A';
                     document.getElementById('requestSerialNumber').value = serialNumber;
 
                     new bootstrap.Modal(document.getElementById('createRequestModal')).show();
