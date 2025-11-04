@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <div class="container-fluid">
   <!-- Success/Error Messages -->
@@ -65,6 +66,8 @@
             <th>Task Type</th>
             <th class="d-none d-md-table-cell">Details</th>
             <th>Status</th>
+            <th>Plan Start</th>
+            <th>Plan Done</th>
             <th>Start Date</th>
             <th>End Date</th>
             <th>Actions</th>
@@ -116,6 +119,26 @@
                 </td>
                 <td>
                   <c:choose>
+                    <c:when test="${taskWithCustomer.planStart != null}">
+                      <fmt:formatDate value="${taskWithCustomer.planStart}" pattern="yyyy-MM-dd"/>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="text-muted">Not set</span>
+                    </c:otherwise>
+                  </c:choose>
+                </td>
+                <td>
+                  <c:choose>
+                    <c:when test="${taskWithCustomer.planDone != null}">
+                      <fmt:formatDate value="${taskWithCustomer.planDone}" pattern="yyyy-MM-dd"/>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="text-muted">Not set</span>
+                    </c:otherwise>
+                  </c:choose>
+                </td>
+                <td>
+                  <c:choose>
                     <c:when test="${taskWithCustomer.task.startDate != null}">
                       ${taskWithCustomer.task.startDate}
                     </c:when>
@@ -147,7 +170,7 @@
           </c:when>
           <c:otherwise>
             <tr>
-              <td colspan="9" class="text-center py-4">
+              <td colspan="11" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                   <p>No tasks found</p>

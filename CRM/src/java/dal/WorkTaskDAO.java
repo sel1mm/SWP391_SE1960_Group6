@@ -66,10 +66,22 @@ public class WorkTaskDAO extends MyDAO {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT wt.taskId, wt.requestId, wt.scheduleId, wt.technicianId, ");
         sql.append("wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status, ");
-        sql.append("sr.createdBy as customerId, a.fullName as customerName, a.email as customerEmail ");
+        sql.append("sr.createdBy as customerId, a.fullName as customerName, a.email as customerEmail, ");
+        // Plan dates from latest WorkAssignment only
+        sql.append("wa.assignmentDate AS planStart, ");
+        sql.append("CASE WHEN wa.assignmentDate IS NOT NULL AND wa.estimatedDuration IS NOT NULL ");
+        sql.append("THEN DATE_ADD(wa.assignmentDate, INTERVAL ROUND(wa.estimatedDuration * 60) MINUTE) ");
+        sql.append("ELSE NULL END AS planDone ");
         sql.append("FROM WorkTask wt ");
         sql.append("LEFT JOIN ServiceRequest sr ON wt.requestId = sr.requestId ");
         sql.append("LEFT JOIN Account a ON sr.createdBy = a.accountId ");
+        // Join latest assignment per task (most recent assignmentDate)
+        sql.append("LEFT JOIN ( ");
+        sql.append("  SELECT wa1.* FROM WorkAssignment wa1 ");
+        sql.append("  JOIN (SELECT taskId, MAX(assignmentDate) AS maxDate FROM WorkAssignment GROUP BY taskId) wa_last ");
+        sql.append("    ON wa1.taskId = wa_last.taskId AND wa1.assignmentDate = wa_last.maxDate ");
+        sql.append(") wa ON wa.taskId = wt.taskId ");
+        // Remove other fallbacks; only WorkAssignment defines planning for this view
         sql.append("WHERE wt.technicianId = ?");
         
         List<Object> params = new ArrayList<>();
@@ -108,6 +120,8 @@ public class WorkTaskDAO extends MyDAO {
             taskWithCustomer.customerId = rs.getObject("customerId", Integer.class);
             taskWithCustomer.customerName = rs.getString("customerName");
             taskWithCustomer.customerEmail = rs.getString("customerEmail");
+            taskWithCustomer.planStart = rs.getTimestamp("planStart");
+            taskWithCustomer.planDone = rs.getTimestamp("planDone");
             tasks.add(taskWithCustomer);
         }
         
@@ -122,11 +136,15 @@ public class WorkTaskDAO extends MyDAO {
         public Integer customerId;
         public String customerName;
         public String customerEmail;
+        public java.sql.Timestamp planStart;
+        public java.sql.Timestamp planDone;
         
         public WorkTask getTask() { return task; }
         public Integer getCustomerId() { return customerId; }
         public String getCustomerName() { return customerName; }
         public String getCustomerEmail() { return customerEmail; }
+        public java.sql.Timestamp getPlanStart() { return planStart; }
+        public java.sql.Timestamp getPlanDone() { return planDone; }
     }
     
     /**
