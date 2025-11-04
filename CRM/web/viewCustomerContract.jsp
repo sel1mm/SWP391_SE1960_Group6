@@ -399,6 +399,14 @@
                                                         <i class="fas fa-file-pdf"></i>
                                                     </button>
                                                 </c:if>
+                                                        
+                                                <c:if test="${contract.canDelete}">
+                                                    <button class="btn btn-sm btn-outline-danger" 
+                                                            title="Xóa hợp đồng"
+                                                            onclick="deleteContract('${contract.contractId}', '${contract.customerName}')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </c:if>       
 
                                                 <!-- <button class="btn btn-sm btn-outline-warning" 
                                                         title="Tạo Service Request"
@@ -685,10 +693,10 @@
                                 </h6>
                                 <div id="contract-selectedEquipmentList" 
                                      class="border rounded p-2" 
-                                     style="min-height: 100px; max-height: 300px; overflow-y: auto;">
+                                     style="min-height: 100px;">
                                     <p class="text-muted text-center mb-0">Chưa có thiết bị nào được chọn</p>
                                 </div>
-                                <div class="invalid-feedback d-block" id="contract-equipmentError"></div>
+                                <div class="invalid-feedback d-block" id="contract-equipmentError" style="display: none;"></div>
                             </div>
                         </div>
                     </div>
@@ -749,7 +757,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Mô tả</label>
-                                <textarea name="description" class="form-control" rows="3" 
+                                <textarea name="description" class="form-control" rows="3"
                                           placeholder="Mô tả chi tiết về phụ lục..."></textarea>
                             </div>
 
@@ -803,19 +811,23 @@
                             </h6>
 
                             <div class="mb-3">
-                                <input type="text" id="equipmentSearch" class="form-control" 
+                                <input type="text" id="appendix-equipmentSearch" class="form-control" 
                                        placeholder="🔍 Tìm kiếm thiết bị (Model, Serial Number)...">
                             </div>
 
-                            <div class="equipment-selection" id="equipmentList">
+                            <div class="equipment-selection" id="appendix-equipmentList">
                                 <div class="text-center text-muted py-4">
                                     <i class="fas fa-spinner fa-spin"></i> Đang tải danh sách thiết bị...
                                 </div>
                             </div>
 
                             <div class="mt-3">
-                                <h6 class="fw-bold">Thiết bị đã chọn (<span id="selectedCount">0</span>)</h6>
-                                <div id="selectedEquipmentList" class="border rounded p-2" style="min-height: 100px;">
+                                <h6 class="fw-bold">
+                                    Thiết bị đã chọn (<span id="appendix-selectedCount">0</span>)
+                                    <span class="text-danger appendix-equipment-required">*</span>
+                                </h6>
+                                
+                                <div id="appendix-selectedEquipmentList" class="border rounded p-2" style="min-height: 100px;">
                                     <p class="text-muted text-center mb-0">Chưa có thiết bị nào được chọn</p>
                                 </div>
                             </div>
@@ -1303,18 +1315,24 @@ async function openAddAppendixModal(contractId, customerName) {
         console.error('✗ Không tìm thấy span #appendix-contractInfo');
     }
     
-    // Reset search
-    const searchInput = document.getElementById('equipmentSearch');
+    // ✅ Reset search với ID MỚI
+    const searchInput = document.getElementById('appendix-equipmentSearch');
     if (searchInput) {
         searchInput.value = '';
     }
     
     // Set ngày hiệu lực mặc định là hôm nay
-    const effectiveDateInput = document.querySelector('input[name="effectiveDate"]');
+    const effectiveDateInput = document.querySelector('#addAppendixModal input[name="effectiveDate"]');
     if (effectiveDateInput) {
         const today = new Date().toISOString().split('T')[0];
         effectiveDateInput.value = today;
     }
+    
+    // ✅ Reset UI indicators
+    const requiredIndicators = document.querySelectorAll('.appendix-equipment-required');
+    const optionalIndicators = document.querySelectorAll('.appendix-equipment-optional');
+    requiredIndicators.forEach(el => el.style.display = 'none');
+    optionalIndicators.forEach(el => el.style.display = 'none');
     
     // Load equipment
     console.log('Loading available equipment...');
@@ -1335,7 +1353,7 @@ async function openAddAppendixModal(contractId, customerName) {
 
 // Load danh sách thiết bị
 async function loadAvailableEquipment() {
-    const container = document.getElementById('equipmentList');
+    const container = document.getElementById('appendix-equipmentList'); 
     try {
         const ctx = window.location.pathname.split("/")[1];
         const response = await fetch("/" + ctx + "/getAvailableEquipment");
@@ -1356,9 +1374,9 @@ async function loadAvailableEquipment() {
     }
 }
 
-// Render danh sách thiết bị
+// Render danh sách thiết bị cho APPENDIX
 function renderEquipmentList(equipmentList) {
-    const container = document.getElementById('equipmentList');
+    const container = document.getElementById('appendix-equipmentList');
     
     if (!equipmentList || equipmentList.length === 0) {
         container.innerHTML = '<p class="text-center text-muted">Không tìm thấy thiết bị nào</p>';
@@ -1371,7 +1389,7 @@ function renderEquipmentList(equipmentList) {
         
         html += '<div class="equipment-item" data-id="' + eq.equipmentId + '" data-category="' + (eq.categoryId || '') + '">' +
             '<div class="form-check">' +
-            '<input class="form-check-input equipment-checkbox" ' +
+            '<input class="form-check-input appendix-equipment-checkbox" ' + 
             'type="checkbox" ' +
             'value="' + eq.equipmentId + '" ' +
             'data-model="' + (eq.model || '') + '" ' +
@@ -1412,8 +1430,8 @@ function toggleEquipment(checkbox) {
 
 // Cập nhật hiển thị thiết bị đã chọn
 function updateSelectedEquipmentDisplay() {
-    const container = document.getElementById('selectedEquipmentList');
-    const countSpan = document.getElementById('selectedCount');
+    const container = document.getElementById('appendix-selectedEquipmentList'); // ✅ ĐỔI ID
+    const countSpan = document.getElementById('appendix-selectedCount'); // ✅ ĐỔI ID
     
     countSpan.innerText = selectedEquipment.length;
     
@@ -1465,31 +1483,27 @@ function removeEquipment(equipmentId) {
         return e.equipmentId !== equipmentId;
     });
     
-    // Bỏ check checkbox
-    const checkbox = document.querySelector('.equipment-checkbox[value="' + equipmentId + '"]');
+    const checkbox = document.querySelector('.appendix-equipment-checkbox[value="' + equipmentId + '"]');
     if (checkbox) checkbox.checked = false;
     
     updateSelectedEquipmentDisplay();
-//    updateTotalAmount();
 }
 
 // Tìm kiếm thiết bị
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('equipmentSearch');
+    const searchInput = document.getElementById('appendix-equipmentSearch'); 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
-            const keyword = e.target.value.toLowerCase();
             filterEquipment();
         });
     }
 });
 
 function filterEquipment() {
-    const keyword = document.getElementById('equipmentSearch').value.toLowerCase();
+    const keyword = document.getElementById('appendix-equipmentSearch').value.toLowerCase(); 
     
     let filtered = allEquipment;
     
-    // Filter by keyword
     if (keyword) {
         filtered = filtered.filter(function(eq) {
             const model = (eq.model || '').toLowerCase();
@@ -1503,7 +1517,7 @@ function filterEquipment() {
     
     // Restore checked state
     selectedEquipment.forEach(function(selected) {
-        const checkbox = document.querySelector('.equipment-checkbox[value="' + selected.equipmentId + '"]');
+        const checkbox = document.querySelector('.appendix-equipment-checkbox[value="' + selected.equipmentId + '"]'); // ✅ ĐỔI CLASS
         if (checkbox) checkbox.checked = true;
     });
 }
@@ -1638,9 +1652,15 @@ async function viewContractDetailsWithAppendix(contractId) {
             data.appendixes.forEach(function(app) {
                 const statusBadge = app.status === 'Approved' ? 'bg-success' :
                                   app.status === 'Draft' ? 'bg-warning' : 'bg-secondary';
-                const typeLabel = app.appendixType === 'AddEquipment' ? 'Thêm thiết bị' :
-                                app.appendixType === 'RepairPart' ? 'Thay linh kiện' :
-                                app.appendixType === 'ExtendTerm' ? 'Gia hạn' : 'Khác';
+                const typeLabel = app.appendixType === 'AddEquipment' ? 'Thêm thiết bị' : 'Khác';
+                
+                // ✅ LOG để debug
+                console.log('Appendix #' + app.appendixId + ':', {
+                    type: app.appendixType,
+                    canEdit: app.canEdit,
+                    canDelete: app.canDelete,
+                    equipmentCount: app.equipmentCount
+                });
                 
                 html += '<div class="appendix-item">' +
                     '<div class="d-flex justify-content-between align-items-start">' +
@@ -1662,12 +1682,13 @@ async function viewContractDetailsWithAppendix(contractId) {
                         '<a href="' + app.fileAttachment + '" target="_blank" class="btn btn-sm btn-outline-success" title="Xem file đính kèm">' +
                         '<i class="fas fa-file-download"></i>' +
                         '</a>' : '') +
-                    // NÚT XEM THIẾT BỊ
-                    '<button type="button" class="btn btn-sm btn-outline-info" ' +
-                    'onclick="viewAppendixEquipment(' + app.appendixId + ')" ' +
-                    'title="Xem thiết bị">' +
-                    '<i class="fas fa-list"></i>' +
-                    '</button>' +
+                    // NÚT XEM THIẾT BỊ (chỉ hiện nếu có thiết bị)
+                    (app.equipmentCount > 0 ?
+                        '<button type="button" class="btn btn-sm btn-outline-info" ' +
+                        'onclick="viewAppendixEquipment(' + app.appendixId + ')" ' +
+                        'title="Xem thiết bị">' +
+                        '<i class="fas fa-list"></i>' +
+                        '</button>' : '') +
                     // NÚT SỬA (chỉ hiện nếu canEdit = true)
                     (app.canEdit ? 
                         '<button type="button" class="btn btn-sm btn-outline-warning" ' +
@@ -1675,13 +1696,17 @@ async function viewContractDetailsWithAppendix(contractId) {
                         'title="Chỉnh sửa">' +
                         '<i class="fas fa-edit"></i>' +
                         '</button>' : '') +
-                    // NÚT XÓA (chỉ hiện nếu canEdit = true)
-                    (app.canEdit ? 
+                    // ✅ NÚT XÓA - LUÔN HIỆN NẾU canDelete = true (bất kể loại phụ lục)
+                    (app.canDelete ? 
                         '<button type="button" class="btn btn-sm btn-outline-danger" ' +
-                        'onclick="deleteAppendix(' + app.appendixId + ')" ' +
+                        'onclick="deleteAppendix(' + app.appendixId + ', \'' + app.appendixType + '\')" ' +
                         'title="Xóa">' +
                         '<i class="fas fa-trash"></i>' +
-                        '</button>' : '') +
+                        '</button>' : 
+                        '<button type="button" class="btn btn-sm btn-outline-secondary" disabled ' +
+                        'title="Không thể xóa (đã quá 15 ngày hoặc có yêu cầu đang xử lý)">' +
+                        '<i class="fas fa-lock"></i>' +
+                        '</button>') +
                     '</div>' +
                     '</div>' +
                     '</div>';
@@ -1817,7 +1842,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const hiddenInput = document.getElementById('appendix-contractId');
         console.log('Hidden input element:', hiddenInput);
         console.log('Hidden input value:', hiddenInput ? hiddenInput.value : 'NOT FOUND');
-        console.log('Hidden input name:', hiddenInput ? hiddenInput.name : 'NOT FOUND');
         
         const contractId = hiddenInput ? hiddenInput.value : null;
         
@@ -1835,7 +1859,43 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('✓ contractId validated:', contractId);
         
-        // 3. Validate ngày hiệu lực
+        // 3. Validate loại phụ lục
+        const appendixTypeSelect = document.querySelector('select[name="appendixType"]');
+        const appendixType = appendixTypeSelect ? appendixTypeSelect.value : '';
+        
+        if (!appendixType) {
+            console.error('ERROR: Appendix type not selected!');
+            Swal.fire({
+                icon: 'error',
+                title: 'Thiếu thông tin',
+                text: 'Vui lòng chọn loại phụ lục',
+                confirmButtonColor: '#000'
+            });
+            appendixTypeSelect.focus();
+            return;
+        }
+        
+        console.log('✓ appendixType:', appendixType);
+        
+        // 4. Validate equipment selection - CHỈ BẮT BUỘC với AddEquipment
+        if (appendixType === 'AddEquipment') {
+            if (!selectedEquipment || selectedEquipment.length === 0) {
+                console.warn('ERROR: No equipment selected for AddEquipment type');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Chưa chọn thiết bị',
+                    text: 'Loại phụ lục "Thêm thiết bị" yêu cầu chọn ít nhất một thiết bị',
+                    confirmButtonColor: '#000'
+                });
+                return;
+            }
+            console.log('✓ Equipment count:', selectedEquipment.length);
+        } else {
+            console.log('ℹ Appendix type is "Other", equipment not required');
+            console.log('Selected equipment count:', selectedEquipment.length);
+        }
+        
+        // 5. Validate ngày hiệu lực
         const effectiveDateInput = document.querySelector('input[name="effectiveDate"]');
         if (effectiveDateInput && effectiveDateInput.value) {
             const effectiveDate = new Date(effectiveDateInput.value);
@@ -1857,7 +1917,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('✓ effectiveDate validated');
         
-        // 4. Validate file đính kèm - BẮT BUỘC
+        // 6. Validate file đính kèm - BẮT BUỘC
         const fileInput = document.getElementById('fileAttachment');
         if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
             console.error('ERROR: No file selected!');
@@ -1894,7 +1954,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✓ File type validated');
         
         // Validate file size (max 10MB)
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        const maxSize = 10 * 1024 * 1024;
         if (file.size > maxSize) {
             console.error('ERROR: File too large!');
             Swal.fire({
@@ -1909,31 +1969,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('✓ File size validated');
         
-        // 5. Validate equipment selection
-        if (!selectedEquipment || selectedEquipment.length === 0) {
-            console.warn('WARNING: No equipment selected');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Chưa chọn thiết bị',
-                text: 'Vui lòng chọn ít nhất một thiết bị',
-                confirmButtonColor: '#000'
-            });
-            return;
-        }
-        
-        console.log('✓ Equipment count:', selectedEquipment.length);
-        
-        // 6. Tạo FormData
+        // 7. Tạo FormData
         const formData = new FormData(form);
         
-        // 7. ĐẢM BẢO contractId được set
+        // 8. ĐẢM BẢO contractId được set
         formData.set('contractId', contractId.trim());
         
-        // 8. Thêm equipment IDs
+        // 9. Thêm equipment IDs (có thể là mảng rỗng nếu type = Other)
         const equipmentIds = selectedEquipment.map(e => parseInt(e.equipmentId));
         formData.append('equipmentIds', JSON.stringify(equipmentIds));
         
-        // 9. Log FormData
+        // 10. Log FormData
         console.log('===== FormData entries =====');
         for (let [key, value] of formData.entries()) {
             if (value instanceof File) {
@@ -1942,14 +1988,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(key + ':', value);
             }
         }
-        
-        const contractIdFromForm = formData.get('contractId');
-        console.log('contractId from FormData:', contractIdFromForm);
-        console.log('contractId type:', typeof contractIdFromForm);
-        console.log('contractId isEmpty:', !contractIdFromForm || contractIdFromForm.trim() === '');
         console.log('================================');
         
-        // 10. Gửi request
+        // 11. Gửi request
         try {
             const ctx = window.location.pathname.split("/")[1];
             const url = "/" + ctx + "/addContractAppendix";
@@ -2006,6 +2047,69 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     console.log('✓ Submit handler registered successfully');
+});
+
+// Thêm event listener cho appendixType select
+document.addEventListener('DOMContentLoaded', function() {
+    const appendixTypeSelect = document.querySelector('#addAppendixModal select[name="appendixType"]');
+    
+    if (appendixTypeSelect) {
+        appendixTypeSelect.addEventListener('change', function(e) {
+            const selectedType = e.target.value;
+            const equipmentHeader = document.getElementById('appendix-equipment-header'); // ✅ ĐỔI ID
+            
+            // Update UI indicators
+            const requiredIndicators = document.querySelectorAll('.appendix-equipment-required'); // ✅ ĐỔI CLASS
+            const optionalIndicators = document.querySelectorAll('.appendix-equipment-optional'); // ✅ ĐỔI CLASS
+            
+            if (selectedType === 'AddEquipment') {
+                requiredIndicators.forEach(el => el.style.display = 'inline');
+                optionalIndicators.forEach(el => el.style.display = 'none');
+                
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Phụ lục thêm thiết bị',
+                    text: 'Bạn phải chọn ít nhất một thiết bị cho loại phụ lục này',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else if (selectedType === 'Other') {
+                requiredIndicators.forEach(el => el.style.display = 'none');
+                optionalIndicators.forEach(el => el.style.display = 'inline');
+                
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Phụ lục thông tin',
+                    text: 'Không cần chọn thiết bị cho loại phụ lục này',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    }
+});
+
+// Thêm vào DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    const appendixTypeSelect = document.querySelector('#addAppendixModal select[name="appendixType"]');
+    
+    if (appendixTypeSelect) {
+        appendixTypeSelect.addEventListener('change', function(e) {
+            const selectedType = e.target.value;
+            
+            // Update UI indicators
+            const requiredIndicators = document.querySelectorAll('#equipment-required-indicator, #selected-required-indicator');
+            const optionalIndicator = document.getElementById('equipment-optional-indicator');
+            
+            if (selectedType === 'AddEquipment') {
+                requiredIndicators.forEach(el => el.style.display = 'inline');
+                if (optionalIndicator) optionalIndicator.style.display = 'none';
+            } else if (selectedType === 'Other') {
+                requiredIndicators.forEach(el => el.style.display = 'none');
+                if (optionalIndicator) optionalIndicator.style.display = 'inline';
+            }
+        });
+    }
 });
 
 // ===== REAL-TIME DATE VALIDATION =====
@@ -2097,6 +2201,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function clearFileInput() {
+    // Clear cho modal Add Appendix
     const fileInput = document.getElementById('fileAttachment');
     const preview = document.getElementById('filePreview');
     if (fileInput) fileInput.value = '';
@@ -2592,16 +2697,40 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ===== DELETE APPENDIX =====
-async function deleteAppendix(appendixId) {
+async function deleteAppendix(appendixId, appendixType) {
+    console.log('=== DELETE APPENDIX ===');
+    console.log('Appendix ID:', appendixId);
+    console.log('Appendix Type:', appendixType);
+    
+    let warningMessage = '<p>Bạn có chắc chắn muốn xóa phụ lục này?</p>';
+    
+    // ✅ Message khác nhau tùy loại phụ lục
+    if (appendixType === 'AddEquipment') {
+        warningMessage += '<div class="alert alert-warning mt-3 mb-0">' +
+                        '<i class="fas fa-exclamation-triangle"></i> ' +
+                        '<strong>Lưu ý:</strong> Tất cả thiết bị và các yêu cầu dịch vụ có trạng thái <strong>Pending</strong> ' +
+                        'liên quan đến phụ lục này sẽ bị xóa cùng!' +
+                        '</div>';
+    } else {
+        warningMessage += '<div class="alert alert-info mt-3 mb-0">' +
+                        '<i class="fas fa-info-circle"></i> ' +
+                        'Đây là phụ lục thông tin, không có thiết bị liên quan.' +
+                        '</div>';
+    }
+    
     const result = await Swal.fire({
         title: 'Xác nhận xóa',
-        text: 'Bạn có chắc chắn muốn xóa phụ lục này? Hành động này không thể hoàn tác!',
+        html: warningMessage,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Xóa',
-        cancelButtonText: 'Hủy'
+        confirmButtonText: '<i class="fas fa-trash"></i> Xóa',
+        cancelButtonText: '<i class="fas fa-times"></i> Hủy',
+        customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-secondary'
+        }
     });
     
     if (!result.isConfirmed) return;
@@ -2611,27 +2740,34 @@ async function deleteAppendix(appendixId) {
         const formData = new FormData();
         formData.append('appendixId', appendixId);
         
+        console.log('Sending delete request...');
+        
         const response = await fetch("/" + ctx + "/deleteContractAppendix", {
             method: 'POST',
             body: formData
         });
         
+        console.log('Response status:', response.status);
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (data.success) {
             await Swal.fire({
                 icon: 'success',
                 title: 'Đã xóa!',
-                text: data.message,
-                confirmButtonColor: '#000'
+                html: '<p>' + data.message + '</p>',
+                confirmButtonColor: '#000',
+                timer: 2000
             });
             
             window.location.reload();
         } else {
             Swal.fire({
                 icon: 'error',
-                title: 'Lỗi',
-                text: data.message,
+                title: 'Không thể xóa',
+                html: '<p>' + data.message + '</p>' +
+                      '<small class="text-muted">Kiểm tra console để biết chi tiết</small>',
                 confirmButtonColor: '#000'
             });
         }
@@ -2640,12 +2776,11 @@ async function deleteAppendix(appendixId) {
         Swal.fire({
             icon: 'error',
             title: 'Lỗi hệ thống',
-            text: error.message,
+            text: 'Không thể kết nối đến server: ' + error.message,
             confirmButtonColor: '#000'
         });
     }
 }
-
 
 // ===== TẠO HỢP ĐỒNG MỚI =====
 let contractSelectedEquipment = [];
@@ -2987,29 +3122,186 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Reset modal when opening
+// Thêm vào đầu function openCreateContractModal()
 function openCreateContractModal() {
+    console.log('=== OPEN CREATE CONTRACT MODAL ===');
+    
     const form = document.getElementById('createContractForm');
     if (form) {
         form.reset();
         form.classList.remove('was-validated');
+        console.log('✓ Form reset');
+    } else {
+        console.error('✗ Form not found');
     }
     
     contractSelectedEquipment = [];
     contractAllEquipment = [];
     
-    document.getElementById('contract-equipmentList').innerHTML = 
-        '<div class="text-center text-muted py-4">' +
-        '<i class="fas fa-info-circle"></i> Vui lòng chọn khách hàng trước' +
-        '</div>';
+    const equipmentList = document.getElementById('contract-equipmentList');
+    if (equipmentList) {
+        equipmentList.innerHTML = 
+            '<div class="text-center text-muted py-4">' +
+            '<i class="fas fa-info-circle"></i> Vui lòng chọn khách hàng trước' +
+            '</div>';
+        console.log('✓ Equipment list reset');
+    } else {
+        console.error('✗ Equipment list not found');
+    }
     
     updateContractSelectedEquipmentDisplay();
     
     document.getElementById('contract-detailsCount').innerText = '0';
-    document.getElementById('contract-equipmentError').style.display = 'none';
     
-    new bootstrap.Modal(document.getElementById('createContractModal')).show();
+    const errorDiv = document.getElementById('contract-equipmentError');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
+    
+    try {
+        new bootstrap.Modal(document.getElementById('createContractModal')).show();
+        console.log('✓ Modal shown');
+    } catch (e) {
+        console.error('✗ Error showing modal:', e);
+    }
+    
+    console.log('===== END OPEN MODAL =====');
 }
 
+// ===== XÓA HỢP ĐỒNG =====
+async function deleteContract(contractId, customerName) {
+    try {
+        // ✅ Lấy thông tin chi tiết về requests trước
+        const ctx = window.location.pathname.split("/")[1];
+        const infoResponse = await fetch("/" + ctx + "/getContractDeletionInfo?contractId=" + contractId);
+        const infoData = await infoResponse.json();
+        
+        let warningMessage = '<p>Bạn có chắc chắn muốn xóa hợp đồng <strong>#' + contractId + 
+                           '</strong> của khách hàng <strong>' + customerName + '</strong>?</p>';
+        
+        // ✅ Hiển thị thông tin về requests sẽ bị xóa
+        if (infoData.success && infoData.info) {
+            const info = infoData.info;
+            const totalRequests = info.totalRequests || 0;
+            const pendingRequests = info.pendingRequests || 0;
+            const cancelledRequests = info.cancelledRequests || 0;
+            const activeRequests = info.activeRequests || 0;
+            
+            if (totalRequests > 0) {
+                warningMessage += '<div class="alert alert-info mt-3 mb-0">' +
+                                '<i class="fas fa-info-circle"></i> ' +
+                                '<strong>Thông tin yêu cầu dịch vụ:</strong>' +
+                                '<ul class="mb-0 mt-2">' +
+                                '<li>Tổng số yêu cầu: <strong>' + totalRequests + '</strong></li>';
+                
+                if (pendingRequests > 0) {
+                    warningMessage += '<li class="text-warning">Pending: <strong>' + pendingRequests + '</strong> (sẽ bị xóa)</li>';
+                }
+                if (cancelledRequests > 0) {
+                    warningMessage += '<li class="text-secondary">Cancelled: <strong>' + cancelledRequests + '</strong> (sẽ bị xóa)</li>';
+                }
+                if (activeRequests > 0) {
+                    warningMessage += '<li class="text-danger">Đang xử lý: <strong>' + activeRequests + '</strong> (không thể xóa)</li>';
+                }
+                
+                warningMessage += '</ul></div>';
+            }
+        }
+        
+        warningMessage += '<div class="alert alert-danger mt-3 mb-0">' +
+                        '<i class="fas fa-exclamation-triangle"></i> ' +
+                        '<strong>CẢNH BÁO:</strong> Hành động này sẽ <strong>XÓA VĨNH VIỄN</strong> hợp đồng khỏi hệ thống!' +
+                        '<br><small>Tất cả dữ liệu liên quan (thiết bị, yêu cầu Pending/Cancelled) sẽ bị xóa và KHÔNG THỂ KHÔI PHỤC!</small>' +
+                        '</div>';
+        
+        const result = await Swal.fire({
+            title: 'Xác nhận xóa vĩnh viễn hợp đồng',
+            html: warningMessage,
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash"></i> Xóa vĩnh viễn',
+            cancelButtonText: '<i class="fas fa-times"></i> Hủy',
+            width: '600px',
+            customClass: {
+                confirmButton: 'btn btn-danger',
+                cancelButton: 'btn btn-secondary'
+            }
+        });
+        
+        if (!result.isConfirmed) return;
+        
+        // ✅ Confirmation thứ 2 để chắc chắn
+        const confirmAgain = await Swal.fire({
+            title: 'Xác nhận lần cuối',
+            html: '<p class="text-danger fw-bold">Bạn THỰC SỰ muốn xóa hợp đồng #' + contractId + '?</p>' +
+                  '<p class="text-muted">Dữ liệu sẽ bị xóa vĩnh viễn và không thể khôi phục!</p>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Tôi chắc chắn, XÓA!',
+            cancelButtonText: 'Không, hủy bỏ'
+        });
+        
+        if (!confirmAgain.isConfirmed) return;
+        
+        // ✅ Thực hiện xóa
+        const formData = new FormData();
+        formData.append('contractId', contractId);
+        
+        console.log('Deleting contract:', contractId);
+        
+        const response = await fetch("/" + ctx + "/deleteContract", {
+            method: 'POST',
+            body: formData
+        });
+        
+        console.log('Response status:', response.status);
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.success) {
+            let successMessage = '<p>' + data.message + '</p>';
+            
+            if (data.deletedRequests && data.deletedRequests > 0) {
+                successMessage += '<small class="text-info">' +
+                                '<i class="fas fa-check-circle"></i> ' +
+                                'Đã xóa ' + data.deletedRequests + ' yêu cầu dịch vụ Pending/Cancelled' +
+                                '</small><br>';
+            }
+            
+            successMessage += '<small class="text-muted">Hợp đồng đã được xóa vĩnh viễn khỏi hệ thống</small>';
+            
+            await Swal.fire({
+                icon: 'success',
+                title: 'Đã xóa!',
+                html: successMessage,
+                confirmButtonColor: '#000',
+                timer: 4000
+            });
+            
+            window.location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Không thể xóa',
+                html: '<p>' + data.message + '</p>',
+                confirmButtonColor: '#000'
+            });
+        }
+    } catch (error) {
+        console.error('ERROR:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi hệ thống',
+            text: 'Không thể kết nối đến server: ' + error.message,
+            confirmButtonColor: '#000'
+        });
+    }
+}
 </script>
 </body>
 </html>

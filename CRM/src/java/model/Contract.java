@@ -1,6 +1,7 @@
 package model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Contract {
     private int contractId;
@@ -9,6 +10,11 @@ public class Contract {
     private String contractType;
     private String status;
     private String details;
+    
+    // ✅ Thêm các field mới
+    private LocalDateTime createdDate;
+    private boolean canDelete; 
+    private boolean canAddAppendix;
     
     // ✅ Thông tin khách hàng (JOIN từ Account + AccountProfile)
     private String customerName;
@@ -173,4 +179,32 @@ public class Contract {
     public void setDetails(String details) {
         this.details = details;
     }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public boolean isCanDelete() {
+        return canDelete;
+    }
+
+    public void setCanDelete(boolean canDelete) {
+        this.canDelete = canDelete;
+    }
+
+    public boolean isCanAddAppendix() {
+        return canAddAppendix;
+    }
+
+    public void setCanAddAppendix(boolean canAddAppendix) {
+        this.canAddAppendix = canAddAppendix;
+    }
+
+   
+    
+    
 }
