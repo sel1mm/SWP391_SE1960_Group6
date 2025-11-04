@@ -63,7 +63,6 @@
             .sidebar-brand i {
                 font-size: 2rem;
                 color: #ffc107;
-                text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
             }
 
             .sidebar.collapsed .sidebar-brand span {
@@ -754,8 +753,7 @@
             </div>
 
             <div class="sidebar-header">
-                <a href="#" class="sidebar-brand">
-                    <i class="fas fa-cube"></i>
+                <a href="#" class="sidebar-brand">                
                     <span>CRM System</span>
                 </a>
             </div>

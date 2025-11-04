@@ -748,7 +748,7 @@
                         <i class="fas fa-tools"></i>
                         <span>Thiết Bị</span>
                     </a>
-                        <a href="${pageContext.request.contextPath}/invoices" class="menu-item">
+                    <a href="${pageContext.request.contextPath}/invoices" class="menu-item">
                         <i class="fas fa-file-invoice-dollar"></i>
                         <span>Hóa Đơn</span>
                     </a>
@@ -1410,7 +1410,14 @@
                                                         <strong><c:out value="${equipment.model}"/></strong><br>
                                                         <small class="text-muted">
                                                             Serial: <c:out value="${equipment.serialNumber}"/> | 
-                                                            Hợp đồng: HD<c:out value="${String.format('%03d', equipment.contractId)}"/>
+                                                            <c:choose>
+                                                                <c:when test="${equipment.contractId != null}">
+                                                                    Hợp đồng: HD<c:out value="${String.format('%03d', equipment.contractId)}"/>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span class="text-warning">Không có hợp đồng</span>
+                                                                </c:otherwise>
+                                                            </c:choose>
                                                         </small>
                                                     </label>
                                                 </div>
@@ -1533,11 +1540,7 @@
                                 <p class="fw-normal" id="pendingEquipmentName"></p>
                             </div>
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong><i class="fas fa-info-circle"></i> Trạng Thái:</strong>
-                                <span class="badge badge-pending" id="pendingStatus">Chờ Xác Nhận</span>
-                            </div>
+                        <div class="row mb-3">                      
                             <div class="col-md-6">
                                 <strong><i class="fas fa-exclamation-circle"></i> Mức Độ Ưu Tiên:</strong>
                                 <span class="badge" id="pendingPriority"></span>
@@ -1596,11 +1599,7 @@
                                 <p class="fw-normal" id="awaitingEquipmentName"></p>
                             </div>
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong><i class="fas fa-info-circle"></i> Trạng Thái:</strong>
-                                <span class="badge badge-awaiting" id="awaitingStatus">Chờ Xử Lý</span>
-                            </div>
+                        <div class="row mb-3">                            
                             <div class="col-md-6">
                                 <strong><i class="fas fa-exclamation-circle"></i> Mức Độ Ưu Tiên:</strong>
                                 <span class="badge" id="awaitingPriority"></span>
@@ -1918,6 +1917,22 @@
                             }
                         }
 
+                        // ========== TOGGLE EQUIPMENT DROPDOWN ==========
+                        function toggleEquipmentDropdown() {
+                            const menu = document.getElementById('equipmentDropdownMenu');
+                            const icon = document.getElementById('equipmentDropdownIcon');
+                            
+                            if (menu.style.display === 'none' || menu.style.display === '') {
+                                menu.style.display = 'block';
+                                icon.classList.remove('fa-chevron-down');
+                                icon.classList.add('fa-chevron-up');
+                            } else {
+                                menu.style.display = 'none';
+                                icon.classList.remove('fa-chevron-up');
+                                icon.classList.add('fa-chevron-down');
+                            }
+                        }
+
                         // ========== UPDATE SELECTED EQUIPMENT DISPLAY ==========
                         function updateSelectedEquipment() {
                             const checkboxes = document.querySelectorAll('.equipment-checkbox:checked');
@@ -2060,7 +2075,7 @@
                                             showPendingModal(data);
                                         } else if (displayStatus === 'Chờ Xử Lý') {
                                             showAwaitingModal(data);
-                                        } else if (displayStatus === 'Đang Xử Lý' && data.hasQuotation) {
+                                        } else if (displayStatus === 'Đang Xử Lý') {
                                             showQuotationModal(data);
                                         } else {
                                             // Fallback: dùng modal Pending
@@ -2160,7 +2175,7 @@
                             new bootstrap.Modal(document.getElementById('viewModalAwaiting')).show();
                         }
 
-// ========== MODAL 3: ĐANG XỬ LÝ - BÁO GIÁ ==========
+                        // ========== MODAL 3: ĐANG XỬ LÝ - BÁO GIÁ ==========
                         function showQuotationModal(data) {
                             // Thông tin yêu cầu
                             document.getElementById('quotationRequestId').textContent = '#' + data.requestId;
@@ -2182,7 +2197,7 @@
                                 const cost = parseFloat(q.estimatedCost) || 0;
                                 document.getElementById('quotationCost').textContent = cost.toLocaleString('vi-VN') + ' VNĐ';
 
-                                // Quotation status
+                                // ✅ ẨN TRẠNG THÁI BÁO GIÁ
                                 const statusEl = document.getElementById('quotationQuotationStatus');
                                 if (q.quotationStatus === 'Approved') {
                                     statusEl.textContent = '✅ Đã Duyệt';
@@ -2198,14 +2213,16 @@
                                 // Lưu requestId cho nút "Đồng Ý"
                                 document.getElementById('quotationRequestIdHidden').value = data.requestId;
 
-                                // ✅ THÊM ĐOẠN NÀY: Kiểm tra điều kiện hiển thị nút "Đồng Ý & Thanh Toán"
+                                // ✅ KIỂM TRA ĐIỀU KIỆN HIỂN THỊ NÚT "ĐỒNG Ý & THANH TOÁN"
                                 const btnAccept = document.getElementById('btnAcceptQuotation');
-                                if (q.quotationStatus !== 'Approved' && cost === 0) {
-                                    btnAccept.style.display = 'none';
-                                    console.log('🚫 Hidden Accept button: quotationStatus=' + q.quotationStatus + ', cost=' + cost);
-                                } else {
+
+                                // CHỈ hiển thị khi: quotationStatus == 'Approved' VÀ có chi phí > 0
+                                if (q.quotationStatus === 'Approved' && cost > 0) {
                                     btnAccept.style.display = 'inline-block';
                                     console.log('✅ Shown Accept button: quotationStatus=' + q.quotationStatus + ', cost=' + cost);
+                                } else {
+                                    btnAccept.style.display = 'none';
+                                    console.log('🚫 Hidden Accept button: quotationStatus=' + q.quotationStatus + ', cost=' + cost);
                                 }
                             }
 
@@ -2213,7 +2230,7 @@
                             new bootstrap.Modal(document.getElementById('viewModalQuotation')).show();
                         }
 
-// ========== ĐỒNG Ý BÁO GIÁ ==========
+                        // ========== ĐỒNG Ý BÁO GIÁ ==========
                         function acceptQuotation() {
                             const requestId = document.getElementById('quotationRequestIdHidden').value;
 
@@ -2519,13 +2536,13 @@
                             const estimatedCost = parseFloat(data.estimatedCost || 0);
                             const quotationStatus = data.quotationStatus;
 
-                            // ✅ Chỉ ẩn khi: quotationStatus != 'Approved' VÀ estimatedCost == 0
-                            if (quotationStatus !== 'Approved' && estimatedCost === 0) {
-                                button.style.display = 'none';
-                                console.log('🚫 Hidden payment button for request ' + requestId + ': quotationStatus=' + quotationStatus + ', cost=' + estimatedCost);
-                            } else {
+                            // ✅ CHỈ hiển thị khi: quotationStatus == 'Approved' VÀ estimatedCost > 0
+                            if (quotationStatus === 'Approved' && estimatedCost > 0) {
                                 button.style.display = 'inline-block';
                                 console.log('✅ Shown payment button for request ' + requestId + ': quotationStatus=' + quotationStatus + ', cost=' + estimatedCost);
+                            } else {
+                                button.style.display = 'none';
+                                console.log('🚫 Hidden payment button for request ' + requestId + ': quotationStatus=' + quotationStatus + ', cost=' + estimatedCost);
                             }
                         })
                         .catch(error => {
