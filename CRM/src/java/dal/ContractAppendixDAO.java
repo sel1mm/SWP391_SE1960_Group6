@@ -301,11 +301,18 @@ public class ContractAppendixDAO extends DBContext {
 
 // ✅ Lấy thông tin chi tiết phụ lục để edit
     public ContractAppendix getAppendixById(int appendixId) throws SQLException {
-        String sql = "SELECT * FROM ContractAppendix WHERE appendixId = ?";
+        String sql = """
+        SELECT a.*, 
+               COUNT(cae.equipmentId) AS equipmentCount
+        FROM ContractAppendix a
+        LEFT JOIN ContractAppendixEquipment cae 
+               ON a.appendixId = cae.appendixId
+        WHERE a.appendixId = ?
+        GROUP BY a.appendixId
+    """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, appendixId);
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     ContractAppendix appendix = new ContractAppendix();
@@ -315,7 +322,6 @@ public class ContractAppendixDAO extends DBContext {
                     appendix.setAppendixName(rs.getString("appendixName"));
                     appendix.setDescription(rs.getString("description"));
 
-                    // XỬ LÝ LocalDate
                     Date effectiveDate = rs.getDate("effectiveDate");
                     if (effectiveDate != null) {
                         appendix.setEffectiveDate(effectiveDate.toLocalDate());
@@ -331,11 +337,13 @@ public class ContractAppendixDAO extends DBContext {
                         appendix.setCreatedAt(createdAt.toLocalDateTime());
                     }
 
+                    // ✅ Bổ sung dòng này
+                    appendix.setEquipmentCount(rs.getInt("equipmentCount"));
+
                     return appendix;
                 }
             }
         }
-
         return null;
     }
 

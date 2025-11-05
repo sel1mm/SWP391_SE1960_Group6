@@ -2171,23 +2171,45 @@ public class ServiceRequestDAO extends MyDAO {
      * Kiểm tra có ServiceRequest KHÔNG phải Pending cho phụ lục không (Awaiting
      * Approval, Approved, Completed, Cancelled, Rejected)
      */
+    /**
+     * Kiểm tra có ServiceRequest KHÔNG phải Pending cho phụ lục không
+     */
     public boolean hasNonPendingRequestsForAppendix(int appendixId) throws SQLException {
-        String sql = """
-        SELECT COUNT(*)
-        FROM ServiceRequest sr
-        INNER JOIN Equipment e ON sr.equipmentId = e.equipmentId
-        INNER JOIN ContractAppendixEquipment cae ON e.equipmentId = cae.equipmentId
-        WHERE cae.appendixId = ?
-          AND sr.status IN ('Awaiting Approval', 'Approved', 'Completed', 'Cancelled', 'Rejected')
-    """;
+        // ✅ Lấy danh sách equipmentIds từ phụ lục
+        List<Integer> equipmentIds = new ArrayList<>();
+        String getEquipmentSql = "SELECT equipmentId FROM ContractAppendixEquipment WHERE appendixId = ?";
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = connection.prepareStatement(getEquipmentSql)) {
             ps.setInt(1, appendixId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    equipmentIds.add(rs.getInt("equipmentId"));
+                }
+            }
+        }
+
+        if (equipmentIds.isEmpty()) {
+            return false;
+        }
+
+        // ✅ Kiểm tra ServiceRequests với status không phải Pending
+        String placeholders = String.join(",", equipmentIds.stream()
+                .map(id -> "?")
+                .toArray(String[]::new));
+
+        String checkSql = "SELECT COUNT(*) FROM ServiceRequest "
+                + "WHERE equipmentId IN (" + placeholders + ") "
+                + "AND status IN ('Awaiting Approval', 'Approved', 'Completed', 'Cancelled', 'Rejected')";
+
+        try (PreparedStatement ps = connection.prepareStatement(checkSql)) {
+            for (int i = 0; i < equipmentIds.size(); i++) {
+                ps.setInt(i + 1, equipmentIds.get(i));
+            }
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int count = rs.getInt(1);
-                    System.out.println("Appendix " + appendixId + " has " + count + " non-pending requests");
+                    System.out.println("📊 Appendix " + appendixId + " has " + count + " non-pending requests");
                     return count > 0;
                 }
             }
@@ -2198,21 +2220,106 @@ public class ServiceRequestDAO extends MyDAO {
     /**
      * Xóa các ServiceRequest có trạng thái Pending cho phụ lục
      */
-    public void deletePendingRequestsForAppendix(int appendixId) throws SQLException {
-        String sql = """
-        DELETE sr
-        FROM ServiceRequest sr
-        INNER JOIN Equipment e ON sr.equipmentId = e.equipmentId
-        INNER JOIN ContractAppendixEquipment cae ON e.equipmentId = cae.equipmentId
-        WHERE cae.appendixId = ?
-          AND sr.status = 'Pending'
-    """;
+    /**
+     * Xóa các ServiceRequest có trạng thái Pending cho phụ lục
+     *
+     * @return Số lượng requests đã xóa
+     */
+    public int deletePendingRequestsForAppendix(int appendixId) throws SQLException {
+        System.out.println("\n========== DELETE PENDING REQUESTS FOR APPENDIX #" + appendixId + " ==========");
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        // Debug trước khi xóa
+        debugServiceRequestsForAppendix(appendixId);
+
+        // Lấy danh sách equipment IDs
+        String getEquipSql = "SELECT equipmentId FROM ContractAppendixEquipment WHERE appendixId = ?";
+        List<Integer> equipmentIds = new ArrayList<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(getEquipSql)) {
             ps.setInt(1, appendixId);
-            int deleted = ps.executeUpdate();
-            System.out.println("✅ Deleted " + deleted + " pending requests for appendix " + appendixId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    equipmentIds.add(rs.getInt("equipmentId"));
+                }
+            }
         }
+
+        if (equipmentIds.isEmpty()) {
+            System.out.println("❌ No equipment found, nothing to delete");
+            System.out.println("==========================================================\n");
+            return 0;
+        }
+
+        // Xóa ServiceRequests với status = 'Pending'
+        String deleteSql = "DELETE FROM ServiceRequest "
+                + "WHERE equipmentId IN ("
+                + String.join(",", equipmentIds.stream().map(String::valueOf).toArray(String[]::new)) + ") "
+                + "AND status = 'Pending'";
+
+        System.out.println("🗑️ DELETE SQL: " + deleteSql);
+
+        try (PreparedStatement ps = connection.prepareStatement(deleteSql)) {
+            int deletedCount = ps.executeUpdate();
+            System.out.println("✅ Deleted " + deletedCount + " pending requests");
+            System.out.println("==========================================================\n");
+            return deletedCount;
+        }
+    }
+
+    /**
+     * DEBUG: Tìm tất cả Service Requests liên quan đến appendix
+     */
+    public void debugServiceRequestsForAppendix(int appendixId) throws SQLException {
+        System.out.println("\n========== DEBUG SERVICE REQUESTS FOR APPENDIX #" + appendixId + " ==========");
+
+        // Bước 1: Lấy equipment từ appendix
+        String getEquipSql = "SELECT equipmentId FROM ContractAppendixEquipment WHERE appendixId = ?";
+        List<Integer> equipmentIds = new ArrayList<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(getEquipSql)) {
+            ps.setInt(1, appendixId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    equipmentIds.add(rs.getInt("equipmentId"));
+                }
+            }
+        }
+
+        System.out.println("📦 Equipment IDs in appendix: " + equipmentIds);
+
+        if (equipmentIds.isEmpty()) {
+            System.out.println("⚠️ No equipment found in appendix!");
+            System.out.println("==========================================================\n");
+            return;
+        }
+
+        // Bước 2: Tìm tất cả Service Requests cho các equipment này
+        String findRequestsSql = "SELECT requestId, equipmentId, status, requestDate, description "
+                + "FROM ServiceRequest "
+                + "WHERE equipmentId IN ("
+                + String.join(",", equipmentIds.stream().map(String::valueOf).toArray(String[]::new)) + ")";
+
+        System.out.println("🔍 SQL Query: " + findRequestsSql);
+
+        try (PreparedStatement ps = connection.prepareStatement(findRequestsSql); ResultSet rs = ps.executeQuery()) {
+
+            int count = 0;
+            while (rs.next()) {
+                count++;
+                System.out.println("  📋 Request #" + rs.getInt("requestId")
+                        + " | Equipment: " + rs.getInt("equipmentId")
+                        + " | Status: " + rs.getString("status")
+                        + " | Date: " + rs.getDate("requestDate"));
+            }
+
+            if (count == 0) {
+                System.out.println("  ℹ️ No service requests found for these equipments");
+            } else {
+                System.out.println("  📊 Total requests found: " + count);
+            }
+        }
+
+        System.out.println("==========================================================\n");
     }
 
 }

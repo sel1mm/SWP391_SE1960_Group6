@@ -2569,71 +2569,165 @@ INSERT INTO PartDetail VALUES (50, 25, 'FAN-MTR-002', 'InUse', 'Chiller Room Bas
 
 -- Equipment: Thiết bị hoàn chỉnh cho tòa nhà
 INSERT INTO Equipment (equipmentId, serialNumber, model, description, installDate, categoryId, lastUpdatedBy, lastUpdatedDate) VALUES
--- Air Conditioning Units (Category 13)
-(1, 'AC001-2024', 'Daikin VRV IV', 'Máy lạnh trung tâm - Tầng 1-5', '2024-01-15', 13, 2, '2024-01-15'),
-(2, 'AC002-2024', 'Mitsubishi City Multi', 'Máy lạnh trung tâm - Tầng 6-10', '2024-02-01', 13, 2, '2024-02-01'),
-(3, 'AC003-2024', 'LG Multi V5', 'Máy lạnh VRV - Tầng hầm', '2024-02-15', 13, 2, '2024-02-15'),
-(4, 'AC004-2024', 'Panasonic ECOi', 'Máy lạnh trung tâm - Văn phòng chính', '2024-03-01', NULL, 2, '2024-03-01'),
+-- Air Conditioning Systems (Category 13)
+(1, 'AC-001-2024', 'Daikin VRV IV', 'Máy lạnh trung tâm - Tầng 1-5', '2024-01-15', 13, 2, '2024-01-15'),
+(2, 'AC-002-2024', 'Daikin VRV IV', 'Máy lạnh trung tâm - Tầng 1-5', '2024-01-15', 13, 2, '2024-01-15'),
+(3, 'AC-003-2024', 'Daikin VRV IV', 'Máy lạnh trung tâm - Tầng 1-5', '2024-01-15', 13, 2, '2024-01-15'),
+(4, 'AC-004-2024', 'Daikin VRV IV', 'Máy lạnh trung tâm - Tầng 1-5', '2024-01-15', 13, 2, '2024-01-15'),
+(5, 'AC-005-2024', 'Daikin VRV IV', 'Máy lạnh trung tâm - Tầng 1-5', '2024-01-15', 13, 2, '2024-01-15'),
+
+(6, 'AC-006-2024', 'Mitsubishi City Multi', 'Máy lạnh trung tâm - Tầng 6-10', '2024-02-01', 13, 2, '2024-02-01'),
+(7, 'AC-007-2024', 'Mitsubishi City Multi', 'Máy lạnh trung tâm - Tầng 6-10', '2024-02-01', 13, 2, '2024-02-01'),
+(8, 'AC-008-2024', 'Mitsubishi City Multi', 'Máy lạnh trung tâm - Tầng 6-10', '2024-02-01', 13, 2, '2024-02-01'),
+(9, 'AC-009-2024', 'Mitsubishi City Multi', 'Máy lạnh trung tâm - Tầng 6-10', '2024-02-01', 13, 2, '2024-02-01'),
+(10, 'AC-010-2024', 'Mitsubishi City Multi', 'Máy lạnh trung tâm - Tầng 6-10', '2024-02-01', 13, 2, '2024-02-01'),
+
+(11, 'AC-011-2024', 'LG Multi V5', 'Máy lạnh VRV - Tầng hầm', '2024-02-15', 13, 2, '2024-02-15'),
+(12, 'AC-012-2024', 'LG Multi V5', 'Máy lạnh VRV - Tầng hầm', '2024-02-15', 13, 2, '2024-02-15'),
+(13, 'AC-013-2024', 'LG Multi V5', 'Máy lạnh VRV - Tầng hầm', '2024-02-15', 13, 2, '2024-02-15'),
+(14, 'AC-014-2024', 'LG Multi V5', 'Máy lạnh VRV - Tầng hầm', '2024-02-15', 13, 2, '2024-02-15'),
+(15, 'AC-015-2024', 'LG Multi V5', 'Máy lạnh VRV - Tầng hầm', '2024-02-15', 13, 2, '2024-02-15'),
+
+(16, 'AC-016-2024', 'Panasonic ECOi', 'Máy lạnh trung tâm - Văn phòng chính', '2024-03-01', 13, 2, '2024-03-01'),
+(17, 'AC-017-2024', 'Panasonic ECOi', 'Máy lạnh trung tâm - Văn phòng chính', '2024-03-01', 13, 2, '2024-03-01'),
+(18, 'AC-018-2024', 'Panasonic ECOi', 'Máy lạnh trung tâm - Văn phòng chính', '2024-03-01', 13, 2, '2024-03-01'),
+(19, 'AC-019-2024', 'Panasonic ECOi', 'Máy lạnh trung tâm - Văn phòng chính', '2024-03-01', 13, 2, '2024-03-01'),
+(20, 'AC-020-2024', 'Panasonic ECOi', 'Máy lạnh trung tâm - Văn phòng chính', '2024-03-01', 13, 2, '2024-03-01'),
 
 -- Water Pumps (Category 7)
-(5, 'PUMP001-2024', 'Grundfos CR32-4', 'Máy bơm nước sinh hoạt tầng 1-10', '2024-01-20', 7, 2, '2024-01-20'),
-(6, 'PUMP002-2024', 'Pentax CM50-200A', 'Máy bơm cấp nước tòa nhà', '2024-02-10', 7, 2, '2024-02-10'),
-(7, 'PUMP003-2024', 'Ebara 3M 32-160', 'Máy bơm chữa cháy', '2024-03-05', 7, 2, '2024-03-05'),
+(21, 'PUMP-021-2024', 'Grundfos CR32-4', 'Máy bơm nước sinh hoạt tầng 1-10', '2024-01-20', 7, 2, '2024-01-20'),
+(22, 'PUMP-022-2024', 'Grundfos CR32-4', 'Máy bơm nước sinh hoạt tầng 1-10', '2024-01-20', 7, 2, '2024-01-20'),
+(23, 'PUMP-023-2024', 'Grundfos CR32-4', 'Máy bơm nước sinh hoạt tầng 1-10', '2024-01-20', 7, 2, '2024-01-20'),
+(24, 'PUMP-024-2024', 'Grundfos CR32-4', 'Máy bơm nước sinh hoạt tầng 1-10', '2024-01-20', 7, 2, '2024-01-20'),
+(25, 'PUMP-025-2024', 'Grundfos CR32-4', 'Máy bơm nước sinh hoạt tầng 1-10', '2024-01-20', 7, 2, '2024-01-20'),
+
+(26, 'PUMP-026-2024', 'Pentax CM50-200A', 'Máy bơm cấp nước tòa nhà', '2024-02-10', 7, 2, '2024-02-10'),
+(27, 'PUMP-027-2024', 'Pentax CM50-200A', 'Máy bơm cấp nước tòa nhà', '2024-02-10', 7, 2, '2024-02-10'),
+(28, 'PUMP-028-2024', 'Pentax CM50-200A', 'Máy bơm cấp nước tòa nhà', '2024-02-10', 7, 2, '2024-02-10'),
+(29, 'PUMP-029-2024', 'Pentax CM50-200A', 'Máy bơm cấp nước tòa nhà', '2024-02-10', 7, 2, '2024-02-10'),
+(30, 'PUMP-030-2024', 'Pentax CM50-200A', 'Máy bơm cấp nước tòa nhà', '2024-02-10', 7, 2, '2024-02-10'),
+
+(31, 'PUMP-031-2024', 'Ebara 3M 32-160', 'Máy bơm chữa cháy', '2024-03-05', 7, 2, '2024-03-05'),
+(32, 'PUMP-032-2024', 'Ebara 3M 32-160', 'Máy bơm chữa cháy', '2024-03-05', 7, 2, '2024-03-05'),
+(33, 'PUMP-033-2024', 'Ebara 3M 32-160', 'Máy bơm chữa cháy', '2024-03-05', 7, 2, '2024-03-05'),
+(34, 'PUMP-034-2024', 'Ebara 3M 32-160', 'Máy bơm chữa cháy', '2024-03-05', 7, 2, '2024-03-05'),
+(35, 'PUMP-035-2024', 'Ebara 3M 32-160', 'Máy bơm chữa cháy', '2024-03-05', 7, 2, '2024-03-05'),
 
 -- Power Systems (Category 8)
-(8, 'ELEC001-2024', 'Schneider Prisma Plus', 'Tủ điện tổng tòa nhà', '2024-01-10', 8, 2, '2024-01-10'),
-(9, 'ELEC002-2024', 'ABB ACH580', 'Biến tần điều khiển bơm nước', '2024-03-20', 8, 2, '2024-03-20'),
-(10, 'UPS001-2024', 'APC Symmetra 20KVA', 'Bộ lưu điện tòa nhà', '2024-02-15', 8, 2, '2024-02-15'),
-(11, 'GEN001-2024', 'Cummins C150D5', 'Máy phát điện dự phòng 150KVA', '2024-01-25', 8, 2, '2024-01-25'),
+(36, 'ELEC-036-2024', 'Schneider Prisma Plus', 'Tủ điện tổng tòa nhà', '2024-01-10', 8, 2, '2024-01-10'),
+(37, 'ELEC-037-2024', 'Schneider Prisma Plus', 'Tủ điện tổng tòa nhà', '2024-01-10', 8, 2, '2024-01-10'),
+(38, 'ELEC-038-2024', 'Schneider Prisma Plus', 'Tủ điện tổng tòa nhà', '2024-01-10', 8, 2, '2024-01-10'),
+(39, 'ELEC-039-2024', 'Schneider Prisma Plus', 'Tủ điện tổng tòa nhà', '2024-01-10', 8, 2, '2024-01-10'),
+(40, 'ELEC-040-2024', 'Schneider Prisma Plus', 'Tủ điện tổng tòa nhà', '2024-01-10', 8, 2, '2024-01-10'),
+
+(41, 'ELEC-041-2024', 'ABB ACH580', 'Biến tần điều khiển bơm nước', '2024-03-20', 8, 2, '2024-03-20'),
+(42, 'ELEC-042-2024', 'ABB ACH580', 'Biến tần điều khiển bơm nước', '2024-03-20', 8, 2, '2024-03-20'),
+(43, 'ELEC-043-2024', 'ABB ACH580', 'Biến tần điều khiển bơm nước', '2024-03-20', 8, 2, '2024-03-20'),
+(44, 'ELEC-044-2024', 'ABB ACH580', 'Biến tần điều khiển bơm nước', '2024-03-20', 8, 2, '2024-03-20'),
+(45, 'ELEC-045-2024', 'ABB ACH580', 'Biến tần điều khiển bơm nước', '2024-03-20', 8, 2, '2024-03-20'),
+
+(46, 'ELEC-046-2024', 'APC Symmetra 20KVA', 'Bộ lưu điện tòa nhà', '2024-02-15', 8, 2, '2024-02-15'),
+(47, 'ELEC-047-2024', 'APC Symmetra 20KVA', 'Bộ lưu điện tòa nhà', '2024-02-15', 8, 2, '2024-02-15'),
+(48, 'ELEC-048-2024', 'APC Symmetra 20KVA', 'Bộ lưu điện tòa nhà', '2024-02-15', 8, 2, '2024-02-15'),
+(49, 'ELEC-049-2024', 'APC Symmetra 20KVA', 'Bộ lưu điện tòa nhà', '2024-02-15', 8, 2, '2024-02-15'),
+(50, 'ELEC-050-2024', 'APC Symmetra 20KVA', 'Bộ lưu điện tòa nhà', '2024-02-15', 8, 2, '2024-02-15'),
+
+(51, 'ELEC-051-2024', 'Cummins C150D5', 'Máy phát điện dự phòng 150KVA', '2024-01-25', 8, 2, '2024-01-25'),
+(52, 'ELEC-052-2024', 'Cummins C150D5', 'Máy phát điện dự phòng 150KVA', '2024-01-25', 8, 2, '2024-01-25'),
+(53, 'ELEC-053-2024', 'Cummins C150D5', 'Máy phát điện dự phòng 150KVA', '2024-01-25', 8, 2, '2024-01-25'),
+(54, 'ELEC-054-2024', 'Cummins C150D5', 'Máy phát điện dự phòng 150KVA', '2024-01-25', 8, 2, '2024-01-25'),
+(55, 'ELEC-055-2024', 'Cummins C150D5', 'Máy phát điện dự phòng 150KVA', '2024-01-25', 8, 2, '2024-01-25'),
 
 -- HVAC Systems (Category 6)
-(12, 'HVAC001-2024', 'Carrier 30XA', 'Hệ thống điều hòa trung tâm chiller', '2024-03-15', 6, 2, '2024-03-15'),
-(13, 'HVAC002-2024', 'Trane RTAC 375', 'Máy lạnh công suất lớn', '2024-03-20', 6, 2, '2024-03-20'),
-(14, 'AHU001-2024', 'York Air Handler', 'Dàn xử lý không khí tầng 5', '2024-04-10', 6, 2, '2024-04-10'),
+(56, 'HVAC-056-2024', 'Carrier 30XA', 'Hệ thống điều hòa trung tâm chiller', '2024-03-15', 6, 2, '2024-03-15'),
+(57, 'HVAC-057-2024', 'Carrier 30XA', 'Hệ thống điều hòa trung tâm chiller', '2024-03-15', 6, 2, '2024-03-15'),
+(58, 'HVAC-058-2024', 'Carrier 30XA', 'Hệ thống điều hòa trung tâm chiller', '2024-03-15', 6, 2, '2024-03-15'),
+(59, 'HVAC-059-2024', 'Carrier 30XA', 'Hệ thống điều hòa trung tâm chiller', '2024-03-15', 6, 2, '2024-03-15'),
+(60, 'HVAC-060-2024', 'Carrier 30XA', 'Hệ thống điều hòa trung tâm chiller', '2024-03-15', 6, 2, '2024-03-15'),
+
+(61, 'HVAC-061-2024', 'Trane RTAC 375', 'Máy lạnh công suất lớn', '2024-03-20', 6, 2, '2024-03-20'),
+(62, 'HVAC-062-2024', 'Trane RTAC 375', 'Máy lạnh công suất lớn', '2024-03-20', 6, 2, '2024-03-20'),
+(63, 'HVAC-063-2024', 'Trane RTAC 375', 'Máy lạnh công suất lớn', '2024-03-20', 6, 2, '2024-03-20'),
+(64, 'HVAC-064-2024', 'Trane RTAC 375', 'Máy lạnh công suất lớn', '2024-03-20', 6, 2, '2024-03-20'),
+(65, 'HVAC-065-2024', 'Trane RTAC 375', 'Máy lạnh công suất lớn', '2024-03-20', 6, 2, '2024-03-20'),
+
+(66, 'HVAC-066-2024', 'York Air Handler', 'Dàn xử lý không khí tầng 5', '2024-04-10', 6, 2, '2024-04-10'),
+(67, 'HVAC-067-2024', 'York Air Handler', 'Dàn xử lý không khí tầng 5', '2024-04-10', 6, 2, '2024-04-10'),
+(68, 'HVAC-068-2024', 'York Air Handler', 'Dàn xử lý không khí tầng 5', '2024-04-10', 6, 2, '2024-04-10'),
+(69, 'HVAC-069-2024', 'York Air Handler', 'Dàn xử lý không khí tầng 5', '2024-04-10', 6, 2, '2024-04-10'),
+(70, 'HVAC-070-2024', 'York Air Handler', 'Dàn xử lý không khí tầng 5', '2024-04-10', 6, 2, '2024-04-10'),
 
 -- Elevator Systems (Category 11)
-(15, 'ELEV001-2024', 'Otis Gen2', 'Thang máy hành khách - Khối A', '2024-04-15', 11, 2, '2024-04-15'),
-(16, 'ELEV002-2024', 'Mitsubishi NEXIEZ-MRL', 'Thang máy hành khách - Khối B', '2024-05-10', 11, 2, '2024-05-10'),
-(17, 'ELEV003-2024', 'KONE MonoSpace 500', 'Thang máy chở hàng', '2024-05-20', 11, 2, '2024-05-20'),
+(71, 'ELEV-071-2024', 'Otis Gen2', 'Thang máy hành khách - Khối A', '2024-04-15', 11, 2, '2024-04-15'),
+(72, 'ELEV-072-2024', 'Otis Gen2', 'Thang máy hành khách - Khối A', '2024-04-15', 11, 2, '2024-04-15'),
+(73, 'ELEV-073-2024', 'Otis Gen2', 'Thang máy hành khách - Khối A', '2024-04-15', 11, 2, '2024-04-15'),
+(74, 'ELEV-074-2024', 'Otis Gen2', 'Thang máy hành khách - Khối A', '2024-04-15', 11, 2, '2024-04-15'),
+(75, 'ELEV-075-2024', 'Otis Gen2', 'Thang máy hành khách - Khối A', '2024-04-15', 11, 2, '2024-04-15'),
+
+-- Elevator Systems (Category 11) tiếp tục
+(76, 'ELEV-076-2024', 'Mitsubishi NEXIEZ-MRL', 'Thang máy hành khách - Khối B', '2024-05-10', 11, 2, '2024-05-10'),
+(77, 'ELEV-077-2024', 'Mitsubishi NEXIEZ-MRL', 'Thang máy hành khách - Khối B', '2024-05-10', 11, 2, '2024-05-10'),
+(78, 'ELEV-078-2024', 'Mitsubishi NEXIEZ-MRL', 'Thang máy hành khách - Khối B', '2024-05-10', 11, 2, '2024-05-10'),
+(79, 'ELEV-079-2024', 'Mitsubishi NEXIEZ-MRL', 'Thang máy hành khách - Khối B', '2024-05-10', 11, 2, '2024-05-10'),
+(80, 'ELEV-080-2024', 'Mitsubishi NEXIEZ-MRL', 'Thang máy hành khách - Khối B', '2024-05-10', 11, 2, '2024-05-10'),
+
+(81, 'ELEV-081-2024', 'KONE MonoSpace 500', 'Thang máy chở hàng', '2024-05-20', 11, 2, '2024-05-20'),
+(82, 'ELEV-082-2024', 'KONE MonoSpace 500', 'Thang máy chở hàng', '2024-05-20', 11, 2, '2024-05-20'),
+(83, 'ELEV-083-2024', 'KONE MonoSpace 500', 'Thang máy chở hàng', '2024-05-20', 11, 2, '2024-05-20'),
+(84, 'ELEV-084-2024', 'KONE MonoSpace 500', 'Thang máy chở hàng', '2024-05-20', 11, 2, '2024-05-20'),
+(85, 'ELEV-085-2024', 'KONE MonoSpace 500', 'Thang máy chở hàng', '2024-05-20', 11, 2, '2024-05-20'),
 
 -- Fire Protection Systems (Category 12)
-(18, 'FIRE001-2024', 'Hochiki Fire Panel', 'Tủ trung tâm báo cháy', '2024-06-01', 12, 2, '2024-06-01'),
-(19, 'SPRNK001-2024', 'Viking Sprinkler System', 'Hệ thống sprinkler phòng cháy', '2024-06-15', 12, 2, '2024-06-15'),
+(86, 'FIRE-086-2024', 'Hochiki Fire Panel', 'Tủ trung tâm báo cháy', '2024-06-01', 12, 2, '2024-06-01'),
+(87, 'FIRE-087-2024', 'Hochiki Fire Panel', 'Tủ trung tâm báo cháy', '2024-06-01', 12, 2, '2024-06-01'),
+(88, 'FIRE-088-2024', 'Hochiki Fire Panel', 'Tủ trung tâm báo cháy', '2024-06-01', 12, 2, '2024-06-01'),
+(89, 'FIRE-089-2024', 'Hochiki Fire Panel', 'Tủ trung tâm báo cháy', '2024-06-01', 12, 2, '2024-06-01'),
+(90, 'FIRE-090-2024', 'Hochiki Fire Panel', 'Tủ trung tâm báo cháy', '2024-06-01', 12, 2, '2024-06-01'),
+
+(91, 'FIRE-091-2024', 'Viking Sprinkler System', 'Hệ thống sprinkler phòng cháy', '2024-06-15', 12, 2, '2024-06-15'),
+(92, 'FIRE-092-2024', 'Viking Sprinkler System', 'Hệ thống sprinkler phòng cháy', '2024-06-15', 12, 2, '2024-06-15'),
+(93, 'FIRE-093-2024', 'Viking Sprinkler System', 'Hệ thống sprinkler phòng cháy', '2024-06-15', 12, 2, '2024-06-15'),
+(94, 'FIRE-094-2024', 'Viking Sprinkler System', 'Hệ thống sprinkler phòng cháy', '2024-06-15', 12, 2, '2024-06-15'),
+(95, 'FIRE-095-2024', 'Viking Sprinkler System', 'Hệ thống sprinkler phòng cháy', '2024-06-15', 12, 2, '2024-06-15'),
 
 -- Control Systems (Category 10)
-(20, 'BMS001-2024', 'Siemens Desigo CC', 'Hệ thống quản lý tòa nhà BMS', '2024-07-01', 10, 2, '2024-07-01'),
-(21, 'ACCESS001-2024', 'Honeywell Pro-Watch', 'Hệ thống kiểm soát ra vào', '2024-07-15', 10, 2, '2024-07-15'),
+(96, 'BMS-096-2024', 'Siemens Desigo CC', 'Hệ thống quản lý tòa nhà BMS', '2024-07-01', 10, 2, '2024-07-01'),
+(97, 'BMS-097-2024', 'Siemens Desigo CC', 'Hệ thống quản lý tòa nhà BMS', '2024-07-01', 10, 2, '2024-07-01'),
+(98, 'BMS-098-2024', 'Siemens Desigo CC', 'Hệ thống quản lý tòa nhà BMS', '2024-07-01', 10, 2, '2024-07-01'),
+(99, 'BMS-099-2024', 'Siemens Desigo CC', 'Hệ thống quản lý tòa nhà BMS', '2024-07-01', 10, 2, '2024-07-01'),
+(100, 'BMS-100-2024', 'Siemens Desigo CC', 'Hệ thống quản lý tòa nhà BMS', '2024-07-01', 10, 2, '2024-07-01'),
+
+(101, 'BMS-101-2024', 'Honeywell Pro-Watch', 'Hệ thống kiểm soát ra vào', '2024-07-15', 10, 2, '2024-07-15'),
+(102, 'BMS-102-2024', 'Honeywell Pro-Watch', 'Hệ thống kiểm soát ra vào', '2024-07-15', 10, 2, '2024-07-15'),
+(103, 'BMS-103-2024', 'Honeywell Pro-Watch', 'Hệ thống kiểm soát ra vào', '2024-07-15', 10, 2, '2024-07-15'),
+(104, 'BMS-104-2024', 'Honeywell Pro-Watch', 'Hệ thống kiểm soát ra vào', '2024-07-15', 10, 2, '2024-07-15'),
+(105, 'BMS-105-2024', 'Honeywell Pro-Watch', 'Hệ thống kiểm soát ra vào', '2024-07-15', 10, 2, '2024-07-15'),
 
 -- Cooling Systems (Category 6)
-(22, 'COOL001-2024', 'BAC Cooling Tower', 'Tháp giải nhiệt 500 RT', '2024-08-01', 6, 2, '2024-08-01'),
-(23, 'CHILLER001-2024', 'York YCIV Chiller', 'Máy làm lạnh nước 400 RT', '2024-08-15', 6, 2, '2024-08-15'),
+(106, 'COOL-106-2024', 'BAC Cooling Tower', 'Tháp giải nhiệt 500 RT', '2024-08-01', 6, 2, '2024-08-01'),
+(107, 'COOL-107-2024', 'BAC Cooling Tower', 'Tháp giải nhiệt 500 RT', '2024-08-01', 6, 2, '2024-08-01'),
+(108, 'COOL-108-2024', 'BAC Cooling Tower', 'Tháp giải nhiệt 500 RT', '2024-08-01', 6, 2, '2024-08-01'),
+(109, 'COOL-109-2024', 'BAC Cooling Tower', 'Tháp giải nhiệt 500 RT', '2024-08-01', 6, 2, '2024-08-01'),
+(110, 'COOL-110-2024', 'BAC Cooling Tower', 'Tháp giải nhiệt 500 RT', '2024-08-01', 6, 2, '2024-08-01'),
+
+(111, 'COOL-111-2024', 'York YCIV Chiller', 'Máy làm lạnh nước 400 RT', '2024-08-15', 6, 2, '2024-08-15'),
+(112, 'COOL-112-2024', 'York YCIV Chiller', 'Máy làm lạnh nước 400 RT', '2024-08-15', 6, 2, '2024-08-15'),
+(113, 'COOL-113-2024', 'York YCIV Chiller', 'Máy làm lạnh nước 400 RT', '2024-08-15', 6, 2, '2024-08-15'),
+(114, 'COOL-114-2024', 'York YCIV Chiller', 'Máy làm lạnh nước 400 RT', '2024-08-15', 6, 2, '2024-08-15'),
+(115, 'COOL-115-2024', 'York YCIV Chiller', 'Máy làm lạnh nước 400 RT', '2024-08-15', 6, 2, '2024-08-15'),
 
 -- Lighting Systems (Category 9)
-(24, 'LIGHT001-2024', 'Philips SmartBright', 'Hệ thống chiếu sáng thông minh', '2024-09-01', 9, 2, '2024-09-01'),
-(25, 'LIGHT002-2024', 'Osram LED System', 'Hệ thống đèn LED tòa nhà', '2024-09-15', 9, 2, '2024-09-15');
+(116, 'LIGHT-116-2024', 'Philips SmartBright', 'Hệ thống chiếu sáng thông minh', '2024-09-01', 9, 2, '2024-09-01'),
+(117, 'LIGHT-117-2024', 'Philips SmartBright', 'Hệ thống chiếu sáng thông minh', '2024-09-01', 9, 2, '2024-09-01'),
+(118, 'LIGHT-118-2024', 'Philips SmartBright', 'Hệ thống chiếu sáng thông minh', '2024-09-01', 9, 2, '2024-09-01'),
+(119, 'LIGHT-119-2024', 'Philips SmartBright', 'Hệ thống chiếu sáng thông minh', '2024-09-01', 9, 2, '2024-09-01'),
+(120, 'LIGHT-120-2024', 'Philips SmartBright', 'Hệ thống chiếu sáng thông minh', '2024-09-01', 9, 2, '2024-09-01'),
 
--- ====================================================================
--- BỔ SUNG EQUIPMENT (Tiếp nối sau các bản ghi hiện có)
--- ====================================================================
-
-INSERT INTO Equipment (equipmentId, serialNumber, model, description, installDate, categoryId, lastUpdatedBy, lastUpdatedDate) VALUES
--- Air Conditioning Units (Category 13)
-(26, 'AC005-2024', 'Daikin FTKC25UAVMV', 'Máy lạnh 1HP - Phòng khách', '2024-01-15', 13, 2, '2024-01-15'),
-(27, 'AC006-2024', 'Panasonic CU-N9VKH-8', 'Máy lạnh 1.5HP - Phòng ngủ chính', '2024-02-01', 13, 2, '2024-02-01'),
-(28, 'AC007-2024', 'Mitsubishi MSY-JP25VF', 'Máy lạnh 1HP - Phòng làm việc', '2024-02-15', 13, 2, '2024-02-15'),
-(29, 'AC008-2024', 'LG V10ENW', 'Máy lạnh 1.5HP - Phòng khách lớn', '2024-03-01', 13, 2, '2024-03-01'),
-
--- Water Pumps (Category 7)
-(30, 'PUMP004-2024', 'Grundfos CM3-4', 'Máy bơm nước sinh hoạt', '2024-01-20', 7, 2, '2024-01-20'),
-(31, 'PUMP005-2024', 'Pentax CM32-160A', 'Máy bơm nước công nghiệp', '2024-02-10', 7, 2, '2024-02-10'),
-
--- Power Systems (Category 8)
-(32, 'ELEC003-2024', 'Schneider Electric Panel', 'Tủ điện chính', '2024-01-10', 8, 2, '2024-01-10'),
-(33, 'ELEC004-2024', 'ABB Motor Drive', 'Biến tần điều khiển motor', '2024-02-20', 8, 2, '2024-02-20'),
-
--- HVAC Systems (Category 6)
-(34, 'HVAC003-2024', 'Carrier AquaEdge 19XR', 'Hệ thống điều hòa trung tâm', '2024-03-15', 6, 2, '2024-03-15'),
-(35, 'HVAC004-2024', 'Trane RTAC', 'Máy lạnh công nghiệp', '2024-03-20', 6, 2, '2024-03-20');
+(121, 'LIGHT-121-2024', 'Osram LED System', 'Hệ thống đèn LED tòa nhà', '2024-09-15', 9, 2, '2024-09-15'),
+(122, 'LIGHT-122-2024', 'Osram LED System', 'Hệ thống đèn LED tòa nhà', '2024-09-15', 9, 2, '2024-09-15'),
+(123, 'LIGHT-123-2024', 'Osram LED System', 'Hệ thống đèn LED tòa nhà', '2024-09-15', 9, 2, '2024-09-15'),
+(124, 'LIGHT-124-2024', 'Osram LED System', 'Hệ thống đèn LED tòa nhà', '2024-09-15', 9, 2, '2024-09-15'),
+(125, 'LIGHT-125-2024', 'Osram LED System', 'Hệ thống đèn LED tòa nhà', '2024-09-15', 9, 2, '2024-09-15');
 
 
 COMMIT;
