@@ -467,11 +467,7 @@
             <hr class="text-white">
         </div>
         <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="dashboard.jsp">
-                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                </a>
-            </li>
+            
             <li class="nav-item">
                 <a class="nav-link" href="technicalManagerApproval">
                     <i class="fas fa-clipboard-check me-2"></i>Duyệt Yêu Cầu
@@ -493,8 +489,8 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="manageProfile.jsp">
-                    <i class="fas fa-cog me-2"></i>Cài Đặt
+                <a class="nav-link" href="manageProfile">
+                    <i class="fas fa-cog me-2"></i>Hồ Sơ
                 </a>
             </li>
             <li class="nav-item">
@@ -562,6 +558,7 @@
                 </div>
             </div>
 
+            
             <!-- Create Schedule Form -->
             <div class="row">
                 <div class="col-lg-4">
@@ -578,7 +575,8 @@
                                     <select class="form-select" id="requestId" name="requestId">
                                         <option value="">Chọn yêu cầu dịch vụ (tùy chọn)...</option>
                                         <c:forEach var="request" items="${approvedRequests}">
-                                            <option value="${request.requestId}">
+                                            <option value="${request.requestId}" 
+                                                    ${prefilledRequestId != null && prefilledRequestId == request.requestId ? 'selected' : ''}>
                                                 #${request.requestId} - ${request.requestType}
                                             </option>
                                         </c:forEach>
@@ -590,24 +588,15 @@
                                     <select class="form-select" id="contractId" name="contractId">
                                         <option value="">Chọn hợp đồng (tùy chọn)...</option>
                                         <c:forEach var="contract" items="${contractList}">
-                                            <option value="${contract.contractId}">
+                                            <option value="${contract.contractId}"
+                                                    ${prefilledContractId != null && prefilledContractId == contract.contractId ? 'selected' : ''}>
                                                 #${contract.contractId} - ${contract.details}
                                             </option>
                                         </c:forEach>
                                     </select>
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label for="equipmentId" class="form-label">Thiết Bị</label>
-                                    <select class="form-select" id="equipmentId" name="equipmentId">
-                                        <option value="">Chọn thiết bị (tùy chọn)...</option>
-                                        <c:forEach var="equipment" items="${equipmentList}">
-                                            <option value="${equipment.equipmentId}">
-                                                ${equipment.serialNumber} - ${equipment.model} - ${equipment.description}
-                                            </option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
+                                
                                 
                                 <div class="mb-3">
                                     <label for="assignedTo" class="form-label">Kỹ Thuật Viên <span class="text-danger">*</span></label>
@@ -653,10 +642,10 @@
                                 <div class="mb-3">
                                     <label for="priorityId" class="form-label">Độ Ưu Tiên</label>
                                     <select class="form-select" id="priorityId" name="priorityId">
-                                        <option value="1">Thấp</option>
-                                        <option value="2" selected>Trung Bình</option>
-                                        <option value="3">Cao</option>
-                                        <option value="4">Khẩn Cấp</option>
+                                        <option value="1" ${prefilledPriorityId != null && prefilledPriorityId == 1 ? 'selected' : ''}>Thấp</option>
+                                        <option value="2" ${prefilledPriorityId == null || prefilledPriorityId == 2 ? 'selected' : ''}>Trung Bình</option>
+                                        <option value="3" ${prefilledPriorityId != null && prefilledPriorityId == 3 ? 'selected' : ''}>Cao</option>
+                                        <option value="4" ${prefilledPriorityId != null && prefilledPriorityId == 4 ? 'selected' : ''}>Khẩn Cấp</option>
                                     </select>
                                 </div>
                                 
@@ -670,6 +659,7 @@
                     </div>
                 </div>
                 
+               
                 <!-- Calendar View -->
                 <div class="col-lg-8">
                     <div class="calendar-container">
@@ -738,7 +728,7 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Yêu Cầu</th>
-                                <th>Thiết Bị</th>
+                                
                                 <th>KTV</th>
                                 <th>Ngày Bảo Trì</th>
                                 <th>Loại</th>
@@ -763,16 +753,7 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${schedule.equipmentId != null}">
-                                                #${schedule.equipmentId}
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="text-muted">N/A</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
+                                    
                                     <td>KTV #${schedule.assignedTo}</td>
                                     <td>${schedule.scheduledDate}</td>
                                     <td>
@@ -888,7 +869,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="editPriorityId" class="form-label">Độ Ưu Tiên</label>
-                                <select class="form-select" id="editPriorityId" name="priorityId">
+                                <select class="form-select" id="editPriorityId" name="priorityId" disabled>
                                     <option value="1">Thấp</option>
                                     <option value="2">Trung Bình</option>
                                     <option value="3">Cao</option>
@@ -1355,6 +1336,43 @@ document.getElementById('scheduleForm').addEventListener('submit', function(e) {
         e.preventDefault();
         alert('Kỹ thuật viên không còn khả năng nhận thêm công việc!');
         return false;
+    }
+});
+// ===== HIGHLIGHT FORM KHI CÓ PRE-FILLED DATA =====
+document.addEventListener('DOMContentLoaded', function() {
+    const requestIdSelect = document.getElementById('requestId');
+    const contractIdSelect = document.getElementById('contractId');
+    const priorityIdSelect = document.getElementById('priorityId');
+    
+    // Kiểm tra nếu có giá trị được pre-fill
+    const hasPrefilledData = requestIdSelect.value || 
+                             contractIdSelect.value || 
+                             (priorityIdSelect.value && priorityIdSelect.value !== '2');
+    
+    if (hasPrefilledData) {
+        // Highlight các trường đã được điền sẵn
+        if (requestIdSelect.value) {
+            requestIdSelect.classList.add('border-success');
+            requestIdSelect.style.borderWidth = '3px';
+        }
+        
+        if (contractIdSelect.value) {
+            contractIdSelect.classList.add('border-success');
+            contractIdSelect.style.borderWidth = '3px';
+        }
+        
+        if (priorityIdSelect.value && priorityIdSelect.value !== '2') {
+            priorityIdSelect.classList.add('border-warning');
+            priorityIdSelect.style.borderWidth = '3px';
+        }
+        
+        // Scroll đến form và hiển thị thông báo
+        const scheduleForm = document.getElementById('scheduleForm');
+        setTimeout(function() {
+            scheduleForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+        
+        showToast('Thêm thông tin thành công', 'success');
     }
 });
     </script>

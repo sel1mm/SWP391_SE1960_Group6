@@ -627,11 +627,7 @@
             <div class="subtitle">Technical Manager</div>
         </div>
         <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="dashboard.jsp">
-                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                </a>
-            </li>
+
             <li class="nav-item">
                 <a class="nav-link active" href="technicalManagerApproval">
                     <i class="fas fa-clipboard-check me-2"></i>Duyệt Yêu Cầu
@@ -653,8 +649,8 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="manageProfile.jsp">
-                    <i class="fas fa-cog me-2"></i>Cài Đặt
+                <a class="nav-link" href="manageProfile">
+                    <i class="fas fa-cog me-2"></i>Hồ Sơ
                 </a>
             </li>
             <li class="nav-item">
@@ -1026,12 +1022,31 @@
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                                                         <c:if test="${request.status == 'Approved'}">
-                    <a href="${pageContext.request.contextPath}/assignWork?requestId=${request.requestId}&priority=${request.priorityLevel}"
-                       class="btn btn-sm btn-success"
-                       title="Phân Công Công Việc">
-                        <i class="fas fa-user-plus"></i>
-                    </a>
-                </c:if>
+    <c:choose>
+        <%-- Nếu là Service (Bảo trì) → Lập lịch bảo trì --%>
+        <c:when test="${request.requestType == 'Service'}">
+             <a href="${pageContext.request.contextPath}/scheduleMaintenance?requestId=${request.requestId}&contractId=${request.contractId}&priority=${request.priorityLevel}"
+               class="btn btn-sm btn-success"
+               title="Lập Lịch Bảo Trì">
+                <i class="fas fa-calendar-plus"></i>
+            </a>
+        </c:when>
+        <%-- Nếu là Warranty (Bảo hành) → Phân công công việc --%>
+        <c:when test="${request.requestType == 'Warranty'}">
+            <a href="${pageContext.request.contextPath}/assignWork?requestId=${request.requestId}&priority=${request.priorityLevel}"
+               class="btn btn-sm btn-success"
+               title="Phân Công Công Việc">
+                <i class="fas fa-user-plus"></i>
+            </a>
+        </c:when>
+        <%-- Fallback: nếu không xác định được loại --%>
+        <c:otherwise>
+            <button class="btn btn-sm btn-secondary" disabled title="Loại yêu cầu không xác định">
+                <i class="fas fa-question"></i>
+            </button>
+        </c:otherwise>
+    </c:choose>
+</c:if>
                                             </c:when>
                                             <c:when test="${request.status == 'Awaiting Approval'}">
                                                 <button class="btn btn-sm btn-success request-action-btn"

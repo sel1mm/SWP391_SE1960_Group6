@@ -11,6 +11,9 @@ public class TechnicianWorkload {
     private BigDecimal averageCompletionTime;
     private LocalDateTime lastAssignedDate;
     private LocalDateTime lastUpdated;
+    
+    // Display fields (not stored in DB, populated from joins)
+    private String technicianName;
 
     public TechnicianWorkload() {
     }
@@ -81,6 +84,14 @@ public class TechnicianWorkload {
 
     public void setLastUpdated(LocalDateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public String getTechnicianName() {
+        return technicianName;
+    }
+
+    public void setTechnicianName(String technicianName) {
+        this.technicianName = technicianName;
     }
 
     // Helper method to calculate available capacity

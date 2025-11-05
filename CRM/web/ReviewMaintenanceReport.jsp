@@ -401,11 +401,7 @@
             <hr class="text-white">
         </div>
         <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="dashboard.jsp">
-                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                </a>
-            </li>
+            
             <li class="nav-item">
                 <a class="nav-link" href="technicalManagerApproval">
                     <i class="fas fa-clipboard-check me-2"></i>Duyệt Yêu Cầu
@@ -427,8 +423,8 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="manageProfile.jsp">
-                    <i class="fas fa-cog me-2"></i>Cài Đặt
+                <a class="nav-link" href="manageProfile">
+                    <i class="fas fa-cog me-2"></i>Hồ Sơ
                 </a>
             </li>
             <li class="nav-item">

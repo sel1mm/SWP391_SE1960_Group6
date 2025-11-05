@@ -291,7 +291,14 @@ public class TechnicianWorkloadDAO extends MyDAO {
         }
         
         workload.setLastUpdated(rs.getTimestamp("lastUpdated").toLocalDateTime());
-        
+        try {
+            String technicianName = rs.getString("technicianName");
+            if (technicianName != null) {
+                workload.setTechnicianName(technicianName);
+            }
+        } catch (SQLException e) {
+            // Column doesn't exist, ignore
+        }
         return workload;
     }
     /**
@@ -349,6 +356,7 @@ public boolean decrementWorkloadByPoints(int technicianId, int points) {
         closeResources();
     }
 }
+
     /**
      * Close database resources
      */
