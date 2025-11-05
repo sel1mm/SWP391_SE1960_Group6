@@ -169,14 +169,44 @@ public class ScheduleMaintenanceServlet extends HttpServlet {
             request.setAttribute("overdueSchedules", overdueSchedules);
             
             List<Contract> contractList = contractDAO.getEveryContracts();
-request.setAttribute("contractList", contractList);
+            request.setAttribute("contractList", contractList);
 
-List<Equipment> equipmentList = equipmentDAO.getAllEquipment();
-request.setAttribute("equipmentList", equipmentList);
-            // Equipment list will be loaded via AJAX or other means
+            List<Equipment> equipmentList = equipmentDAO.getAllEquipment();
+            request.setAttribute("equipmentList", equipmentList);
             
-            // Get contracts for dropdown
-            // Contract list will be loaded via AJAX or other means
+            // ===== XỬ LÝ THAM SỐ TỪ URL =====
+            String requestIdParam = request.getParameter("requestId");
+            String contractIdParam = request.getParameter("contractId");
+            String priorityParam = request.getParameter("priority");
+            
+            // Truyền các tham số sang JSP để pre-fill form
+            if (requestIdParam != null && !requestIdParam.trim().isEmpty()) {
+                request.setAttribute("prefilledRequestId", requestIdParam);
+            }
+            
+            if (contractIdParam != null && !contractIdParam.trim().isEmpty()) {
+                request.setAttribute("prefilledContractId", contractIdParam);
+            }
+            
+            if (priorityParam != null && !priorityParam.trim().isEmpty()) {
+                // Map priority level sang priorityId
+                int priorityId = 2; // Default: Trung Bình
+                switch(priorityParam) {
+                    case "Urgent":
+                        priorityId = 4; // Khẩn Cấp
+                        break;
+                    case "High":
+                        priorityId = 3; // Cao
+                        break;
+                    case "Normal":
+                        priorityId = 2; // Trung Bình
+                        break;
+                    default:
+                        priorityId = 1; // Thấp
+                        break;
+                }
+                request.setAttribute("prefilledPriorityId", priorityId);
+            }
             
             request.getRequestDispatcher("ScheduleMaintenance.jsp").forward(request, response);
             
@@ -218,7 +248,7 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
         Integer contractId = (contractIdStr != null && !contractIdStr.trim().isEmpty()) ? Integer.parseInt(contractIdStr) : null;
         Integer equipmentId = (equipmentIdStr != null && !equipmentIdStr.trim().isEmpty()) ? Integer.parseInt(equipmentIdStr) : null;
         int assignedTo = Integer.parseInt(assignedToStr);
-        int priorityId = (priorityIdStr != null && !priorityIdStr.trim().isEmpty()) ? Integer.parseInt(priorityIdStr) : 1;
+        int priorityId = (priorityIdStr != null && !priorityIdStr.trim().isEmpty()) ? Integer.parseInt(priorityIdStr) : 2;
 
         // --- Chuyển đổi ngày giờ ---
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
@@ -226,10 +256,32 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
         Timestamp scheduledTimestamp = new Timestamp(parsedDate.getTime());
         LocalDate scheduledDate = scheduledTimestamp.toLocalDateTime().toLocalDate();
 
-        // --- Kiểm tra khả năng KTV ---
+        // --- Kiểm tra khả năng KTV THEO PRIORITY ---
         TechnicianWorkload technicianWorkload = technicianWorkloadDAO.getWorkloadByTechnician(assignedTo);
-        if (technicianWorkload == null || technicianWorkload.getAvailableCapacity() <= 0) {
-            session.setAttribute("errorMessage", "Kỹ thuật viên đã chọn không có khả năng nhận thêm công việc!");
+        if (technicianWorkload == null) {
+            session.setAttribute("errorMessage", "Không tìm thấy thông tin workload của kỹ thuật viên!");
+            response.sendRedirect("scheduleMaintenance");
+            return;
+        }
+
+        // Tính workload points theo priority
+        int workloadPoints = calculateWorkloadPoints(priorityId);
+        int maxCapacity = technicianWorkload.getMaxConcurrentTasks();
+        int currentLoad = technicianWorkload.getCurrentActiveTasks();
+        int newTotalLoad = currentLoad + workloadPoints;
+
+        // ✅ KIỂM TRA VƯỢT QUÁ GIỚI HẠN
+        if (newTotalLoad > maxCapacity) {
+            String priorityName = priorityId == 4 ? "Khẩn Cấp" : 
+                                  priorityId == 3 ? "Cao" : 
+                                  priorityId == 2 ? "Trung Bình" : "Thấp";
+            
+            session.setAttribute("errorMessage", 
+                String.format("⚠️ KHÔNG THỂ PHÂN CÔNG! Kỹ thuật viên #%d đang có %d/%d points. " +
+                              "Độ ưu tiên '%s' cần +%d points → Tổng sẽ là %d/%d (VƯỢT QUÁ GIỚI HẠN). " +
+                              "Vui lòng chọn kỹ thuật viên khác hoặc giảm độ ưu tiên!",
+                              assignedTo, currentLoad, maxCapacity, priorityName, 
+                              workloadPoints, newTotalLoad, maxCapacity));
             response.sendRedirect("scheduleMaintenance");
             return;
         }
@@ -250,30 +302,45 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
         int scheduleId = maintenanceScheduleDAO.createMaintenanceSchedule(schedule);
 
         if (scheduleId > 0) {
-            // --- Update workload KTV ---
-            
-
-            // --- Tạo WorkTask ---
+            // ✅ TẠO WORKTASK
             WorkTaskDAO workTaskDAO = new WorkTaskDAO();
             WorkTask task = new WorkTask();
-            task.setScheduleId(scheduleId);               // liên kết schedule
-            task.setRequestId(requestId);                // nếu có request
+            task.setScheduleId(scheduleId);
+            task.setRequestId(requestId);
             task.setTechnicianId(assignedTo);
             task.setTaskType("Scheduled");
             task.setTaskDetails("Bảo trì " + scheduleType + 
                                 (equipmentId != null ? " thiết bị #" + equipmentId : ""));
             task.setStartDate(scheduledDate);
-            // endDate intentionally left null until completion
+            task.setEndDate(scheduledDate);
             task.setStatus("Assigned");
 
             int taskId = workTaskDAO.createWorkTask(task);
 
             if (taskId > 0) {
-                session.setAttribute("successMessage", "Lập lịch bảo trì và tạo công việc thành công!");
+                // ✅ QUAN TRỌNG: Trigger đã tự động cộng 1, giờ cộng thêm (workloadPoints - 1)
+                int additionalPoints = workloadPoints - 1; // Urgent: 3-1=2, High: 2-1=1, Normal: 1-1=0
+                
+                if (additionalPoints > 0) {
+                    boolean workloadUpdated = technicianWorkloadDAO.incrementWorkloadByPoints(assignedTo, additionalPoints);
+                    
+                    if (workloadUpdated) {
+                        session.setAttribute("successMessage", 
+                            String.format("✅ Lập lịch bảo trì thành công! KTV #%d nhận +%d points (Priority: %s)", 
+                                assignedTo, workloadPoints, 
+                                priorityId == 4 ? "Urgent" : priorityId == 3 ? "High" : "Normal"));
+                    } else {
+                        session.setAttribute("successMessage", "Lập lịch thành công nhưng cập nhật workload thất bại!");
+                    }
+                } else {
+                    // Normal priority: trigger đã cộng đủ rồi
+                    session.setAttribute("successMessage", 
+                        String.format("✅ Lập lịch bảo trì thành công! KTV #%d nhận +%d point (Priority: Normal)", 
+                            assignedTo, workloadPoints));
+                }
             } else {
-                session.setAttribute("errorMessage", "Lập lịch bảo trì thành công nhưng tạo công việc thất bại!");
+                session.setAttribute("errorMessage", "Lập lịch thành công nhưng tạo công việc thất bại!");
             }
-
         } else {
             session.setAttribute("errorMessage", "Lỗi khi lập lịch bảo trì!");
         }
@@ -289,6 +356,7 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
 
     response.sendRedirect("scheduleMaintenance");
 }
+
 
     
     private void updateMaintenanceSchedule(HttpServletRequest request, HttpServletResponse response)
@@ -350,10 +418,23 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
         existingSchedule.setPriorityId(priorityId);
         
         boolean success = maintenanceScheduleDAO.updateMaintenanceSchedule(existingSchedule);
+
+if (success) {
+    // ✅ ĐIỀU CHỈNH WORKLOAD KHI THAY ĐỔI PRIORITY
+    MaintenanceSchedule oldSchedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
+    if (oldSchedule != null && oldSchedule.getPriorityId() != priorityId) {
+        int oldPoints = calculateWorkloadPoints(oldSchedule.getPriorityId());
+        int newPoints = calculateWorkloadPoints(priorityId);
+        int diff = newPoints - oldPoints;
         
-        if (success) {
-            session.setAttribute("successMessage", "Cập nhật lịch bảo trì thành công!");
-        } else {
+        if (diff > 0) {
+            technicianWorkloadDAO.incrementWorkloadByPoints(existingSchedule.getAssignedTo(), diff);
+        } else if (diff < 0) {
+            technicianWorkloadDAO.decrementWorkloadByPoints(existingSchedule.getAssignedTo(), Math.abs(diff));
+        }
+    }
+    
+    session.setAttribute("successMessage", "Cập nhật lịch bảo trì thành công!");} else {
             session.setAttribute("errorMessage", "Lỗi khi cập nhật lịch bảo trì!");
         }
         
@@ -410,20 +491,23 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
             return;
         }
 
-        // Xóa tất cả WorkTask liên quan
+        // ✅ BƯỚC 1: Tính workload points cần giảm
+        int workloadPoints = calculateWorkloadPoints(existingSchedule.getPriorityId());
+
+        // ✅ BƯỚC 2: Xóa tất cả WorkTask liên quan
         WorkTaskDAO workTaskDAO = new WorkTaskDAO();
         List<WorkTask> tasks = workTaskDAO.findByScheduleId(scheduleId);
         for (WorkTask task : tasks) {
             workTaskDAO.deleteTaskById(task.getTaskId());
         }
 
-        // Xóa MaintenanceSchedule
+        // ✅ BƯỚC 3: Xóa MaintenanceSchedule
         boolean success = maintenanceScheduleDAO.deleteMaintenanceSchedule(scheduleId);
 
         if (success) {
-            // Cập nhật workload kỹ thuật viên
+            // ✅ BƯỚC 4: Giảm workload theo ĐÚNG priority
             if (existingSchedule.getAssignedTo() > 0) {
-                technicianWorkloadDAO.decrementActiveTasks(existingSchedule.getAssignedTo());
+                technicianWorkloadDAO.decrementWorkloadByPoints(existingSchedule.getAssignedTo(), workloadPoints);
             }
 
             jsonResponse.addProperty("success", true);
@@ -618,4 +702,17 @@ private void getScheduleDetails(HttpServletRequest request, HttpServletResponse 
     out.flush();
 }
 
+    /**
+ * Calculate workload points based on priority level
+ * Urgent = 3, High = 2, Normal = 1
+ */
+private int calculateWorkloadPoints(int priorityId) {
+    switch (priorityId) {
+        case 4: return 3; // Urgent
+        case 3: return 2; // High
+        case 2: return 1; // Normal
+        case 1: return 1; // Low (treated as Normal)
+        default: return 1;
+    }
+}
 } 
