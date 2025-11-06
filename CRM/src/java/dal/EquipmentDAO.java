@@ -107,7 +107,7 @@ public class EquipmentDAO extends DBContext {
             ps.setString(3, equipment.getDescription());
             ps.setDate(4, equipment.getInstallDate() != null ? Date.valueOf(equipment.getInstallDate()) : null);
 
-            if (equipment.getCategoryId() != null) {
+            if (equipment.getCategoryId() != -1) {
                 ps.setInt(5, equipment.getCategoryId());
             } else {
                 ps.setNull(5, Types.INTEGER);
@@ -147,7 +147,7 @@ public class EquipmentDAO extends DBContext {
             ps.setString(3, equipment.getDescription());
             ps.setDate(4, equipment.getInstallDate() != null ? Date.valueOf(equipment.getInstallDate()) : null);
 
-            if (equipment.getCategoryId() != null) {
+            if (equipment.getCategoryId() != -1) {
                 ps.setInt(5, equipment.getCategoryId());
             } else {
                 ps.setNull(5, Types.INTEGER);
@@ -267,6 +267,69 @@ public class EquipmentDAO extends DBContext {
     /**
      * Get equipment by category
      */
+    public List<Equipment> getEquipmentGroupedByModel() {
+    List<Equipment> list = new ArrayList<>();
+    String sql = "SELECT e.model, " +
+                "c.categoryName, " +
+                "e.description, " +
+                "COUNT(*) as totalCount " +
+                "FROM Equipment e " +
+                "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
+                "GROUP BY e.model, c.categoryName, e.description " +
+                "ORDER BY e.model";
+    
+    try (PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        
+        while (rs.next()) {
+            Equipment eq = new Equipment();
+            eq.setModel(rs.getString("model"));
+            eq.setCategoryName(rs.getString("categoryName"));
+            eq.setDescription(rs.getString("description"));
+         
+            list.add(eq);
+        }
+    } catch (SQLException e) {
+        System.out.println("Error in getEquipmentGroupedByModel: " + e.getMessage());
+    }
+    return list;
+}
+public List<Equipment> getEquipmentByModel(String model) {
+    List<Equipment> list = new ArrayList<>();
+    String sql = "SELECT e.equipmentId, e.serialNumber, e.model, " +
+                "e.description, e.installDate, e.lastUpdatedBy, e.lastUpdatedDate, " +
+                "e.categoryId, c.categoryName, a.username " +
+                "FROM Equipment e " +
+                "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
+                "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId " +
+                "WHERE e.model = ? " +
+                "ORDER BY e.equipmentId";
+    
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setString(1, model);
+        ResultSet rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            Equipment eq = new Equipment();
+            eq.setEquipmentId(rs.getInt("equipmentId"));
+            eq.setSerialNumber(rs.getString("serialNumber"));
+            eq.setModel(rs.getString("model"));
+            eq.setDescription(rs.getString("description"));
+            eq.setInstallDate(rs.getDate("installDate") != null ? 
+                rs.getDate("installDate").toLocalDate() : null);
+            eq.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
+            eq.setLastUpdatedDate(rs.getDate("lastUpdatedDate") != null ? 
+                rs.getDate("lastUpdatedDate").toLocalDate() : null);
+            eq.setCategoryId(rs.getInt("categoryId"));
+            eq.setCategoryName(rs.getString("categoryName"));
+            eq.setUsername(rs.getString("username"));
+            list.add(eq);
+        }
+    } catch (SQLException e) {
+        System.out.println("Error in getEquipmentByModel: " + e.getMessage());
+    }
+    return list;
+}
     public List<Equipment> getEquipmentByCategory(int categoryId) throws SQLException {
         List<Equipment> list = new ArrayList<>();
         String sql = "SELECT e.equipmentId, e.serialNumber, e.model, e.description, "
@@ -1318,5 +1381,43 @@ public class EquipmentDAO extends DBContext {
     }
     return 0;
 }
+// Thêm method này vào class EquipmentDAO của bạn
 
+/**
+ * Lấy thông tin template của 1 model cụ thể (để dùng khi thêm equipment với model có sẵn)
+ * @param model Model name
+ * @return Equipment object chứa thông tin template, hoặc null nếu không tìm thấy
+ */
+public Equipment getEquipmentGroupedByModelSingle(String model) {
+    String sql = "SELECT e.model, e.description, e.category_id, c.category_name " +
+                 "FROM equipment e " +
+                 "LEFT JOIN category c ON e.category_id = c.category_id " +
+                 "WHERE e.model = ? " +
+                 "LIMIT 1";
+    
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setString(1, model);
+        ResultSet rs = ps.executeQuery();
+        
+        if (rs.next()) {
+            Equipment equipment = new Equipment();
+            equipment.setModel(rs.getString("model"));
+            equipment.setDescription(rs.getString("description"));
+            
+            int categoryId = rs.getInt("category_id");
+            if (!rs.wasNull()) {
+                equipment.setCategoryId(categoryId);
+                equipment.setCategoryName(rs.getString("category_name"));
+            } else {
+                equipment.setCategoryId(0);
+            }
+            
+            return equipment;
+        }
+    } catch (SQLException e) {
+        System.out.println("Error in getEquipmentGroupedByModelSingle: " + e.getMessage());
+        e.printStackTrace();
+    }
+    return null;
+}
 }

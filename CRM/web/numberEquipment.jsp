@@ -24,7 +24,6 @@
             min-height: 100vh;
         }
 
-        /* Sidebar - Full Height */
         .sidebar {
             width: 220px;
             height: 100vh;
@@ -87,7 +86,6 @@
             font-weight: 500;
         }
 
-        /* Top Navbar - Right Side Only */
         .navbar {
             background: #f5f5f5;
             padding: 1rem 2rem;
@@ -114,7 +112,6 @@
             border: 1px solid #b8e6e9;
         }
 
-        /* Main Content */
         .container {
             margin-left: 220px;
             margin-top: 65px;
@@ -133,154 +130,111 @@
             font-weight: 600;
         }
 
-        /* DETAIL PANEL */
-        .detail-panel {
-            background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 100%);
-            border: 2px solid #4285f4;
-            border-radius: 8px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(66, 133, 244, 0.15);
-            border: 1px solid #e0e0e0;
-        }
-
-        .detail-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .alert {
+            padding: 12px 20px;
+            border-radius: 6px;
             margin-bottom: 20px;
-        }
-
-        .detail-header h3 {
-            color: #1967d2;
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 500;
             display: flex;
             align-items: center;
             gap: 10px;
+            animation: slideDown 0.3s ease;
         }
 
-        .btn-close-detail {
-            padding: 8px 20px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 6px;
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-close {
+            margin-left: auto;
             cursor: pointer;
-            font-weight: 500;
-            font-size: 14px;
-            transition: all 0.2s;
+            font-size: 18px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
         }
 
-        .btn-close-detail:hover {
-            background: #c82333;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(220,53,69,0.3);
+        .alert-close:hover {
+            opacity: 1;
         }
 
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+        @keyframes slideDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
-        .status-card {
+        /* ===== SEARCH & FILTER SECTION ===== */
+        .search-filter-container {
             background: white;
             padding: 20px;
             border-radius: 8px;
-            border-left: 5px solid;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: all 0.2s;
-        }
-
-        .status-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-
-        .status-card.active { border-left-color: #28a745; }
-        .status-card.repair { border-left-color: #dc3545; }
-        .status-card.maintenance { border-left-color: #ffc107; }
-
-        .status-card h4 {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            font-weight: 600;
-        }
-
-        .status-card .count {
-            font-size: 32px;
-            font-weight: 700;
-            color: #333;
-            line-height: 1;
-        }
-
-        /* Search Filter Container */
-        .search-filter-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 0 0 20px 0;
-            background: white;
-            padding: 16px 20px;
-            border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid #e0e0e0;
-            flex-wrap: wrap;
-            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        .search-filter-container form {
+        .filter-row {
             display: flex;
-            width: 100%;
-            align-items: center;
-            gap: 10px;
+            gap: 15px;
+            align-items: flex-end;
             flex-wrap: wrap;
-        }
-
-        .search-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex: 1 1 300px;
         }
 
         .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            flex: 1;
+            min-width: 200px;
         }
 
-        .search-input, .filter-select {
-            padding: 9px 14px;
+        .filter-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        .filter-group input[type="text"],
+        .filter-group select {
+            width: 100%;
+            padding: 9px 12px;
             border: 1px solid #d0d0d0;
             border-radius: 6px;
             font-size: 14px;
-            outline: none;
             background: #fafafa;
             transition: all 0.2s;
         }
 
-        .search-input {
-            width: 300px;
-        }
-
-        .search-input:focus, .filter-select:focus {
-            border-color: #999;
-            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+        .filter-group input[type="text"]:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #007bff;
             background: white;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
         }
 
-        .btn-search {
-            background: #007bff;
-            color: white;
-            border: none;
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .btn-filter, .btn-reset, .btn-new {
             padding: 9px 18px;
+            border: none;
             border-radius: 6px;
             cursor: pointer;
             font-weight: 500;
@@ -289,27 +243,34 @@
             align-items: center;
             gap: 8px;
             font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .btn-filter {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-filter:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,123,255,0.3);
+        }
+
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(108,117,125,0.3);
         }
 
         .btn-new {
             background: #28a745;
             color: white;
-            border: none;
-            padding: 9px 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-
-        .btn-search:hover {
-            background: #0056b3;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(0,123,255,0.3);
         }
 
         .btn-new:hover {
@@ -318,20 +279,18 @@
             box-shadow: 0 2px 6px rgba(40,167,69,0.3);
         }
 
-        /* Table */
-        .inventory-table {
-            table-layout: fixed;
+        .summary-table {
             width: 100%;
-            margin: 0 0 20px 0;
             border-collapse: collapse;
             background: white;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid #e0e0e0;
+            margin-bottom: 20px;
         }
 
-        .inventory-table thead tr th {
+        .summary-table thead tr th {
             background: #f8f9fa;
             color: #333;
             padding: 12px 16px;
@@ -341,33 +300,56 @@
             border-bottom: 2px solid #dee2e6;
         }
 
-        .inventory-table thead tr th:nth-child(1) { width: 6%; }
-        .inventory-table thead tr th:nth-child(2) { width: 11%; }
-        .inventory-table thead tr th:nth-child(3) { width: 10%; }
-        .inventory-table thead tr th:nth-child(4) { width: 10%; }
-        .inventory-table thead tr th:nth-child(5) { width: 14%; }
-        .inventory-table thead tr th:nth-child(6) { width: 9%; }
-        .inventory-table thead tr th:nth-child(7) { width: 10%; }
-        .inventory-table thead tr th:nth-child(8) { width: 10%; }
-        .inventory-table thead tr th:nth-child(9) { width: 20%; }
-
-        .inventory-table tbody td {
+        .summary-table tbody td {
             padding: 12px 16px;
             border-bottom: 1px solid #e0e0e0;
             font-size: 13px;
             color: #666;
         }
 
-        .inventory-table tbody tr:hover {
+        .summary-table tbody tr:hover {
             background-color: #f0f0f0;
         }
 
-        .inventory-table tbody tr:last-child td {
-            border-bottom: none;
+        .detail-table-container {
+            padding: 0;
+            background: #f8f9fa;
+            display: none;
         }
 
-        /* ✅ BUTTONS - HORIZONTAL LAYOUT LIKE PARTDETAIL */
-        .btn-edit, .btn-delete, .btn-detail {
+        .detail-table-container.show {
+            display: block;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .detail-table thead tr th {
+            background: #e9ecef;
+            color: #495057;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .detail-table tbody td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 12px;
+            color: #666;
+            background: white;
+        }
+
+        .detail-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .btn-edit, .btn-delete {
             color: white;
             border: none;
             padding: 5px 10px;
@@ -379,10 +361,7 @@
             gap: 4px;
             font-size: 11px;
             font-weight: 500;
-        }
-
-        .btn-detail {
-            background: #17a2b8;
+            margin-right: 4px;
         }
 
         .btn-edit {
@@ -391,12 +370,6 @@
 
         .btn-delete {
             background: #dc3545;
-        }
-
-        .btn-detail:hover {
-            background: #138496;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(23,162,184,0.3);
         }
 
         .btn-edit:hover {
@@ -411,152 +384,6 @@
             box-shadow: 0 2px 6px rgba(220,53,69,0.3);
         }
 
-        /* ✅ ACTION COLUMN - HORIZONTAL LAYOUT */
-        .inventory-table tbody td:nth-child(9) {
-            padding: 8px;
-        }
-
-        .inventory-table tbody td:nth-child(9) > div {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* DELETE CONFIRMATION MODAL */
-        .delete-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-            animation: fadeIn 0.2s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .delete-modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 450px;
-            max-width: 90%;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-            text-align: center;
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .delete-modal-icon {
-            font-size: 50px;
-            color: #dc3545;
-            margin-bottom: 15px;
-        }
-
-        .delete-modal h3 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 22px;
-        }
-
-        .delete-modal p {
-            color: #666;
-            margin-bottom: 25px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .delete-modal-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .btn-confirm-delete, .btn-cancel-delete {
-            padding: 10px 25px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-confirm-delete {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-confirm-delete:hover {
-            background: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(220,53,69,0.4);
-        }
-
-        .btn-cancel-delete {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-cancel-delete:hover {
-            background: #5a6268;
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin: 20px 0 40px;
-        }
-
-        .pagination a {
-            padding: 7px 12px;
-            border-radius: 6px;
-            background: white;
-            color: #666;
-            text-decoration: none;
-            font-weight: 500;
-            border: 1px solid #e0e0e0;
-            transition: all 0.2s ease;
-            font-size: 13px;
-        }
-
-        .pagination a:hover {
-            background: #f8f9fa;
-            border-color: #ccc;
-            color: #333;
-        }
-
-        .pagination a.active {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-
-        /* Form Popup */
         .form-overlay {
             position: fixed;
             top: 0;
@@ -587,6 +414,36 @@
             text-align: center;
         }
 
+        .mode-selection {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .mode-btn:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .mode-btn.active {
+            border-color: #007bff;
+            background: #007bff;
+            color: white;
+        }
+
         .form-container label {
             font-weight: 500;
             margin-bottom: 6px;
@@ -614,12 +471,6 @@
             border-color: #999;
             box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
             background: white;
-        }
-
-        .form-container input:disabled {
-            background: #e9ecef;
-            cursor: not-allowed;
-            color: #6c757d;
         }
 
         #formMessage {
@@ -671,251 +522,130 @@
             box-shadow: 0 2px 6px rgba(108,117,125,0.3);
         }
 
-        /* RESPONSIVE */
-        @media (max-width: 900px) {
-            .content {
-                padding: 20px;
-                margin-left: 0;
-                width: 100%;
-            }
-            .sidebar {
-                display: none;
-            }
-            .navbar {
-                left: 0;
-            }
-            .container {
-                margin-left: 0;
-            }
-            .search-input {
-                width: 100%;
-            }
-            
+        .delete-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
         }
-        /* ========== FLOATING CHATBOT STYLES ========== */
 
-/* Chat Button */
-.chat-button {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-    transition: all 0.3s ease;
-    z-index: 1002;
-    border: none;
-}
+        .delete-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            text-align: center;
+        }
 
-.chat-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
-}
+        .delete-modal-icon {
+            font-size: 50px;
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
 
-.chat-button.active {
-    background: #ff6b6b;
-}
+        .delete-modal h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
 
-.chat-button i {
-    font-size: 26px;
-    color: white;
-}
+        .delete-modal p {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
 
-/* Chat Widget */
-.chat-widget {
-    position: fixed;
-    bottom: 100px;
-    right: 30px;
-    width: 400px;
-    height: 600px;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    z-index: 1001;
-    animation: slideUp 0.3s ease-out;
-}
+        .delete-modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
 
-.chat-widget.active {
-    display: flex;
-}
+        .btn-confirm-delete, .btn-cancel-delete {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+        .btn-confirm-delete {
+            background: #dc3545;
+            color: white;
+        }
 
-.chat-widget-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px;
-    text-align: center;
-    font-size: 18px;
-    font-weight: bold;
-}
+        .btn-cancel-delete {
+            background: #6c757d;
+            color: white;
+        }
 
-.chat-widget-messages {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    background: #f5f5f5;
-}
+        .toggle-icon {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            display: inline-block;
+            margin-right: 8px;
+            color: #007bff;
+        }
 
-.chat-widget-message {
-    margin-bottom: 15px;
-    animation: fadeIn 0.3s;
-}
+        .toggle-icon.open {
+            transform: rotate(90deg);
+        }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
 
-.chat-widget-message.user {
-    text-align: right;
-}
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-.chat-widget-message-content {
-    display: inline-block;
-    padding: 12px 18px;
-    border-radius: 18px;
-    max-width: 80%;
-    word-wrap: break-word;
-    line-height: 1.4;
-}
+        .hidden {
+            display: none !important;
+        }
 
-.chat-widget-message.user .chat-widget-message-content {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 16px;
+        }
 
-.chat-widget-message.ai .chat-widget-message-content {
-    background: white;
-    color: #333;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.chat-widget-message.error .chat-widget-message-content {
-    background: #ff6b6b;
-    color: white;
-}
-
-.typing-indicator {
-    display: none;
-    padding: 10px;
-    text-align: left;
-}
-
-.typing-indicator.show {
-    display: block;
-}
-
-.typing-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #999;
-    margin: 0 2px;
-    animation: typing 1.4s infinite;
-}
-
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes typing {
-    0%, 60%, 100% { transform: translateY(0); }
-    30% { transform: translateY(-10px); }
-}
-
-.chat-widget-input-area {
-    padding: 20px;
-    background: white;
-    border-top: 1px solid #e0e0e0;
-}
-
-.chat-widget-input-wrapper {
-    display: flex;
-    gap: 10px;
-}
-
-#chatMessageInput {
-    flex: 1;
-    padding: 12px 18px;
-    border: 2px solid #e0e0e0;
-    border-radius: 25px;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.3s;
-}
-
-#chatMessageInput:focus {
-    border-color: #667eea;
-}
-
-#chatSendButton {
-    padding: 12px 25px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: transform 0.2s;
-}
-
-#chatSendButton:hover:not(:disabled) {
-    transform: scale(1.05);
-}
-
-#chatSendButton:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.chat-widget-messages::-webkit-scrollbar {
-    width: 6px;
-}
-
-.chat-widget-messages::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.chat-widget-messages::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 3px;
-}
-
-.chat-widget-messages::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
+        .no-results i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
+            color: #ccc;
+        }
     </style>
 </head>
 
 <body>
-    <!-- Sidebar Full Height -->
     <div class="sidebar">
         <div class="sidebar-logo">CRM System</div>
         <div class="sidebar-menu">
-            <a href="storekeeper"><i class="fas fa-home"></i><span>Trang chủ</span></a>
+            <a href="storekeeper" class="active"><i class="fas fa-home"></i><span>Trang chủ</span></a>
             <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
             <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
             <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
-            <a href="numberEquipment" class="active"><i class="fas fa-list"></i><span>Danh sách thiết bị</span></a>
+            <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị</span></a>
             <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
             <a href="partDetail"><i class="fas fa-truck-loading"></i><span>Chi tiết linh kiện</span></a>
             <a href="category"><i class="fas fa-tags"></i><span>Quản lý danh mục</span></a>
@@ -925,207 +655,200 @@
         </a>
     </div>
 
-    <!-- Top Navbar (Right Side Only) -->
     <nav class="navbar">
         <div class="user-info">
             Xin chào ${sessionScope.username}
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="container">
         <div class="content">
             <h2>Danh sách thiết bị</h2>
 
-            <!-- DETAIL PANEL -->
-            <c:if test="${showDetail && selectedEquipment != null}">
-                <div class="detail-panel">
-                    <div class="detail-header">
-                        <h3>
-                            <i class="fas fa-chart-pie"></i> 
-                            Chi tiết trạng thái: ${selectedEquipment.model}
-                        </h3>
-                        <form action="numberEquipment" method="get" style="display: inline;">
-                            <button type="submit" class="btn-close-detail">
-                                <i class="fas fa-times"></i> Đóng
-                            </button>
-                        </form>
-                    </div>
-                    
-                    <div class="status-grid">
-                        <div class="status-card active">
-                            <h4><i class="fas fa-check-circle"></i> Active (Hoạt động)</h4>
-                            <div class="count">${statusCount['Active']}</div>
-                        </div>
-                        
-                        <div class="status-card repair">
-                            <h4><i class="fas fa-tools"></i> Repair (Sửa chữa)</h4>
-                            <div class="count">${statusCount['Repair']}</div>
-                        </div>
-                        
-                        <div class="status-card maintenance">
-                            <h4><i class="fas fa-wrench"></i> Maintenance (Bảo trì)</h4>
-                            <div class="count">${statusCount['Maintenance']}</div>
-                        </div>
-                    </div>
+            <c:if test="${not empty sessionScope.successMessage}">
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>${sessionScope.successMessage}</span>
+                    <span class="alert-close" onclick="this.parentElement.remove()">×</span>
                 </div>
+                <c:remove var="successMessage" scope="session"/>
             </c:if>
 
-            <!-- Search & Filter -->
+            <c:if test="${not empty sessionScope.errorMessage}">
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>${sessionScope.errorMessage}</span>
+                    <span class="alert-close" onclick="this.parentElement.remove()">×</span>
+                </div>
+                <c:remove var="errorMessage" scope="session"/>
+            </c:if>
+
+            <!-- ===== SEARCH & FILTER SECTION ===== -->
             <div class="search-filter-container">
-                <form action="numberEquipment" method="POST">
-                    <div class="search-group">
-                        <input type="text" placeholder="Nhập từ khoá..." name="keyword"
-                               value="${param.keyword}" class="search-input"/>
-                        <button type="submit" class="btn-search"> 
-                            <i class="fas fa-search"></i> Search
-                        </button>
-                    </div>
+                <form action="numberEquipment" method="GET" id="filterForm">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label><i class="fas fa-search"></i> Search (Model / Description)</label>
+                            <input type="text" name="search" id="searchInput" 
+                                   placeholder="Nhập từ khóa tìm kiếm..." 
+                                   value="${searchKeyword != null ? searchKeyword : ''}">
+                        </div>
 
-                    <div class="filter-group">
-                        <select name="categoryFilter" class="filter-select" onchange="this.form.submit()">
-                            <option value="">-- All Categories --</option>
-                            <c:forEach items="${categories}" var="cat">
-                                <option value="${cat.categoryId}" ${param.categoryFilter == cat.categoryId ? 'selected' : ''}>
-                                    ${cat.categoryName}
-                                </option>
-                            </c:forEach>
-                        </select>
-                        
-                        <select name="filter" class="filter-select" onchange="this.form.submit()">
-                            <option value="">-- Sort by --</option>
-                            <option value="equipmentId" ${param.filter == 'equipmentId' ? 'selected' : ''}>By Equipment ID</option>
-                            <option value="serialNumber" ${param.filter == 'serialNumber' ? 'selected' : ''}>By Serial Number</option>
-                            <option value="model" ${param.filter == 'model' ? 'selected' : ''}>By Model</option>
-                            <option value="category" ${param.filter == 'category' ? 'selected' : ''}>By Category</option>
-                            <option value="installDate" ${param.filter == 'installDate' ? 'selected' : ''}>By Install Date</option>
-                            <option value="updatePerson" ${param.filter == 'updatePerson' ? 'selected' : ''}>By Update Person</option>
-                            <option value="updateDate" ${param.filter == 'updateDate' ? 'selected' : ''}>By Update Date</option>
-                        </select>
+                        <div class="filter-group">
+                            <label><i class="fas fa-filter"></i> Category</label>
+                            <select name="categoryFilter" id="categoryFilter">
+                                <option value="all">-- All Categories --</option>
+                                <c:forEach items="${categories}" var="cat">
+                                    <option value="${cat.categoryId}" 
+                                            ${categoryFilter != null && categoryFilter == cat.categoryId.toString() ? 'selected' : ''}>
+                                        ${cat.categoryName}
+                                    </option>
+                                </c:forEach>
+                            </select>
+                        </div>
 
-                        <button type="button" class="btn-new" onclick="openForm('new')">
-                            <i class="fas fa-plus"></i> New Equipment
-                        </button>
+                        <div class="filter-group">
+                            <label><i class="fas fa-sort"></i> Sort by ID</label>
+                            <select name="sortById" id="sortById">
+                                <option value="">-- Default --</option>
+                                <option value="asc" ${sortById == 'asc' ? 'selected' : ''}>ID ↑ (Tăng dần)</option>
+                                <option value="desc" ${sortById == 'desc' ? 'selected' : ''}>ID ↓ (Giảm dần)</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-buttons">
+                            <button type="submit" class="btn-filter">
+                                <i class="fas fa-search"></i> Filter & Search
+                            </button>
+                            <button type="button" class="btn-reset" onclick="resetFilters()">
+                                <i class="fas fa-redo"></i> Reset
+                            </button>
+                            <button type="button" class="btn-new" onclick="openForm('new')">
+                                <i class="fas fa-plus"></i> New
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
 
-            <!-- Table -->
-            <table class="inventory-table">
-                <thead>
-                    <tr>
-                        <th>Equipment ID</th>
-                        <th>Serial Number</th>
-                        <th>Model</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Install Date</th>
-                        <th>Last Updated By</th>
-                        <th>Last Update Time</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach items="${list}" var="equipment">
-                        <tr>
-                            <td>${equipment.equipmentId}</td>
-                            <td>${equipment.serialNumber}</td>
-                            <td>${equipment.model}</td>
-                            <td>
-                                <c:choose>
-                                    <c:when test="${not empty equipment.categoryName}">
-                                        ${equipment.categoryName}
-                                    </c:when>
-                                    <c:otherwise>
-                                        N/A
-                                    </c:otherwise>
-                                </c:choose>
-                            </td>
-                            <td>${equipment.description}</td>
-                            <td>${equipment.installDate}</td>
-                            <td>${equipment.username}</td>
-                            <td>${equipment.lastUpdatedDate}</td>
-                            <td>
-                                <div>
-                                    <form action="numberEquipment" method="post" style="margin: 0; display: inline;">
-                                        <input type="hidden" name="action" value="detail">
-                                        <input type="hidden" name="equipmentId" value="${equipment.equipmentId}">
-                                        <button type="submit" class="btn-detail">
-                                            <i class="fas fa-info-circle"></i> Detail
-                                        </button>
-                                    </form>
-                                    
-                                    <button type="button" class="btn-edit"
-                                            onclick="openForm('edit',
-                                                            '${equipment.equipmentId}',
-                                                            '${equipment.serialNumber}',
-                                                            '${equipment.model}',
-                                                            '${equipment.description}',
-                                                            '${equipment.installDate}',
-                                                            '${equipment.categoryId}')">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    
-                                    <button type="button" class="btn-delete"
-                                            onclick="showDeleteModal('${equipment.equipmentId}', '${equipment.serialNumber}', '${equipment.model}')">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
-
-            <!-- DELETE CONFIRMATION MODAL -->
-            <div class="delete-modal" id="deleteModal">
-                <div class="delete-modal-content">
-                    <div class="delete-modal-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
+            <!-- ===== EQUIPMENT TABLE ===== -->
+            <c:choose>
+                <c:when test="${not empty groupedList}">
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 7.5%"></th>
+                                <th style="width: 27.5%">Model</th>
+                                <th style="width: 22.5%">Category</th>
+                                <th style="width: 42.5%">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach items="${groupedList}" var="group" varStatus="status">
+                                <tr class="summary-row" data-model="${group.model}" 
+                                    data-category="${group.categoryId}" 
+                                    data-category-name="${group.categoryName}"
+                                    data-description="${group.description}"
+                                    data-index="${status.index}">
+                                    <td>
+                                        <i class="fas fa-chevron-right toggle-icon" 
+                                           onclick="toggleDetailByIndex(${status.index})"></i>
+                                    </td>
+                                    <td>${group.model}</td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${not empty group.categoryName}">
+                                                ${group.categoryName}
+                                            </c:when>
+                                            <c:otherwise>N/A</c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>${group.description}</td>
+                                </tr>
+                                <tr class="detail-row" id="detail-${status.index}" style="display: none;">
+                                    <td colspan="5" style="padding: 0;">
+                                        <div class="detail-table-container" id="container-${status.index}">
+                                            <table class="detail-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Equipment ID</th>
+                                                        <th>Serial Number</th>
+                                                        <th>Install Date</th>
+                                                        <th>Updated By</th>
+                                                        <th>Update Date</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tbody-${status.index}">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </c:when>
+                <c:otherwise>
+                    <div class="no-results">
+                        <i class="fas fa-search"></i>
+                        <p>Không tìm thấy thiết bị nào phù hợp với bộ lọc</p>
                     </div>
-                    <h3>Xác nhận xóa</h3>
-                    <p id="deleteModalMessage">Bạn có chắc muốn xóa equipment này?</p>
-                    <div class="delete-modal-buttons">
-                        <button type="button" class="btn-confirm-delete" onclick="confirmDeleteAction()">
-                            <i class="fas fa-check"></i> Xác nhận
-                        </button>
-                        <button type="button" class="btn-cancel-delete" onclick="closeDeleteModal()">
-                            <i class="fas fa-times"></i> Hủy
-                        </button>
-                    </div>
-                </div>
-            </div>
+                </c:otherwise>
+            </c:choose>
 
-            <!-- Form Popup -->
+            <!-- ===== ADD/EDIT FORM MODAL ===== -->
             <div class="form-overlay" id="formOverlay">
                 <div class="form-container">
                     <h2 id="formTitle">Add New Equipment</h2>
+                    
+                    <div class="mode-selection" id="modeSelection">
+                        <div class="mode-btn active" id="existingModelBtn" onclick="selectMode('existing')">
+                            <i class="fas fa-plus-circle"></i> Thêm thiết bị (Model có sẵn)
+                        </div>
+                        <div class="mode-btn" id="newModelBtn" onclick="selectMode('new')">
+                            <i class="fas fa-star"></i> Tạo Model mới
+                        </div>
+                    </div>
+
                     <form action="numberEquipment" method="POST" id="equipmentForm" onsubmit="return validateForm()">
                         <input type="hidden" name="action" id="actionInput" value="add">
                         <input type="hidden" name="equipmentId" id="equipmentId">
+                        <input type="hidden" name="addMode" id="addModeInput" value="existing">
+
+                        <div id="modelSelectionGroup">
+                            <label>Chọn Model *</label>
+                            <select name="selectedModel" id="selectedModel">
+                                <option value="">-- Chọn Model --</option>
+                                <c:forEach items="${groupedList}" var="group">
+                                    <option value="${group.model}">
+                                        ${group.model}
+                                    </option>
+                                </c:forEach>
+                            </select>
+                        </div>
+
+                        <div id="newModelFields" class="hidden">
+                            <label>Model * (Tối thiểu 3 ký tự)</label>
+                            <input type="text" name="model" id="model" 
+                                   minlength="3" maxlength="50" placeholder="Nhập model">
+
+                            <label>Category</label>
+                            <select name="categoryId" id="categoryId">
+                                <option value="">-- Select Category --</option>
+                                <c:forEach items="${categories}" var="cat">
+                                    <option value="${cat.categoryId}">${cat.categoryName}</option>
+                                </c:forEach>
+                            </select>
+
+                            <label>Description * (10-100 ký tự)</label>
+                            <input type="text" name="description" id="description" 
+                                   minlength="10" maxlength="100" placeholder="Nhập mô tả">
+                        </div>
 
                         <label>Serial Number * (3-30 ký tự)</label>
                         <input type="text" name="serialNumber" id="serialNumber" required 
-                               minlength="3" maxlength="30"
-                               placeholder="Nhập serial number (3-30 ký tự)">
-
-                        <label>Model * (Tối thiểu 3 ký tự)</label>
-                        <input type="text" name="model" id="model" required 
-                               minlength="3" maxlength="50"
-                               placeholder="Nhập model (ít nhất 3 ký tự)">
-
-                        <label>Category</label>
-                        <select name="categoryId" id="categoryId" class="filter-select" style="width: 100%; background: #fafafa;">
-                            <option value="">-- Select Category --</option>
-                            <c:forEach items="${categories}" var="cat">
-                                <option value="${cat.categoryId}">${cat.categoryName}</option>
-                            </c:forEach>
-                        </select>
-
-                        <label>Description * (10-100 ký tự)</label>
-                        <input type="text" name="description" id="description" required 
-                               minlength="10" maxlength="100"
-                               placeholder="Nhập mô tả (10-100 ký tự)">
+                               minlength="3" maxlength="30" placeholder="Nhập serial number">
 
                         <label>Install Date *</label>
                         <input type="date" name="installDate" id="installDate" required>
@@ -1143,85 +866,239 @@
                     </form>
                 </div>
             </div>
-<!-- Floating Chat Button -->
-<button class="chat-button" id="chatButton">
-    <i class="fas fa-robot"></i>
-</button>
 
-<!-- Chat Widget -->
-<div class="chat-widget" id="chatWidget">
-    <div class="chat-widget-header">
-        🤖 ChatGPT Assistant
-    </div>
-    
-    <div class="chat-widget-messages" id="chatWidgetMessages">
-        <div class="chat-widget-message ai">
-            <div class="chat-widget-message-content">
-                Xin chào! Tôi là trợ lý AI. Tôi có thể giúp gì cho bạn?
-            </div>
-        </div>
-    </div>
-
-    <div class="typing-indicator" id="chatTypingIndicator">
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-    </div>
-    
-    <div class="chat-widget-input-area">
-        <div class="chat-widget-input-wrapper">
-            <input 
-                type="text" 
-                id="chatMessageInput" 
-                placeholder="Nhập tin nhắn của bạn..."
-                autocomplete="off"
-            >
-            <button id="chatSendButton">Gửi</button>
-        </div>
-    </div>
-</div>
-            <!-- Pagination -->
-            <div class="pagination">
-                <a href="#">« First</a>
-                <a href="#">‹ Prev</a>
-                <a href="#" class="active">1</a>
-                <a href="#">2</a>
-                <a href="#">3</a>
-                <a href="#">Next ›</a>
-                <a href="#">Last »</a>
+            <!-- ===== DELETE CONFIRMATION MODAL ===== -->
+            <div class="delete-modal" id="deleteModal">
+                <div class="delete-modal-content">
+                    <div class="delete-modal-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>Xác nhận xóa</h3>
+                    <p id="deleteModalMessage">Bạn có chắc muốn xóa equipment này?</p>
+                    <div class="delete-modal-buttons">
+                        <button type="button" class="btn-confirm-delete" onclick="confirmDeleteAction()">
+                            <i class="fas fa-check"></i> Xác nhận
+                        </button>
+                        <button type="button" class="btn-cancel-delete" onclick="closeDeleteModal()">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         let deleteEquipmentId = null;
+        let loadedRows = {};
+        let currentMode = 'existing';
 
-        // ✅ SHOW DELETE MODAL - FIXED TO AVOID LOCALHOST DISPLAY
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = 'all';
+            document.getElementById('sortById').value = '';
+            window.location.href = 'numberEquipment';
+        }
+
+        function toggleDetailByIndex(index) {
+            const detailRow = document.getElementById('detail-' + index);
+            const summaryRow = document.querySelector('[data-index="' + index + '"]');
+            const icon = summaryRow ? summaryRow.querySelector('.toggle-icon') : null;
+            const container = document.getElementById('container-' + index);
+            const model = summaryRow ? summaryRow.getAttribute('data-model') : null;
+            
+            if (!detailRow || !icon || !container || !model) {
+                console.error('Cannot find elements');
+                return;
+            }
+            
+            if (detailRow.style.display === 'none' || detailRow.style.display === '') {
+                detailRow.style.display = 'table-row';
+                icon.classList.add('open');
+                container.classList.add('show');
+                
+                if (!loadedRows[index]) {
+                    loadDetailData(index, model);
+                    loadedRows[index] = true;
+                }
+            } else {
+                detailRow.style.display = 'none';
+                icon.classList.remove('open');
+                container.classList.remove('show');
+            }
+        }
+
+        function loadDetailData(index, model) {
+            const tbody = document.getElementById('tbody-' + index);
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;"><span class="loading-spinner"></span> Loading...</td></tr>';
+            
+            fetch('numberEquipment?action=getDetailByModel&model=' + encodeURIComponent(model))
+                .then(response => response.json())
+                .then(data => {
+                    tbody.innerHTML = '';
+                    
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có dữ liệu</td></tr>';
+                        return;
+                    }
+                    
+                    data.forEach(item => {
+                        const row = document.createElement('tr');
+                        const sn = String(item.serialNumber).replace(/'/g, "\\'");
+                        const installDate = item.installDate || '';
+                        
+                        row.innerHTML = 
+                            '<td>' + item.equipmentId + '</td>' +
+                            '<td>' + item.serialNumber + '</td>' +
+                            '<td>' + (item.installDate || 'N/A') + '</td>' +
+                            '<td>' + (item.username || 'N/A') + '</td>' +
+                            '<td>' + (item.lastUpdatedDate || 'N/A') + '</td>' +
+                            '<td>' +
+                                '<button class="btn-edit" onclick="openForm(\'edit\', ' + item.equipmentId + ', \'' + sn + '\', \'' + installDate + '\')">' +
+                                    '<i class="fas fa-edit"></i> Edit' +
+                                '</button>' +
+                                '<button class="btn-delete" onclick="showDeleteModal(' + item.equipmentId + ', \'' + sn + '\', \'' + item.model + '\')">' +
+                                    '<i class="fas fa-trash"></i> Delete' +
+                                '</button>' +
+                            '</td>';
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Lỗi: ' + error.message + '</td></tr>';
+                });
+        }
+
+        function selectMode(mode) {
+            currentMode = mode;
+            document.getElementById('addModeInput').value = mode;
+            
+            const existingBtn = document.getElementById('existingModelBtn');
+            const newBtn = document.getElementById('newModelBtn');
+            const modelSelectionGroup = document.getElementById('modelSelectionGroup');
+            const newModelFields = document.getElementById('newModelFields');
+            
+            if (mode === 'existing') {
+                existingBtn.classList.add('active');
+                newBtn.classList.remove('active');
+                modelSelectionGroup.classList.remove('hidden');
+                newModelFields.classList.add('hidden');
+                
+                document.getElementById('model').value = '';
+                document.getElementById('categoryId').value = '';
+                document.getElementById('description').value = '';
+            } else {
+                newBtn.classList.add('active');
+                existingBtn.classList.remove('active');
+                modelSelectionGroup.classList.add('hidden');
+                newModelFields.classList.remove('hidden');
+                
+                document.getElementById('selectedModel').value = '';
+            }
+        }
+
+        function openForm(mode, equipmentId, serialNumber, installDate) {
+            const overlay = document.getElementById("formOverlay");
+            const title = document.getElementById("formTitle");
+            const actionInput = document.getElementById("actionInput");
+            const formMessage = document.getElementById("formMessage");
+            const modeSelection = document.getElementById("modeSelection");
+            const modelSelectionGroup = document.getElementById("modelSelectionGroup");
+            const newModelFields = document.getElementById("newModelFields");
+            
+            const serialNumberInput = document.getElementById("serialNumber");
+            const installDateInput = document.getElementById("installDate");
+
+            overlay.style.display = "flex";
+            formMessage.textContent = "";
+
+            if (mode === "new") {
+                title.textContent = "Add New Equipment";
+                actionInput.value = "add";
+                modeSelection.classList.remove('hidden');
+                
+                document.getElementById("equipmentId").value = "";
+                serialNumberInput.value = "";
+                document.getElementById("selectedModel").value = "";
+                document.getElementById("model").value = "";
+                document.getElementById("categoryId").value = "";
+                document.getElementById("description").value = "";
+                installDateInput.value = "";
+                
+                selectMode('existing');
+                
+            } else if (mode === "edit") {
+                title.textContent = "Edit Equipment";
+                actionInput.value = "edit";
+                modeSelection.classList.add('hidden');
+                modelSelectionGroup.classList.add('hidden');
+                newModelFields.classList.add('hidden');
+                
+                document.getElementById("equipmentId").value = equipmentId || "";
+                serialNumberInput.value = serialNumber || "";
+                installDateInput.value = installDate || "";
+            }
+        }
+
+        function closeForm() {
+            document.getElementById("formOverlay").style.display = "none";
+        }
+
+        function validateForm() {
+            const actionInput = document.getElementById("actionInput").value;
+            const serialNumber = document.getElementById("serialNumber").value.trim();
+            const formMessage = document.getElementById("formMessage");
+            
+            if (serialNumber.length < 3 || serialNumber.length > 30) {
+                formMessage.textContent = "❌ Serial Number phải từ 3-30 ký tự!";
+                return false;
+            }
+            
+            if (actionInput === 'edit') {
+                return true;
+            }
+            
+            const addMode = document.getElementById("addModeInput").value;
+            
+            if (addMode === 'existing') {
+                const selectedModel = document.getElementById("selectedModel").value;
+                if (!selectedModel) {
+                    formMessage.textContent = "❌ Vui lòng chọn Model!";
+                    return false;
+                }
+            } else {
+                const model = document.getElementById("model").value.trim();
+                const description = document.getElementById("description").value.trim();
+                
+                if (model.length < 3) {
+                    formMessage.textContent = "❌ Model phải có ít nhất 3 ký tự!";
+                    return false;
+                }
+                
+                if (description.length < 10 || description.length > 100) {
+                    formMessage.textContent = "❌ Mô tả phải từ 10-100 ký tự!";
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
         function showDeleteModal(equipmentId, serialNumber, model) {
-            // Convert to string to ensure no issues
-            const id = String(equipmentId);
-            const sn = String(serialNumber);
-            const mdl = String(model);
-            
             deleteEquipmentId = equipmentId;
-            
             const modal = document.getElementById("deleteModal");
             const message = document.getElementById("deleteModalMessage");
             
-            // Use string concatenation instead of template literals
-            const newHTML = "Bạn có chắc muốn xóa Equipment:<br><strong>" + mdl + "</strong><br>Serial: <strong>" + sn + "</strong> (ID: " + id + ")?";
-            
-            message.innerHTML = newHTML;
+            message.innerHTML = "Bạn có chắc muốn xóa Equipment:<br><strong>" + model + 
+                              "</strong><br>Serial: <strong>" + serialNumber + "</strong>?";
             modal.style.display = "flex";
         }
 
-        // CLOSE DELETE MODAL
         function closeDeleteModal() {
             document.getElementById("deleteModal").style.display = "none";
             deleteEquipmentId = null;
         }
-
-        // CONFIRM DELETE ACTION
+        
         function confirmDeleteAction() {
             if (deleteEquipmentId) {
                 const form = document.createElement('form');
@@ -1245,390 +1122,31 @@
             }
         }
 
-        function openForm(mode, equipmentId = '', serialNumber = '', model = '', description = '', installDate = '', categoryId = '') {
-            const overlay = document.getElementById("formOverlay");
-            const title = document.getElementById("formTitle");
-            const actionInput = document.getElementById("actionInput");
-            const formMessage = document.getElementById("formMessage");
-            const installDateInput = document.getElementById("installDate");
+        document.getElementById("formOverlay").addEventListener('click', function (e) {
+            if (e.target === this) closeForm();
+        });
 
-            overlay.style.display = "flex";
-            formMessage.textContent = "";
-            formMessage.style.color = "#dc3545";
+        document.getElementById("deleteModal").addEventListener('click', function (e) {
+            if (e.target === this) closeDeleteModal();
+        });
 
-            if (mode === "new") {
-                title.textContent = "Add New Equipment";
-                actionInput.value = "add";
-                document.getElementById("equipmentId").value = "";
-                document.getElementById("serialNumber").value = "";
-                document.getElementById("model").value = "";
-                document.getElementById("categoryId").value = "";
-                document.getElementById("description").value = "";
-                document.getElementById("installDate").value = "";
-                
-                installDateInput.disabled = false;
-                installDateInput.style.background = "#fafafa";
-            } else {
-                title.textContent = "Edit Equipment";
-                actionInput.value = "edit";
-                document.getElementById("equipmentId").value = equipmentId;
-                document.getElementById("serialNumber").value = serialNumber;
-                document.getElementById("model").value = model;
-                document.getElementById("categoryId").value = categoryId;
-                document.getElementById("description").value = description;
-                document.getElementById("installDate").value = installDate;
-                
-                installDateInput.disabled = true;
-                installDateInput.style.background = "#e9ecef";
-            }
-        }
-
-        function closeForm() {
-            document.getElementById("formOverlay").style.display = "none";
-            document.getElementById("formMessage").textContent = "";
-        }
-
-        function validateForm() {
-            const serialNumber = document.getElementById("serialNumber").value.trim();
-            const model = document.getElementById("model").value.trim();
-            const description = document.getElementById("description").value.trim();
-            const installDate = document.getElementById("installDate").value;
-            const formMessage = document.getElementById("formMessage");
-            const actionInput = document.getElementById("actionInput").value;
-            
-            formMessage.textContent = "";
-            formMessage.style.color = "#dc3545";
-            
-            if (serialNumber.length < 3) {
-                formMessage.textContent = "❌ Serial Number phải có ít nhất 3 ký tự!";
-                return false;
-            }
-            
-            if (serialNumber.length > 30) {
-                formMessage.textContent = "❌ Serial Number không được vượt quá 30 ký tự!";
-                return false;
-            }
-            
-            if (model.length < 3) {
-                formMessage.textContent = "❌ Model phải có ít nhất 3 ký tự!";
-                return false;
-            }
-            
-            if (model.length > 50) {
-                formMessage.textContent = "❌ Model không được vượt quá 50 ký tự!";
-                return false;
-            }
-            
-            if (description.length < 10) {
-                formMessage.textContent = "❌ Mô tả phải có ít nhất 10 ký tự!";
-                return false;
-            }
-            
-            if (description.length > 100) {
-                formMessage.textContent = "❌ Mô tả không được vượt quá 100 ký tự!";
-                return false;
-            }
-            
-            if (actionInput === "add" && !installDate) {
-                formMessage.textContent = "❌ Vui lòng chọn ngày lắp đặt!";
-                return false;
-            }
-            
-            return true;
-        }
-
-        let currentPage = 1;
-        const rowsPerPage = 10;
-
-        function renderTable() {
-            const tableBody = document.querySelector(".inventory-table tbody");
-            if (!tableBody) return;
-
-            const keyword = document.querySelector(".search-input").value.toLowerCase();
-            const rows = Array.from(tableBody.rows);
-
-            const filteredRows = rows.filter(row => {
-                return Array.from(row.cells).slice(0, 8)
-                        .some(td => td.innerText.toLowerCase().includes(keyword));
-            });
-
-            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-            if (filteredRows.length === 0) {
-                rows.forEach(row => row.style.display = "none");
-                return;
-            }
-
-            if (currentPage > totalPages) currentPage = totalPages;
-            if (currentPage < 1) currentPage = 1;
-
-            rows.forEach(row => row.style.display = "none");
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            filteredRows.slice(start, end).forEach(row => row.style.display = "");
-
-            renderPagination(totalPages);
-        }
-
-        function renderPagination(totalPages) {
-            const pagination = document.querySelector(".pagination");
-            if (!pagination) return;
-            pagination.innerHTML = "";
-
-            function createBtn(text, onClick, active = false) {
-                const btn = document.createElement("a");
-                btn.href = "#";
-                btn.textContent = text;
-                if (active) btn.classList.add("active");
-                btn.onclick = e => {
-                    e.preventDefault();
-                    onClick();
-                };
-                return btn;
-            }
-
-            pagination.appendChild(createBtn("« First", () => {
-                currentPage = 1;
-                renderTable();
-            }));
-            
-            pagination.appendChild(createBtn("‹ Prev", () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    renderTable();
-                }
-            }));
-
-            let start = Math.max(currentPage - 2, 1);
-            let end = Math.min(start + 4, totalPages);
-            for (let i = start; i <= end; i++) {
-                pagination.appendChild(createBtn(i, () => {
-                    currentPage = i;
-                    renderTable();
-                }, i === currentPage));
-            }
-
-            pagination.appendChild(createBtn("Next ›", () => {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    renderTable();
-                }
-            }));
-            
-            pagination.appendChild(createBtn("Last »", () => {
-                currentPage = totalPages;
-                renderTable();
-            }));
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            renderTable();
-
-            const searchInput = document.querySelector(".search-input");
-            if (searchInput) {
-                searchInput.addEventListener("input", () => {
-                    currentPage = 1;
-                    renderTable();
-                });
-            }
-
-            const formOverlay = document.getElementById("formOverlay");
-            if (formOverlay) {
-                formOverlay.addEventListener('click', function (e) {
-                    if (e.target === this) {
-                        closeForm();
-                    }
-                });
-            }
-
-            const deleteModal = document.getElementById("deleteModal");
-            if (deleteModal) {
-                deleteModal.addEventListener('click', function (e) {
-                    if (e.target === this) {
-                        closeDeleteModal();
-                    }
-                });
-            }
-
-            // ESC key to close modals
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    closeForm();
-                    closeDeleteModal();
-                }
-            });
-
-            const serialNumberInput = document.getElementById("serialNumber");
-            if (serialNumberInput) {
-                serialNumberInput.addEventListener("input", function() {
-                    const length = this.value.length;
-                    const formMessage = document.getElementById("formMessage");
-                    
-                    if (length === 0) {
-                        formMessage.textContent = "";
-                    } else if (length < 3) {
-                        formMessage.textContent = "⚠️ Serial Number: Còn thiếu " + (3 - length) + " ký tự";
-                        formMessage.style.color = "#ff9800";
-                    } else if (length > 30) {
-                        formMessage.textContent = "❌ Serial Number: Vượt quá " + (length - 30) + " ký tự";
-                        formMessage.style.color = "#dc3545";
-                    } else {
-                        formMessage.textContent = "✓ Serial Number: " + length + "/30 ký tự";
-                        formMessage.style.color = "#28a745";
-                    }
-                });
-            }
-
-            const modelInput = document.getElementById("model");
-            if (modelInput) {
-                modelInput.addEventListener("input", function() {
-                    const length = this.value.length;
-                    const formMessage = document.getElementById("formMessage");
-                    
-                    if (length === 0) {
-                        formMessage.textContent = "";
-                    } else if (length < 3) {
-                        formMessage.textContent = "⚠️ Model: Còn thiếu " + (3 - length) + " ký tự";
-                        formMessage.style.color = "#ff9800";
-                    } else if (length > 50) {
-                        formMessage.textContent = "❌ Model: Vượt quá " + (length - 50) + " ký tự";
-                        formMessage.style.color = "#dc3545";
-                    } else {
-                        formMessage.textContent = "✓ Model: " + length + "/50 ký tự";
-                        formMessage.style.color = "#28a745";
-                    }
-                });
-            }
-            // ========== CHATBOT FUNCTIONALITY ==========
-const chatButton = document.getElementById('chatButton');
-const chatWidget = document.getElementById('chatWidget');
-const chatMessageInput = document.getElementById('chatMessageInput');
-const chatSendButton = document.getElementById('chatSendButton');
-const chatWidgetMessages = document.getElementById('chatWidgetMessages');
-const chatTypingIndicator = document.getElementById('chatTypingIndicator');
-
-// Toggle chat widget
-chatButton.addEventListener('click', function() {
-    chatWidget.classList.toggle('active');
-    chatButton.classList.toggle('active');
-    
-    if (chatWidget.classList.contains('active')) {
-        chatMessageInput.focus();
-        chatButton.innerHTML = '<i class="fas fa-times"></i>';
-    } else {
-        chatButton.innerHTML = '<i class="fas fa-robot"></i>';
-    }
-});
-
-// Send message on Enter
-chatMessageInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter' && !chatSendButton.disabled) {
-        sendChatMessage();
-    }
-});
-
-// Send message on button click
-chatSendButton.addEventListener('click', sendChatMessage);
-
-function sendChatMessage() {
-    const message = chatMessageInput.value.trim();
-    
-    if (!message) {
-        return;
-    }
-
-    // Display user message
-    addChatMessage('user', message);
-    
-    // Clear input
-    chatMessageInput.value = '';
-    
-    // Disable input
-    chatSendButton.disabled = true;
-    chatMessageInput.disabled = true;
-    
-    // Show typing indicator
-    chatTypingIndicator.classList.add('show');
-    scrollChatToBottom();
-
-    // Send request to servlet
-    fetch('AskGeminiServlet', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'q=' + encodeURIComponent(message)
-    })
-    .then(response => response.json())
-    .then(data => {
-        chatTypingIndicator.classList.remove('show');
-
-        // If server returns error
-        if (data.error) {
-            addChatMessage('error', data.error);
-            return;
-        }
-
-        // ONLY display natural language answer (no table, no SQL)
-        if (data.ai_answer) {
-            addChatMessage('ai', data.ai_answer);
-        } else {
-            addChatMessage('ai', 'Xin lỗi, tôi không thể trả lời câu hỏi này.');
-        }
-    })
-    .catch(error => {
-        chatTypingIndicator.classList.remove('show');
-        addChatMessage('error', 'Không thể kết nối đến server');
-        console.error('Error:', error);
-    })
-    .finally(() => {
-        chatSendButton.disabled = false;
-        chatMessageInput.disabled = false;
-        chatMessageInput.focus();
-    });
-}
-
-function addChatMessage(type, content) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'chat-widget-message ' + type;
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'chat-widget-message-content';
-    contentDiv.textContent = content;
-    
-    messageDiv.appendChild(contentDiv);
-    chatWidgetMessages.appendChild(messageDiv);
-    
-    scrollChatToBottom();
-}
-
-function scrollChatToBottom() {
-    chatWidgetMessages.scrollTop = chatWidgetMessages.scrollHeight;
-}
-
-            const descriptionInput = document.getElementById("description");
-            if (descriptionInput) {
-                descriptionInput.addEventListener("input", function() {
-                    const length = this.value.length;
-                    const formMessage = document.getElementById("formMessage");
-                    
-                    if (length === 0) {
-                        formMessage.textContent = "";
-                    } else if (length < 10) {
-                        formMessage.textContent = "⚠️ Mô tả: Còn thiếu " + (10 - length) + " ký tự";
-                        formMessage.style.color = "#ff9800";
-                    } else if (length > 100) {
-                        formMessage.textContent = "❌ Mô tả: Vượt quá " + (length - 100) + " ký tự";
-                        formMessage.style.color = "#dc3545";
-                    } else {
-                        formMessage.textContent = "✓ Mô tả: " + length + "/100 ký tự";
-                        formMessage.style.color = "#28a745";
-                    }
-                });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeForm();
+                closeDeleteModal();
             }
         });
-    </script>
 
-    <c:remove var="successMessage" scope="session" />
-    <c:remove var="errorMessage" scope="session" />
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.transition = 'opacity 0.3s ease';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 300);
+                }, 5000);
+            });
+        });
+    </script>
 </body>
 </html>
