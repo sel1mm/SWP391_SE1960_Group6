@@ -27,6 +27,8 @@ import com.google.gson.JsonSerializer;
 import dto.Response;
 import jakarta.servlet.annotation.MultipartConfig;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import model.AccountProfile;
 import service.AccountService;
 import java.util.logging.Logger;
@@ -171,6 +173,10 @@ public class ViewCustomerRequest extends HttpServlet {
      * Return JSON (contracts + equipment) for given customerId Bao gồm cả thiết
      * bị từ hợp đồng chính và phụ lục
      */
+    /**
+     * Load equipment list for customer (only ACTIVE equipment) Exclude
+     * equipment in Repair or Maintenance status
+     */
     private void handleLoadContractsAndEquipment(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
@@ -189,17 +195,42 @@ public class ViewCustomerRequest extends HttpServlet {
             // Lấy hợp đồng của khách hàng
             List<Contract> contracts = contractDAO.getContractsByCustomer(customerId);
 
-            // ✅ Lấy thiết bị từ CẢ hợp đồng chính VÀ phụ lục
-            List<Equipment> equipment = equipmentDAO.getEquipmentByCustomerContractsAndAppendix(customerId);
+            // ✅ Lấy thiết bị từ hợp đồng chính VÀ phụ lục
+            List<Equipment> allEquipment = equipmentDAO.getEquipmentByCustomerContractsAndAppendix(customerId);
+
+            // ✅ LỌC CHỈ LẤY THIẾT BỊ ACTIVE
+            List<Equipment> activeEquipment = new ArrayList<>();
+
+            for (Equipment eq : allEquipment) {
+                // Kiểm tra trạng thái thiết bị
+                String equipmentStatus = equipmentDAO.getEquipmentStatus(eq.getEquipmentId());
+
+                System.out.println("🔍 Equipment " + eq.getEquipmentId() + " (" + eq.getModel() + "): Status = " + equipmentStatus);
+
+                // ✅ CHỈ THÊM THIẾT BỊ CÓ TRẠNG THÁI ACTIVE
+                if ("Active".equals(equipmentStatus)) {
+                    activeEquipment.add(eq);
+                    System.out.println("✅ Added equipment " + eq.getEquipmentId() + " to list");
+                } else {
+                    System.out.println("⚠️ Skipped equipment " + eq.getEquipmentId() + " - Status: " + equipmentStatus);
+                }
+            }
+
+            System.out.println("📦 Total equipment: " + allEquipment.size());
+            System.out.println("✅ Active equipment: " + activeEquipment.size());
 
             Gson gson = new GsonBuilder()
                     .registerTypeAdapter(LocalDate.class,
-                            (JsonSerializer<LocalDate>) (date, type, context)
+                            (JsonSerializer<LocalDate>) (date, type, ctx)
                             -> date == null ? null : new JsonPrimitive(date.toString()))
+                    .registerTypeAdapter(LocalDateTime.class,
+                            (JsonSerializer<LocalDateTime>) (dt, type, ctx)
+                            -> dt == null ? null : new JsonPrimitive(dt.toString()))
                     .serializeNulls()
                     .create();
 
-            String json = gson.toJson(new ResponseWrapper(contracts, equipment));
+            // ✅ TRẢ VỀ DANH SÁCH CHỈ CÓ THIẾT BỊ ACTIVE
+            String json = gson.toJson(new ResponseWrapper(contracts, activeEquipment));
             out.print(json);
             out.flush();
 
@@ -347,10 +378,21 @@ public class ViewCustomerRequest extends HttpServlet {
 
             int successCount = 0;
             int failCount = 0;
+            List<String> skippedEquipment = new ArrayList<>();
 
             for (String eqStr : equipmentIds) {
                 try {
                     int eqId = Integer.parseInt(eqStr.trim());
+
+                    // ✅ KIỂM TRA TRẠNG THÁI THIẾT BỊ TRƯỚC KHI TẠO REQUEST
+                    String equipmentStatus = equipmentDAO.getEquipmentStatus(eqId);
+
+                    if (!"Active".equals(equipmentStatus)) {
+                        System.out.println("⚠️ Skipping equipment " + eqId + " - Status: " + equipmentStatus);
+                        skippedEquipment.add("Thiết bị #" + eqId + " (trạng thái: " + equipmentStatus + ")");
+                        failCount++;
+                        continue;
+                    }
 
                     // --- Lấy hợp đồng tương ứng thiết bị ---
                     Integer contractId = contractDAO.getContractIdByEquipmentAndCustomer(eqId, customerId);
@@ -366,7 +408,7 @@ public class ViewCustomerRequest extends HttpServlet {
                     ServiceRequest req = new ServiceRequest();
                     req.setCreatedBy(customerId);
                     req.setEquipmentId(eqId);
-                    req.setContractId(contractId);   // ✅ tự động điền
+                    req.setContractId(contractId);
                     req.setRequestType(requestType);
                     req.setPriorityLevel(priorityLevel);
                     req.setDescription(description);
@@ -389,11 +431,27 @@ public class ViewCustomerRequest extends HttpServlet {
                 }
             }
 
+            // ✅ TẠO MESSAGE PHÙ HỢP
+            StringBuilder message = new StringBuilder();
+
             if (successCount > 0) {
-                out.print("{\"success\":true, \"message\":\"Tạo thành công " + successCount
-                        + " yêu cầu dịch vụ. " + (failCount > 0 ? failCount + " thiết bị bị bỏ qua.\"}" : "\"}"));
+                message.append("Tạo thành công ").append(successCount).append(" yêu cầu dịch vụ.");
+            }
+
+            if (failCount > 0) {
+                message.append(" ").append(failCount).append(" thiết bị bị bỏ qua.");
+            }
+
+            if (!skippedEquipment.isEmpty()) {
+                message.append("<br><small class='text-warning'>Thiết bị bị bỏ qua: ");
+                message.append(String.join(", ", skippedEquipment));
+                message.append("</small>");
+            }
+
+            if (successCount > 0) {
+                out.print("{\"success\":true, \"message\":\"" + message.toString() + "\"}");
             } else {
-                out.print("{\"success\":false, \"message\":\"Không thể tạo yêu cầu nào.\"}");
+                out.print("{\"success\":false, \"message\":\"Không thể tạo yêu cầu nào. " + message.toString() + "\"}");
             }
 
         } catch (Exception e) {

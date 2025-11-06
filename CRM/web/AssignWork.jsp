@@ -324,11 +324,7 @@
             <hr class="text-white">
         </div>
         <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="dashboard.jsp">
-                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                </a>
-            </li>
+            
             <li class="nav-item">
                 <a class="nav-link" href="technicalManagerApproval">
                     <i class="fas fa-check-circle me-2"></i>Duyệt Yêu Cầu
@@ -350,8 +346,8 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="manageProfile.jsp">
-                    <i class="fas fa-cog me-2"></i>Cài Đặt
+                <a class="nav-link" href="manageProfile">
+                    <i class="fas fa-cog me-2"></i>Hồ Sơ
                 </a>
             </li>
             <li class="nav-item">
@@ -409,7 +405,7 @@
                                             <c:forEach var="request" items="${pendingRequests}">
                                                 <option value="${request.requestId}" 
                                                         ${preSelectedRequestId != null && preSelectedRequestId == request.requestId.toString() ? 'selected' : ''}>
-                                                    #${request.requestId} - ${request.requestType} (${request.priorityLevel})
+                                                    ${request.description} - ID:${request.requestId}
                                                 </option>
                                             </c:forEach>
                                         </select>
@@ -423,8 +419,8 @@
                                                 <option value="<c:out value='${technician.technicianId}' escapeXml='true'/>" 
                                                         data-capacity="<c:out value='${technician.availableCapacity}' escapeXml='true'/>"
                                                         data-completion-time="<c:out value='${technician.averageCompletionTime}' escapeXml='true'/>">
-                                                    Kỹ thuật viên #<c:out value='${technician.technicianId}' escapeXml='true'/> 
-                                                    (Khả năng: <c:out value='${technician.availableCapacity}' escapeXml='true'/>/<c:out value='${technician.maxConcurrentTasks}' escapeXml='true'/>)
+                                                    Kỹ thuật viên : <c:out value='${technician.technicianName}-ID: ${technician.technicianId}' escapeXml='true'/> 
+                                                    
                                                 </option>
                                             </c:forEach>
                                         </select>
@@ -442,9 +438,9 @@
                                         <label for="priority" class="form-label">Độ Ưu Tiên</label>
                                         <select class="form-select" id="priority" name="priority" required>
                                            
-                                            <option value="Normal" ${preSelectedPriority == 'Normal' || preSelectedPriority == null ? 'selected' : ''}>Trung Bình (1 point)</option>
-                                            <option value="High" ${preSelectedPriority == 'High' ? 'selected' : ''}>Cao (2 points)</option>
-                                            <option value="Urgent" ${preSelectedPriority == 'Urgent' ? 'selected' : ''}>Khẩn Cấp (3 points)</option>
+                                            <option value="Normal" ${preSelectedPriority == 'Normal' || preSelectedPriority == null ? 'selected' : ''}>Trung Bình</option>
+                                            <option value="High" ${preSelectedPriority == 'High' ? 'selected' : ''}>Cao</option>
+                                            <option value="Urgent" ${preSelectedPriority == 'Urgent' ? 'selected' : ''}>Khẩn Cấp</option>
                                         </select>
                                     </div>
                                 </div>
@@ -484,14 +480,8 @@
     
     <div class="mb-3 p-3 border rounded">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <strong>KTV #${technician.technicianId}</strong>
-            <span class="badge <c:choose>
-                <c:when test='${availablePoints >= 3}'>bg-success</c:when>
-                <c:when test='${availablePoints >= 1}'>bg-warning text-dark</c:when>
-                <c:otherwise>bg-danger</c:otherwise>
-            </c:choose>">
-                ${currentPoints}/${maxPoints} points
-            </span>
+            <strong>KTV :${technician.technicianName}</strong>
+            
         </div>
         <div class="workload-indicator mb-2">
             <div class="workload-bar <c:choose>
@@ -639,41 +629,47 @@
         }
 
         function renderTable() {
-            const tbody = document.getElementById('assignmentHistoryTable');
-            tbody.innerHTML = '';
-            
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const pageAssignments = filteredAssignments.slice(startIndex, endIndex);
-            
-            pageAssignments.forEach(assignment => {
-                const row = document.createElement('tr');
-                row.innerHTML = 
-                    '<td>#' + assignment.assignmentId + '</td>' +
-                    '<td>#' + assignment.taskId + '</td>' +
-                    '<td>KTV #' + assignment.assignedTo + '</td>' +
-                    '<td>' + assignment.assignmentDate + '</td>' +
-                    '<td>' + parseFloat(assignment.estimatedDuration).toFixed(2) + 'h</td>' +
-                    '<td>' +
-                        '<span class="badge ' + getPriorityClass(assignment.priority) + '">' +
-                        assignment.priority +
-                        '</span>' +
-                    '</td>' +
-                    '<td>' +
-                        '<span class="badge ' + getStatusClass(assignment.status) + '">' +
-                        getStatusText(assignment.status) +
-                        '</span>' +
-                    '</td>' +
-                    '<td>' +
-                        '<button class="btn btn-sm btn-outline-danger delete-assignment-btn" ' +
-                                'data-assignment-id="' + assignment.assignmentId + '"' +
-                                (assignment.status === 'Completed' ? ' disabled' : '') + '>' +
-                            '<i class="fas fa-trash"></i>' +
-                        '</button>' +
-                    '</td>';
-                tbody.appendChild(row);
-            });
-        }
+    const tbody = document.getElementById('assignmentHistoryTable');
+    tbody.innerHTML = '';
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const pageAssignments = filteredAssignments.slice(startIndex, endIndex);
+    
+    pageAssignments.forEach(assignment => {
+        const row = document.createElement('tr');
+        
+        // ✅ Hiển thị tên technician thay vì chỉ ID
+        const technicianDisplay = assignment.technicianName 
+            ? assignment.technicianName + ' (ID: ' + assignment.assignedTo + ')' 
+            : 'KTV #' + assignment.assignedTo;
+        
+        row.innerHTML = 
+            '<td>#' + assignment.assignmentId + '</td>' +
+            '<td>#' + assignment.taskId + '</td>' +
+            '<td>' + technicianDisplay + '</td>' + // ✅ Thay đổi ở đây
+            '<td>' + assignment.assignmentDate + '</td>' +
+            '<td>' + parseFloat(assignment.estimatedDuration).toFixed(2) + 'h</td>' +
+            '<td>' +
+                '<span class="badge ' + getPriorityClass(assignment.priority) + '">' +
+                assignment.priority +
+                '</span>' +
+            '</td>' +
+            '<td>' +
+                '<span class="badge ' + getStatusClass(assignment.status) + '">' +
+                getStatusText(assignment.status) +
+                '</span>' +
+            '</td>' +
+            '<td>' +
+                '<button class="btn btn-sm btn-outline-danger delete-assignment-btn" ' +
+                        'data-assignment-id="' + assignment.assignmentId + '"' +
+                        (assignment.status === 'Completed' ? ' disabled' : '') + '>' +
+                    '<i class="fas fa-trash"></i>' +
+                '</button>' +
+            '</td>';
+        tbody.appendChild(row);
+    });
+}
 
         function renderPagination() {
             const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);

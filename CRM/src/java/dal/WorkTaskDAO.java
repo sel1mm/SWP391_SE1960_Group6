@@ -565,6 +565,54 @@ public boolean deleteTaskById(int taskId) throws SQLException {
         return affected > 0;
     }
 }
+
+public List<WorkTask> findByRequestId(int requestId) {
+    List<WorkTask> tasks = new ArrayList<>();
+    String sql = "SELECT * FROM WorkTask WHERE requestId = ? ORDER BY taskId DESC";
+    
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setInt(1, requestId);
+        rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            WorkTask task = new WorkTask();
+            task.setTaskId(rs.getInt("taskId"));
+            task.setRequestId(rs.getInt("requestId"));
+            
+            // Handle nullable scheduleId
+            int scheduleId = rs.getInt("scheduleId");
+            if (!rs.wasNull()) {
+                task.setScheduleId(scheduleId);
+            }
+            
+            task.setTechnicianId(rs.getInt("technicianId"));
+            task.setTaskType(rs.getString("taskType"));
+            task.setTaskDetails(rs.getString("taskDetails"));
+            
+            // Handle nullable dates
+            Date startDate = rs.getDate("startDate");
+            if (startDate != null) {
+                task.setStartDate(startDate.toLocalDate());
+            }
+            
+            Date endDate = rs.getDate("endDate");
+            if (endDate != null) {
+                task.setEndDate(endDate.toLocalDate());
+            }
+            
+            task.setStatus(rs.getString("status"));
+            
+            tasks.add(task);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        closeResources();
+    }
+    
+    return tasks;
+}
 //public List<WorkTask> findByScheduleId(int scheduleId) throws SQLException {
 //    List<WorkTask> tasks = new ArrayList<>();
 //    String sql = "SELECT * FROM WorkTask WHERE scheduleId = ?";

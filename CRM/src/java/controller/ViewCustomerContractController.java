@@ -51,7 +51,8 @@ import model.Account;
     "/getAvailableEquipmentForCustomer",
     "/createContract",
     "/deleteContract",
-    "/getContractDeletionInfo"
+    "/getContractDeletionInfo",
+    "/viewAppendixDetails"
 })
 public class ViewCustomerContractController extends HttpServlet {
 
@@ -96,6 +97,9 @@ public class ViewCustomerContractController extends HttpServlet {
                 case "/getContractDeletionInfo":
                     handleGetContractDeletionInfo(request, response);
                     break;
+                case "/viewAppendixDetails":
+                    handleViewAppendixDetails(request, response);
+                    break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
@@ -105,6 +109,21 @@ public class ViewCustomerContractController extends HttpServlet {
             response.getWriter().write("{\"success\":false,\"message\":\"Lỗi hệ thống: " + e.getMessage() + "\"}");
         }
     }
+    
+    private void handleViewAppendixDetails(HttpServletRequest request, HttpServletResponse response)
+        throws IOException, SQLException {
+
+    int appendixId = Integer.parseInt(request.getParameter("appendixId"));
+
+    ContractAppendix appendix = appendixDAO.getAppendixById(appendixId);
+    List<Map<String, Object>> equipment = appendixDAO.getEquipmentByAppendixId(appendixId);
+
+    Map<String, Object> result = new HashMap<>();
+    result.put("success", true);
+    result.put("appendix", appendix);
+    result.put("equipment", equipment);
+    sendJson(response, result);
+}
 
     // Lấy danh sách hợp đồng (full hoặc theo filter)
     private void handleListOrSearch(HttpServletRequest request, HttpServletResponse response)
@@ -458,12 +477,16 @@ public class ViewCustomerContractController extends HttpServlet {
         int contractId = Integer.parseInt(request.getParameter("contractId"));
         List<ContractAppendix> appendixList = appendixDAO.getAppendixesByContractId(contractId);
 
-        // Thêm thông tin canDelete cho mỗi phụ lục
-        // Chỉ cho phép xóa nếu: trong vòng 15 ngày VÀ không có request nào khác Pending
+        // ✅ Thêm thông tin canEdit và canDelete cho mỗi phụ lục
         for (ContractAppendix appendix : appendixList) {
             boolean withinEditPeriod = appendixDAO.canEditAppendix(appendix.getAppendixId());
             boolean hasNonPending = hasNonPendingServiceRequests(appendix.getAppendixId());
 
+            // ✅ CHỈ cho phép EDIT nếu: trong vòng 15 ngày VÀ không có request nào khác Pending/Cancelled
+            boolean canEdit = withinEditPeriod && !hasNonPending;
+            appendix.setCanEdit(canEdit);
+
+            // ✅ CHỈ cho phép DELETE nếu: trong vòng 15 ngày VÀ không có request nào khác Pending/Cancelled
             boolean canDelete = withinEditPeriod && !hasNonPending;
             appendix.setCanDelete(canDelete);
         }
@@ -493,11 +516,20 @@ public class ViewCustomerContractController extends HttpServlet {
 
         int appendixId = Integer.parseInt(request.getParameter("appendixId"));
 
-        // Kiểm tra xem có thể edit không
-        if (!appendixDAO.canEditAppendix(appendixId)) {
+        // ✅ Kiểm tra xem có thể edit không (trong vòng 15 ngày VÀ không có request nào đang xử lý)
+        boolean withinEditPeriod = appendixDAO.canEditAppendix(appendixId);
+        boolean hasNonPending = hasNonPendingServiceRequests(appendixId);
+
+        if (!withinEditPeriod || hasNonPending) {
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
-            errorResult.put("message", "Phụ lục này đã quá 15 ngày, không thể chỉnh sửa");
+
+            if (!withinEditPeriod) {
+                errorResult.put("message", "Phụ lục này đã quá 15 ngày, không thể chỉnh sửa");
+            } else {
+                errorResult.put("message", "Không thể chỉnh sửa phụ lục vì có yêu cầu dịch vụ đang được xử lý");
+            }
+
             sendJson(response, errorResult);
             return;
         }
@@ -533,14 +565,25 @@ public class ViewCustomerContractController extends HttpServlet {
             int appendixId = Integer.parseInt(appendixIdStr.trim());
             System.out.println("Parsed appendixId: " + appendixId);
 
-            // Kiểm tra xem có thể edit không
-            boolean canEdit = appendixDAO.canEditAppendix(appendixId);
-            System.out.println("Can edit: " + canEdit);
+            // ✅ Kiểm tra xem có thể edit không
+            boolean withinEditPeriod = appendixDAO.canEditAppendix(appendixId);
+            boolean hasNonPending = hasNonPendingServiceRequests(appendixId);
 
-            if (!canEdit) {
+            System.out.println("Within edit period: " + withinEditPeriod);
+            System.out.println("Has non-pending requests: " + hasNonPending);
+
+            if (!withinEditPeriod) {
                 Map<String, Object> errorResult = new HashMap<>();
                 errorResult.put("success", false);
                 errorResult.put("message", "Phụ lục này đã quá 15 ngày, không thể chỉnh sửa");
+                sendJson(response, errorResult);
+                return;
+            }
+
+            if (hasNonPending) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "Không thể chỉnh sửa phụ lục vì có yêu cầu dịch vụ đang được xử lý (Approved/In Progress/Completed)");
                 sendJson(response, errorResult);
                 return;
             }
@@ -686,7 +729,9 @@ public class ViewCustomerContractController extends HttpServlet {
         try {
             int appendixId = Integer.parseInt(request.getParameter("appendixId"));
 
-            System.out.println("=== DELETE APPENDIX #" + appendixId + " ===");
+            System.out.println("\n╔════════════════════════════════════════════════════════════╗");
+            System.out.println("║  DELETE APPENDIX REQUEST FOR ID: " + appendixId);
+            System.out.println("╚════════════════════════════════════════════════════════════╝");
 
             // Kiểm tra xem có thể xóa không (trong vòng 15 ngày)
             if (!appendixDAO.canEditAppendix(appendixId)) {
@@ -697,32 +742,39 @@ public class ViewCustomerContractController extends HttpServlet {
                 return;
             }
 
-            // ✅ Lấy thông tin phụ lục để kiểm tra loại
+            // Lấy thông tin phụ lục
             ContractAppendix appendix = appendixDAO.getAppendixById(appendixId);
-            System.out.println("Appendix type: " + appendix.getAppendixType());
-            System.out.println("Equipment count: " + appendix.getEquipmentCount());
+            System.out.println("📄 Appendix type: " + appendix.getAppendixType());
+            System.out.println("📄 Equipment count: " + appendix.getEquipmentCount());
 
-            // ✅ Chỉ kiểm tra ServiceRequest nếu có thiết bị
+            // Chỉ xử lý requests nếu có thiết bị
             if (appendix.getEquipmentCount() > 0) {
+                // Kiểm tra non-pending requests
                 if (hasNonPendingServiceRequests(appendixId)) {
                     Map<String, Object> errorResult = new HashMap<>();
                     errorResult.put("success", false);
-                    errorResult.put("message", "Không thể xóa phụ lục này vì có yêu cầu dịch vụ đã được xử lý (không phải Pending)");
+                    errorResult.put("message", "Không thể xóa phụ lục này vì có yêu cầu dịch vụ đã được xử lý");
                     sendJson(response, errorResult);
                     return;
                 }
 
-                // Xóa các request có trạng thái Pending
+                // ✅ XÓA PENDING REQUESTS
                 ServiceRequestDAO srDAO = new ServiceRequestDAO();
-                srDAO.deletePendingRequestsForAppendix(appendixId);
-                System.out.println("✓ Deleted pending requests");
+                int deletedCount = srDAO.deletePendingRequestsForAppendix(appendixId);
+                System.out.println("🗑️ Total pending requests deleted: " + deletedCount);
+
+                // ✅ VERIFY: Debug lại sau khi xóa
+                System.out.println("\n--- VERIFICATION AFTER DELETE ---");
+                srDAO.debugServiceRequestsForAppendix(appendixId);
+
             } else {
-                System.out.println("ℹ No equipment, skip request check");
+                System.out.println("ℹ️ No equipment in appendix, skipping request deletion");
             }
 
             // Xóa phụ lục
+            System.out.println("🗑️ Now deleting appendix...");
             boolean deleted = appendixDAO.deleteAppendix(appendixId);
-            System.out.println("Delete result: " + deleted);
+            System.out.println("📊 Appendix deletion result: " + deleted);
 
             Map<String, Object> result = new HashMap<>();
             if (deleted) {
@@ -736,6 +788,11 @@ public class ViewCustomerContractController extends HttpServlet {
                 result.put("success", false);
                 result.put("message", "Không thể xóa phụ lục");
             }
+
+            System.out.println("\n╔════════════════════════════════════════════════════════════╗");
+            System.out.println("║  DELETION COMPLETED");
+            System.out.println("╚════════════════════════════════════════════════════════════╝\n");
+
             sendJson(response, result);
 
         } catch (Exception e) {
