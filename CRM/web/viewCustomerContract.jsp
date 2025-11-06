@@ -1014,6 +1014,88 @@
         </div>
     </div>
 </div>
+                                       
+                                       <!-- Modal: View Contract Appendix (Read-only) -->
+<div class="modal fade" id="viewAppendixModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i> Xem Chi Tiết Phụ Lục
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>Chế độ chỉ xem:</strong> Phụ lục này có yêu cầu dịch vụ đang xử lý, không thể chỉnh sửa.
+                </div>
+
+                <div class="row">
+                    <!-- Thông tin phụ lục -->
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-clipboard"></i> Thông tin phụ lục
+                        </h6>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Loại phụ lục</label>
+                            <input type="text" id="view-appendixType" class="form-control" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên phụ lục</label>
+                            <input type="text" id="view-appendixName" class="form-control" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mô tả</label>
+                            <textarea id="view-description" class="form-control" rows="3" readonly></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ngày hiệu lực</label>
+                            <input type="text" id="view-effectiveDate" class="form-control" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Trạng thái</label>
+                            <input type="text" id="view-status" class="form-control" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-file-download"></i> File đính kèm
+                            </label>
+                            <div id="view-fileDisplay"></div>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách thiết bị (chỉ hiển thị) -->
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-tools"></i> Danh sách thiết bị 
+                            (<span id="view-equipmentCount">0</span>)
+                        </h6>
+
+                        <div id="view-equipmentList" 
+                             class="border rounded p-3" 
+                             style="max-height: 400px; overflow-y: auto; background-color: #f8f9fa;">
+                            <p class="text-muted text-center mb-0">Chưa có thiết bị nào</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -1632,6 +1714,7 @@ function filterEquipment() {
 //});
 
 // Các function khác giữ nguyên
+// ✅ CẬP NHẬT FUNCTION viewContractDetailsWithAppendix
 async function viewContractDetailsWithAppendix(contractId) {
     viewContractDetails(contractId);
     
@@ -1654,7 +1737,6 @@ async function viewContractDetailsWithAppendix(contractId) {
                                   app.status === 'Draft' ? 'bg-warning' : 'bg-secondary';
                 const typeLabel = app.appendixType === 'AddEquipment' ? 'Thêm thiết bị' : 'Khác';
                 
-                // ✅ LOG để debug
                 console.log('Appendix #' + app.appendixId + ':', {
                     type: app.appendixType,
                     canEdit: app.canEdit,
@@ -1676,38 +1758,57 @@ async function viewContractDetailsWithAppendix(contractId) {
                     '<i class="fas fa-tools"></i> Số thiết bị: <strong>' + (app.equipmentCount || 0) + '</strong>' +
                     '</p>' +
                     '</div>' +
-                    '<div class="btn-group">' +
-                    // NÚT XEM FILE
-                    (app.fileAttachment ? 
-                        '<a href="' + app.fileAttachment + '" target="_blank" class="btn btn-sm btn-outline-success" title="Xem file đính kèm">' +
-                        '<i class="fas fa-file-download"></i>' +
-                        '</a>' : '') +
-                    // NÚT XEM THIẾT BỊ (chỉ hiện nếu có thiết bị)
-                    (app.equipmentCount > 0 ?
-                        '<button type="button" class="btn btn-sm btn-outline-info" ' +
-                        'onclick="viewAppendixEquipment(' + app.appendixId + ')" ' +
-                        'title="Xem thiết bị">' +
-                        '<i class="fas fa-list"></i>' +
-                        '</button>' : '') +
-                    // NÚT SỬA (chỉ hiện nếu canEdit = true)
-                    (app.canEdit ? 
-                        '<button type="button" class="btn btn-sm btn-outline-warning" ' +
-                        'onclick="openEditAppendixModal(' + app.appendixId + ')" ' +
-                        'title="Chỉnh sửa">' +
-                        '<i class="fas fa-edit"></i>' +
-                        '</button>' : '') +
-                    // ✅ NÚT XÓA - LUÔN HIỆN NẾU canDelete = true (bất kể loại phụ lục)
-                    (app.canDelete ? 
-                        '<button type="button" class="btn btn-sm btn-outline-danger" ' +
-                        'onclick="deleteAppendix(' + app.appendixId + ', \'' + app.appendixType + '\')" ' +
-                        'title="Xóa">' +
-                        '<i class="fas fa-trash"></i>' +
-                        '</button>' : 
-                        '<button type="button" class="btn btn-sm btn-outline-secondary" disabled ' +
-                        'title="Không thể xóa (đã quá 15 ngày hoặc có yêu cầu đang xử lý)">' +
-                        '<i class="fas fa-lock"></i>' +
-                        '</button>') +
-                    '</div>' +
+                    '<div class="btn-group">';
+                
+                // NÚT XEM FILE
+                if (app.fileAttachment) {
+                    html += '<a href="' + app.fileAttachment + '" target="_blank" ' +
+                           'class="btn btn-sm btn-outline-success" title="Xem file đính kèm">' +
+                           '<i class="fas fa-file-download"></i>' +
+                           '</a>';
+                }
+                
+                // NÚT XEM THIẾT BỊ (chỉ hiện nếu có thiết bị)
+                if (app.equipmentCount > 0) {
+                    html += '<button type="button" class="btn btn-sm btn-outline-info" ' +
+                           'onclick="viewAppendixEquipment(' + app.appendixId + ')" ' +
+                           'title="Xem thiết bị">' +
+                           '<i class="fas fa-list"></i>' +
+                           '</button>';
+                }
+                
+                // Trong hàm viewContractDetailsWithAppendix(), phần render appendix list
+                if (app.canEdit) {
+                    // Có thể sửa → Hiển thị nút EDIT
+                    html += '<button type="button" class="btn btn-sm btn-outline-warning" ' +
+                           'onclick="openEditAppendixModal(' + app.appendixId + ')" ' +
+                           'title="Chỉnh sửa">' +
+                           '<i class="fas fa-edit"></i>' +
+                           '</button>';
+                } else {
+                    // Không thể sửa → Hiển thị nút VIEW (Read-only)
+                    html += '<button type="button" class="btn btn-sm btn-outline-info" ' +
+                           'onclick="openViewAppendixModal(' + app.appendixId + ')" ' +
+                           'title="Xem chi tiết (chỉ đọc)">' +
+                           '<i class="fas fa-eye"></i>' +
+                           '</button>';
+                }
+                
+                // NÚT XÓA
+                if (app.canDelete) {
+                    html += '<button type="button" class="btn btn-sm btn-outline-danger" ' +
+                           'onclick="deleteAppendix(' + app.appendixId + ', \'' + app.appendixType + '\')" ' +
+                           'title="Xóa">' +
+                           '<i class="fas fa-trash"></i>' +
+                           '</button>';
+                } else {
+                    html += '<button type="button" class="btn btn-sm btn-outline-secondary" disabled ' +
+                           'title="Không thể xóa (đã quá 15 ngày hoặc có yêu cầu đang xử lý)">' +
+                           '<i class="fas fa-lock"></i>' +
+                           '</button>';
+                }
+                
+                html += '</div>' +
                     '</div>' +
                     '</div>';
             });
@@ -3298,6 +3399,94 @@ async function deleteContract(contractId, customerName) {
             icon: 'error',
             title: 'Lỗi hệ thống',
             text: 'Không thể kết nối đến server: ' + error.message,
+            confirmButtonColor: '#000'
+        });
+    }
+}
+
+async function openViewAppendixModal(appendixId) {
+    console.log('=== OPEN VIEW APPENDIX MODAL ===');
+    console.log('Appendix ID:', appendixId);
+    
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const response = await fetch("/" + ctx + "/viewAppendixDetails?appendixId=" + appendixId);
+        
+        if (!response.ok) throw new Error("Không thể tải thông tin phụ lục");
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: data.message,
+                confirmButtonColor: '#000'
+            });
+            return;
+        }
+        
+        const appendix = data.appendix;
+        const equipment = data.equipment || [];
+        
+        // Hiển thị thông tin phụ lục
+        document.getElementById('view-appendixType').value = 
+            appendix.appendixType === 'AddEquipment' ? 'Thêm thiết bị' : 'Khác';
+        document.getElementById('view-appendixName').value = appendix.appendixName;
+        document.getElementById('view-description').value = appendix.description || '';
+        document.getElementById('view-effectiveDate').value = appendix.effectiveDate;
+        document.getElementById('view-status').value = appendix.status;
+        
+        // Hiển thị file
+        const fileDisplay = document.getElementById('view-fileDisplay');
+        if (appendix.fileAttachment) {
+            const fileName = appendix.fileAttachment.split('/').pop();
+            const fileIcon = getFileIcon(appendix.fileAttachment);
+            fileDisplay.innerHTML = 
+                '<a href="' + appendix.fileAttachment + '" target="_blank" class="btn btn-outline-success btn-sm">' +
+                '<i class="' + fileIcon + ' me-2"></i>' + fileName +
+                '</a>';
+        } else {
+            fileDisplay.innerHTML = '<span class="text-muted">Không có file</span>';
+        }
+        
+        // Hiển thị danh sách thiết bị
+        const equipmentContainer = document.getElementById('view-equipmentList');
+        const countSpan = document.getElementById('view-equipmentCount');
+        
+        countSpan.innerText = equipment.length;
+        
+        if (equipment.length === 0) {
+            equipmentContainer.innerHTML = '<p class="text-muted text-center mb-0">Chưa có thiết bị nào</p>';
+        } else {
+            let html = '<div class="list-group list-group-flush">';
+            equipment.forEach(function(eq, index) {
+                html += '<div class="list-group-item bg-white">' +
+                    '<div class="d-flex align-items-start">' +
+                    '<div class="me-2">' +
+                    '<span class="badge bg-primary rounded-circle">' + (index + 1) + '</span>' +
+                    '</div>' +
+                    '<div class="flex-grow-1">' +
+                    '<strong>' + (eq.model || 'N/A') + '</strong>' +
+                    '<br><small class="text-muted"><code>' + (eq.serialNumber || 'N/A') + '</code></small>' +
+                    (eq.description ? '<br><small class="text-secondary">' + eq.description + '</small>' : '') +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+            });
+            html += '</div>';
+            equipmentContainer.innerHTML = html;
+        }
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('viewAppendixModal')).show();
+        
+    } catch (error) {
+        console.error("Error:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Không thể tải thông tin phụ lục',
             confirmButtonColor: '#000'
         });
     }
