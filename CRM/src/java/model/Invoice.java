@@ -8,6 +8,7 @@ public class Invoice {
     private LocalDate dueDate;
     private double totalAmount;
     private String status;
+    private String paymentMethod;
 
     public Invoice() {
     }
@@ -68,6 +69,12 @@ public class Invoice {
     public void setStatus(String status) {
         this.status = status;
     }
-    
-    
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
 }

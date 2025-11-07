@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet(name = "invoicesServlet", urlPatterns = {"/invoices"})
 public class invoicesServlet extends HttpServlet {
@@ -64,8 +65,8 @@ public class invoicesServlet extends HttpServlet {
         
         int customerId = account.getAccountId(); // SỬA LẠI: dùng getAccountId() thay vì getUserId()
         
-        // Lấy danh sách hóa đơn
-        List<Invoice> invoices = invoiceDAO.getInvoicesByCustomerId(customerId);
+        // Lấy danh sách hóa đơn - tạm thời dùng getAllInvoicesForTest để test
+        List<Invoice> invoices = invoiceDAO.getAllInvoicesForTest();
         
         // Tạo danh sách InvoiceItem với formatted contract ID
         List<InvoiceItem> invoiceList = new ArrayList<>();
@@ -76,11 +77,16 @@ public class invoicesServlet extends HttpServlet {
             invoiceList.add(item);
         }
         
-        // Lấy thống kê
-        int totalInvoices = invoiceDAO.countTotalInvoices(customerId);
-        int paidCount = invoiceDAO.countPaidInvoices(customerId);
-        int pendingCount = invoiceDAO.countPendingInvoices(customerId);
-        double totalAmount = invoiceDAO.calculateTotalAmount(customerId);
+        // Lấy thống kê - tạm thời dùng phương thức test
+        int totalInvoices = invoiceDAO.countTotalInvoicesForTest();
+        int paidCount = invoiceDAO.countPaidInvoicesForTest();
+        int pendingCount = invoiceDAO.countPendingInvoicesForTest();
+        double totalAmount = invoiceDAO.calculateTotalAmountForTest();
+        
+        // Debug info
+        System.out.println("DEBUG: Customer ID = " + customerId);
+        System.out.println("DEBUG: Total invoices found = " + invoices.size());
+        System.out.println("DEBUG: Invoice list size = " + invoiceList.size());
         
         // Set attributes
         request.setAttribute("invoiceList", invoiceList);
@@ -99,16 +105,40 @@ public class invoicesServlet extends HttpServlet {
     private void handleSearch(HttpServletRequest request, HttpServletResponse response, Account account)
             throws ServletException, IOException {
         
-        int customerId = account.getAccountId(); // SỬA LẠI: dùng getAccountId() thay vì getUserId()
+        int customerId = account.getAccountId();
+        
+        // Lấy các tham số tìm kiếm
         String keyword = request.getParameter("keyword");
+        String status = request.getParameter("status");
+        String paymentMethod = request.getParameter("paymentMethod");
+        String sortBy = request.getParameter("sortBy");
+        String fromDate = request.getParameter("fromDate");
+        String toDate = request.getParameter("toDate");
+        String fromDueDate = request.getParameter("fromDueDate");
+        String toDueDate = request.getParameter("toDueDate");
         
-        if (keyword == null || keyword.trim().isEmpty()) {
-            handleList(request, response, account);
-            return;
+        // Kiểm tra xem có tiêu chí tìm kiếm nào không
+        boolean hasSearchCriteria = (keyword != null && !keyword.trim().isEmpty()) ||
+                                   (status != null && !status.trim().isEmpty()) ||
+                                   (paymentMethod != null && !paymentMethod.trim().isEmpty()) ||
+                                   (fromDate != null && !fromDate.trim().isEmpty()) ||
+                                   (toDate != null && !toDate.trim().isEmpty()) ||
+                                   (fromDueDate != null && !fromDueDate.trim().isEmpty()) ||
+                                   (toDueDate != null && !toDueDate.trim().isEmpty());
+        
+        List<Invoice> invoices;
+        if (hasSearchCriteria) {
+            // Tìm kiếm nâng cao
+            invoices = invoiceDAO.searchInvoicesAdvanced(customerId, keyword, status, 
+                    paymentMethod, sortBy, fromDate, toDate, fromDueDate, toDueDate);
+        } else {
+            // Không có tiêu chí tìm kiếm, hiển thị tất cả với sắp xếp
+            invoices = invoiceDAO.getInvoicesByCustomerId(customerId);
+            // Áp dụng sắp xếp nếu có
+            if (sortBy != null && !sortBy.trim().isEmpty()) {
+                sortInvoices(invoices, sortBy);
+            }
         }
-        
-        // Tìm kiếm hóa đơn
-        List<Invoice> invoices = invoiceDAO.searchInvoices(customerId, keyword.trim());
         
         // Tạo danh sách InvoiceItem
         List<InvoiceItem> invoiceList = new ArrayList<>();
@@ -119,11 +149,11 @@ public class invoicesServlet extends HttpServlet {
             invoiceList.add(item);
         }
         
-        // Lấy thống kê (vẫn lấy từ tất cả hóa đơn)
-        int totalInvoices = invoiceDAO.countTotalInvoices(customerId);
-        int paidCount = invoiceDAO.countPaidInvoices(customerId);
-        int pendingCount = invoiceDAO.countPendingInvoices(customerId);
-        double totalAmount = invoiceDAO.calculateTotalAmount(customerId);
+        // Lấy thống kê - tạm thời dùng phương thức test
+        int totalInvoices = invoiceDAO.countTotalInvoicesForTest();
+        int paidCount = invoiceDAO.countPaidInvoicesForTest();
+        int pendingCount = invoiceDAO.countPendingInvoicesForTest();
+        double totalAmount = invoiceDAO.calculateTotalAmountForTest();
         
         // Set attributes
         request.setAttribute("invoiceList", invoiceList);
@@ -131,12 +161,30 @@ public class invoicesServlet extends HttpServlet {
         request.setAttribute("paidCount", paidCount);
         request.setAttribute("pendingCount", pendingCount);
         request.setAttribute("totalAmount", totalAmount);
-        request.setAttribute("searchMode", true);
+        request.setAttribute("searchMode", hasSearchCriteria);
         request.setAttribute("keyword", keyword);
         request.setAttribute("viewMode", "list");
         
         // Forward to JSP
         request.getRequestDispatcher("/invoices.jsp").forward(request, response);
+    }
+    
+    // Phương thức sắp xếp danh sách hóa đơn
+    private void sortInvoices(List<Invoice> invoices, String sortBy) {
+        switch (sortBy) {
+            case "newest":
+                invoices.sort((a, b) -> b.getIssueDate().compareTo(a.getIssueDate()));
+                break;
+            case "oldest":
+                invoices.sort((a, b) -> a.getIssueDate().compareTo(b.getIssueDate()));
+                break;
+            case "amount_asc":
+                invoices.sort((a, b) -> Double.compare(a.getTotalAmount(), b.getTotalAmount()));
+                break;
+            case "amount_desc":
+                invoices.sort((a, b) -> Double.compare(b.getTotalAmount(), a.getTotalAmount()));
+                break;
+        }
     }
     
     // Xem chi tiết hóa đơn (hiển thị trên cùng trang)
@@ -159,8 +207,13 @@ public class invoicesServlet extends HttpServlet {
             // Lấy chi tiết hóa đơn
             List<InvoiceDetail> invoiceDetails = invoiceDAO.getInvoiceDetails(invoiceId);
             
-            // Vẫn lấy danh sách và thống kê để hiển thị
-            List<Invoice> invoices = invoiceDAO.getInvoicesByCustomerId(customerId);
+            // Lấy chi tiết linh kiện từ báo cáo sửa chữa
+            List<Map<String, Object>> repairPartDetails = invoiceDAO.getRepairPartDetails(invoiceId);
+            double partsTotalAmount = invoiceDAO.calculatePartsTotalForInvoice(invoiceId);
+            List<Map<String, Object>> partsCategoryStats = invoiceDAO.getPartsCategoryStats(invoiceId);
+            
+            // Vẫn lấy danh sách và thống kê để hiển thị - dùng phương thức test
+            List<Invoice> invoices = invoiceDAO.getAllInvoicesForTest();
             List<InvoiceItem> invoiceList = new ArrayList<>();
             for (Invoice inv : invoices) {
                 InvoiceItem item = new InvoiceItem();
@@ -169,11 +222,11 @@ public class invoicesServlet extends HttpServlet {
                 invoiceList.add(item);
             }
             
-            // Lấy thống kê
-            int totalInvoices = invoiceDAO.countTotalInvoices(customerId);
-            int paidCount = invoiceDAO.countPaidInvoices(customerId);
-            int pendingCount = invoiceDAO.countPendingInvoices(customerId);
-            double totalAmount = invoiceDAO.calculateTotalAmount(customerId);
+            // Lấy thống kê - dùng phương thức test
+            int totalInvoices = invoiceDAO.countTotalInvoicesForTest();
+            int paidCount = invoiceDAO.countPaidInvoicesForTest();
+            int pendingCount = invoiceDAO.countPendingInvoicesForTest();
+            double totalAmount = invoiceDAO.calculateTotalAmountForTest();
             
             // Set attributes cho danh sách
             request.setAttribute("invoiceList", invoiceList);
@@ -185,6 +238,9 @@ public class invoicesServlet extends HttpServlet {
             // Set attributes cho chi tiết
             request.setAttribute("selectedInvoice", invoice);
             request.setAttribute("invoiceDetails", invoiceDetails);
+            request.setAttribute("repairPartDetails", repairPartDetails);
+            request.setAttribute("partsTotalAmount", partsTotalAmount);
+            request.setAttribute("partsCategoryStats", partsCategoryStats);
             request.setAttribute("formattedContractId", "CTR" + String.format("%04d", invoice.getContractId()));
             request.setAttribute("viewMode", "detail");
             

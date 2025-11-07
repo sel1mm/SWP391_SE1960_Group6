@@ -898,12 +898,25 @@ public class ContractDAO extends MyDAO {
     }
 
     /**
-     * Get all contracts belonging to a specific customer
+     * ✅ Get all contracts belonging to a specific customer ONLY get main
+     * contracts from Contract table
      */
     public List<Contract> getContractsByCustomer(int customerId) throws SQLException {
         List<Contract> list = new ArrayList<>();
-        String sql = "SELECT contractId, customerId, contractDate, contractType, status, details "
-                + "FROM Contract WHERE customerId = ? ORDER BY contractDate DESC";
+
+        // Chỉ lấy hợp đồng chính từ bảng Contract
+        String sql = """
+        SELECT 
+            contractId, 
+            customerId, 
+            contractDate, 
+            contractType,
+            status, 
+            details
+        FROM Contract 
+        WHERE customerId = ?
+        ORDER BY contractDate DESC
+    """;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, customerId);
@@ -912,20 +925,138 @@ public class ContractDAO extends MyDAO {
                     Contract c = new Contract();
                     c.setContractId(rs.getInt("contractId"));
                     c.setCustomerId(rs.getInt("customerId"));
+
                     Date sqlDate = rs.getDate("contractDate");
                     if (sqlDate != null) {
                         c.setContractDate(sqlDate.toLocalDate());
                     }
-                    c.setContractType(rs.getString("contractType"));
+
+                    // ✅ ĐÂY LÀ ĐIỂM QUAN TRỌNG!
+                    // Nếu contractType NULL hoặc rỗng → set thành "MainContract"
+                    String contractType = rs.getString("contractType");
+                    if (contractType == null || contractType.trim().isEmpty()) {
+                        c.setContractType("MainContract");
+                    } else {
+                        c.setContractType(contractType);
+                    }
+
                     c.setStatus(rs.getString("status"));
                     c.setDetails(rs.getString("details"));
                     list.add(c);
                 }
             }
         } catch (SQLException e) {
-            System.out.println("❌ Error in getContractsByCustomer: " + e.getMessage());
+            System.err.println("❌ Error in getContractsByCustomer: " + e.getMessage());
             throw e;
         }
+
+        System.out.println("✅ getContractsByCustomer: Found " + list.size() + " contracts for customer " + customerId);
+
+        // Debug: In ra thông tin từng hợp đồng
+        for (Contract c : list) {
+            System.out.println("  - Contract ID: " + c.getContractId()
+                    + ", Type: " + c.getContractType()
+                    + ", Status: " + c.getStatus()
+                    + ", Date: " + c.getContractDate());
+        }
+
+        return list;
+    }
+
+    /**
+     * ✅ Get all contracts AND appendixes belonging to a specific customer This
+     * method combines both main contracts and appendixes
+     */
+    /**
+     * ✅ Get BOTH main contracts AND appendixes for a customer
+     */
+    public List<Contract> getContractsAndAppendixesByCustomer(int customerId) throws SQLException {
+        List<Contract> list = new ArrayList<>();
+
+        // 1. Lấy hợp đồng chính từ bảng Contract
+        String mainContractSql = """
+        SELECT 
+            contractId, 
+            customerId, 
+            contractDate, 
+            contractType,
+            status, 
+            details
+        FROM Contract 
+        WHERE customerId = ?
+    """;
+
+        try (PreparedStatement ps = con.prepareStatement(mainContractSql)) {
+            ps.setInt(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Contract c = new Contract();
+                    c.setContractId(rs.getInt("contractId"));
+                    c.setCustomerId(rs.getInt("customerId"));
+
+                    Date sqlDate = rs.getDate("contractDate");
+                    if (sqlDate != null) {
+                        c.setContractDate(sqlDate.toLocalDate());
+                    }
+
+                    // ✅ Nếu contractType NULL → set = "MainContract"
+                    String contractType = rs.getString("contractType");
+                    c.setContractType((contractType == null || contractType.trim().isEmpty())
+                            ? "MainContract"
+                            : contractType);
+
+                    c.setStatus(rs.getString("status"));
+                    c.setDetails(rs.getString("details"));
+                    list.add(c);
+                }
+            }
+        }
+
+        // 2. Lấy phụ lục từ bảng ContractAppendix
+        String appendixSql = """
+        SELECT 
+            ca.appendixId,
+            c.customerId,
+            ca.effectiveDate as contractDate,
+            ca.status,
+            CONCAT('Phụ lục: ', ca.appendixName, ' (HĐ #', ca.contractId, ')') as details,
+            ca.contractId as parentContractId
+        FROM ContractAppendix ca
+        JOIN Contract c ON ca.contractId = c.contractId
+        WHERE c.customerId = ?
+    """;
+
+        try (PreparedStatement ps = con.prepareStatement(appendixSql)) {
+            ps.setInt(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Contract c = new Contract();
+
+                    // ⚠️ LƯU Ý: appendixId khác với contractId
+                    // Để phân biệt, có thể thêm prefix
+                    c.setContractId(rs.getInt("appendixId"));
+                    c.setCustomerId(rs.getInt("customerId"));
+
+                    Date sqlDate = rs.getDate("contractDate");
+                    if (sqlDate != null) {
+                        c.setContractDate(sqlDate.toLocalDate());
+                    }
+
+                    // ✅ LUÔN set = "Appendix" cho phụ lục
+                    c.setContractType("Appendix");
+                    c.setStatus(rs.getString("status"));
+                    c.setDetails(rs.getString("details"));
+
+                    list.add(c);
+                }
+            }
+        }
+
+        // 3. Sắp xếp theo ngày (mới nhất trước)
+        list.sort((a, b) -> b.getContractDate().compareTo(a.getContractDate()));
+
+        System.out.println("✅ getContractsAndAppendixesByCustomer: Found " + list.size() + " items for customer " + customerId);
+
         return list;
     }
 
@@ -1209,7 +1340,6 @@ public class ContractDAO extends MyDAO {
 
         return 0;
     }
-
 
     // Thêm thiết bị vào hợp đồng
     public boolean addEquipmentToContract(int contractId, int equipmentId,
