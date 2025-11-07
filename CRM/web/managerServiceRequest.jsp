@@ -982,42 +982,99 @@
                     </div>
                 </div>
 
-                <!-- SEARCH & FILTER BAR -->
+
+
+
+                <!-- SEARCH BAR FOR SERVICE REQUEST -->
                 <div class="search-filter-bar">
-                    <form action="${pageContext.request.contextPath}/managerServiceRequest" method="get" class="row g-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <input type="text" class="form-control" name="keyword" 
-                                       placeholder="Tìm kiếm theo mô tả, ID..." value="${keyword}">
-                                <button class="btn btn-primary" type="submit" name="action" value="search">
-                                    <i class="fas fa-search"></i> Tìm Kiếm
-                                </button>
+                    <form action="${pageContext.request.contextPath}/managerServiceRequest" method="get">
+                        <input type="hidden" name="action" value="search"/>
+
+                        <!-- Hàng 1: Search + Dropdowns -->
+                        <div class="row g-3 mb-2">
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Tìm kiếm</label>
+                                <input type="text" class="form-control" name="keyword"
+                                       placeholder="Mô tả, ID yêu cầu, mã hợp đồng..."
+                                       value="${param.keyword}">
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold">Trạng Thái</label>
+                                <select name="status" class="form-select">
+                                    <option value="">Tất cả</option>
+                                    <option value="Pending" ${param.status == 'Pending' ? 'selected' : ''}>Chờ Xác Nhận</option>
+                                    <option value="AwaitingApproval" ${param.status == 'AwaitingApproval' ? 'selected' : ''}>Chờ Xử Lý</option>
+                                    <option value="Approved" ${param.status == 'Approved' ? 'selected' : ''}>Đang Xử Lý</option>
+                                    <option value="Completed" ${param.status == 'Completed' ? 'selected' : ''}>Hoàn Thành</option>
+                                    <option value="Cancelled" ${param.status == 'Cancelled' ? 'selected' : ''}>Đã Hủy</option>
+                                    <option value="Rejected" ${param.status == 'Rejected' ? 'selected' : ''}>Bị Từ Chối</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Loại Yêu Cầu</label>
+                                <select name="requestType" class="form-select">
+                                    <option value="">Tất cả</option>
+                                    <option value="Service" ${param.requestType == 'Service' ? 'selected' : ''}>Dịch Vụ</option>
+                                    <option value="Warranty" ${param.requestType == 'Warranty' ? 'selected' : ''}>Bảo Hành</option>
+                                    <option value="InformationUpdate" ${param.requestType == 'InformationUpdate' ? 'selected' : ''}>Cập Nhật Thông Tin</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Sắp xếp</label>
+                                <select name="sortBy" class="form-select">
+                                    <option value="newest" ${param.sortBy == 'newest' ? 'selected' : ''}>Mới nhất</option>
+                                    <option value="oldest" ${param.sortBy == 'oldest' ? 'selected' : ''}>Cũ nhất</option>
+                                    <option value="priority_high" ${param.sortBy == 'priority_high' ? 'selected' : ''}>Ưu tiên cao</option>
+                                    <option value="priority_low" ${param.sortBy == 'priority_low' ? 'selected' : ''}>Ưu tiên thấp</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <select class="form-select" name="status" id="filterStatus">
-                                <option value="">-- Tất Cả Trạng Thái --</option>
-                                <option value="Pending" ${filterStatus == 'Pending' ? 'selected' : ''}>Chờ Xử Lý</option>
-                                <option value="Approved" ${filterStatus == 'Approved' ? 'selected' : ''}>Đã Duyệt</option>
-                                <option value="Completed" ${filterStatus == 'Completed' ? 'selected' : ''}>Hoàn Thành</option>
-                                <option value="Rejected" ${filterStatus == 'Rejected' ? 'selected' : ''}>Bị từ chối</option>
-                                <option value="Cancelled" ${filterStatus == 'Cancelled' ? 'selected' : ''}>Đã Hủy</option>
-                            </select>
+
+                        <!-- Hàng 2: Date range + Priority -->
+                        <div class="row g-3 mb-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Từ ngày tạo</label>
+                                <input type="date" class="form-control" name="fromDate" value="${param.fromDate}">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Đến ngày tạo</label>
+                                <input type="date" class="form-control" name="toDate" value="${param.toDate}">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Mức độ ưu tiên</label>
+                                <select name="priorityLevel" class="form-select">
+                                    <option value="">Tất cả</option>
+                                    <option value="Normal" ${param.priorityLevel == 'Normal' ? 'selected' : ''}>Bình Thường</option>
+                                    <option value="High" ${param.priorityLevel == 'High' ? 'selected' : ''}>Cao</option>
+                                    <option value="Urgent" ${param.priorityLevel == 'Urgent' ? 'selected' : ''}>Khẩn Cấp</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <button type="submit" name="action" value="filter" class="btn btn-info w-100">
-                                <i class="fas fa-filter"></i> Lọc
-                            </button>
+
+                        <!-- Hàng 3: Buttons -->
+                        <div class="row g-3">
+                            <div class="col-md-3 d-grid">
+                                <button type="submit" class="btn btn-dark">
+                                    <i class="fas fa-search me-1"></i> Tìm kiếm
+                                </button>
+                            </div>
+                            <div class="col-md-3 d-grid">
+                                <a href="${pageContext.request.contextPath}/managerServiceRequest" class="btn btn-outline-dark">
+                                    <i class="fas fa-sync-alt me-1"></i> Làm mới
+                                </a>
+                            </div>
                         </div>
                     </form>
-                    <c:if test="${searchMode || filterMode}">
-                        <div class="mt-2">
-                            <a href="${pageContext.request.contextPath}/managerServiceRequest" class="btn btn-sm btn-secondary">
-                                <i class="fas fa-times"></i> Xóa Bộ Lọc
-                            </a>
-                        </div>
-                    </c:if>
-                </div>
+                </div>            
+
+
+
+
 
                 <!-- BẢNG DANH SÁCH -->
                 <div class="table-container">
@@ -1120,7 +1177,7 @@
                                                     <i class="fas fa-times-circle"></i> Hủy
                                                 </button>
                                             </c:if>
-                                            <%-- ✅ NÚT XEM BÁO GIÁ - Luôn hiển thị khi đang xử lý --%>
+                                            <%-- ✅ NÚT XEM BÁO GIÁ - Hiển thị khi đang xử lý --%>
                                             <c:if test="${displayStatus == 'Đang Xử Lý' && 
                                                           dbStatus == 'Completed' && 
                                                           paymentStatus != 'Completed' && 
@@ -1128,14 +1185,6 @@
                                                   <button class="btn btn-sm btn-purple btn-action"
                                                           onclick="viewQuotation(${req.requestId})">
                                                       <i class="fas fa-file-invoice"></i> Báo Giá
-                                                  </button>
-                                                  <%-- ✅ NÚT THANH TOÁN - Ẩn mặc định, JavaScript sẽ kiểm tra và hiển thị --%>
-                                                  <button class="btn btn-sm btn-success btn-action"
-                                                          id="payBtn_${req.requestId}"
-                                                          onclick="makePayment(${req.requestId})"
-                                                          style="display: none;"
-                                                          data-request-id="${req.requestId}">
-                                                      <i class="fas fa-credit-card"></i> Thanh Toán
                                                   </button>
                                             </c:if>
 
@@ -1164,7 +1213,7 @@
                             <ul class="pagination justify-content-center">
                                 <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
                                     <c:if test="${currentPage > 1}">
-                                        <a class="page-link" href="?page=${currentPage - 1}${filterStatus != null ? '&status='.concat(filterStatus) : ''}${keyword != null ? '&keyword='.concat(keyword) : ''}&action=${filterMode ? 'filter' : (searchMode ? 'search' : '')}">
+                                        <a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage - 1})">
                                             <i class="fas fa-chevron-left"></i> Trước
                                         </a>
                                     </c:if>
@@ -1178,7 +1227,7 @@
                                 <c:forEach var="i" begin="1" end="${totalPages}">
                                     <li class="page-item ${i == currentPage ? 'active' : ''}">
                                         <c:if test="${i != currentPage}">
-                                            <a class="page-link" href="?page=${i}${filterStatus != null ? '&status='.concat(filterStatus) : ''}${keyword != null ? '&keyword='.concat(keyword) : ''}&action=${filterMode ? 'filter' : (searchMode ? 'search' : '')}">
+                                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(${i})">
                                                 ${i}
                                             </a>
                                         </c:if>
@@ -1190,7 +1239,7 @@
 
                                 <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
                                     <c:if test="${currentPage < totalPages}">
-                                        <a class="page-link" href="?page=${currentPage + 1}${filterStatus != null ? '&status='.concat(filterStatus) : ''}${keyword != null ? '&keyword='.concat(keyword) : ''}&action=${filterMode ? 'filter' : (searchMode ? 'search' : '')}">
+                                        <a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage + 1})">
                                             Tiếp <i class="fas fa-chevron-right"></i>
                                         </a>
                                     </c:if>
@@ -1265,65 +1314,7 @@
                                 <li><a href="#">→ Liên hệ</a></li>
                             </ul>
                         </div>
-                    </div>
-
-                    <!-- Divider -->
-                    <div class="footer-divider"></div>
-
-                    <!-- Bottom Info -->
-                    <div class="footer-grid" style="margin-bottom: 30px;">
-                        <!-- Contact Info -->
-                        <div>
-                            <h5 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Liên hệ</h5>
-                            <div class="footer-contact-item">
-                                <i class="fas fa-envelope"></i>
-                                <span><strong>Email:</strong> support@crmsystem.com</span>
-                            </div>
-                            <div class="footer-contact-item">
-                                <i class="fas fa-phone"></i>
-                                <span><strong>Hotline:</strong> (+84) 123 456 7890</span>
-                            </div>
-                            <div class="footer-contact-item">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <span><strong>Địa chỉ:</strong> Ho Chi Minh City, Vietnam</span>
-                            </div>
-                            <div class="footer-contact-item">
-                                <i class="fas fa-clock"></i>
-                                <span><strong>Hỗ trợ:</strong> 24/7</span>
-                            </div>
-                        </div>
-
-                        <!-- Stats -->
-                        <div>
-                            <h5 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Thống kê</h5>
-                            <ul class="footer-stats">
-                                <li><i class="fas fa-users"></i> <span>Người dùng: <strong>5,000+</strong></span></li>
-                                <li><i class="fas fa-building"></i> <span>Công ty: <strong>1,200+</strong></span></li>
-                                <li><i class="fas fa-database"></i> <span>Dữ liệu: <strong>500K+</strong></span></li>
-                                <li><i class="fas fa-star"></i> <span>Đánh giá: <strong>4.9/5.0</strong></span></li>
-                            </ul>
-                        </div>
-
-                        <!-- Certification -->
-                        <div style="grid-column: span 2;">
-                            <h5 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Chứng chỉ</h5>
-                            <div class="footer-certifications">
-                                <div class="cert-badge">
-                                    <i class="fas fa-lock"></i>
-                                    <span>ISO 27001</span>
-                                </div>
-                                <div class="cert-badge">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>GDPR</span>
-                                </div>
-                                <div class="cert-badge">
-                                    <i class="fas fa-shield-alt"></i>
-                                    <span>SOC 2</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                    </div>                                  
                     <!-- Footer Bottom -->
                     <div class="footer-bottom">
                         <p class="footer-copyright">
@@ -1631,6 +1622,37 @@
                 </div>
             </div>
         </div>
+        <style>
+            /* ✅ THÊM STYLE CHO BẢNG LINH KIỆN */
+            #partsTable {
+                font-size: 0.9rem;
+            }
+
+            #partsTable thead th {
+                background-color: #f8f9fa;
+                font-weight: 600;
+                text-align: center;
+                vertical-align: middle;
+            }
+
+            #partsTable tbody td {
+                vertical-align: middle;
+            }
+
+            #partsTable tbody tr:hover {
+                background-color: #f1f3f5;
+            }
+
+            .part-description {
+                font-size: 0.85rem;
+                color: #6c757d;
+                font-style: italic;
+            }
+
+            #partsTable tfoot {
+                font-size: 1rem;
+            }
+        </style>
 
         <!-- ========================================== -->
         <!-- MODAL 3: ĐANG XỬ LÝ - BÁO GIÁ (In Progress) -->
@@ -1694,27 +1716,40 @@
                                         <p id="quotationRepairDate">Chưa xác định</p>
                                     </div>
                                 </div>
+
+                                <!-- ✅ BẢNG DANH SÁCH LINH KIỆN THAY THẾ -->
                                 <div class="mb-3">
-                                    <strong><i class="fas fa-stethoscope"></i> Chẩn Đoán:</strong>
-                                    <div class="border rounded p-3 bg-light" id="quotationDiagnosis"></div>
-                                </div>
-                                <div class="mb-3">
-                                    <strong><i class="fas fa-wrench"></i> Chi Tiết Sửa Chữa:</strong>
-                                    <div class="border rounded p-3 bg-light" id="quotationDetails"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="alert alert-info">
-                                            <strong><i class="fas fa-dollar-sign"></i> Chi Phí Ước Tính:</strong>
-                                            <h4 class="mb-0 text-primary" id="quotationCost">0 VNĐ</h4>
-                                        </div>
+                                    <strong><i class="fas fa-cogs"></i> Linh Kiện Thay Thế:</strong>
+                                    <div class="table-responsive mt-2">
+                                        <table class="table table-bordered table-hover" id="partsTable">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th width="5%">#</th>
+                                                    <th width="30%">Tên Linh Kiện</th>
+                                                    <th width="20%">Serial Number</th>
+                                                    <th width="10%">Số Lượng</th>
+                                                    <th width="15%">Đơn Giá</th>
+                                                    <th width="20%">Thành Tiền</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="partsTableBody">
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted">
+                                                        <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                            <tfoot class="table-light">
+                                                <tr>
+                                                    <td colspan="5" class="text-end"><strong>Tổng Chi Phí:</strong></td>
+                                                    <td><strong id="partsTotalCost" class="text-primary">0 VNĐ</strong></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="alert alert-warning">
-                                            <strong><i class="fas fa-info-circle"></i> Trạng Thái Báo Giá:</strong>
-                                            <p class="mb-0" id="quotationQuotationStatus">Pending</p>
-                                        </div>
-                                    </div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> Chi phí đã bao gồm linh kiện và công sửa chữa
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -1731,14 +1766,16 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="fas fa-times"></i> Đóng
                         </button>
-                        <%-- ✅ NÚT ĐỒNG Ý - Ẩn mặc định, JavaScript sẽ kiểm tra và hiển thị --%>
-                        <button type="button" class="btn btn-success" id="btnAcceptQuotation" onclick="acceptQuotation()" style="display: none;">
-                            <i class="fas fa-check-circle"></i> Đồng Ý & Thanh Toán
+                        <%-- ✅ NÚT THANH TOÁN - Chỉ hiển thị khi có linh kiện --%>
+                        <button type="button" class="btn btn-success" id="btnPaymentInModal" 
+                                onclick="makePaymentFromModal()" style="display: none;">
+                            <i class="fas fa-credit-card"></i> Thanh Toán
                         </button>
                     </div>
                 </div>
             </div>
         </div>
+
 
         <!-- MODAL SỬA -->
         <div class="modal fade" id="editModal" tabindex="-1">
@@ -1921,7 +1958,7 @@
                         function toggleEquipmentDropdown() {
                             const menu = document.getElementById('equipmentDropdownMenu');
                             const icon = document.getElementById('equipmentDropdownIcon');
-                            
+
                             if (menu.style.display === 'none' || menu.style.display === '') {
                                 menu.style.display = 'block';
                                 icon.classList.remove('fa-chevron-down');
@@ -1990,6 +2027,19 @@
                             return true;
                         }
 
+                        // ========== EVENT LISTENERS ==========
+                        document.addEventListener('DOMContentLoaded', function () {
+                            // Add date range validation to search form
+                            const searchForm = document.querySelector('form[action*="/managerServiceRequest"]');
+                            if (searchForm) {
+                                searchForm.addEventListener('submit', function (e) {
+                                    if (!validateDateRange()) {
+                                        e.preventDefault();
+                                    }
+                                });
+                            }
+                        });
+
                         function validateEditForm(event) {
                             const description = document.getElementById('editDescription').value.trim();
 
@@ -2007,6 +2057,92 @@
                                 return false;
                             }
 
+                            return true;
+                        }
+
+                        // ========== PAGINATION ==========
+                        function goToPage(pageNumber) {
+                            // Lấy URL hiện tại và các tham số
+                            const urlParams = new URLSearchParams(window.location.search);
+
+                            // Cập nhật hoặc thêm tham số page
+                            urlParams.set('page', pageNumber);
+
+                            // Nếu không có action=search trong URL, thêm vào
+                            if (!urlParams.has('action')) {
+                                urlParams.set('action', 'search');
+                            }
+
+                            // Chuyển hướng với tất cả tham số
+                            window.location.href = '${pageContext.request.contextPath}/managerServiceRequest?' + urlParams.toString();
+                        }
+
+                        // ========== QUOTATION MODAL FUNCTIONS ==========
+                        function viewQuotation(requestId) {
+                            // Tìm request trong danh sách để lấy thông tin
+                            const requests = [
+            <c:forEach var="req" items="${requests}" varStatus="status">
+                            {
+                            requestId: ${req.requestId},
+                                    requestDate: '<fmt:formatDate value="${req.requestDate}" pattern="dd/MM/yyyy"/>',
+                                    contractId: '${req.contractId}',
+                                    equipmentName: '${req.equipmentName}',
+                                    description: `${fn:escapeXml(req.description)}`,
+                                    technicianName: '${req.technicianName}',
+                                    customerName: '${req.customerName}'
+                            }<c:if test="${!status.last}">,</c:if>
+            </c:forEach>
+                            ];
+
+                            const request = requests.find(r => r.requestId === requestId);
+                            if (!request) {
+                                showToast('Không tìm thấy thông tin yêu cầu!', 'error');
+                                        return;
+                            }
+
+                            // Điền thông tin vào modal
+                            document.getElementById('quotationRequestId').textContent = '#' + requestId;
+                            document.getElementById('quotationRequestDate').textContent = request.requestDate;
+                            document.getElementById('quotationContractId').textContent = 'CTR' + String(request.contractId).padStart(4, '0');
+                            document.getElementById('quotationEquipmentName').textContent = request.equipmentName || 'Không xác định';
+                            document.getElementById('quotationDescription').textContent = request.description;
+
+                            // Hiển thị thông tin kỹ thuật viên
+                            const technicianElement = document.getElementById('quotationTechnicianName');
+                            if (request.technicianName && request.technicianName.trim() !== '') {
+                                technicianElement.innerHTML = `<i class="fas fa-user-check me-1"></i>${request.technicianName}`;
+                                technicianElement.className = 'text-success fw-bold';
+                            } else {
+                                technicianElement.innerHTML = '<i class="fas fa-user-clock me-1"></i>Chưa phân công kỹ thuật viên';
+                                technicianElement.className = 'text-warning';
+                            }
+
+                            // Hiển thị thông tin báo giá mặc định (có thể lấy từ server sau)
+                            document.getElementById('quotationRepairDate').textContent = 'Sẽ được thông báo sau khi xác nhận';
+                            document.getElementById('quotationDiagnosis').textContent = 'Đang chờ kỹ thuật viên thực hiện chẩn đoán...';
+                            document.getElementById('quotationDetails').textContent = 'Chi tiết sửa chữa sẽ được cập nhật sau khi hoàn thành chẩn đoán.';
+                            document.getElementById('quotationCost').textContent = 'Đang tính toán...';
+                            document.getElementById('quotationQuotationStatus').textContent = 'Đang xử lý';
+
+                            // Ẩn nút đồng ý vì chưa có báo giá thực tế
+                            document.getElementById('btnAcceptQuotation').style.display = 'none';
+
+                            // Hiển thị modal
+                            const modal = new bootstrap.Modal(document.getElementById('viewModalQuotation'));
+                            modal.show();
+                        }
+
+                        // ========== DATE RANGE VALIDATION ==========
+                        function validateDateRange() {
+                            const fromDate = document.querySelector('input[name="fromDate"]');
+                            const toDate = document.querySelector('input[name="toDate"]');
+
+                            if (fromDate && toDate && fromDate.value && toDate.value) {
+                                if (fromDate.value > toDate.value) {
+                                    showToast('Từ ngày không thể lớn hơn đến ngày!', 'error');
+                                    return false;
+                                }
+                            }
                             return true;
                         }
 
@@ -2190,39 +2326,65 @@
 
                                 document.getElementById('quotationTechnicianName').textContent = q.technicianName || 'N/A';
                                 document.getElementById('quotationRepairDate').textContent = q.repairDate || 'Chưa xác định';
-                                document.getElementById('quotationDiagnosis').textContent = q.diagnosis || 'Chưa có thông tin';
-                                document.getElementById('quotationDetails').textContent = q.details || 'Chưa có chi tiết';
 
-                                // Format currency
-                                const cost = parseFloat(q.estimatedCost) || 0;
-                                document.getElementById('quotationCost').textContent = cost.toLocaleString('vi-VN') + ' VNĐ';
+                                // ✅ HIỂN THỊ BẢNG LINH KIỆN
+                                const tbody = document.getElementById('partsTableBody');
+                                tbody.innerHTML = '';
 
-                                // ✅ ẨN TRẠNG THÁI BÁO GIÁ
-                                const statusEl = document.getElementById('quotationQuotationStatus');
-                                if (q.quotationStatus === 'Approved') {
-                                    statusEl.textContent = '✅ Đã Duyệt';
-                                    statusEl.className = 'mb-0 text-success fw-bold';
-                                } else if (q.quotationStatus === 'Pending') {
-                                    statusEl.textContent = '⏳ Chờ Xác Nhận';
-                                    statusEl.className = 'mb-0 text-warning fw-bold';
+                                let hasParts = false; // ✅ BIẾN KIỂM TRA CÓ LINH KIỆN HAY KHÔNG
+
+                                if (q.parts && q.parts.length > 0) {
+                                    let totalCost = 0;
+                                    hasParts = true; // ✅ CÓ LINH KIỆN
+
+                                    q.parts.forEach((part, index) => {
+                                        const unitPrice = parseFloat(part.unitPrice) || 0;
+                                        const quantity = parseInt(part.quantity) || 0;
+                                        const totalPrice = parseFloat(part.totalPrice) || 0;
+                                        totalCost += totalPrice;
+
+                                        const row = `
+                    <tr>
+                        <td class="text-center">${index + 1}</td>
+                        <td>
+                            <strong>${part.partName}</strong>
+            ${part.description ? '<br><span class="part-description">' + part.description + '</span>' : ''}
+                        </td>
+                        <td class="text-center"><code>${part.serialNumber}</code></td>
+                        <td class="text-center">${quantity}</td>
+                        <td class="text-end">${unitPrice.toLocaleString('vi-VN')} VNĐ</td>
+                        <td class="text-end"><strong>${totalPrice.toLocaleString('vi-VN')} VNĐ</strong></td>
+                    </tr>
+                `;
+                                        tbody.innerHTML += row;
+                                    });
+
+                                    document.getElementById('partsTotalCost').textContent = totalCost.toLocaleString('vi-VN') + ' VNĐ';
                                 } else {
-                                    statusEl.textContent = q.quotationStatus || 'N/A';
-                                    statusEl.className = 'mb-0';
+                                    tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">
+                        <i class="fas fa-box-open fa-2x mb-2"></i>
+                        <p>Không có linh kiện nào cần thay thế</p>
+                    </td>
+                </tr>
+            `;
+                                    document.getElementById('partsTotalCost').textContent = '0 VNĐ';
                                 }
 
-                                // Lưu requestId cho nút "Đồng Ý"
+                                // Lưu requestId cho nút thanh toán
                                 document.getElementById('quotationRequestIdHidden').value = data.requestId;
 
-                                // ✅ KIỂM TRA ĐIỀU KIỆN HIỂN THỊ NÚT "ĐỒNG Ý & THANH TOÁN"
-                                const btnAccept = document.getElementById('btnAcceptQuotation');
-
-                                // CHỈ hiển thị khi: quotationStatus == 'Approved' VÀ có chi phí > 0
-                                if (q.quotationStatus === 'Approved' && cost > 0) {
-                                    btnAccept.style.display = 'inline-block';
-                                    console.log('✅ Shown Accept button: quotationStatus=' + q.quotationStatus + ', cost=' + cost);
+                                // ✅ KIỂM TRA ĐIỀU KIỆN HIỂN THỊ NÚT THANH TOÁN
+                                // CHỈ hiển thị khi: Có linh kiện thay thế
+                                const btnPayment = document.getElementById('btnPaymentInModal');
+                                
+                                if (hasParts) {
+                                    btnPayment.style.display = 'inline-block';
+                                    console.log('✅ Shown Payment button: hasParts=' + hasParts);
                                 } else {
-                                    btnAccept.style.display = 'none';
-                                    console.log('🚫 Hidden Accept button: quotationStatus=' + q.quotationStatus + ', cost=' + cost);
+                                    btnPayment.style.display = 'none';
+                                    console.log('🚫 Hidden Payment button: hasParts=' + hasParts);
                                 }
                             }
 
@@ -2309,6 +2471,37 @@
                                 cancelButtonColor: '#6c757d'
                             }).then(function (result) {
                                 if (result.isConfirmed) {
+                                    window.location.href = contextPath + '/managerServiceRequest?action=makePayment&requestId=' + requestId;
+                                }
+                            });
+                        }
+
+                        // ✅ Hàm thanh toán từ modal báo giá
+                        function makePaymentFromModal() {
+                            const requestId = document.getElementById('quotationRequestIdHidden').value;
+                            if (!requestId) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: 'Không tìm thấy thông tin yêu cầu'
+                                });
+                                return;
+                            }
+                            
+                            var contextPath = '${pageContext.request.contextPath}';
+                            Swal.fire({
+                                title: 'Xác nhận thanh toán?',
+                                text: 'Bạn sẽ được chuyển đến trang thanh toán',
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonText: 'Tiếp tục',
+                                cancelButtonText: 'Hủy',
+                                confirmButtonColor: '#10b981',
+                                cancelButtonColor: '#6c757d'
+                            }).then(function (result) {
+                                if (result.isConfirmed) {
+                                    // Đóng modal trước khi chuyển trang
+                                    bootstrap.Modal.getInstance(document.getElementById('viewModalQuotation')).hide();
                                     window.location.href = contextPath + '/managerServiceRequest?action=makePayment&requestId=' + requestId;
                                 }
                             });
@@ -2510,46 +2703,9 @@
 
 
         <script>
-// ✅ Kiểm tra và ẩn/hiện nút thanh toán khi load trang
-            document.addEventListener('DOMContentLoaded', function () {
-                checkAllPaymentButtons();
-            });
-
-            function checkAllPaymentButtons() {
-                const paymentButtons = document.querySelectorAll('[id^="payBtn_"]');
-
-                paymentButtons.forEach(function (button) {
-                    const requestId = button.id.replace('payBtn_', '');
-                    checkQuotationAndToggleButton(requestId, button);
-                });
-            }
-
-            function checkQuotationAndToggleButton(requestId, button) {
-                fetch('${pageContext.request.contextPath}/managerServiceRequest?action=checkQuotation&requestId=' + requestId)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (!data.success) {
-                                button.style.display = 'none';
-                                return;
-                            }
-
-                            const estimatedCost = parseFloat(data.estimatedCost || 0);
-                            const quotationStatus = data.quotationStatus;
-
-                            // ✅ CHỈ hiển thị khi: quotationStatus == 'Approved' VÀ estimatedCost > 0
-                            if (quotationStatus === 'Approved' && estimatedCost > 0) {
-                                button.style.display = 'inline-block';
-                                console.log('✅ Shown payment button for request ' + requestId + ': quotationStatus=' + quotationStatus + ', cost=' + estimatedCost);
-                            } else {
-                                button.style.display = 'none';
-                                console.log('🚫 Hidden payment button for request ' + requestId + ': quotationStatus=' + quotationStatus + ', cost=' + estimatedCost);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('❌ Error checking quotation for request ' + requestId + ':', error);
-                            button.style.display = 'none';
-                        });
-            }
+            // ✅ Nút thanh toán hiển thị ngay cho tất cả đơn "Đang Xử Lý"
+            // Không cần kiểm tra thêm điều kiện
+            console.log('✅ Payment buttons are now visible for all "Đang Xử Lý" requests');
         </script>
     </body>
 </html>

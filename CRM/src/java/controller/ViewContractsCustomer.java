@@ -500,15 +500,28 @@ public class ViewContractsCustomer extends HttpServlet {
      */
     private Map<String, String> getCustomerInfo(int customerId) throws SQLException {
         Map<String, String> info = new HashMap<>();
-        String sql = "SELECT email, phone, address FROM Account WHERE accountId = ?";
+        String sql = "SELECT a.email, a.phone, ap.address FROM Account a "
+                + "LEFT JOIN AccountProfile ap ON a.accountId = ap.accountId "
+                + "WHERE a.accountId = ?";
 
         try (Connection conn = new dal.DBContext().connection; PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    info.put("email", rs.getString("email"));
-                    info.put("phone", rs.getString("phone"));
-                    info.put("address", rs.getString("address"));
+                    String email = rs.getString("email");
+                    String phone = rs.getString("phone");
+                    String address = rs.getString("address");
+                    
+                    info.put("email", email != null ? email : "Chưa cập nhật");
+                    info.put("phone", phone != null ? phone : "Chưa cập nhật");
+                    info.put("address", address != null ? address : "Chưa cập nhật");
+                    
+                    System.out.println("DEBUG: Customer " + customerId + " - Email: " + email + ", Phone: " + phone);
+                } else {
+                    System.out.println("WARNING: No customer found with ID: " + customerId);
+                    info.put("email", "Không tìm thấy");
+                    info.put("phone", "Không tìm thấy");
+                    info.put("address", "Không tìm thấy");
                 }
             }
         }

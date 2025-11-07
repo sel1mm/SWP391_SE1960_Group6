@@ -355,6 +355,228 @@
                 background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
                 color: white;
             }
+
+            /* FOOTER STYLES */
+            .site-footer {
+                background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+                color: rgba(255, 255, 255, 0.9);
+                padding: 50px 0 20px;
+                margin-top: 50px;
+            }
+
+            .footer-content {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 0 30px;
+            }
+
+            .footer-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 50px;
+                margin-bottom: 60px;
+            }
+
+            .footer-section h5 {
+                color: #fff;
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 20px;
+                position: relative;
+                padding-bottom: 10px;
+            }
+
+            .footer-section h5:after {
+                content: '';
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                width: 50px;
+                height: 2px;
+                background: #ffc107;
+            }
+
+            .footer-about {
+                color: rgba(255, 255, 255, 0.8);
+                line-height: 1.8;
+                margin-bottom: 15px;
+                font-size: 14px;
+            }
+
+            .footer-version {
+                color: rgba(255, 255, 255, 0.6);
+                font-size: 0.9rem;
+            }
+
+            .footer-links {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .footer-links li {
+                margin-bottom: 12px;
+            }
+
+            .footer-links a {
+                color: rgba(255, 255, 255, 0.8);
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                transition: all 0.3s;
+                font-size: 0.95rem;
+            }
+
+            .footer-links a:hover {
+                color: #ffc107;
+                transform: translateX(5px);
+            }
+
+            .footer-contact-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                margin-bottom: 15px;
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 0.9rem;
+            }
+
+            .footer-contact-item i {
+                font-size: 1rem;
+                color: #ffc107;
+                margin-top: 3px;
+            }
+
+            .footer-stats {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .footer-stats li {
+                margin-bottom: 12px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 0.9rem;
+            }
+
+            .footer-stats i {
+                color: #ffc107;
+                font-size: 1rem;
+            }
+
+            .footer-certifications {
+                display: flex;
+                gap: 10px;
+                margin-top: 20px;
+                flex-wrap: wrap;
+            }
+
+            .cert-badge {
+                background: rgba(255, 255, 255, 0.1);
+                padding: 6px 12px;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.8rem;
+                transition: all 0.3s;
+            }
+
+            .cert-badge:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: translateY(-2px);
+            }
+
+            .cert-badge i {
+                color: #ffc107;
+            }
+
+            .footer-divider {
+                height: 1px;
+                background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+                margin-bottom: 40px;
+            }
+
+            .footer-bottom {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding-top: 25px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .footer-copyright {
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 0.9rem;
+            }
+
+            .footer-bottom-links {
+                display: flex;
+                gap: 25px;
+            }
+
+            .footer-bottom-links a {
+                color: rgba(255, 255, 255, 0.7);
+                text-decoration: none;
+                font-size: 0.9rem;
+                transition: all 0.3s;
+            }
+
+            .footer-bottom-links a:hover {
+                color: #ffc107;
+            }
+
+            /* SCROLL TO TOP BUTTON */
+            .scroll-to-top {
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                width: 45px;
+                height: 45px;
+                background: #ffc107;
+                color: #1e3c72;
+                border-radius: 50%;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.3s;
+                z-index: 999;
+                box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+            }
+
+            .scroll-to-top:hover {
+                background: #ffb300;
+                transform: translateY(-5px);
+            }
+
+            .scroll-to-top.show {
+                display: flex;
+            }
+
+            /* RESPONSIVE FOOTER */
+            @media (max-width: 768px) {
+                .footer-grid {
+                    grid-template-columns: 1fr;
+                    gap: 30px;
+                }
+
+                .footer-bottom {
+                    flex-direction: column;
+                    text-align: center;
+                }
+
+                .footer-bottom-links {
+                    flex-direction: column;
+                    gap: 10px;
+                }
+            }
         </style>
     </head>
 
@@ -503,20 +725,29 @@
                                     </label>
                                     <select name="status" class="form-select">
                                         <option value="">Tất cả</option>
-                                        <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>Active</option>
-                                        <option value="Completed" ${param.status == 'Completed' ? 'selected' : ''}>Completed</option>
-                                        <option value="Cancelled" ${param.status == 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                                        <optgroup label="Hợp đồng chính">
+                                            <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>Active</option>
+                                            <option value="Completed" ${param.status == 'Completed' ? 'selected' : ''}>Completed</option>
+                                            <option value="Cancelled" ${param.status == 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                                        </optgroup>
+                                        <optgroup label="Phụ lục">
+                                            <option value="Approved" ${param.status == 'Approved' ? 'selected' : ''}>Đã duyệt</option>
+                                            <option value="Draft" ${param.status == 'Draft' ? 'selected' : ''}>Bản nháp</option>
+                                            <option value="Archived" ${param.status == 'Archived' ? 'selected' : ''}>Lưu trữ</option>
+                                        </optgroup>
                                     </select>
                                 </div>
 
                                 <div class="col-md-3">
                                     <label class="form-label fw-bold">
-                                        <i class="fas fa-file-contract"></i> Loại
+                                        <i class="fas fa-file-contract"></i> Loại hợp đồng
                                     </label>
                                     <select name="contractType" class="form-select">
                                         <option value="">Tất cả</option>
-                                        <option value="MainContract" ${param.contractType == 'MainContract' ? 'selected' : ''}>Hợp Đồng </option>
-                                        <option value="Appendix" ${param.contractType == 'Appendix' ? 'selected' : ''}>Phụ Lục</option>
+                                        <option value="Sales" ${param.contractType == 'Sales' ? 'selected' : ''}>Mua bán (Sales)</option>
+                                        <option value="Warranty" ${param.contractType == 'Warranty' ? 'selected' : ''}>Bảo hành (Warranty)</option>
+                                        <option value="Maintenance" ${param.contractType == 'Maintenance' ? 'selected' : ''}>Bảo trì (Maintenance)</option>
+                                        <option value="Bảo trì" ${param.contractType == 'Bảo trì' ? 'selected' : ''}>Bảo trì</option>
                                     </select>
                                 </div>
 
@@ -655,14 +886,31 @@
 
                                                 <td>
                                                     <c:choose>
+                                                        <%-- Trạng thái hợp đồng chính --%>
                                                         <c:when test="${contract.status eq 'Active'}">
                                                             <span class="badge bg-success">Active</span>
                                                         </c:when>
                                                         <c:when test="${contract.status eq 'Completed'}">
                                                             <span class="badge bg-primary">Completed</span>
                                                         </c:when>
-                                                        <c:otherwise>
+                                                        <c:when test="${contract.status eq 'Cancelled'}">
                                                             <span class="badge bg-danger">Cancelled</span>
+                                                        </c:when>
+                                                        
+                                                        <%-- Trạng thái hợp đồng phụ lục --%>
+                                                        <c:when test="${contract.status eq 'Approved'}">
+                                                            <span class="badge bg-success">Đã duyệt</span>
+                                                        </c:when>
+                                                        <c:when test="${contract.status eq 'Draft'}">
+                                                            <span class="badge bg-warning text-dark">Bản nháp</span>
+                                                        </c:when>
+                                                        <c:when test="${contract.status eq 'Archived'}">
+                                                            <span class="badge bg-secondary">Lưu trữ</span>
+                                                        </c:when>
+                                                        
+                                                        <%-- Trạng thái không xác định --%>
+                                                        <c:otherwise>
+                                                            <span class="badge bg-secondary">${contract.status}</span>
                                                         </c:otherwise>
                                                     </c:choose>
                                                 </td>
@@ -759,6 +1007,129 @@
                             </div>
                         </c:if>
                     </div>
+                </div>
+
+                <!-- FOOTER -->
+                <footer class="site-footer">
+                    <div class="footer-content">
+                        <!-- Main Footer Content -->
+                        <div class="footer-grid">
+                            <!-- About Section -->
+                            <div class="footer-section">
+                                <h5>CRM System</h5>
+                                <p class="footer-about">Giải pháp quản lý khách hàng toàn diện, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ.</p>
+                                <p class="footer-version"><strong>Version:</strong> 1.0.0<br><strong>Phiên bản:</strong> Enterprise Edition</p>
+                            </div>
+
+                            <!-- Products & Features -->
+                            <div class="footer-section">
+                                <h5>Tính năng chính</h5>
+                                <ul class="footer-links">
+                                    <li><a href="#">→ Quản lý khách hàng</a></li>
+                                    <li><a href="#">→ Quản lý hợp đồng</a></li>
+                                    <li><a href="#">→ Quản lý thiết bị</a></li>
+                                    <li><a href="#">→ Báo cáo & Phân tích</a></li>
+                                    <li><a href="#">→ Quản lý yêu cầu dịch vụ</a></li>
+                                </ul>
+                            </div>
+
+                            <!-- Support & Help -->
+                            <div class="footer-section">
+                                <h5>Hỗ trợ & Trợ giúp</h5>
+                                <ul class="footer-links">
+                                    <li><a href="#">→ Trung tâm trợ giúp</a></li>
+                                    <li><a href="#">→ Hướng dẫn sử dụng</a></li>
+                                    <li><a href="#">→ Liên hệ hỗ trợ</a></li>
+                                    <li><a href="#">→ Câu hỏi thường gặp</a></li>
+                                    <li><a href="#">→ Yêu cầu tính năng</a></li>
+                                </ul>
+                            </div>
+
+                            <!-- Company Info -->
+                            <div class="footer-section">
+                                <h5>Thông tin công ty</h5>
+                                <ul class="footer-links">
+                                    <li><a href="#">→ Về chúng tôi</a></li>
+                                    <li><a href="#">→ Điều khoản sử dụng</a></li>
+                                    <li><a href="#">→ Chính sách bảo mật</a></li>
+                                    <li><a href="#">→ Bảo mật dữ liệu</a></li>
+                                    <li><a href="#">→ Liên hệ</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="footer-divider"></div>
+
+                        <!-- Bottom Info -->
+                        <div class="footer-grid" style="margin-bottom: 30px;">
+                            <!-- Contact Info -->
+                            <div>
+                                <h5 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Liên hệ</h5>
+                                <div class="footer-contact-item">
+                                    <i class="fas fa-envelope"></i>
+                                    <span><strong>Email:</strong> support@crmsystem.com</span>
+                                </div>
+                                <div class="footer-contact-item">
+                                    <i class="fas fa-phone"></i>
+                                    <span><strong>Hotline:</strong> (+84) 123 456 7890</span>
+                                </div>
+                                <div class="footer-contact-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span><strong>Địa chỉ:</strong> Ho Chi Minh City, Vietnam</span>
+                                </div>
+                                <div class="footer-contact-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span><strong>Hỗ trợ:</strong> 24/7</span>
+                                </div>
+                            </div>
+
+                            <!-- Stats -->
+                            <div>
+                                <h5 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Thống kê</h5>
+                                <ul class="footer-stats">
+                                    <li><i class="fas fa-users"></i> <span>Người dùng: <strong>5,000+</strong></span></li>
+                                    <li><i class="fas fa-building"></i> <span>Công ty: <strong>1,200+</strong></span></li>
+                                    <li><i class="fas fa-database"></i> <span>Dữ liệu: <strong>500K+</strong></span></li>
+                                    <li><i class="fas fa-star"></i> <span>Đánh giá: <strong>4.9/5.0</strong></span></li>
+                                </ul>
+                            </div>
+
+                            <!-- Certification -->
+                            <div style="grid-column: span 2;">
+                                <h5 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Chứng chỉ</h5>
+                                <div class="footer-certifications">
+                                    <div class="cert-badge">
+                                        <i class="fas fa-lock"></i>
+                                        <span>ISO 27001</span>
+                                    </div>
+                                    <div class="cert-badge">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>GDPR</span>
+                                    </div>
+                                    <div class="cert-badge">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <span>SOC 2</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer Bottom -->
+                        <div class="footer-bottom">
+                            <p class="footer-copyright">&copy; 2025 CRM System. All rights reserved. | Phát triển bởi <strong>Group 6</strong></p>
+                            <div class="footer-bottom-links">
+                                <a href="#">Chính sách bảo mật</a>
+                                <a href="#">Điều khoản dịch vụ</a>
+                                <a href="#">Cài đặt Cookie</a>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+
+                <!-- Scroll to Top Button -->
+                <div class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">
+                    <i class="fas fa-arrow-up"></i>
                 </div>
             </div>
 
@@ -1198,6 +1569,26 @@
                                                                                 toggleIcon.classList.add('fa-chevron-left');
                                                                             }
                                                                         }
+
+                                                                        // Scroll to Top
+                                                                        function scrollToTop() {
+                                                                            window.scrollTo({
+                                                                                top: 0,
+                                                                                behavior: 'smooth'
+                                                                            });
+                                                                        }
+
+                                                                        // Show/Hide Scroll to Top Button
+                                                                        window.addEventListener('scroll', function () {
+                                                                            const scrollBtn = document.getElementById('scrollToTop');
+                                                                            if (scrollBtn) {
+                                                                                if (window.pageYOffset > 300) {
+                                                                                    scrollBtn.classList.add('show');
+                                                                                } else {
+                                                                                    scrollBtn.classList.remove('show');
+                                                                                }
+                                                                            }
+                                                                        });
 
             </script>
     </body>

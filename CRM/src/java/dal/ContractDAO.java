@@ -969,6 +969,7 @@ public class ContractDAO extends MyDAO {
      */
     /**
      * ✅ Get BOTH main contracts AND appendixes for a customer
+     * @param customerId
      */
     public List<Contract> getContractsAndAppendixesByCustomer(int customerId) throws SQLException {
         List<Contract> list = new ArrayList<>();
@@ -1563,4 +1564,7 @@ public class ContractDAO extends MyDAO {
         }
     }
 
+ 
 }
+
+

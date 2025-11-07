@@ -123,4 +123,8 @@ public class Account {
     public void setProfile(AccountProfile profile) {
         this.profile = profile;
     }
+
+    public Object getRole() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }
