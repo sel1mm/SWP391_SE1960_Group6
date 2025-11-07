@@ -749,66 +749,79 @@
                 </div>
 
 
+               
                 <!-- SEARCH BAR -->
                 <div class="search-filter-bar">
-                    <form action="${pageContext.request.contextPath}/equipment" method="get" class="row g-3">
-                        <div class="col-md-5">
-                            <div class="input-group">
-                                <input type="text" class="form-control" name="keyword" 
-                                       placeholder="🔍 Tìm kiếm theo tên, serial number..." value="${keyword}">
+                    <form action="${pageContext.request.contextPath}/equipment" method="get">
+                        <input type="hidden" name="action" value="search"/>
+                        
+                        <!-- Hàng 1: Search + Dropdowns -->
+                        <div class="row g-3 mb-2">
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Tìm kiếm</label>
+                                <input type="text" class="form-control" name="keyword"
+                                       placeholder="Tên thiết bị, serial number, mã hợp đồng..."
+                                       value="${param.keyword}">
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold">Trạng thái</label>
+                                <select name="status" class="form-select">
+                                    <option value="">Tất cả</option>
+                                    <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>Đang Hoạt Động</option>
+                                    <option value="Repair" ${param.status == 'Repair' ? 'selected' : ''}>Đang Sửa Chữa</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Loại</label>
+                                <select name="sourceType" class="form-select">
+                                    <option value="">Tất cả</option>
+                                    <option value="Hợp Đồng" ${param.sourceType == 'Hợp Đồng' ? 'selected' : ''}>Hợp Đồng</option>
+                                    <option value="Phụ Lục" ${param.sourceType == 'Phụ Lục' ? 'selected' : ''}>Phụ Lục</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Sắp xếp</label>
+                                <select name="sortBy" class="form-select">
+                                    <option value="newest" ${param.sortBy == 'newest' ? 'selected' : ''}>Mới nhất</option>
+                                    <option value="oldest" ${param.sortBy == 'oldest' ? 'selected' : ''}>Cũ nhất</option>
+                                    <option value="name_asc" ${param.sortBy == 'name_asc' ? 'selected' : ''}>Tên A-Z</option>
+                                    <option value="name_desc" ${param.sortBy == 'name_desc' ? 'selected' : ''}>Tên Z-A</option>
+                                </select>
                             </div>
                         </div>
 
-                        <!-- ✅ THÊM DROPDOWN LỌC TRẠNG THÁI -->
-                        <div class="col-md-3">
-                            <select class="form-select" name="status">
-                                <option value="">🔍 Tất cả trạng thái</option>
-                                <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>
-                                    ✅ Đang Hoạt Động
-                                </option>
-                                <option value="Repair" ${param.status == 'Repair' ? 'selected' : ''}>
-                                    🔧 Đang Sửa Chữa
-                                </option>
-                                <option value="Maintenance" ${param.status == 'Maintenance' ? 'selected' : ''}>
-                                    ⚙️ Đang Bảo Trì
-                                </option>
-                            </select>
+                        <!-- Hàng 2: Date range -->
+                        <div class="row g-3 mb-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Từ ngày lắp đặt</label>
+                                <input type="date" class="form-control" name="fromDate" value="${param.fromDate}">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Đến ngày lắp đặt</label>
+                                <input type="date" class="form-control" name="toDate" value="${param.toDate}">
+                            </div>
                         </div>
 
-                        <!-- ✅ THÊM DROPDOWN SẮP XẾP -->
-                        <div class="col-md-2">
-                            <select class="form-select" name="sortBy">
-                                <option value="newest" ${param.sortBy == 'newest' ? 'selected' : ''}>
-                                    📅 Mới nhất
-                                </option>
-                                <option value="oldest" ${param.sortBy == 'oldest' ? 'selected' : ''}>
-                                    📅 Cũ nhất
-                                </option>
-                                <option value="name_asc" ${param.sortBy == 'name_asc' ? 'selected' : ''}>
-                                    🔤 Tên A-Z
-                                </option>
-                                <option value="name_desc" ${param.sortBy == 'name_desc' ? 'selected' : ''}>
-                                    🔤 Tên Z-A
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-2">
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-primary" type="submit" name="action" value="filter">
-                                    <i class="fas fa-filter"></i> Lọc
+                        <!-- Hàng 3: Buttons -->
+                        <div class="row g-3">
+                            <div class="col-md-3 d-grid">
+                                <button type="submit" class="btn btn-dark">
+                                    <i class="fas fa-search me-1"></i> Tìm kiếm
                                 </button>
-                                <c:if test="${searchMode or not empty param.status or not empty param.sortBy}">
-                                    <a href="${pageContext.request.contextPath}/equipment" 
-                                       class="btn btn-secondary" title="Xóa bộ lọc">
-                                        <i class="fas fa-times"></i>
-                                    </a>
-                                </c:if>
+                            </div>
+                            <div class="col-md-3 d-grid">
+                                <a href="${pageContext.request.contextPath}/equipment" class="btn btn-outline-dark">
+                                    <i class="fas fa-sync-alt me-1"></i> Làm mới
+                                </a>
                             </div>
                         </div>
                     </form>
                 </div>
-
+                    
 
                 <!-- TABLE -->
                 <div class="table-container">
@@ -957,7 +970,7 @@
                             <ul class="pagination justify-content-center">
                                 <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
                                     <c:if test="${currentPage > 1}">
-                                        <a class="page-link" href="?page=${currentPage - 1}${not empty param.keyword ? '&keyword='.concat(param.keyword) : ''}${not empty param.status ? '&status='.concat(param.status) : ''}${not empty param.sortBy ? '&sortBy='.concat(param.sortBy) : ''}&action=${searchMode ? 'search' : (not empty param.status or not empty param.sortBy ? 'filter' : '')}">
+                                        <a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage - 1})">
                                             <i class="fas fa-chevron-left"></i> Trước
                                         </a>
                                     </c:if>
@@ -971,7 +984,7 @@
                                 <c:forEach var="i" begin="1" end="${totalPages}">
                                     <li class="page-item ${i == currentPage ? 'active' : ''}">
                                         <c:if test="${i != currentPage}">
-                                            <a class="page-link" href="?page=${i}${not empty param.keyword ? '&keyword='.concat(param.keyword) : ''}${not empty param.status ? '&status='.concat(param.status) : ''}${not empty param.sortBy ? '&sortBy='.concat(param.sortBy) : ''}&action=${searchMode ? 'search' : (not empty param.status or not empty param.sortBy ? 'filter' : '')}">
+                                            <a class="page-link" href="javascript:void(0)" onclick="goToPage(${i})">
                                                 ${i}
                                             </a>
                                         </c:if>
@@ -983,7 +996,7 @@
 
                                 <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
                                     <c:if test="${currentPage < totalPages}">
-                                        <a class="page-link" href="?page=${currentPage + 1}${not empty param.keyword ? '&keyword='.concat(param.keyword) : ''}${not empty param.status ? '&status='.concat(param.status) : ''}${not empty param.sortBy ? '&sortBy='.concat(param.sortBy) : ''}&action=${searchMode ? 'search' : (not empty param.status or not empty param.sortBy ? 'filter' : '')}">
+                                        <a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage + 1})">
                                             Tiếp <i class="fas fa-chevron-right"></i>
                                         </a>
                                     </c:if>
@@ -1138,32 +1151,7 @@
                                             <strong><i class="fas fa-calendar-check"></i> Ngày Bắt Đầu Sửa:</strong>
                                             <p id="viewRepairDate">N/A</p>
                                         </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <strong><i class="fas fa-stethoscope"></i> Chẩn Đoán:</strong>
-                                        <div class="border rounded p-3 bg-light" id="viewDiagnosis">Chưa có thông tin</div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <strong><i class="fas fa-clipboard-list"></i> Chi Tiết Sửa Chữa:</strong>
-                                        <div class="border rounded p-3 bg-light" id="viewRepairDetails">Chưa có thông tin</div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="alert alert-info mb-0">
-                                                <strong><i class="fas fa-dollar-sign"></i> Chi Phí Ước Tính:</strong>
-                                                <h5 class="mb-0 text-primary" id="viewEstimatedCost">0 VNĐ</h5>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="alert alert-warning mb-0">
-                                                <strong><i class="fas fa-info-circle"></i> Trạng Thái Báo Giá:</strong>
-                                                <p class="mb-0 fw-bold" id="viewQuotationStatus">N/A</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    </div>                                  
                                 </div>
                             </div>
                         </div>
@@ -1390,36 +1378,7 @@
                         document.getElementById('viewTechnicianName').innerHTML = 
                             '<i class="fas fa-user-check"></i> ' + (technicianName && technicianName !== 'null' ? technicianName : 'Chưa phân công');
                         document.getElementById('viewRepairDate').textContent = 
-                            (repairDate && repairDate !== 'null' ? repairDate : 'N/A');
-                        document.getElementById('viewDiagnosis').textContent = 
-                            (diagnosis && diagnosis !== 'null' ? diagnosis : 'Chưa có thông tin');
-                        document.getElementById('viewRepairDetails').textContent = 
-                            (repairDetails && repairDetails !== 'null' ? repairDetails : 'Chưa có thông tin');
-                        
-                        // Format estimated cost
-                        let costText = '0 VNĐ';
-                        if (estimatedCost && estimatedCost !== 'null' && estimatedCost !== '0') {
-                            try {
-                                const cost = parseFloat(estimatedCost);
-                                costText = cost.toLocaleString('vi-VN') + ' VNĐ';
-                            } catch (e) {
-                                costText = estimatedCost + ' VNĐ';
-                            }
-                        }
-                        document.getElementById('viewEstimatedCost').textContent = costText;
-
-                        // Format quotation status
-                        const quotationStatusElement = document.getElementById('viewQuotationStatus');
-                        if (quotationStatus === 'Approved') {
-                            quotationStatusElement.textContent = '✅ Đã Duyệt';
-                            quotationStatusElement.className = 'mb-0 fw-bold text-success';
-                        } else if (quotationStatus === 'Pending') {
-                            quotationStatusElement.textContent = '⏳ Chờ Xác Nhận';
-                            quotationStatusElement.className = 'mb-0 fw-bold text-warning';
-                        } else {
-                            quotationStatusElement.textContent = (quotationStatus && quotationStatus !== 'null' ? quotationStatus : 'N/A');
-                            quotationStatusElement.className = 'mb-0 fw-bold';
-                        }
+                            (repairDate && repairDate !== 'null' ? repairDate : 'N/A');                      
                     } else {
                         repairSection.style.display = 'none';
                     }
@@ -1474,6 +1433,39 @@
                     });
                 }
 
+                // ========== PAGINATION ==========
+                function goToPage(pageNumber) {
+                    const form = document.querySelector('form[action*="/equipment"]');
+                    if (form) {
+                        // Tạo hidden input cho page number
+                        let pageInput = form.querySelector('input[name="page"]');
+                        if (!pageInput) {
+                            pageInput = document.createElement('input');
+                            pageInput.type = 'hidden';
+                            pageInput.name = 'page';
+                            form.appendChild(pageInput);
+                        }
+                        pageInput.value = pageNumber;
+                        
+                        // Submit form
+                        form.submit();
+                    }
+                }
+
+                // ========== DATE RANGE VALIDATION ==========
+                function validateDateRange() {
+                    const fromDate = document.querySelector('input[name="fromDate"]');
+                    const toDate = document.querySelector('input[name="toDate"]');
+                    
+                    if (fromDate && toDate && fromDate.value && toDate.value) {
+                        if (fromDate.value > toDate.value) {
+                            showToast('Từ ngày không thể lớn hơn đến ngày!', 'error');
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
                 // ========== EVENT LISTENERS ==========
                 document.addEventListener('DOMContentLoaded', function () {
                     const descriptionTextarea = document.getElementById('requestDescription');
@@ -1487,6 +1479,16 @@
                         createModal.addEventListener('hidden.bs.modal', function () {
                             document.getElementById('createRequestForm').reset();
                             updateCharCount();
+                        });
+                    }
+
+                    // Add date range validation to search form
+                    const searchForm = document.querySelector('form[action*="/equipment"]');
+                    if (searchForm) {
+                        searchForm.addEventListener('submit', function(e) {
+                            if (!validateDateRange()) {
+                                e.preventDefault();        
+                            }
                         });
                     }
                 });
