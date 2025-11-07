@@ -93,6 +93,8 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         // ✅ THÊM ACTION XEM CHI TIẾT
         if ("viewDetail".equals(action)) {
             handleViewDetail(request, response, customerId);
+        } else if ("checkQuotation".equals(action)) {
+            handleCheckQuotation(request, response, customerId);
         } else if ("search".equals(action)) {
             handleSearch(request, response, customerId);
         } else if ("filter".equals(action)) {
@@ -126,8 +128,12 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             handleUpdateRequest(request, response);
         } else if ("CancelServiceRequest".equals(action)) {
             handleCancelRequest(request, response);
-        } else if ("AcceptQuotation".equals(action)) {  // ✅ THÊM ACTION MỚI
+        } else if ("AcceptQuotation".equals(action)) {
             handleAcceptQuotation(request, response, customerId);
+        } else if ("approveQuotation".equals(action)) {  // ✅ THÊM ACTION MỚI
+            handleApproveQuotation(request, response, customerId);
+        } else if ("rejectQuotation".equals(action)) {  // ✅ THÊM ACTION MỚI
+            handleRejectQuotation(request, response, customerId);
         }
     }
 
@@ -252,19 +258,128 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String keyword = request.getParameter("keyword");
-
-        if (keyword == null || keyword.trim().isEmpty()) {
-            displayAllRequests(request, response, customerId);
-            return;
-        }
+        String status = request.getParameter("status");
+        String requestType = request.getParameter("requestType");
+        String sortBy = request.getParameter("sortBy");
+        String fromDate = request.getParameter("fromDate");
+        String toDate = request.getParameter("toDate");
+        String priorityLevel = request.getParameter("priorityLevel");
 
         int currentPage = getPageNumber(request);
         int offset = (currentPage - 1) * PAGE_SIZE;
 
-        // ✅ TÌM KIẾM CHỈ THEO EQUIPMENT NAME VÀ DESCRIPTION
-        List<ServiceRequest> allRequests = serviceRequestDAO.searchRequestsByEquipmentAndDescription(customerId, keyword.trim());
+        // Lấy tất cả yêu cầu của customer
+        List<ServiceRequest> allRequests = serviceRequestDAO.getRequestsByCustomerId(customerId);
+        
+        // Áp dụng các bộ lọc
+        List<ServiceRequest> filteredRequests = new ArrayList<>();
+        
+        for (ServiceRequest req : allRequests) {
+            boolean match = true;
+            
+            // Lọc theo keyword (tìm trong description, equipment name, contract ID)
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String kw = keyword.trim().toLowerCase();
+                boolean keywordMatch = false;
+                
+                if (req.getDescription() != null && req.getDescription().toLowerCase().contains(kw)) {
+                    keywordMatch = true;
+                }
+                if (req.getEquipmentName() != null && req.getEquipmentName().toLowerCase().contains(kw)) {
+                    keywordMatch = true;
+                }
+                if (req.getContractId() != null && String.valueOf(req.getContractId()).contains(kw)) {
+                    keywordMatch = true;
+                }
+                if (String.valueOf(req.getRequestId()).contains(kw)) {
+                    keywordMatch = true;
+                }
+                
+                if (!keywordMatch) {
+                    match = false;
+                }
+            }
+            
+            // Lọc theo status (sử dụng DB status)
+            if (match && status != null && !status.trim().isEmpty()) {
+                if (!status.equals(req.getStatus())) {
+                    match = false;
+                }
+            }
+            
+            // Lọc theo requestType
+            if (match && requestType != null && !requestType.trim().isEmpty()) {
+                if (!requestType.equals(req.getRequestType())) {
+                    match = false;
+                }
+            }
+            
+            // Lọc theo priorityLevel
+            if (match && priorityLevel != null && !priorityLevel.trim().isEmpty()) {
+                if (!priorityLevel.equals(req.getPriorityLevel())) {
+                    match = false;
+                }
+            }
+            
+            // Lọc theo ngày tạo
+            if (match && fromDate != null && !fromDate.trim().isEmpty()) {
+                try {
+                    java.sql.Date from = java.sql.Date.valueOf(fromDate);
+                    if (req.getRequestDate().before(from)) {
+                        match = false;
+                    }
+                } catch (Exception e) {
+                    // Ignore invalid date
+                }
+            }
+            
+            if (match && toDate != null && !toDate.trim().isEmpty()) {
+                try {
+                    java.sql.Date to = java.sql.Date.valueOf(toDate);
+                    // Add 1 day to include the toDate
+                    java.util.Calendar cal = java.util.Calendar.getInstance();
+                    cal.setTime(to);
+                    cal.add(java.util.Calendar.DAY_OF_MONTH, 1);
+                    if (req.getRequestDate().after(cal.getTime())) {
+                        match = false;
+                    }
+                } catch (Exception e) {
+                    // Ignore invalid date
+                }
+            }
+            
+            if (match) {
+                filteredRequests.add(req);
+            }
+        }
+        
+        // Sắp xếp
+        if (sortBy != null && !sortBy.trim().isEmpty()) {
+            switch (sortBy) {
+                case "newest":
+                    filteredRequests.sort((a, b) -> b.getRequestDate().compareTo(a.getRequestDate()));
+                    break;
+                case "oldest":
+                    filteredRequests.sort((a, b) -> a.getRequestDate().compareTo(b.getRequestDate()));
+                    break;
+                case "priority_high":
+                    filteredRequests.sort((a, b) -> {
+                        int priorityA = getPriorityValue(a.getPriorityLevel());
+                        int priorityB = getPriorityValue(b.getPriorityLevel());
+                        return Integer.compare(priorityB, priorityA);
+                    });
+                    break;
+                case "priority_low":
+                    filteredRequests.sort((a, b) -> {
+                        int priorityA = getPriorityValue(a.getPriorityLevel());
+                        int priorityB = getPriorityValue(b.getPriorityLevel());
+                        return Integer.compare(priorityA, priorityB);
+                    });
+                    break;
+            }
+        }
 
-        int totalRecords = allRequests.size();
+        int totalRecords = filteredRequests.size();
         int totalPages = (int) Math.ceil((double) totalRecords / PAGE_SIZE);
 
         if (currentPage > totalPages && totalPages > 0) {
@@ -273,20 +388,20 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         }
 
         List<ServiceRequest> requests = new ArrayList<>();
-        int endIndex = Math.min(offset + PAGE_SIZE, allRequests.size());
-        if (offset < allRequests.size()) {
-            requests = allRequests.subList(offset, endIndex);
+        int endIndex = Math.min(offset + PAGE_SIZE, filteredRequests.size());
+        if (offset < filteredRequests.size()) {
+            requests = filteredRequests.subList(offset, endIndex);
         }
 
         // ✅ TÍNH THỐNG KÊ DỰA TRÊN getDisplayStatus()
-        int totalRequests = allRequests.size();
+        int totalRequests = filteredRequests.size();
         int countChoXacNhan = 0;
         int countChoXuLy = 0;
         int countDangXuLy = 0;
         int countHoanThanh = 0;
         int countDaHuy = 0;
 
-        for (ServiceRequest req : allRequests) {
+        for (ServiceRequest req : filteredRequests) {
             String displayStatus = req.getDisplayStatus();
 
             if ("Chờ Xác Nhận".equals(displayStatus)) {
@@ -310,13 +425,22 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         request.setAttribute("countDangXuLy", countDangXuLy);
         request.setAttribute("countHoanThanh", countHoanThanh);
         request.setAttribute("countDaHuy", countDaHuy);
-        request.setAttribute("keyword", keyword);
         request.setAttribute("searchMode", true);
         request.setAttribute("currentPage", currentPage);
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("pageSize", PAGE_SIZE);
 
         request.getRequestDispatcher("/managerServiceRequest.jsp").forward(request, response);
+    }
+    
+    private int getPriorityValue(String priority) {
+        if (priority == null) return 0;
+        switch (priority) {
+            case "Urgent": return 3;
+            case "High": return 2;
+            case "Normal": return 1;
+            default: return 0;
+        }
     }
 
     private void handleFilter(HttpServletRequest request, HttpServletResponse response, int customerId)
@@ -912,6 +1036,76 @@ public class ManagerServiceRequestServlet extends HttpServlet {
     }
 
     /**
+     * ✅ XỬ LÝ KIỂM TRA TRẠNG THÁI BÁO GIÁ
+     * Dùng để kiểm tra xem có hiển thị nút thanh toán không
+     * ✅ CẬP NHẬT: Kiểm tra thêm điều kiện có linh kiện thay thế hay không
+     */
+    private void handleCheckQuotation(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
+        String requestIdStr = request.getParameter("requestId");
+
+        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu không hợp lệ!\"}");
+            return;
+        }
+
+        try {
+            int requestId = Integer.parseInt(requestIdStr.trim());
+
+            // Kiểm tra request có thuộc về customer không
+            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+
+            if (sr == null || sr.getCreatedBy() != customerId) {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write("{\"success\": false, \"message\": \"Bạn không có quyền xem yêu cầu này!\"}");
+                return;
+            }
+
+            // Lấy thông tin báo giá
+            RepairReport report = serviceRequestDAO.getRepairReportByRequestId(requestId);
+
+            if (report == null) {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write("{\"success\": false, \"message\": \"Không tìm thấy báo giá!\"}");
+                return;
+            }
+
+            // ✅ KIỂM TRA XEM CÓ LINH KIỆN THAY THẾ HAY KHÔNG
+            // Kiểm tra xem có PartsRequest nào được approved cho request này không
+            boolean hasParts = serviceRequestDAO.hasApprovedPartsForRequest(requestId);
+
+            // Tạo JSON response
+            StringBuilder json = new StringBuilder();
+            json.append("{");
+            json.append("\"success\": true,");
+            json.append("\"estimatedCost\": ").append(report.getEstimatedCost() != null ? report.getEstimatedCost() : 0).append(",");
+            json.append("\"quotationStatus\": \"").append(escapeJson(report.getQuotationStatus() != null ? report.getQuotationStatus() : "Pending")).append("\",");
+            json.append("\"hasParts\": ").append(hasParts); // ✅ THÊM THÔNG TIN CÓ LINH KIỆN HAY KHÔNG
+            json.append("}");
+
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(json.toString());
+
+        } catch (NumberFormatException e) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu phải là số nguyên!\"}");
+        } catch (Exception e) {
+            System.err.println("❌ Error in handleCheckQuotation: " + e.getMessage());
+            e.printStackTrace();
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+        }
+    }
+
+    /**
      * Helper method để escape JSON string
      */
     private String escapeJson(String input) {
@@ -924,4 +1118,117 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");
     }
+    
+       /*
+*
+     * ✅ XỬ LÝ ĐỒNG Ý BÁO GIÁ
+     * Customer đồng ý với báo giá của technician
+     */
+    private void handleApproveQuotation(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        String requestIdStr = request.getParameter("requestId");
+
+        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu không hợp lệ!\"}");
+            return;
+        }
+
+        try {
+            int requestId = Integer.parseInt(requestIdStr.trim());
+
+            // Kiểm tra request có thuộc về customer không
+            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+
+            if (sr == null || sr.getCreatedBy() != customerId) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}");
+                return;
+            }
+
+            // Kiểm tra có báo giá không
+            RepairReport report = serviceRequestDAO.getRepairReportByRequestId(requestId);
+
+            if (report == null) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Không tìm thấy báo giá!\"}");
+                return;
+            }
+
+            // Cập nhật quotationStatus = 'Approved'
+            boolean success = serviceRequestDAO.updateQuotationStatus(report.getReportId(), "Approved");
+
+            if (success) {
+                System.out.println("✅ Customer approved quotation for request " + requestId);
+                response.getWriter().write("{\"success\": true, \"message\": \"Đã đồng ý báo giá thành công!\"}");
+            } else {
+                response.getWriter().write("{\"success\": false, \"message\": \"Không thể cập nhật trạng thái báo giá!\"}");
+            }
+
+        } catch (NumberFormatException e) {
+            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu phải là số nguyên!\"}");
+        } catch (Exception e) {
+            System.err.println("❌ Error approving quotation: " + e.getMessage());
+            e.printStackTrace();
+            response.getWriter().write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+        }
+    }
+
+    /**
+     * ✅ XỬ LÝ TỪ CHỐI BÁO GIÁ
+     * Customer từ chối báo giá của technician
+     */
+    private void handleRejectQuotation(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        String requestIdStr = request.getParameter("requestId");
+
+        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu không hợp lệ!\"}");
+            return;
+        }
+
+        try {
+            int requestId = Integer.parseInt(requestIdStr.trim());
+
+            // Kiểm tra request có thuộc về customer không
+            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+
+            if (sr == null || sr.getCreatedBy() != customerId) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}");
+                return;
+            }
+
+            // Kiểm tra có báo giá không
+            RepairReport report = serviceRequestDAO.getRepairReportByRequestId(requestId);
+
+            if (report == null) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Không tìm thấy báo giá!\"}");
+                return;
+            }
+
+            // Cập nhật quotationStatus = 'Rejected'
+            boolean success = serviceRequestDAO.updateQuotationStatus(report.getReportId(), "Rejected");
+
+            if (success) {
+                System.out.println("✅ Customer rejected quotation for request " + requestId);
+                response.getWriter().write("{\"success\": true, \"message\": \"Đã từ chối báo giá!\"}");
+            } else {
+                response.getWriter().write("{\"success\": false, \"message\": \"Không thể cập nhật trạng thái báo giá!\"}");
+            }
+
+        } catch (NumberFormatException e) {
+            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu phải là số nguyên!\"}");
+        } catch (Exception e) {
+            System.err.println("❌ Error rejecting quotation: " + e.getMessage());
+            e.printStackTrace();
+            response.getWriter().write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+        }
+    }
+
 }
+ 
