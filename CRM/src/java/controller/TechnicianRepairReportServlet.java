@@ -95,6 +95,19 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                             doGetReportList(req, resp, technicianId);
                             return;
                         }
+                        // Check if a repair report already exists for this requestId by this technician
+                        try {
+                            RepairReport existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
+                            if (existingReport != null) {
+                                // Report already exists, redirect to edit instead
+                                req.setAttribute("info", "A repair report already exists for this task. Redirecting to edit...");
+                                resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReport.getReportId());
+                                return;
+                            }
+                        } catch (SQLException e) {
+                            // Log error but continue - allow creation if check fails
+                            System.err.println("Error checking for existing report: " + e.getMessage());
+                        }
                     } catch (NumberFormatException e) {
                         req.setAttribute("error", "Invalid request ID");
                         doGetReportList(req, resp, technicianId);
@@ -160,21 +173,87 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 int reportId = Integer.parseInt(reportIdParam);
                 RepairReport report = reportDAO.findById(reportId);
                 
-                if (report != null && report.getTechnicianId() != null && report.getTechnicianId() == technicianId) {
-                    if (reportDAO.canTechnicianEditReport(reportId, technicianId)) {
-                        req.setAttribute("report", report);
-                        req.setAttribute("pageTitle", "Edit Repair Report");
-                        req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
-                        req.setAttribute("activePage", "reports");
-                        req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
-                    } else {
-                        req.setAttribute("error", "This report cannot be edited (quotation status is not Pending)");
-                        doGetReportList(req, resp, technicianId);
-                    }
-                } else {
+                if (report == null) {
+                    req.setAttribute("error", "Report not found");
+                    doGetReportList(req, resp, technicianId);
+                    return;
+                }
+                
+                // Verify report belongs to this technician
+                if (report.getTechnicianId() == null || report.getTechnicianId() != technicianId) {
                     req.setAttribute("error", "Report not found or not assigned to you");
                     doGetReportList(req, resp, technicianId);
+                    return;
                 }
+                
+                // Verify WorkTask is still assigned to this technician
+                WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+                try {
+                    if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, report.getRequestId())) {
+                        req.setAttribute("error", "You are no longer assigned to this task");
+                        doGetReportList(req, resp, technicianId);
+                        return;
+                    }
+                } catch (SQLException e) {
+                    req.setAttribute("error", "Error validating task assignment: " + e.getMessage());
+                    doGetReportList(req, resp, technicianId);
+                    return;
+                }
+                
+                // Check if report can be edited (status must be Pending)
+                try {
+                    if (!reportDAO.canTechnicianEditReport(reportId, technicianId)) {
+                        req.setAttribute("error", "This report cannot be edited (quotation status is not Pending)");
+                        doGetReportList(req, resp, technicianId);
+                        return;
+                    }
+                } catch (SQLException e) {
+                    req.setAttribute("error", "Error checking edit permission: " + e.getMessage());
+                    doGetReportList(req, resp, technicianId);
+                    return;
+                }
+                
+                // Load report details (parts) and put them in session for the cart
+                List<RepairReportDetail> reportDetails = reportDAO.getReportDetails(reportId);
+                String cartKey = "selectedParts_" + report.getRequestId();
+                req.getSession().setAttribute(cartKey, reportDetails);
+                
+                // Load available parts for the form
+                List<Map<String, Object>> availableParts = null;
+                try {
+                    availableParts = getAllAvailableParts();
+                } catch (SQLException e) {
+                    req.setAttribute("error", "Error loading parts: " + e.getMessage());
+                    availableParts = new ArrayList<>();
+                }
+                
+                // Get customer/request info for display
+                Map<String, Object> customerRequestInfo = null;
+                try {
+                    customerRequestInfo = getCustomerRequestInfo(report.getRequestId());
+                } catch (SQLException e) {
+                    System.err.println("Error loading customer info: " + e.getMessage());
+                }
+                
+                // Calculate subtotal from existing parts
+                BigDecimal subtotal = BigDecimal.ZERO;
+                if (reportDetails != null && !reportDetails.isEmpty()) {
+                    for (RepairReportDetail detail : reportDetails) {
+                        subtotal = subtotal.add(detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getQuantity())));
+                    }
+                }
+                
+                // All validations passed, show edit form
+                req.setAttribute("report", report);
+                req.setAttribute("reportDetails", reportDetails);
+                req.setAttribute("availableParts", availableParts);
+                req.setAttribute("selectedParts", reportDetails);
+                req.setAttribute("subtotal", subtotal);
+                req.setAttribute("customerRequestInfo", customerRequestInfo);
+                req.setAttribute("pageTitle", "Edit Repair Report");
+                req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
+                req.setAttribute("activePage", "reports");
+                req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
                 
             } else if ("detail".equals(action) && reportIdParam != null) {
                 // Show report detail
@@ -314,6 +393,21 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     return;
                 }
                 
+                // Check if a repair report already exists for this requestId by this technician
+                try {
+                    RepairReport existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
+                    if (existingReport != null) {
+                        // Report already exists, redirect to edit instead
+                        req.setAttribute("error", "A repair report already exists for this task. Redirecting to edit...");
+                        resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReport.getReportId());
+                        return;
+                    }
+                } catch (SQLException e) {
+                    req.setAttribute("error", "Error checking for existing report: " + e.getMessage());
+                    doGet(req, resp);
+                    return;
+                }
+                
                 report.setRequestId(requestId);
                 report.setTechnicianId(technicianId);
                 report.setDetails(req.getParameter("details"));
@@ -382,16 +476,44 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 // Update existing report
                 int reportId = Integer.parseInt(req.getParameter("reportId"));
                 
-                if (!reportDAO.canTechnicianEditReport(reportId, technicianId)) {
-                    req.setAttribute("error", "This report cannot be edited (quotation status is not Pending)");
-                    doGet(req, resp);
-                    return;
-                }
-                
                 // Get existing report data first
                 RepairReport existingReport = reportDAO.findById(reportId);
                 if (existingReport == null) {
                     req.setAttribute("error", "Report not found");
+                    doGet(req, resp);
+                    return;
+                }
+                
+                // Verify report belongs to this technician
+                if (existingReport.getTechnicianId() == null || existingReport.getTechnicianId() != technicianId) {
+                    req.setAttribute("error", "Report not found or not assigned to you");
+                    doGet(req, resp);
+                    return;
+                }
+                
+                // Verify WorkTask is still assigned to this technician
+                WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+                try {
+                    if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, existingReport.getRequestId())) {
+                        req.setAttribute("error", "You are no longer assigned to this task");
+                        doGet(req, resp);
+                        return;
+                    }
+                } catch (SQLException e) {
+                    req.setAttribute("error", "Error validating task assignment: " + e.getMessage());
+                    doGet(req, resp);
+                    return;
+                }
+                
+                // Check if report can be edited (status must be Pending)
+                try {
+                    if (!reportDAO.canTechnicianEditReport(reportId, technicianId)) {
+                        req.setAttribute("error", "This report cannot be edited (quotation status is not Pending)");
+                        doGet(req, resp);
+                        return;
+                    }
+                } catch (SQLException e) {
+                    req.setAttribute("error", "Error checking edit permission: " + e.getMessage());
                     doGet(req, resp);
                     return;
                 }

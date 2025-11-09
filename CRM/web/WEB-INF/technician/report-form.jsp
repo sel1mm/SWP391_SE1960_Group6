@@ -330,55 +330,70 @@
     });
   }
   
-  // Get requestId select element once
-  const requestIdSelect = document.querySelector('select[name="requestId"]');
+  // Variables for requestId elements (will be set in DOMContentLoaded)
+  let requestIdSelect = null;
+  let requestIdInput = null;
   
   // Initialize cart from server-side session
   window.addEventListener('DOMContentLoaded', function() {
     console.log('=== DOMContentLoaded - Initializing repair report form ===');
     console.log('Context path:', contextPath);
+    
+    // Get requestId elements (select for create, input for edit)
+    requestIdSelect = document.querySelector('select[name="requestId"]');
+    requestIdInput = document.querySelector('input[name="requestId"]');
+    
     console.log('Request ID select found:', !!requestIdSelect);
+    console.log('Request ID input found:', !!requestIdInput);
     console.log('Parts list body found:', !!partsListBody);
+    
+    // Check if requestId is available (from select for create, or input for edit)
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
+    
+    if (requestId) {
+      console.log('Request ID found:', requestId, '(from', requestIdSelect ? 'select' : 'input', ')');
+      loadAllAvailableParts(requestId);
+    } else {
+      console.log('No request ID found, waiting for user selection');
+    }
     
     loadCartFromSession();
     updatePartsSearchState();
     
-    // If requestId is pre-selected (coming from Task Details), load parts immediately
-    if (requestIdSelect && requestIdSelect.value) {
-      console.log('Request ID pre-selected:', requestIdSelect.value);
-      loadAllAvailableParts(requestIdSelect.value);
+    // Clear cart when Request ID changes (only for select, not input)
+    if (requestIdSelect) {
+      console.log('✅ Request ID select element found, attaching change listener');
+      requestIdSelect.addEventListener('change', function() {
+        console.log('🔄 Request ID changed to:', this.value);
+        if (this.value) {
+          console.log('Loading data for request:', this.value);
+          // Clear old cart when switching request
+          clearCartAjax();
+          // Load all available parts
+          loadAllAvailableParts(this.value);
+          // Enable search
+          enablePartsSearch();
+        } else {
+          console.log('No request selected, disabling parts');
+          // No request selected, disable search
+          disablePartsSearch();
+          clearPartsList();
+        }
+      });
     } else {
-      console.log('No request ID pre-selected, waiting for user selection');
+      console.log('ℹ️ Request ID select not found (this is normal in edit mode)');
+    }
+    
+    // For edit mode, requestId is in a hidden input, so load parts on page load
+    if (requestIdInput && !requestIdSelect) {
+      console.log('✅ Request ID input found (edit mode), parts will load on page load');
     }
   });
   
-  // Clear cart when Request ID changes
-  if (requestIdSelect) {
-    console.log('✅ Request ID select element found, attaching change listener');
-    requestIdSelect.addEventListener('change', function() {
-      console.log('🔄 Request ID changed to:', this.value);
-      if (this.value) {
-        console.log('Loading data for request:', this.value);
-        // Clear old cart when switching request
-        clearCartAjax();
-        // Load all available parts
-        loadAllAvailableParts(this.value);
-        // Enable search
-        enablePartsSearch();
-      } else {
-        console.log('No request selected, disabling parts');
-        // No request selected, disable search
-        disablePartsSearch();
-        clearPartsList();
-      }
-    });
-  } else {
-    console.warn('⚠️ Request ID select element not found!');
-  }
-  
   // Check if parts search should be enabled
   function updatePartsSearchState() {
-    const requestId = requestIdSelect?.value;
+    // Check both select (create) and input (edit) for requestId
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
     
     if (!requestId) {
       disablePartsSearch('Please select a task first before searching for parts.');
@@ -664,8 +679,8 @@
   // ============================================
   
   function addPartToCart(partId, quantity) {
-    // Validate request ID is selected
-    const requestId = requestIdSelect?.value;
+    // Check both select (create) and input (edit) for requestId
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
     if (!requestId) {
       alert('Please select a task before adding parts to cart.');
       return;
@@ -737,7 +752,8 @@
       return;
     }
     
-    const requestId = requestIdSelect?.value || '';
+    // Check both select (create) and input (edit) for requestId
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
     
     if (!requestId) {
       console.error('Cannot remove part: No requestId selected');
@@ -805,7 +821,8 @@
   
   function clearCartAjax() {
     // Clear all parts from cart when changing request
-    const requestId = requestIdSelect?.value || '';
+    // Check both select (create) and input (edit) for requestId
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
     fetch(contextPath + '/technician/reports?action=clearCartAjax&requestId=' + requestId)
       .then(response => response.json())
       .then(data => {
@@ -824,8 +841,10 @@
   }
   
   function loadCartFromSession() {
-    const requestId = document.querySelector('select[name="requestId"]')?.value || 
-                     document.querySelector('input[name="requestId"]')?.value || '';
+    // Check both select (create) and input (edit) for requestId
+    const requestIdSelect = document.querySelector('select[name="requestId"]');
+    const requestIdInput = document.querySelector('input[name="requestId"]');
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
     
     if (!requestId) {
       // If no request ID yet, show empty cart

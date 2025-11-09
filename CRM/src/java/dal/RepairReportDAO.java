@@ -359,6 +359,22 @@ public class RepairReportDAO extends MyDAO {
     /**
      * Find repair report by request ID
      */
+    /**
+     * Find repair report by requestId and technicianId (to prevent duplicates)
+     */
+    public RepairReport findByRequestIdAndTechnician(int requestId, int technicianId) throws SQLException {
+        xSql = "SELECT * FROM RepairReport WHERE requestId = ? AND technicianId = ?";
+        ps = con.prepareStatement(xSql);
+        ps.setInt(1, requestId);
+        ps.setInt(2, technicianId);
+        rs = ps.executeQuery();
+        
+        if (rs.next()) {
+            return mapResultSetToRepairReport(rs);
+        }
+        return null;
+    }
+    
     public RepairReport findByRequestId(int requestId) throws SQLException {
         xSql = "SELECT * FROM RepairReport WHERE requestId = ?";
         ps = con.prepareStatement(xSql);
