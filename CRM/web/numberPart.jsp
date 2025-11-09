@@ -1056,7 +1056,7 @@
                             <option value="partId" ${param.filter == 'partId' ? 'selected' : ''}>By Part ID</option>
                             <option value="partName" ${param.filter == 'partName' ? 'selected' : ''}>By Part Name</option>
                             <option value="category" ${param.filter == 'category' ? 'selected' : ''}>By Category</option>
-                            <option value="quantity" ${param.filter == 'quantity' ? 'selected' : ''}>By Quantity</option>
+
                             <option value="unitPrice" ${param.filter == 'unitPrice' ? 'selected' : ''}>By Unit Price</option>
                             <option value="updatePerson" ${param.filter == 'updatePerson' ? 'selected' : ''}>By Update Person</option>
                             <option value="updateDate" ${param.filter == 'updateDate' ? 'selected' : ''}>By Update Date</option>
@@ -1078,7 +1078,7 @@
                         <th>Category</th>
                         <th>Description</th>
                         <th>Unit Price</th>
-                        <th>Quantity</th>
+                       
                         <th>Last Updated By</th>
                         <th>Last Update Time</th>
                         <th>Action</th>
@@ -1092,11 +1092,10 @@
                             <td>${ls.categoryName != null ? ls.categoryName : 'N/A'}</td>
                             <td>${ls.description}</td>
                             <td>${ls.unitPrice}</td>
-                            <td>${ls.quantity}</td>
                             <td>${ls.userName}</td>
                             <td>${ls.lastUpdatedDate}</td>
                             <td>
-                                <div>
+                                <div style="display: flex; gap: 8px; align-items: center;">
                                     <form action="numberPart" method="post" style="margin: 0; display: inline;">
                                         <input type="hidden" name="action" value="detail">
                                         <input type="hidden" name="partId" value="${ls.partId}">
