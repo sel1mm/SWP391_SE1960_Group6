@@ -116,18 +116,50 @@
             </div>
           </div>
           
+          <!-- Parts List (replaces Diagnosis) -->
           <div class="mb-3">
-            <label class="form-label fw-bold">Diagnosis</label>
-            <div class="border rounded p-3 bg-light">
-              <c:choose>
-                <c:when test="${report.diagnosis != null && !report.diagnosis.isEmpty()}">
-                  <p class="mb-0">${fn:escapeXml(report.diagnosis)}</p>
-                </c:when>
-                <c:otherwise>
-                  <p class="mb-0 text-muted">No diagnosis provided</p>
-                </c:otherwise>
-              </c:choose>
-            </div>
+            <label class="form-label fw-bold">Parts</label>
+            <c:choose>
+              <c:when test="${not empty reportDetails}">
+                <div class="table-responsive">
+                  <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Part Name</th>
+                        <th>Serial</th>
+                        <th>Location</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th>Line Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <c:forEach var="detail" items="${reportDetails}">
+                        <tr>
+                          <td>${fn:escapeXml(detail.partName)}</td>
+                          <td>${fn:escapeXml(detail.serialNumber != null ? detail.serialNumber : 'N/A')}</td>
+                          <td>${fn:escapeXml(detail.location != null ? detail.location : 'N/A')}</td>
+                          <td>$${detail.unitPrice}</td>
+                          <td>${detail.quantity}</td>
+                          <td class="fw-bold">$${detail.lineTotal}</td>
+                        </tr>
+                      </c:forEach>
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="5" class="text-end fw-bold">Total:</td>
+                        <td class="fw-bold text-success fs-5">$${report.estimatedCost}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </c:when>
+              <c:otherwise>
+                <div class="border rounded p-3 bg-light">
+                  <p class="mb-0 text-muted">No parts selected for this report</p>
+                </div>
+              </c:otherwise>
+            </c:choose>
           </div>
         </div>
       </div>

@@ -537,7 +537,7 @@
                     </a>
 
                     <!-- Hợp Đồng -->
-                    <a href="${pageContext.request.contextPath}/managerContracts" class="dashboard-card">
+                    <a href="${pageContext.request.contextPath}/viewcontracts" class="dashboard-card">
                         <div class="card-icon">
                             <i class="fas fa-file-contract"></i>
                         </div>

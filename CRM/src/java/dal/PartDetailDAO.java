@@ -416,6 +416,122 @@ public class PartDetailDAO extends DBContext {
     }
 
     /**
+     * Lock and validate a PartDetail for use in a repair report.
+     * Uses SELECT ... FOR UPDATE to prevent concurrent modifications.
+     * Returns the PartDetail if it exists and is Available, null otherwise.
+     */
+    public NewPartDetail lockAndValidatePartDetail(int partDetailId) throws SQLException {
+        String sql = "SELECT pd.partDetailId, pd.partId, pd.serialNumber, pd.status, pd.location, " +
+                     "       pd.lastUpdatedBy, pd.lastUpdatedDate, " +
+                     "       a.username, " +
+                     "       p.categoryId, c.categoryName " +
+                     "FROM PartDetail pd " +
+                     "LEFT JOIN Account a ON pd.lastUpdatedBy = a.accountId " +
+                     "LEFT JOIN Part p ON pd.partId = p.partId " +
+                     "LEFT JOIN Category c ON p.categoryId = c.categoryId " +
+                     "WHERE pd.partDetailId = ? AND pd.status = 'Available' " +
+                     "FOR UPDATE";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, partDetailId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    NewPartDetail pd = mapResultSetToPartDetail(rs);
+                    System.out.println("✅ Locked and validated PartDetail ID: " + partDetailId);
+                    return pd;
+                }
+            }
+        }
+        
+        System.out.println("❌ PartDetail ID " + partDetailId + " not found or not Available");
+        return null;
+    }
+    
+    /**
+     * Get available quantity for a specific Part (count of Available PartDetails).
+     */
+    public int getAvailableQuantityForPart(int partId) throws SQLException {
+        String sql = "SELECT COUNT(*) as count FROM PartDetail " +
+                     "WHERE partId = ? AND status = 'Available'";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, partId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("count");
+                }
+            }
+        }
+        
+        return 0;
+    }
+    
+    /**
+     * Update PartDetail status to 'InUse' (optimistic locking).
+     * Returns true if update succeeded (part was Available), false otherwise.
+     */
+    public boolean markPartDetailAsInUse(int partDetailId, int updatedBy) throws SQLException {
+        String sql = "UPDATE PartDetail SET status = 'InUse', " +
+                     "lastUpdatedBy = ?, lastUpdatedDate = ? " +
+                     "WHERE partDetailId = ? AND status = 'Available'";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, updatedBy);
+            ps.setDate(2, Date.valueOf(LocalDate.now()));
+            ps.setInt(3, partDetailId);
+            
+            int rowsAffected = ps.executeUpdate();
+            boolean success = rowsAffected > 0;
+            
+            if (success) {
+                System.out.println("✅ Marked PartDetail ID " + partDetailId + " as InUse");
+            } else {
+                System.out.println("❌ Failed to mark PartDetail ID " + partDetailId + " as InUse (not Available or not found)");
+            }
+            
+            return success;
+        }
+    }
+    
+    /**
+     * Batch update multiple PartDetails to 'InUse' status.
+     * Returns the number of successfully updated rows.
+     */
+    public int markPartDetailsAsInUse(List<Integer> partDetailIds, int updatedBy) throws SQLException {
+        if (partDetailIds == null || partDetailIds.isEmpty()) {
+            return 0;
+        }
+        
+        // Build IN clause
+        StringBuilder sql = new StringBuilder(
+            "UPDATE PartDetail SET status = 'InUse', " +
+            "lastUpdatedBy = ?, lastUpdatedDate = ? " +
+            "WHERE partDetailId IN ("
+        );
+        
+        for (int i = 0; i < partDetailIds.size(); i++) {
+            if (i > 0) sql.append(",");
+            sql.append("?");
+        }
+        sql.append(") AND status = 'Available'");
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            ps.setInt(1, updatedBy);
+            ps.setDate(2, Date.valueOf(LocalDate.now()));
+            
+            for (int i = 0; i < partDetailIds.size(); i++) {
+                ps.setInt(i + 3, partDetailIds.get(i));
+            }
+            
+            int rowsAffected = ps.executeUpdate();
+            System.out.println("✅ Marked " + rowsAffected + " PartDetails as InUse");
+            return rowsAffected;
+        }
+    }
+    
+    /**
      * Helper method: Map ResultSet to NewPartDetail
      */
     private NewPartDetail mapResultSetToPartDetail(ResultSet rs) throws SQLException {

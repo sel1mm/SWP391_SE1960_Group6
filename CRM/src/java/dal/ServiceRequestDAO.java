@@ -1,5 +1,6 @@
 package dal;
 
+import java.math.BigDecimal;
 import model.ServiceRequest;
 import model.ServiceRequestDetailDTO2;
 import java.sql.*;
@@ -1869,7 +1870,7 @@ public class ServiceRequestDAO extends MyDAO {
                     report.setRepairDate(sqlDate.toLocalDate());
                 }
 
-                // Thông tin người sửa
+                // ✅ Thông tin kỹ thuật viên từ RepairReport.technicianId
                 report.setTechnicianName(rs.getString("technicianName"));
 
                 return report;
@@ -1914,6 +1915,10 @@ public class ServiceRequestDAO extends MyDAO {
      * Lấy đầy đủ thông tin Service Request + Báo giá (nếu có) + Người xử lý
      * Dùng cho modal "Chi Tiết" tùy theo trạng thái
      */
+    /**
+     * Lấy đầy đủ thông tin Service Request + Báo giá (nếu có) + Người xử lý +
+     * Danh sách linh kiện Dùng cho modal "Chi Tiết" tùy theo trạng thái
+     */
     public ServiceRequestWithQuotation getRequestWithQuotation(int requestId, int customerId) {
         String sql = "SELECT sr.*, "
                 + "e.model as equipmentName, "
@@ -1921,12 +1926,14 @@ public class ServiceRequestDAO extends MyDAO {
                 + "tech.fullName as assignedTechnicianName, "
                 + "rr.reportId, rr.technicianId as repairTechnicianId, "
                 + "rr.details as repairDetails, rr.diagnosis, "
-                + "rr.estimatedCost, rr.quotationStatus, rr.repairDate "
+                + "rr.estimatedCost, rr.quotationStatus, rr.repairDate, "
+                + "repairTech.fullName as repairTechnicianName "
                 + "FROM ServiceRequest sr "
                 + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
                 + "LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId "
                 + "LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId "
                 + "LEFT JOIN RepairReport rr ON sr.requestId = rr.requestId "
+                + "LEFT JOIN Account repairTech ON rr.technicianId = repairTech.accountId "
                 + "WHERE sr.requestId = ? AND sr.createdBy = ?";
 
         try {
@@ -1943,7 +1950,9 @@ public class ServiceRequestDAO extends MyDAO {
                 result.setServiceRequest(sr);
 
                 // ✅ Technician info (for "Chờ Xử Lý" state)
-                result.setAssignedTechnicianName(rs.getString("assignedTechnicianName"));
+                String assignedTechName = rs.getString("assignedTechnicianName");
+                result.setAssignedTechnicianName(assignedTechName);
+                System.out.println("🔍 DEBUG: RequestId=" + requestId + ", AssignedTechnicianName=" + assignedTechName);
 
                 // ✅ Repair Report info (for "Đang Xử Lý" state)
                 if (rs.getObject("reportId") != null) {
@@ -1968,8 +1977,21 @@ public class ServiceRequestDAO extends MyDAO {
                         report.setRepairDate(sqlDate.toLocalDate());
                     }
 
-                    report.setTechnicianName(rs.getString("assignedTechnicianName"));
+                    // ✅ Tên kỹ thuật viên từ RepairReport
+                    String repairTechName = rs.getString("repairTechnicianName");
+                    if (repairTechName != null) {
+                        report.setTechnicianName(repairTechName);
+                    } else {
+                        report.setTechnicianName(assignedTechName);
+                    }
+
                     result.setRepairReport(report);
+
+                    // ✅ LẤY DANH SÁCH LINH KIỆN
+                    int reportId = report.getReportId();
+                    List<RepairPartDetail> parts = getRepairPartsByReportId(reportId);
+                    result.setPartDetails(parts);
+                    System.out.println("✅ Loaded " + parts.size() + " parts for reportId: " + reportId);
                 }
 
                 return result;
@@ -1993,6 +2015,7 @@ public class ServiceRequestDAO extends MyDAO {
         private ServiceRequest serviceRequest;
         private RepairReport repairReport;
         private String assignedTechnicianName;
+        private List<RepairPartDetail> partDetails; // ✅ THÊM MỚI
 
         public ServiceRequest getServiceRequest() {
             return serviceRequest;
@@ -2016,6 +2039,14 @@ public class ServiceRequestDAO extends MyDAO {
 
         public void setAssignedTechnicianName(String assignedTechnicianName) {
             this.assignedTechnicianName = assignedTechnicianName;
+        }
+
+        public List<RepairPartDetail> getPartDetails() {
+            return partDetails;
+        }
+
+        public void setPartDetails(List<RepairPartDetail> partDetails) {
+            this.partDetails = partDetails;
         }
 
     }
@@ -2319,7 +2350,226 @@ public class ServiceRequestDAO extends MyDAO {
             }
         }
 
-        System.out.println("==========================================================\n");
     }
 
+    // ============ INNER CLASS FOR REPAIR PART DETAILS ============
+    /**
+     * Class chứa thông tin chi tiết linh kiện từ báo giá JOIN 4 bảng:
+     * RepairReport -> RepairReportDetail -> Part -> PartDetail
+     */
+    public static class RepairPartDetail {
+
+        private int detailId;
+        private String partName;
+        private String serialNumber;
+        private int quantity;
+        private BigDecimal unitPrice;
+        private BigDecimal totalPrice;
+        private String partDescription;
+
+        // Constructor
+        public RepairPartDetail(int detailId, String partName, String serialNumber,
+                int quantity, BigDecimal unitPrice, String partDescription) {
+            this.detailId = detailId;
+            this.partName = partName;
+            this.serialNumber = serialNumber;
+            this.quantity = quantity;
+            this.unitPrice = unitPrice;
+            this.totalPrice = unitPrice.multiply(new BigDecimal(quantity));
+            this.partDescription = partDescription;
+        }
+
+        // Getters
+        public int getDetailId() {
+            return detailId;
+        }
+
+        public String getPartName() {
+            return partName;
+        }
+
+        public String getSerialNumber() {
+            return serialNumber;
+        }
+
+        public int getQuantity() {
+            return quantity;
+        }
+
+        public BigDecimal getUnitPrice() {
+            return unitPrice;
+        }
+
+        public BigDecimal getTotalPrice() {
+            return totalPrice;
+        }
+
+        public String getPartDescription() {
+            return partDescription;
+        }
+    }
+
+    /**
+     * ✅ LẤY DANH SÁCH LINH KIỆN THAY THẾ TỪ BÁO GIÁ JOIN 4 bảng: RepairReport
+     * -> RepairReportDetail -> Part -> PartDetail
+     */
+    public List<RepairPartDetail> getRepairPartsByReportId(int reportId) {
+        List<RepairPartDetail> parts = new ArrayList<>();
+        String sql = "SELECT "
+                + "rrd.detailId, "
+                + "p.partName, "
+                + "pd.serialNumber, "
+                + "rrd.quantity, "
+                + "rrd.unitPrice, "
+                + "p.description as partDescription "
+                + "FROM RepairReportDetail rrd "
+                + "INNER JOIN Part p ON rrd.partId = p.partId "
+                + "LEFT JOIN PartDetail pd ON rrd.partDetailId = pd.partDetailId "
+                + "WHERE rrd.reportId = ? "
+                + "ORDER BY rrd.detailId";
+
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, reportId);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                RepairPartDetail part = new RepairPartDetail(
+                        rs.getInt("detailId"),
+                        rs.getString("partName"),
+                        rs.getString("serialNumber") != null ? rs.getString("serialNumber") : "N/A",
+                        rs.getInt("quantity"),
+                        rs.getBigDecimal("unitPrice"),
+                        rs.getString("partDescription")
+                );
+                parts.add(part);
+            }
+
+            System.out.println("✅ Found " + parts.size() + " parts for reportId: " + reportId);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error getting repair parts: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            closeResources();
+        }
+
+        return parts;
+    }
+
+    /**
+     * ✅ KIỂM TRA XEM CÓ LINH KIỆN THAY THẾ ĐƯỢC APPROVED CHO REQUEST HAY KHÔNG
+     * Kiểm tra xem có PartsRequest nào được approved/completed cho các task
+     * liên quan đến request này
+     *
+     * @param requestId ID của service request
+     * @return true nếu có linh kiện thay thế, false nếu không
+     */
+    public boolean hasApprovedPartsForRequest(int requestId) {
+        String sql = """
+            SELECT COUNT(*) as partCount
+            FROM PartsRequest pr
+            INNER JOIN WorkTask wt ON pr.taskId = wt.taskId
+            WHERE wt.requestId = ? 
+            AND pr.status IN ('Approved', 'Completed')
+            AND pr.partsRequestId IN (
+                SELECT DISTINCT prd.partsRequestId 
+                FROM PartsRequestDetail prd 
+                WHERE prd.partsRequestId = pr.partsRequestId
+                AND prd.quantityIssued > 0
+            )
+        """;
+
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, requestId);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                int partCount = rs.getInt("partCount");
+                System.out.println("✅ Request " + requestId + " has " + partCount + " approved parts");
+                return partCount > 0;
+            }
+
+            return false;
+        } catch (Exception e) {
+            System.err.println("❌ Error checking parts for request " + requestId + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    
+    /**
+     * ✅ CẬP NHẬT TRẠNG THÁI BÁO GIÁ (quotationStatus)
+     * Customer đồng ý hoặc từ chối báo giá
+     * 
+     * @param reportId ID của repair report
+     * @param quotationStatus Trạng thái mới: 'Approved' hoặc 'Rejected'
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean updateQuotationStatus(int reportId, String quotationStatus) {
+        String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
+        
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setString(1, quotationStatus);
+            ps.setInt(2, reportId);
+            
+            int rowsAffected = ps.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                System.out.println("✅ Updated quotationStatus to '" + quotationStatus + "' for reportId " + reportId);
+                return true;
+            }
+            
+            return false;
+        } catch (Exception e) {
+            System.err.println("❌ Error updating quotationStatus: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    
+    /**
+     * ✅ CẬP NHẬT TRẠNG THÁI THANH TOÁN CỦA SERVICE REQUEST
+     * Cập nhật paymentStatus khi tất cả linh kiện đã được thanh toán
+     * 
+     * @param requestId ID của service request
+     * @param paymentStatus Trạng thái thanh toán mới: 'Completed'
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean updatePaymentStatus(int requestId, String paymentStatus) {
+        String sql = "UPDATE ServiceRequest SET paymentStatus = ? WHERE requestId = ?";
+        
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setString(1, paymentStatus);
+            ps.setInt(2, requestId);
+            
+            int rowsAffected = ps.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                System.out.println("✅ Updated paymentStatus to '" + paymentStatus + "' for requestId " + requestId);
+                return true;
+            }
+            
+            return false;
+        } catch (Exception e) {
+            System.err.println("❌ Error updating paymentStatus: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+
+
 }
+
+    

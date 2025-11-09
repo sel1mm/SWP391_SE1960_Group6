@@ -100,6 +100,9 @@
                       <div class="invalid-feedback" id="requestIdError"></div>
                     </div>
                   </div>
+                  
+                  <!-- Contract Selection removed - Contract is automatically determined from ServiceRequest when report is approved -->
+                </div>
               </c:otherwise>
             </c:choose>
             
@@ -124,15 +127,81 @@
               <div class="invalid-feedback" id="detailsError"></div>
             </div>
             
+            <!-- Parts Selection (Simple Search & Select) -->
             <div class="mb-3">
-              <label for="diagnosis" class="form-label fw-bold">Diagnosis <span class="text-danger">*</span></label>
-              <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3" 
-                        placeholder="Describe the problem diagnosis..." 
-                        maxlength="255" required>${not empty report ? fn:escapeXml(report.diagnosis) : ''}</textarea>
-              <div class="form-text">
-                <span id="diagnosisCount">0</span>/255 characters
+              <label class="form-label fw-bold">Parts <span class="text-danger">*</span></label>
+
+              <!-- Search Box -->
+              <div class="mb-3">
+                <div class="input-group">
+                  <input type="text"
+                         id="partSearchInput"
+                         class="form-control"
+                         placeholder="Search parts by name or serial number..."
+                         autocomplete="off">
+                  <span class="input-group-text">
+                    <i class="bi bi-search" id="searchIcon"></i>
+                    <span class="spinner-border spinner-border-sm d-none" id="searchSpinner"></span>
+                  </span>
+                </div>
+                <div class="form-text">Type to filter parts - all available parts shown below</div>
               </div>
-              <div class="invalid-feedback" id="diagnosisError"></div>
+
+              <!-- Available Parts List -->
+              <div class="card mb-3">
+                <div class="card-header bg-light">
+                  <h6 class="mb-0"><i class="bi bi-box-seam me-2"></i>Available Parts</h6>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover table-sm mb-0">
+                      <thead class="table-light sticky-top">
+                        <tr>
+                          <th>Part Name</th>
+                          <th class="text-center">Serial Number</th>
+                          <th class="text-center">Unit Price</th>
+                          <th class="text-center">Available</th>
+                          <th class="text-center">Quantity</th>
+                        </tr>
+                      </thead>
+                      <tbody id="partsListBody">
+                        <!-- Will be populated by JavaScript -->
+                        <tr>
+                          <td colspan="5" class="text-center text-muted py-4">
+                            <i class="bi bi-search me-2"></i>Select a task first to load available parts
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Selected Parts List -->
+              <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                  <h6 class="mb-0">
+                    <i class="bi bi-cart-check me-2"></i>
+                    Selected Parts 
+                    <span class="badge bg-light text-dark ms-2" id="selectedPartsCount">0</span>
+                  </h6>
+                </div>
+                <div class="card-body p-0">
+                  <div id="selectedPartsList" class="list-group list-group-flush">
+                    <div class="list-group-item text-center text-muted py-4" id="emptyCartMessage">
+                      <i class="bi bi-cart-x me-2"></i>No parts selected yet
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer bg-light">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Total Estimated Cost:</span>
+                    <span id="totalCost" class="fw-bold text-success fs-4">$0.00</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="invalid-feedback" id="partsError"></div>
             </div>
             
             <div class="row">
@@ -144,9 +213,18 @@
                     <input type="number" class="form-control" id="estimatedCost" name="estimatedCost" 
                            step="0.01" min="0.01" max="999999.99" 
                            placeholder="0.00" required
-                           value="${not empty report ? report.estimatedCost : ''}">
+                           value="${not empty report ? report.estimatedCost : (not empty subtotal ? subtotal : '')}">
                   </div>
-                  <div class="form-text">Enter cost in USD (e.g., 150.50)</div>
+                  <div class="form-text">
+                    <c:choose>
+                      <c:when test="${not empty subtotal}">
+                        Auto-calculated from parts: $${subtotal}. You can override if needed.
+                      </c:when>
+                      <c:otherwise>
+                        Enter cost in USD (e.g., 150.50). Will be auto-filled when parts are selected.
+                      </c:otherwise>
+                    </c:choose>
+                  </div>
                   <div class="invalid-feedback" id="estimatedCostError"></div>
                 </div>
               </div>
@@ -210,258 +288,716 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('reportForm');
-    const detailsField = document.getElementById('details');
-    const diagnosisField = document.getElementById('diagnosis');
-    const estimatedCostField = document.getElementById('estimatedCost');
-    const repairDateField = document.getElementById('repairDate');
-    const requestIdField = document.getElementById('requestId');
-    
-    // Character counters
-    function updateCharCount(field, counterId) {
-        const counter = document.getElementById(counterId);
-        counter.textContent = field.value.length;
-    }
-    
-    detailsField.addEventListener('input', () => updateCharCount(detailsField, 'detailsCount'));
-    diagnosisField.addEventListener('input', () => updateCharCount(diagnosisField, 'diagnosisCount'));
-    
-    // Initialize counters
-    updateCharCount(detailsField, 'detailsCount');
-    updateCharCount(diagnosisField, 'diagnosisCount');
-    
-    // Set minimum date to today
-    const today = new Date().toISOString().split('T')[0];
-    repairDateField.setAttribute('min', today);
-    
-    // Form validation
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        let isValid = true;
-        let firstError = '';
-        
-        // Clear previous validation
-        clearValidation();
-        
-        // Validate request ID (only for create mode)
-        if (requestIdField) {
-            const requestIdValidation = validateRequestId(requestIdField.value);
-            if (!requestIdValidation.isValid) {
-                showFieldError(requestIdField, 'requestIdError', requestIdValidation.error);
-                isValid = false;
-                if (!firstError) firstError = requestIdValidation.error;
-            }
-        }
-        
-        // Validate details
-        const detailsValidation = validateDetails(detailsField.value);
-        if (!detailsValidation.isValid) {
-            showFieldError(detailsField, 'detailsError', detailsValidation.error);
-            isValid = false;
-            if (!firstError) firstError = detailsValidation.error;
-        }
-        
-        // Validate diagnosis
-        const diagnosisValidation = validateDiagnosis(diagnosisField.value);
-        if (!diagnosisValidation.isValid) {
-            showFieldError(diagnosisField, 'diagnosisError', diagnosisValidation.error);
-            isValid = false;
-            if (!firstError) firstError = diagnosisValidation.error;
-        }
-        
-        // Validate estimated cost
-        const costValidation = validateEstimatedCost(estimatedCostField.value);
-        if (!costValidation.isValid) {
-            showFieldError(estimatedCostField, 'estimatedCostError', costValidation.error);
-            isValid = false;
-            if (!firstError) firstError = costValidation.error;
-        }
-        
-        // Validate repair date
-        const dateValidation = validateRepairDate(repairDateField.value);
-        if (!dateValidation.isValid) {
-            showFieldError(repairDateField, 'repairDateError', dateValidation.error);
-            isValid = false;
-            if (!firstError) firstError = dateValidation.error;
-        }
-        
-        if (!isValid) {
-            showValidationModal(firstError);
-            return;
-        }
-        
-        // Submit form if valid
-        form.submit();
+// ============================================
+// REAL-TIME PART SELECTION SYSTEM
+// Pure JavaScript (No Frameworks)
+// ============================================
+
+(function() {
+  'use strict';
+  
+  // Search state
+  let searchTimeout = null;
+  const SEARCH_DELAY = 300; // milliseconds
+  
+  // DOM Elements
+  const partSearchInput = document.getElementById('partSearchInput');
+  const searchIcon = document.getElementById('searchIcon');
+  const searchSpinner = document.getElementById('searchSpinner');
+  const partsListBody = document.getElementById('partsListBody');
+  const selectedPartsList = document.getElementById('selectedPartsList');
+  const selectedPartsCount = document.getElementById('selectedPartsCount');
+  const totalCost = document.getElementById('totalCost');
+  const estimatedCostInput = document.getElementById('estimatedCost');
+  // Contract selection removed - contract is automatically determined from ServiceRequest
+  
+  // State
+  let allParts = []; // All available parts loaded from server
+  let selectedParts = {}; // In-memory cart: {partId: {partId, partName, serialNumber, unitPrice, quantity}}
+  
+  // Context path
+  const contextPath = '${pageContext.request.contextPath}';
+  
+  // ============================================
+  // EVENT LISTENERS
+  // ============================================
+  
+  // Client-side search filter (instant, no AJAX)
+  if (partSearchInput) {
+    partSearchInput.addEventListener('keyup', function(e) {
+      if (this.disabled) return;
+      filterPartsList(this.value.trim());
     });
+  }
+  
+  // Variables for requestId elements (will be set in DOMContentLoaded)
+  let requestIdSelect = null;
+  let requestIdInput = null;
+  
+  // Initialize cart from server-side session
+  window.addEventListener('DOMContentLoaded', function() {
+    console.log('=== DOMContentLoaded - Initializing repair report form ===');
+    console.log('Context path:', contextPath);
     
-    // Add event listener for modal OK button to allow retry
-    document.getElementById('validationModal').addEventListener('hidden.bs.modal', function() {
-        // Focus on the first invalid field to help user continue editing
-        const firstInvalidField = document.querySelector('.is-invalid');
-        if (firstInvalidField) {
-            firstInvalidField.focus();
-        }
-    });
+    // Get requestId elements (select for create, input for edit)
+    requestIdSelect = document.querySelector('select[name="requestId"]');
+    requestIdInput = document.querySelector('input[name="requestId"]');
     
-    // Additional event listener for OK button click
-    document.getElementById('validationModal').addEventListener('click', function(e) {
-        if (e.target.classList.contains('btn-primary') && e.target.textContent.trim() === 'OK') {
-            const modal = bootstrap.Modal.getInstance(this);
-            if (modal) {
-                modal.hide();
-            }
-        }
-    });
+    console.log('Request ID select found:', !!requestIdSelect);
+    console.log('Request ID input found:', !!requestIdInput);
+    console.log('Parts list body found:', !!partsListBody);
     
-    function clearValidation() {
-        document.querySelectorAll('.is-invalid').forEach(field => field.classList.remove('is-invalid'));
-        document.querySelectorAll('.invalid-feedback').forEach(feedback => feedback.textContent = '');
+    // Check if requestId is available (from select for create, or input for edit)
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
+    
+    if (requestId) {
+      console.log('Request ID found:', requestId, '(from', requestIdSelect ? 'select' : 'input', ')');
+      loadAllAvailableParts(requestId);
+    } else {
+      console.log('No request ID found, waiting for user selection');
     }
     
-    function showFieldError(field, errorId, message) {
-        field.classList.add('is-invalid');
-        document.getElementById(errorId).textContent = message;
-    }
+    loadCartFromSession();
+    updatePartsSearchState();
     
-    function showValidationModal(message) {
-        document.getElementById('validationMessage').innerHTML = 
-            '<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle me-2"></i>' + message + '</div>';
-        document.getElementById('validationExample').innerHTML = getExampleText(message);
-        
-        const modalElement = document.getElementById('validationModal');
-        const modal = new bootstrap.Modal(modalElement);
-        modal.show();
-        
-        // Ensure OK button properly closes modal
-        const okButton = modalElement.querySelector('[data-bs-dismiss="modal"]');
-        if (okButton) {
-            okButton.addEventListener('click', function() {
-                modal.hide();
-            });
-        }
-        
-        // Fallback: Close modal when clicking outside or pressing Escape
-        modalElement.addEventListener('click', function(e) {
-            if (e.target === modalElement) {
-                modal.hide();
-            }
-        });
-    }
-    
-    // Validation functions matching server-side rules
-    function validateRequestId(value) {
-        if (!value || !value.trim()) {
-            return { isValid: false, error: 'Please select a task to report on' };
-        }
-        return { isValid: true };
-    }
-    
-    function validateDetails(value) {
-        if (!value || !value.trim()) {
-            return { isValid: false, error: 'Details is required' };
-        }
-        const trimmed = value.trim();
-        if (trimmed.length > 255) {
-            return { isValid: false, error: 'Details must be 255 characters or less' };
-        }
-        // Allow Unicode characters (including Vietnamese) and common punctuation
-        const validPattern = /^[\p{L}\p{N}\s,.\-()!?;:'"]*$/u;
-        if (!validPattern.test(trimmed)) {
-            // Debug: log the actual characters that are causing issues
-            console.log('Invalid characters detected in:', trimmed);
-            console.log('Character codes:', Array.from(trimmed).map(c => c.charCodeAt(0)));
-            return { isValid: false, error: 'Details can only contain letters, numbers, spaces, and these characters: , . - ( ) ! ? ; : \' "' };
-        }
-        return { isValid: true };
-    }
-    
-    function validateDiagnosis(value) {
-        if (!value || !value.trim()) {
-            return { isValid: false, error: 'Diagnosis is required' };
-        }
-        const trimmed = value.trim();
-        if (trimmed.length > 255) {
-            return { isValid: false, error: 'Diagnosis must be 255 characters or less' };
-        }
-        // Allow Unicode characters (including Vietnamese) and common punctuation
-        const validPattern = /^[\p{L}\p{N}\s,.\-()!?;:'"]*$/u;
-        if (!validPattern.test(trimmed)) {
-            // Debug: log the actual characters that are causing issues
-            console.log('Invalid characters detected in diagnosis:', trimmed);
-            console.log('Character codes:', Array.from(trimmed).map(c => c.charCodeAt(0)));
-            return { isValid: false, error: 'Diagnosis can only contain letters, numbers, spaces, and these characters: , . - ( ) ! ? ; : \' "' };
-        }
-        return { isValid: true };
-    }
-    
-    function validateEstimatedCost(value) {
-        if (!value || !value.trim()) {
-            return { isValid: false, error: 'Estimated cost is required' };
-        }
-        if (!/^\d+(\.\d{1,2})?$/.test(value.trim())) {
-            return { isValid: false, error: 'Estimated cost must be a valid number (e.g., 1500.00)' };
-        }
-        const cost = parseFloat(value);
-        if (cost <= 0) {
-            return { isValid: false, error: 'Estimated cost must be greater than 0' };
-        }
-        if (cost > 999999.99) {
-            return { isValid: false, error: 'Estimated cost cannot exceed 999,999.99' };
-        }
-        return { isValid: true };
-    }
-    
-    function validateRepairDate(value) {
-        if (!value || !value.trim()) {
-            return { isValid: false, error: 'Repair date is required' };
-        }
-        
-        const repairDate = new Date(value);
-        if (isNaN(repairDate.getTime())) {
-            return { isValid: false, error: 'Invalid date format. Please use YYYY-MM-DD format' };
-        }
-        
-        // Check if this is an edit operation (update existing report)
-        const isEditMode = document.querySelector('input[name="action"]').value === 'update';
-        
-        if (isEditMode) {
-            // For existing reports, repair date should not be changed
-            // The date field should be disabled, but if somehow it's not, we allow any valid date
-            return { isValid: true };
+    // Clear cart when Request ID changes (only for select, not input)
+    if (requestIdSelect) {
+      console.log('✅ Request ID select element found, attaching change listener');
+      requestIdSelect.addEventListener('change', function() {
+        console.log('🔄 Request ID changed to:', this.value);
+        if (this.value) {
+          console.log('Loading data for request:', this.value);
+          // Clear old cart when switching request
+          clearCartAjax();
+          // Load all available parts
+          loadAllAvailableParts(this.value);
+          // Enable search
+          enablePartsSearch();
         } else {
-            // For new reports, repair date cannot be in the past
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            if (repairDate < today) {
-                return { isValid: false, error: 'Repair date cannot be in the past' };
-            }
-            
-            const maxDate = new Date(today);
-            maxDate.setFullYear(maxDate.getFullYear() + 1);
-            if (repairDate > maxDate) {
-                return { isValid: false, error: 'Repair date cannot be more than 1 year in the future' };
-            }
+          console.log('No request selected, disabling parts');
+          // No request selected, disable search
+          disablePartsSearch();
+          clearPartsList();
         }
-        
-        return { isValid: true };
+      });
+    } else {
+      console.log('ℹ️ Request ID select not found (this is normal in edit mode)');
     }
     
-    function getExampleText(errorMessage) {
-        if (errorMessage.includes('task') || errorMessage.includes('select')) {
-            return '<strong>Example:</strong> Select a task from the dropdown list';
-        } else if (errorMessage.includes('Details')) {
-            return '<strong>Example:</strong> Equipment malfunction, replaced faulty component';
-        } else if (errorMessage.includes('Diagnosis')) {
-            return '<strong>Example:</strong> Motor overheating due to worn bearings';
-        } else if (errorMessage.includes('cost')) {
-            return '<strong>Example:</strong> 1500.00';
-        } else if (errorMessage.includes('date')) {
-            return '<strong>Example:</strong> 2024-12-25';
-        }
-        return '<strong>Example:</strong> Please provide valid input';
+    // For edit mode, requestId is in a hidden input, so load parts on page load
+    if (requestIdInput && !requestIdSelect) {
+      console.log('✅ Request ID input found (edit mode), parts will load on page load');
     }
-});
+  });
+  
+  // Check if parts search should be enabled
+  function updatePartsSearchState() {
+    // Check both select (create) and input (edit) for requestId
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
+    
+    if (!requestId) {
+      disablePartsSearch('Please select a task first before searching for parts.');
+      return;
+    }
+    
+    // Enable search
+    enablePartsSearch();
+  }
+  
+  function disablePartsSearch(message) {
+    if (partSearchInput) {
+      partSearchInput.disabled = true;
+      partSearchInput.placeholder = message || 'Parts search disabled';
+      partSearchInput.value = '';
+    }
+    clearSearch();
+  }
+  
+  function enablePartsSearch() {
+    if (partSearchInput) {
+      partSearchInput.disabled = false;
+      partSearchInput.placeholder = 'Search parts by name or serial number...';
+    }
+  }
+  
+  // Load all available parts when task is selected
+  function loadAllAvailableParts(requestId) {
+    console.log('=== loadAllAvailableParts called with requestId:', requestId);
+    if (!requestId) {
+      console.log('No requestId provided, clearing parts list');
+      clearPartsList();
+      return;
+    }
+    
+    console.log('Showing loading spinner and fetching parts...');
+    showSearchLoading(true);
+    
+    const url = contextPath + '/technician/reports?action=searchParts&q=';
+    console.log('Fetching from URL:', url);
+    
+    // Load all parts (empty query = all parts)
+    fetch(url)
+      .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response content-type:', response.headers.get('content-type'));
+        if (!response.ok) {
+          throw new Error('HTTP error! status: ' + response.status);
+        }
+        return response.text();
+      })
+      .then(text => {
+        console.log('Raw response text (first 500 chars):', text.substring(0, Math.min(500, text.length)));
+        try {
+          const data = JSON.parse(text);
+          console.log('Parsed data type:', Array.isArray(data) ? 'Array' : typeof data);
+          console.log('Parsed data length:', Array.isArray(data) ? data.length : 'N/A');
+          if (Array.isArray(data) && data.length > 0) {
+            console.log('First part sample:', data[0]);
+          }
+          showSearchLoading(false);
+          
+          // Check if response is an error object
+          if (data && typeof data === 'object' && data.error) {
+            console.error('Server error:', data.error);
+            alert('Error loading parts: ' + data.error);
+            allParts = [];
+            clearPartsList();
+            return;
+          }
+          
+          // Check if response is an array
+          if (Array.isArray(data)) {
+            allParts = data;
+            console.log('✅ All parts loaded successfully:', allParts.length, 'parts');
+            if (allParts.length === 0) {
+              console.warn('⚠️ No parts found in database');
+            }
+            filterPartsList(partSearchInput?.value || '');
+          } else {
+            console.error('❌ Unexpected response format. Expected array, got:', typeof data, data);
+            allParts = [];
+            clearPartsList();
+          }
+        } catch (e) {
+          console.error('❌ JSON parse error:', e);
+          console.error('Response text that failed to parse:', text);
+          showSearchLoading(false);
+          allParts = [];
+          clearPartsList();
+          alert('Error parsing server response. Check console for details.');
+        }
+      })
+      .catch(error => {
+        showSearchLoading(false);
+        console.error('❌ Load parts fetch error:', error);
+        allParts = [];
+        clearPartsList();
+        alert('Network error loading parts: ' + error.message);
+      });
+  }
+  
+  // Filter parts list (client-side, instant)
+  function filterPartsList(query) {
+    if (!partsListBody) return;
+    
+    const searchTerm = query.toLowerCase();
+    const filtered = allParts.filter(part => {
+      if (!searchTerm) return true;
+      const name = (part.partName || '').toLowerCase();
+      const serial = (part.serialNumber || '').toLowerCase();
+      return name.includes(searchTerm) || serial.includes(searchTerm);
+    });
+    
+    renderPartsList(filtered);
+  }
+  
+  // Render parts in the table
+  function renderPartsList(parts) {
+    console.log('=== renderPartsList called with', parts?.length || 0, 'parts');
+    if (!partsListBody) {
+      console.error('❌ partsListBody element not found! Check HTML ID.');
+      return;
+    }
+    
+    if (!parts || parts.length === 0) {
+      console.log('No parts to render, showing empty message');
+      partsListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>No parts found. Please check if parts exist in the database.</td></tr>';
+      return;
+    }
+    
+    console.log('✅ Rendering', parts.length, 'parts');
+    let html = '';
+    let renderedCount = 0;
+    parts.forEach(function(part) {
+      const partId = part.partId;
+      if (!partId) {
+        console.warn('⚠️ Part missing partId:', part);
+        return;
+      }
+      renderedCount++;
+      const isSelected = selectedParts[partId] != null;
+      const selectedQty = isSelected ? selectedParts[partId].quantity : 0;
+      
+      // Get quantity from cart (server-side session)
+      const cartQty = 0; // Will be updated from cart after loadCartFromSession
+      
+      html += '<tr data-part-id="' + partId + '">';
+      html += '<td><strong>' + escapeHtml(part.partName) + '</strong></td>';
+      html += '<td class="text-center">' + escapeHtml(part.serialNumber || 'N/A') + '</td>';
+      html += '<td class="text-center"><strong class="text-success">$' + parseFloat(part.unitPrice).toFixed(2) + '</strong></td>';
+      html += '<td class="text-center"><span class="badge bg-success">' + part.availableQuantity + '</span></td>';
+      html += '<td class="text-center">';
+      html += '<div class="btn-group btn-group-sm" role="group">';
+      html += '<button type="button" class="btn btn-outline-secondary qty-minus" data-part-id="' + partId + '" ' + (selectedQty <= 0 ? 'disabled' : '') + '>';
+      html += '<i class="bi bi-dash"></i></button>';
+      html += '<span class="btn btn-light disabled qty-display" style="min-width: 40px;" data-part-id="' + partId + '">' + selectedQty + '</span>';
+      html += '<button type="button" class="btn btn-outline-secondary qty-plus" data-part-id="' + partId + '" ' + (selectedQty >= part.availableQuantity ? 'disabled' : '') + '>';
+      html += '<i class="bi bi-plus"></i></button>';
+      html += '</div>';
+      html += '</td>';
+      html += '</tr>';
+    });
+    
+    console.log('✅ Rendered', renderedCount, 'parts in table');
+    partsListBody.innerHTML = html;
+    
+    // Attach event listeners
+    attachPartsListListeners();
+  }
+  
+  // Attach listeners to quantity controls
+  function attachPartsListListeners() {
+    // Plus buttons
+    document.querySelectorAll('.qty-plus').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const partId = parseInt(this.dataset.partId);
+        if (isNaN(partId) || partId <= 0) {
+          console.error('Invalid partId in plus button:', this.dataset.partId);
+          return false;
+        }
+        adjustPartQuantity(partId, 1);
+        return false;
+      });
+    });
+    
+    // Minus buttons
+    document.querySelectorAll('.qty-minus').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const partId = parseInt(this.dataset.partId);
+        if (isNaN(partId) || partId <= 0) {
+          console.error('Invalid partId in minus button:', this.dataset.partId);
+          return false;
+        }
+        adjustPartQuantity(partId, -1);
+        return false;
+      });
+    });
+  }
+  
+  // Adjust quantity in the parts list - auto-adds to cart when quantity > 0
+  function adjustPartQuantity(partId, delta) {
+    const part = allParts.find(p => p.partId === partId);
+    if (!part) return;
+    
+    const currentQty = selectedParts[partId] ? selectedParts[partId].quantity : 0;
+    let newQty = currentQty + delta;
+    newQty = Math.max(0, Math.min(newQty, part.availableQuantity));
+    
+    // Update in-memory state
+    if (newQty > 0) {
+      if (!selectedParts[partId]) {
+        selectedParts[partId] = {
+          partId: partId,
+          partName: part.partName,
+          serialNumber: part.serialNumber,
+          unitPrice: part.unitPrice,
+          quantity: 0
+        };
+      }
+      selectedParts[partId].quantity = newQty;
+    } else {
+      delete selectedParts[partId];
+    }
+    
+    // Update UI
+    const row = partsListBody.querySelector('tr[data-part-id="' + partId + '"]');
+    if (row) {
+      const qtyDisplay = row.querySelector('.qty-display[data-part-id="' + partId + '"]');
+      const minusBtn = row.querySelector('.qty-minus[data-part-id="' + partId + '"]');
+      const plusBtn = row.querySelector('.qty-plus[data-part-id="' + partId + '"]');
+      
+      qtyDisplay.textContent = newQty;
+      minusBtn.disabled = (newQty <= 0);
+      plusBtn.disabled = (newQty >= part.availableQuantity);
+      
+      // Auto-add to cart when quantity becomes > 0, or update if already in cart
+      if (newQty > 0) {
+        // Check if this is an increase (delta > 0) or if it's a new addition
+        if (delta > 0 || currentQty === 0) {
+          addPartToCart(partId, newQty);
+        } else {
+          // Quantity decreased, update cart
+          addPartToCart(partId, newQty);
+        }
+      } else if (newQty === 0 && currentQty > 0) {
+        // Quantity reduced to 0, remove from cart
+        removePartFromCart(partId, false); // false = no confirm dialog
+      }
+    }
+  }
+  
+  // Clear parts list
+  function clearPartsList() {
+    allParts = [];
+    if (partsListBody) {
+      partsListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-search me-2"></i>Select a task first to load available parts</td></tr>';
+    }
+  }
+  
+  // Contract selection functions removed - contract is automatically determined from ServiceRequest
+  
+  // ============================================
+  // UTILITY FUNCTIONS
+  // ============================================
+  
+  function showSearchLoading(loading) {
+    if (loading) {
+      searchIcon.classList.add('d-none');
+      searchSpinner.classList.remove('d-none');
+    } else {
+      searchIcon.classList.remove('d-none');
+      searchSpinner.classList.add('d-none');
+    }
+  }
+  
+  // ============================================
+  // CART MANAGEMENT
+  // ============================================
+  
+  function addPartToCart(partId, quantity) {
+    // Check both select (create) and input (edit) for requestId
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
+    if (!requestId) {
+      alert('Please select a task before adding parts to cart.');
+      return;
+    }
+    
+    const part = allParts.find(p => p.partId === partId);
+    if (!part) {
+      console.error('Part not found:', partId);
+      return;
+    }
+    
+    if (quantity <= 0) {
+      console.log('Quantity is 0, skipping add to cart');
+      return;
+    }
+    
+    console.log('Adding part', partId, 'quantity', quantity, 'to cart');
+    
+    // AJAX request to add/update part in cart
+    fetch(contextPath + '/technician/reports?action=addPartAjax&partId=' + partId + '&quantity=' + quantity + '&requestId=' + requestId)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('HTTP error! status: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Add part response:', data);
+        if (data.success) {
+          // Reload cart from session to update display
+          loadCartFromSession();
+        } else {
+          console.error('Add part failed:', data.error);
+          alert('Error: ' + (data.error || 'Failed to add part'));
+          // Revert quantity in UI
+          const row = partsListBody.querySelector('tr[data-part-id="' + partId + '"]');
+          if (row) {
+            const qtyDisplay = row.querySelector('.qty-display[data-part-id="' + partId + '"]');
+            if (qtyDisplay) {
+              const currentCartQty = 0; // Will be updated by loadCartFromSession
+              qtyDisplay.textContent = currentCartQty;
+            }
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Add part error:', error);
+        alert('Network error: Could not add part to cart. ' + error.message);
+        // Revert quantity in UI
+        const row = partsListBody.querySelector('tr[data-part-id="' + partId + '"]');
+        if (row) {
+          const qtyDisplay = row.querySelector('.qty-display[data-part-id="' + partId + '"]');
+          if (qtyDisplay) {
+            qtyDisplay.textContent = '0';
+          }
+        }
+      });
+  }
+  
+  function removePartFromCart(partId, showConfirm = true) {
+    if (showConfirm && !confirm('Remove this part from cart?')) {
+      return;
+    }
+    
+    // Validate partId
+    if (!partId || isNaN(partId) || partId <= 0) {
+      console.error('Invalid partId:', partId);
+      alert('Invalid part ID. Please refresh the page and try again.');
+      return;
+    }
+    
+    // Check both select (create) and input (edit) for requestId
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
+    
+    if (!requestId) {
+      console.error('Cannot remove part: No requestId selected');
+      alert('Please select a task first');
+      return;
+    }
+    
+    console.log('Removing part', partId, '(type:', typeof partId, ') from cart for request', requestId, '(type:', typeof requestId, ')');
+    
+    // AJAX request to remove part
+    const url = contextPath + '/technician/reports?action=removePartAjax&partId=' + encodeURIComponent(partId) + '&requestId=' + encodeURIComponent(requestId);
+    console.log('Remove URL:', url);
+    
+    fetch(url)
+      .then(response => {
+        console.log('Remove response status:', response.status);
+        if (!response.ok) {
+          throw new Error('HTTP error! status: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Remove response data:', data);
+        if (data.success) {
+          // Reset quantity in parts list to 0
+          delete selectedParts[partId];
+          
+          // Update the quantity display in the parts list
+          const row = partsListBody.querySelector('tr[data-part-id="' + partId + '"]');
+          if (row) {
+            const qtyDisplay = row.querySelector('.qty-display[data-part-id="' + partId + '"]');
+            const minusBtn = row.querySelector('.qty-minus[data-part-id="' + partId + '"]');
+            const plusBtn = row.querySelector('.qty-plus[data-part-id="' + partId + '"]');
+            
+            if (qtyDisplay) qtyDisplay.textContent = '0';
+            if (minusBtn) minusBtn.disabled = true;
+            if (plusBtn) {
+              const part = allParts.find(p => p.partId === partId);
+              if (part) {
+                plusBtn.disabled = (0 >= part.availableQuantity);
+              }
+            }
+          }
+          
+          // Update cart display immediately with the new subtotal from response
+          const newSubtotal = data.subtotal || 0;
+          const newPartsCount = data.partsCount || 0;
+          
+          // Reload full cart to get updated parts list
+          loadCartFromSession();
+          
+          // Also update estimated cost immediately
+          if (estimatedCostInput) {
+            estimatedCostInput.value = parseFloat(newSubtotal).toFixed(2);
+          }
+        } else {
+          alert('Error: ' + (data.error || 'Failed to remove part'));
+        }
+      })
+      .catch(error => {
+        console.error('Remove part error:', error);
+        alert('Network error: Could not remove part. ' + error.message);
+      });
+  }
+  
+  function clearCartAjax() {
+    // Clear all parts from cart when changing request
+    // Check both select (create) and input (edit) for requestId
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
+    fetch(contextPath + '/technician/reports?action=clearCartAjax&requestId=' + requestId)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Reset all quantities in parts list
+          selectedParts = {};
+          // Re-render parts list to reset all quantities
+          filterPartsList(partSearchInput?.value || '');
+          // Update cart display
+          updateCartDisplay([], 0);
+        }
+      })
+      .catch(error => {
+        console.error('Clear cart error:', error);
+      });
+  }
+  
+  function loadCartFromSession() {
+    // Check both select (create) and input (edit) for requestId
+    const requestIdSelect = document.querySelector('select[name="requestId"]');
+    const requestIdInput = document.querySelector('input[name="requestId"]');
+    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
+    
+    if (!requestId) {
+      // If no request ID yet, show empty cart
+      updateCartDisplay([], 0);
+      return;
+    }
+    
+    // AJAX request to get cart summary
+    fetch(contextPath + '/technician/reports?action=getCartSummary&requestId=' + requestId)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          updateCartDisplay(data.parts || [], data.subtotal || 0);
+        }
+      })
+      .catch(error => {
+        console.error('Load cart error:', error);
+      });
+  }
+  
+  function updateCartDisplay(parts, subtotal) {
+    // Calculate total quantity
+    const totalQty = parts.reduce((sum, part) => sum + (part.quantity || 0), 0);
+    
+    // Update summary numbers
+    if (selectedPartsCount) {
+      selectedPartsCount.textContent = totalQty;
+    }
+    if (totalCost) {
+      totalCost.textContent = '$' + parseFloat(subtotal || 0).toFixed(2);
+    }
+    
+    // Update estimated cost input (sync) - always update, even when 0
+    if (estimatedCostInput) {
+      estimatedCostInput.value = parseFloat(subtotal || 0).toFixed(2);
+    }
+    
+    // Contract requirement update removed - contract is automatically determined from ServiceRequest
+    
+    // Update selected parts list
+    if (!selectedPartsList) return;
+    
+    if (parts.length === 0) {
+      selectedPartsList.innerHTML = '<div class="list-group-item text-center text-muted py-4" id="emptyCartMessage"><i class="bi bi-cart-x me-2"></i>No parts selected yet</div>';
+    } else {
+      let html = '';
+      parts.forEach(function(part) {
+        // Ensure partId is a valid number
+        const partId = parseInt(part.partId);
+        if (isNaN(partId) || partId <= 0) {
+          console.error('Invalid partId in cart part:', part);
+          return; // Skip this part
+        }
+        
+        const lineTotal = (part.unitPrice * part.quantity).toFixed(2);
+        html += '<div class="list-group-item d-flex justify-content-between align-items-start">';
+        html += '<div class="flex-grow-1">';
+        html += '<div class="fw-bold">' + escapeHtml(part.partName) + '</div>';
+        html += '<div class="text-muted small">S/N: ' + escapeHtml(part.serialNumber || 'N/A') + '</div>';
+        html += '<div class="text-muted small">';
+        html += '$' + parseFloat(part.unitPrice).toFixed(2) + ' × ' + part.quantity + ' = <strong>$' + lineTotal + '</strong>';
+        html += '</div>';
+        html += '</div>';
+        html += '<button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-part-btn" data-part-id="' + partId + '" title="Remove">';
+        html += '<i class="bi bi-trash"></i>';
+        html += '</button>';
+        html += '</div>';
+      });
+      selectedPartsList.innerHTML = html;
+      
+      // Attach remove button listeners
+      document.querySelectorAll('.remove-part-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault(); // Prevent any default behavior
+          e.stopPropagation(); // Stop event bubbling
+          
+          const partIdStr = this.dataset.partId;
+          console.log('Remove button clicked, partId from dataset:', partIdStr, 'type:', typeof partIdStr);
+          const partId = parseInt(partIdStr);
+          console.log('Parsed partId:', partId, 'isNaN:', isNaN(partId));
+          if (isNaN(partId) || partId <= 0) {
+            console.error('Invalid partId:', partIdStr);
+            alert('Invalid part ID. Please refresh the page and try again.');
+            return false;
+          }
+          removePartFromCart(partId, true); // true = show confirm dialog
+          return false; // Prevent any further action
+        });
+      });
+      
+      // Update quantity displays in parts list to match cart
+      if (partsListBody && allParts.length > 0) {
+        parts.forEach(function(cartPart) {
+          const row = partsListBody.querySelector('tr[data-part-id="' + cartPart.partId + '"]');
+          if (row) {
+            const qtyDisplay = row.querySelector('.qty-display[data-part-id="' + cartPart.partId + '"]');
+            const minusBtn = row.querySelector('.qty-minus[data-part-id="' + cartPart.partId + '"]');
+            const plusBtn = row.querySelector('.qty-plus[data-part-id="' + cartPart.partId + '"]');
+            const part = allParts.find(p => p.partId === cartPart.partId);
+            
+            if (qtyDisplay) qtyDisplay.textContent = cartPart.quantity;
+            if (minusBtn) minusBtn.disabled = (cartPart.quantity <= 0);
+            if (plusBtn && part) {
+              plusBtn.disabled = (cartPart.quantity >= part.availableQuantity);
+            }
+            
+            // Update in-memory state
+            selectedParts[cartPart.partId] = {
+              partId: cartPart.partId,
+              partName: cartPart.partName,
+              serialNumber: cartPart.serialNumber,
+              unitPrice: cartPart.unitPrice,
+              quantity: cartPart.quantity
+            };
+          }
+        });
+      }
+    }
+  }
+  
+  // ============================================
+  // UTILITY FUNCTIONS
+  // ============================================
+  
+  function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
+  }
+  
+  // ============================================
+  // FORM VALIDATION
+  // ============================================
+  
+  // Ensure at least one part is selected before submit
+  const reportForm = document.getElementById('reportForm');
+  if (reportForm) {
+    reportForm.addEventListener('submit', function(e) {
+      const partsCount = selectedPartsCount ? parseInt(selectedPartsCount.textContent) || 0 : 0;
+      if (partsCount <= 0) {
+        e.preventDefault();
+        alert('Please select at least one part for the repair report.');
+        return false;
+      }
+      // Contract validation removed - contract is automatically determined from ServiceRequest
+    });
+  }
+  
+})();
 </script>
