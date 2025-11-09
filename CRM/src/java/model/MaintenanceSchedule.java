@@ -12,7 +12,7 @@ public class MaintenanceSchedule {
     private String recurrenceRule;
     private String status;
     private int priorityId;
-
+    private String technicianName; 
     public MaintenanceSchedule() {
     }
 
@@ -108,6 +108,12 @@ public class MaintenanceSchedule {
     public void setPriorityId(int priorityId) {
         this.priorityId = priorityId;
     }
+    public String getTechnicianName() {
+        return technicianName;
+    }
     
+    public void setTechnicianName(String technicianName) {
+        this.technicianName = technicianName;
+    }
     
 }

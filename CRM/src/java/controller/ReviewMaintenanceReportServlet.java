@@ -4,6 +4,10 @@ import dal.ServiceRequestDAO;
 import dal.MaintenanceScheduleDAO;
 import dal.WorkAssignmentDAO;
 import dal.TechnicianWorkloadDAO;
+import dal.NotificationDAO;
+import dal.ContractDAO;
+import dal.AccountDAO;
+import dal.WorkTaskDAO;
 import model.Account;
 import model.ServiceRequest;
 import model.MaintenanceSchedule;
@@ -11,6 +15,9 @@ import model.WorkAssignment;
 import model.WorkTask;
 import model.RepairReport;
 import model.RepairResult;
+import model.Notification;
+import model.ServiceRequestDetailDTO2;
+import utils.Email;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
@@ -29,6 +36,8 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.google.gson.Gson;
@@ -47,6 +56,9 @@ public class ReviewMaintenanceReportServlet extends HttpServlet {
     private MaintenanceScheduleDAO maintenanceScheduleDAO;
     private WorkAssignmentDAO workAssignmentDAO;
     private TechnicianWorkloadDAO technicianWorkloadDAO;
+    private NotificationDAO notificationDAO;
+    private ContractDAO contractDAO;
+    private AccountDAO accountDAO;
     private Gson gson;
     
     @Override
@@ -57,6 +69,9 @@ public class ReviewMaintenanceReportServlet extends HttpServlet {
             maintenanceScheduleDAO = new MaintenanceScheduleDAO();
             workAssignmentDAO = new WorkAssignmentDAO();
             technicianWorkloadDAO = new TechnicianWorkloadDAO();
+            notificationDAO = new NotificationDAO();
+            contractDAO = new ContractDAO();
+            accountDAO = new AccountDAO();
             gson = new Gson();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error initializing ReviewMaintenanceReportServlet", e);
@@ -185,6 +200,47 @@ public class ReviewMaintenanceReportServlet extends HttpServlet {
             // Get all maintenance schedules for overview
             List<MaintenanceSchedule> allSchedules = maintenanceScheduleDAO.getAllMaintenanceSchedules();
             request.setAttribute("allSchedules", allSchedules);
+
+            // Build a map contractId -> contract.details for display in table
+            try {
+                Map<Integer, String> contractDetailsMap = new HashMap<>();
+                for (MaintenanceSchedule s : allSchedules) {
+                    if (s.getContractId() != null) {
+                        Integer cid = s.getContractId();
+                        if (!contractDetailsMap.containsKey(cid)) {
+                            model.Contract c = contractDAO.getContractById(cid);
+                            String label = null;
+                            if (c != null) {
+                                // Prefer details as display name; fallback to contractType
+                                label = (c.getDetails() != null && !c.getDetails().trim().isEmpty())
+                                        ? c.getDetails().trim()
+                                        : c.getContractType();
+                            }
+                            contractDetailsMap.put(cid, label);
+                        }
+                    }
+                }
+                request.setAttribute("contractDetailsMap", contractDetailsMap);
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "Failed to build contract details map", ex);
+                request.setAttribute("contractDetailsMap", new HashMap<Integer, String>());
+            }
+
+            // Build a map technicianId -> technician fullName for display (KTV name + id)
+            try {
+                Map<Integer, String> technicianNamesMap = new HashMap<>();
+                for (MaintenanceSchedule s : allSchedules) {
+                    Integer tid = s.getAssignedTo();
+                    if (tid != null && !technicianNamesMap.containsKey(tid)) {
+                        Account tech = accountDAO.getAccountById(tid);
+                        technicianNamesMap.put(tid, tech != null ? tech.getFullName() : null);
+                    }
+                }
+                request.setAttribute("technicianNamesMap", technicianNamesMap);
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "Failed to build technician names map", ex);
+                request.setAttribute("technicianNamesMap", new HashMap<Integer, String>());
+            }
             
             // Get service requests for context
             List<ServiceRequest> serviceRequests = serviceRequestDAO.getAllRequestsHistory();
@@ -253,6 +309,30 @@ public class ReviewMaintenanceReportServlet extends HttpServlet {
         if (serviceRequest != null) {
             response_obj.add("serviceRequest", localDateGson.toJsonTree(serviceRequest));
         }
+        // Include contract details if available
+        try {
+            if (schedule.getContractId() != null) {
+                model.Contract contract = contractDAO.getContractById(schedule.getContractId());
+                if (contract != null) {
+                    response_obj.add("contract", localDateGson.toJsonTree(contract));
+                }
+            }
+        } catch (Exception contractEx) {
+            LOGGER.log(Level.WARNING, "Failed to load contract for scheduleId=" + scheduleId, contractEx);
+        }
+
+        // Include technician name if available
+        try {
+            Integer tid = schedule.getAssignedTo();
+            if (tid != null) {
+                Account tech = accountDAO.getAccountById(tid);
+                if (tech != null) {
+                    response_obj.addProperty("technicianName", tech.getFullName());
+                }
+            }
+        } catch (Exception techEx) {
+            LOGGER.log(Level.WARNING, "Failed to load technician for scheduleId=" + scheduleId, techEx);
+        }
         response_obj.add("assignments", localDateGson.toJsonTree(assignments));
 
         out.print(localDateGson.toJson(response_obj));
@@ -284,8 +364,28 @@ public class ReviewMaintenanceReportServlet extends HttpServlet {
             boolean success = maintenanceScheduleDAO.updateScheduleStatus(scheduleId, "Approved");
             
             if (success) {
-                // TODO: Add approval comments to a comments table if needed
-                // For now, we'll just update the status
+                // Sync related work tasks: mark as Completed if not already
+                try {
+                    WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+                    List<WorkTask> tasks = workTaskDAO.findByScheduleId(scheduleId);
+                    for (WorkTask t : tasks) {
+                        if (t.getStatus() == null || !"Completed".equals(t.getStatus())) {
+                            workTaskDAO.updateTaskStatus(t.getTaskId(), "Completed");
+                        }
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Failed to sync WorkTask status for scheduleId=" + scheduleId, ex);
+                }
+
+                // Notify customer via system notification and email
+                try {
+                    sendCustomerNotificationForSchedule(scheduleId, 
+                            "Maintenance report approved", 
+                            approvalComments, 
+                            "Approved");
+                } catch (Exception notifyEx) {
+                    LOGGER.log(Level.WARNING, "Approved but notification/email failed for scheduleId=" + scheduleId, notifyEx);
+                }
                 
                 session.setAttribute("successMessage", "Báo cáo bảo trì đã được phê duyệt thành công!");
             } else {
@@ -322,7 +422,26 @@ public class ReviewMaintenanceReportServlet extends HttpServlet {
             boolean success = maintenanceScheduleDAO.updateScheduleStatus(scheduleId, "Rejected");
             
             if (success) {
-                // TODO: Add rejection reason to a comments table if needed
+                // Sync related work tasks: put on hold
+                try {
+                    WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+                    List<WorkTask> tasks = workTaskDAO.findByScheduleId(scheduleId);
+                    for (WorkTask t : tasks) {
+                        workTaskDAO.updateTaskStatus(t.getTaskId(), "On Hold");
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Failed to sync WorkTask status (Rejected) for scheduleId=" + scheduleId, ex);
+                }
+
+                // Notify customer
+                try {
+                    sendCustomerNotificationForSchedule(scheduleId, 
+                            "Maintenance report rejected", 
+                            rejectionReason, 
+                            "Rejected");
+                } catch (Exception notifyEx) {
+                    LOGGER.log(Level.WARNING, "Rejected but notification/email failed for scheduleId=" + scheduleId, notifyEx);
+                }
                 session.setAttribute("successMessage", "Báo cáo bảo trì đã bị từ chối!");
             } else {
                 session.setAttribute("errorMessage", "Không thể từ chối báo cáo bảo trì");
@@ -358,7 +477,26 @@ public class ReviewMaintenanceReportServlet extends HttpServlet {
             boolean success = maintenanceScheduleDAO.updateScheduleStatus(scheduleId, "Revision Requested");
             
             if (success) {
-                // TODO: Add revision comments to a comments table if needed
+                // Sync related work tasks: set back to In Progress for revision
+                try {
+                    WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+                    List<WorkTask> tasks = workTaskDAO.findByScheduleId(scheduleId);
+                    for (WorkTask t : tasks) {
+                        workTaskDAO.updateTaskStatus(t.getTaskId(), "In Progress");
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Failed to sync WorkTask status (Revision Requested) for scheduleId=" + scheduleId, ex);
+                }
+
+                // Notify customer
+                try {
+                    sendCustomerNotificationForSchedule(scheduleId, 
+                            "Maintenance report revision requested", 
+                            revisionComments, 
+                            "Revision Requested");
+                } catch (Exception notifyEx) {
+                    LOGGER.log(Level.WARNING, "Revision requested but notification/email failed for scheduleId=" + scheduleId, notifyEx);
+                }
                 session.setAttribute("successMessage", "Đã yêu cầu chỉnh sửa báo cáo bảo trì!");
             } else {
                 session.setAttribute("errorMessage", "Không thể yêu cầu chỉnh sửa báo cáo bảo trì");
@@ -438,6 +576,105 @@ public class ReviewMaintenanceReportServlet extends HttpServlet {
             errorResponse.addProperty("success", false);
             errorResponse.addProperty("error", "Lỗi cơ sở dữ liệu: " + e.getMessage());
             out.print(gson.toJson(errorResponse));
+        }
+    }
+
+    /**
+     * Build and send a customer notification and email for a schedule status change
+     */
+    private void sendCustomerNotificationForSchedule(int scheduleId, String actionText, String comments, String newStatus) {
+        MaintenanceSchedule schedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
+        if (schedule == null) return;
+
+        Integer customerId = null;
+        String customerEmail = null;
+        Integer contractEquipmentId = null;
+        String equipInfo = null;
+
+        // Try to get from linked service request first
+        try {
+            int reqId = schedule.getRequestId();
+            if (reqId > 0) {
+                ServiceRequestDetailDTO2 detail = serviceRequestDAO.getRequestDetailById(reqId);
+                if (detail != null) {
+                    customerId = detail.getCreatedBy();
+                    customerEmail = detail.getCustomerEmail();
+                    equipInfo = (detail.getEquipmentModel() != null ? detail.getEquipmentModel() : "Equipment");
+                    if (detail.getSerialNumber() != null && !detail.getSerialNumber().trim().isEmpty()) {
+                        equipInfo += " (" + detail.getSerialNumber() + ")";
+                    }
+                    try {
+                        contractEquipmentId = contractDAO.getContractEquipmentIdByContractAndEquipment(
+                            detail.getContractId(), detail.getEquipmentId());
+                    } catch (Exception ignore) {}
+                }
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "Failed to load ServiceRequest details for scheduleId=" + scheduleId, ex);
+        }
+
+        // Fallback: use contract linkage
+        try {
+            if (customerId == null && schedule.getContractId() != null) {
+                model.Contract c = contractDAO.getContractById(schedule.getContractId());
+                if (c != null) {
+                    customerId = c.getCustomerId();
+                }
+            }
+            if (customerEmail == null && customerId != null) {
+                Account acc = accountDAO.getAccountById(customerId);
+                if (acc != null) {
+                    customerEmail = acc.getEmail();
+                }
+            }
+            if (contractEquipmentId == null && schedule.getContractId() != null && schedule.getEquipmentId() != null) {
+                try {
+                    contractEquipmentId = contractDAO.getContractEquipmentIdByContractAndEquipment(
+                        schedule.getContractId(), schedule.getEquipmentId());
+                } catch (Exception ignore) {}
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "Fallback customer/contract lookup failed for scheduleId=" + scheduleId, ex);
+        }
+
+        // Build message
+        StringBuilder message = new StringBuilder();
+        message.append("Báo cáo bảo trì cho lịch #").append(scheduleId)
+               .append(" (" + schedule.getScheduleType() + ") ")
+               .append("vào ngày ").append(schedule.getScheduledDate())
+               .append(": ").append(actionText).append(".");
+
+        if (equipInfo != null) {
+            message.append("\n\nThiết bị: ").append(equipInfo);
+        }
+
+        if (comments != null && !comments.trim().isEmpty()) {
+            message.append("\n\nGhi chú: ").append(comments.trim());
+        }
+
+        // Create system notification
+        try {
+            if (customerId != null) {
+                Notification n = new Notification();
+                n.setAccountId(customerId);
+                n.setNotificationType("System");
+                n.setStatus("Unread");
+                n.setMessage(message.toString());
+                n.setContractEquipmentId(contractEquipmentId != null ? contractEquipmentId : 0);
+                notificationDAO.createNotification(n);
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "Failed to create notification for scheduleId=" + scheduleId, ex);
+        }
+
+        // Send email
+        try {
+            if (customerEmail != null && !customerEmail.trim().isEmpty()) {
+                String subject = "[CRM] " + actionText;
+                Email.sendEmail(customerEmail, subject, message.toString());
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "Failed to send email for scheduleId=" + scheduleId, ex);
         }
     }
 }

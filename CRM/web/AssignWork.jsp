@@ -314,6 +314,29 @@
             flex: 1;
             max-width: 200px;
         }
+        .technician-item {
+    transition: all 0.3s ease;
+    border-radius: 5px;
+}
+
+.technician-item:hover {
+    background-color: rgba(102, 126, 234, 0.08) !important;
+}
+
+.form-check-input {
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.form-check-label {
+    margin-left: 10px;
+}
     </style>
 </head>
 <body>
@@ -398,34 +421,108 @@
                                 <input type="hidden" name="action" value="assignWork">
                                 
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="taskId" class="form-label">Yêu Cầu Dịch Vụ</label>
-                                        <select class="form-select" id="taskId" name="taskId" required>
-                                            <option value="">Chọn yêu cầu dịch vụ...</option>
-                                            <c:forEach var="request" items="${pendingRequests}">
-                                                <option value="${request.requestId}" 
-                                                        ${preSelectedRequestId != null && preSelectedRequestId == request.requestId.toString() ? 'selected' : ''}>
-                                                    ${request.description} - ID:${request.requestId}
-                                                </option>
-                                            </c:forEach>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="col-md-6 mb-3">
-                                        <label for="technicianId" class="form-label">Kỹ Thuật Viên</label>
-                                        <select class="form-select" id="technicianId" name="technicianId" required>
-                                            <option value="">Chọn kỹ thuật viên...</option>
-                                            <c:forEach var="technician" items="${availableTechnicians}">
-                                                <option value="<c:out value='${technician.technicianId}' escapeXml='true'/>" 
-                                                        data-capacity="<c:out value='${technician.availableCapacity}' escapeXml='true'/>"
-                                                        data-completion-time="<c:out value='${technician.averageCompletionTime}' escapeXml='true'/>">
-                                                    Kỹ thuật viên : <c:out value='${technician.technicianName}-ID: ${technician.technicianId}' escapeXml='true'/> 
-                                                    
-                                                </option>
-                                            </c:forEach>
-                                        </select>
-                                    </div>
+    <!-- Yêu Cầu Dịch Vụ -->
+    <div class="col-md-6 mb-3">
+        <label for="taskId" class="form-label">Yêu Cầu Dịch Vụ</label>
+        <select class="form-select" id="taskId" name="taskId" required>
+            <option value="">Chọn yêu cầu dịch vụ...</option>
+            <c:forEach var="request" items="${pendingRequests}">
+                <option value="${request.requestId}" 
+                        ${preSelectedRequestId != null && preSelectedRequestId == request.requestId.toString() ? 'selected' : ''}>
+                    ${request.description} - ID:${request.requestId}
+                </option>
+            </c:forEach>
+        </select>
+    </div>
+    
+    <!-- Kỹ Thuật Viên -->
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Kỹ Thuật Viên <span class="text-danger">*</span></label>
+        
+        <!-- Dropdown Button -->
+        <div class="dropdown w-100">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" 
+                    type="button" 
+                    id="technicianDropdown" 
+                    data-bs-toggle="dropdown" 
+                    aria-expanded="false"
+                    style="height: 40px;">
+                <span id="dropdownButtonText">Chọn kỹ thuật viên...</span>
+                
+            </button>
+            
+            <!-- Dropdown Menu with Checkboxes -->
+            <div class="dropdown-menu w-100 p-3" 
+                 aria-labelledby="technicianDropdown" 
+                 style="max-height: 400px; overflow-y: auto;"
+                 onclick="event.stopPropagation();">
+                
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2 mb-3 pb-3 border-bottom">
+                    <button type="button" class="btn btn-sm btn-outline-primary flex-fill" onclick="selectAllTechnicians()">
+                        <i class="fas fa-check-square me-1"></i>Chọn Tất Cả
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" onclick="deselectAllTechnicians()">
+                        <i class="fas fa-square me-1"></i>Bỏ Chọn
+                    </button>
+                </div>
+                
+                <!-- Technician List -->
+                <c:forEach var="technician" items="${availableTechnicians}">
+                    <div class="form-check mb-2 p-2 technician-item rounded" 
+                         style="border-left: 3px solid transparent; transition: all 0.3s;">
+                        <input class="form-check-input technician-checkbox" 
+                               type="checkbox" 
+                               name="technicianIds" 
+                               value="${technician.technicianId}"
+                               id="tech_${technician.technicianId}"
+                               data-capacity="${technician.availableCapacity}"
+                               data-name="${technician.technicianName}"
+                               onchange="updateSelectedCount()">
+                        <label class="form-check-label w-100" for="tech_${technician.technicianId}" style="cursor: pointer;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${technician.technicianName}</strong>
+                                    <small class="text-muted d-block">(ID: ${technician.technicianId})</small>
                                 </div>
+                                <div class="text-end">
+                                    <c:set var="maxPoints" value="${technician.maxConcurrentTasks}" />
+                                    <c:set var="currentPoints" value="${technician.currentActiveTasks}" />
+                                    <c:set var="availablePoints" value="${maxPoints - currentPoints}" />
+                                    <c:choose>
+                                        <c:when test="${availablePoints >= 3}">
+                                            <span class="badge bg-success">Sẵn sàng </span>
+                                        </c:when>
+                                        <c:when test="${availablePoints >= 1}">
+                                            <span class="badge bg-warning text-dark">Gần đầy </span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge bg-danger">Quá tải </span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </c:forEach>
+                
+                <c:if test="${empty availableTechnicians}">
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-user-slash fa-2x mb-2"></i>
+                        <p class="mb-0">Không có kỹ thuật viên khả dụng</p>
+                    </div>
+                </c:if>
+            </div>
+        </div>
+        
+        <!-- Selected Count Badge -->
+        <div class="mt-2">
+            <span class="badge bg-info" id="selectedCount">Đã chọn: 0</span>
+        </div>
+        
+        <small class="text-danger d-none" id="technicianError">Vui lòng chọn ít nhất một kỹ thuật viên</small>
+    </div>
+</div>
                                 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
@@ -568,67 +665,173 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let currentPage = 1;
-        const itemsPerPage = 10;
-        let allAssignments = [];
-        let filteredAssignments = [];
+ // ========================================
+// ASSIGNMENT HISTORY MANAGEMENT
+// ========================================
+let currentPage = 1;
+const itemsPerPage = 10;
+let allAssignments = [];
+let filteredAssignments = [];
 
-        document.getElementById('assignWorkForm').addEventListener('submit', function(e) {
-            const technicianSelect = document.getElementById('technicianId');
-            const selectedOption = technicianSelect.options[technicianSelect.selectedIndex];
+// ========================================
+// FORM VALIDATION & SUBMISSION
+// ========================================
+document.getElementById('assignWorkForm').addEventListener('submit', function(e) {
+    const checkedBoxes = document.querySelectorAll('.technician-checkbox:checked');
+    
+    // Validate: At least one technician must be selected
+    if (checkedBoxes.length === 0) {
+        e.preventDefault();
+        document.getElementById('technicianError').classList.remove('d-none');
+        document.querySelector('.technician-checkbox').focus();
+        alert('Vui lòng chọn ít nhất một kỹ thuật viên!');
+        return false;
+    }
+    
+    // Check capacity for each selected technician
+    let hasOverloadedTech = false;
+    let overloadedNames = [];
+    
+    checkedBoxes.forEach(cb => {
+        if (parseInt(cb.dataset.capacity) <= 0) {
+            hasOverloadedTech = true;
+            overloadedNames.push(cb.dataset.name);
+        }
+    });
+    
+    if (hasOverloadedTech) {
+        e.preventDefault();
+        alert('Các kỹ thuật viên sau đã quá tải:\n' + overloadedNames.join('\n') + 
+              '\n\nVui lòng bỏ chọn họ trước khi phân công!');
+        return false;
+    }
+    
+    // Confirm assignment
+    const confirmMsg = `Bạn có chắc muốn phân công công việc này cho ${checkedBoxes.length} kỹ thuật viên?\n\n` +
+                       Array.from(checkedBoxes).map(cb => '• ' + cb.dataset.name).join('\n');
+    
+    if (!confirm(confirmMsg)) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // ✅ If all validations pass, let form submit normally
+    // Page will reload and show success message
+});
+
+// ========================================
+// TECHNICIAN SELECTION HELPERS
+// ========================================
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.technician-checkbox:checked');
+    const count = checkboxes.length;
+    document.getElementById('selectedCount').textContent = 'Đã chọn: ' + count;
+    
+    // Highlight selected items
+    document.querySelectorAll('.technician-item').forEach(item => {
+        const checkbox = item.querySelector('.technician-checkbox');
+        if (checkbox.checked) {
+            item.style.borderLeftColor = '#667eea';
+            item.style.backgroundColor = 'rgba(102, 126, 234, 0.05)';
+        } else {
+            item.style.borderLeftColor = 'transparent';
+            item.style.backgroundColor = 'transparent';
+        }
+    });
+    
+    // Hide error message when at least one is selected
+    if (count > 0) {
+        document.getElementById('technicianError').classList.add('d-none');
+    }
+}
+
+function selectAllTechnicians() {
+    const checkboxes = document.querySelectorAll('.technician-checkbox');
+    checkboxes.forEach(cb => {
+        if (cb.dataset.capacity > 0) {
+            cb.checked = true;
+        }
+    });
+    updateSelectedCount();
+}
+
+function deselectAllTechnicians() {
+    const checkboxes = document.querySelectorAll('.technician-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    updateSelectedCount();
+}
+
+// ========================================
+// STATUS & PRIORITY HELPERS
+// ========================================
+function getStatusClass(status) {
+    switch(status) {
+        case 'Completed': return 'bg-success';
+        case 'Assigned': return 'bg-info';
+        case 'In Progress': return 'bg-warning text-dark';
+        default: return 'bg-secondary';
+    }
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'Completed': return 'Đã Hoàn Thành';
+        case 'Assigned': return 'Đã Phân Công';
+        case 'In Progress': return 'Đang Thực Hiện';
+        default: return status;
+    }
+}
+
+function getPriorityClass(priority) {
+    switch(priority) {
+        case 'Urgent': return 'bg-danger';
+        case 'High': return 'bg-warning';
+        case 'Normal': return 'bg-info';
+        default: return 'bg-secondary';
+    }
+}
+
+// ========================================
+// ASSIGNMENT HISTORY API
+// ========================================
+function refreshAssignmentHistory() {
+    console.log('🔄 Fetching assignment history...');
+    
+    fetch('assignWork?action=getAssignmentHistory')
+        .then(response => {
+            console.log('✅ Response received:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('📋 Assignment data:', data);
+            console.log('📊 Total assignments:', data.length);
             
-            if (selectedOption && selectedOption.dataset.capacity <= 0) {
-                e.preventDefault();
-                alert('Kỹ thuật viên đã chọn không còn khả năng nhận thêm công việc!');
-                return false;
-            }
+            allAssignments = data;
+            applyFilter();
+        })
+        .catch(error => {
+            console.error('❌ Error refreshing assignment history:', error);
         });
+}
 
-        function getStatusClass(status) {
-            switch(status) {
-                case 'Completed': return 'bg-success';
-                case 'Assigned': return 'bg-info';
-                case 'In Progress': return 'bg-warning text-dark';
-                default: return 'bg-secondary';
-            }
-        }
+function applyFilter() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    if (statusFilter === '') {
+        filteredAssignments = allAssignments;
+    } else {
+        filteredAssignments = allAssignments.filter(a => a.status === statusFilter);
+    }
+    
+    currentPage = 1;
+    renderTable();
+    renderPagination();
+}
 
-        function getStatusText(status) {
-            switch(status) {
-                case 'Completed': return 'Đã Hoàn Thành';
-                case 'Assigned': return 'Đã Phân Công';
-                case 'In Progress': return 'Đang Thực Hiện';
-                default: return status;
-            }
-        }
-
-        function refreshAssignmentHistory() {
-            fetch('assignWork?action=getAssignmentHistory')
-                .then(response => response.json())
-                .then(data => {
-                    allAssignments = data;
-                    applyFilter();
-                })
-                .catch(error => {
-                    console.error('Error refreshing assignment history:', error);
-                });
-        }
-
-        function applyFilter() {
-            const statusFilter = document.getElementById('statusFilter').value;
-            
-            if (statusFilter === '') {
-                filteredAssignments = allAssignments;
-            } else {
-                filteredAssignments = allAssignments.filter(a => a.status === statusFilter);
-            }
-            
-            currentPage = 1;
-            renderTable();
-            renderPagination();
-        }
-
-        function renderTable() {
+// ========================================
+// TABLE RENDERING
+// ========================================
+function renderTable() {
     const tbody = document.getElementById('assignmentHistoryTable');
     tbody.innerHTML = '';
     
@@ -636,10 +839,16 @@
     const endIndex = startIndex + itemsPerPage;
     const pageAssignments = filteredAssignments.slice(startIndex, endIndex);
     
+    if (pageAssignments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">' +
+                         '<i class="fas fa-inbox fa-2x mb-2 d-block"></i>' +
+                         'Không có dữ liệu phân công</td></tr>';
+        return;
+    }
+    
     pageAssignments.forEach(assignment => {
         const row = document.createElement('tr');
         
-        // ✅ Hiển thị tên technician thay vì chỉ ID
         const technicianDisplay = assignment.technicianName 
             ? assignment.technicianName + ' (ID: ' + assignment.assignedTo + ')' 
             : 'KTV #' + assignment.assignedTo;
@@ -647,7 +856,7 @@
         row.innerHTML = 
             '<td>#' + assignment.assignmentId + '</td>' +
             '<td>#' + assignment.taskId + '</td>' +
-            '<td>' + technicianDisplay + '</td>' + // ✅ Thay đổi ở đây
+            '<td>' + technicianDisplay + '</td>' +
             '<td>' + assignment.assignmentDate + '</td>' +
             '<td>' + parseFloat(assignment.estimatedDuration).toFixed(2) + 'h</td>' +
             '<td>' +
@@ -671,229 +880,162 @@
     });
 }
 
-        function renderPagination() {
-            const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);
-            const paginationControls = document.getElementById('paginationControls');
-            paginationControls.innerHTML = '';
-            
-            if (totalPages <= 1) return;
-            
-            // Previous button
-            const prevBtn = document.createElement('button');
-            prevBtn.textContent = '« Trước';
-            prevBtn.disabled = currentPage === 1;
-            prevBtn.onclick = () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    renderTable();
-                    renderPagination();
-                }
-            };
-            paginationControls.appendChild(prevBtn);
-            
-            // Page numbers
-            for (let i = 1; i <= totalPages; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.textContent = i;
-                pageBtn.className = currentPage === i ? 'active' : '';
-                pageBtn.onclick = () => {
-                    currentPage = i;
-                    renderTable();
-                    renderPagination();
-                };
-                paginationControls.appendChild(pageBtn);
-            }
-            
-            // Next button
-            const nextBtn = document.createElement('button');
-            nextBtn.textContent = 'Sau »';
-            nextBtn.disabled = currentPage === totalPages;
-            nextBtn.onclick = () => {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    renderTable();
-                    renderPagination();
-                }
-            };
-            paginationControls.appendChild(nextBtn);
+function renderPagination() {
+    const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);
+    const paginationControls = document.getElementById('paginationControls');
+    paginationControls.innerHTML = '';
+    
+    if (totalPages <= 1) return;
+    
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '« Trước';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderTable();
+            renderPagination();
         }
-
-       // Delete assignment
-
-        function deleteAssignment(assignmentId) {
-
-            if (confirm('Bạn có chắc chắn muốn xóa phân công này?')) {
-
-                fetch('assignWork', {
-
-                    method: 'POST',
-
-                    headers: {
-
-                        'Content-Type': 'application/x-www-form-urlencoded',
-
-                    },
-
-                    body: 'action=deleteAssignment&assignmentId=' + assignmentId
-
-                })
-
-                .then(response => response.json())
-
-                .then(data => {
-
-                    if (data.success) {
-
-                        refreshAssignmentHistory();
-
-                        showToast('Xóa phân công thành công!', 'success');
-
-                        location.reload(); 
-
-                    } else {
-
-                        showToast('Lỗi khi xóa phân công: ' + (data.error || 'Unknown error'), 'error');
-
-                    }
-
-                })
-
-                .catch(error => {
-
-                    console.error('Error deleting assignment:', error);
-
-                    showToast('Lỗi khi xóa phân công!', 'error');
-
-                });
-
-            }
-
+    };
+    paginationControls.appendChild(prevBtn);
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        pageBtn.className = currentPage === i ? 'active' : '';
+        pageBtn.onclick = () => {
+            currentPage = i;
+            renderTable();
+            renderPagination();
+        };
+        paginationControls.appendChild(pageBtn);
+    }
+    
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Sau »';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderTable();
+            renderPagination();
         }
+    };
+    paginationControls.appendChild(nextBtn);
+}
 
-        // Event delegation for delete assignment buttons
-
-        document.addEventListener('click', function(e) {
-
-            if (e.target.closest('.delete-assignment-btn')) {
-
-                const button = e.target.closest('.delete-assignment-btn');
-
-                const assignmentId = button.getAttribute('data-assignment-id');
-
-                if (assignmentId) {
-
-                    deleteAssignment(assignmentId);
-
-                }
-
+// ========================================
+// DELETE ASSIGNMENT
+// ========================================
+// ========================================
+// DELETE ASSIGNMENT
+// ========================================
+function deleteAssignment(assignmentId) {
+    if (confirm('Bạn có chắc chắn muốn xóa phân công này?')) {
+        fetch('assignWork', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=deleteAssignment&assignmentId=' + assignmentId
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Xóa phân công thành công!', 'success');
+                // ✅ REFRESH TRANG SAU 1 GIÂY
+                setTimeout(() => {
+                    location.reload();
+                }, 100);
+            } else {
+                showToast('Lỗi khi xóa phân công: ' + (data.error || 'Unknown error'), 'error');
             }
-
+        })
+        .catch(error => {
+            console.error('Error deleting assignment:', error);
+            showToast('Lỗi khi xóa phân công!', 'error');
         });
+    }
+}
 
-        // Helper functions
-
-        function getPriorityClass(priority) {
-
-            switch(priority) {
-
-                case 'Urgent': return 'bg-danger';
-
-                case 'High': return 'bg-warning';
-
-                case 'Normal': return 'bg-info';
-
-                default: return 'bg-secondary';
-
-            }
-
+// Event delegation for delete buttons
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-assignment-btn')) {
+        const button = e.target.closest('.delete-assignment-btn');
+        const assignmentId = button.getAttribute('data-assignment-id');
+        if (assignmentId) {
+            deleteAssignment(assignmentId);
         }
-
-        function showToast(message, type) {
-
-            // Simple toast notification
-
-            const toast = document.createElement('div');
-
-            toast.className = 'alert alert-' + (type == 'success' ? 'success' : 'danger') + ' position-fixed';
-
-            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-
-            toast.innerHTML = message +
-
-                '<button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>';
-
-            document.body.appendChild(toast);
-
-            
-
-            setTimeout(() => {
-
-                if (toast.parentElement) {
-
-                    toast.remove();
-
-                }
-
-            }, 5000);
-
-        }
-
-        // Auto-refresh every 30 seconds
-
-        setInterval(refreshAssignmentHistory, 30000);
-
-        document.addEventListener('DOMContentLoaded', function() {
-
-    refreshAssignmentHistory();
-
+    }
 });
 
+// ========================================
+// TOAST NOTIFICATION
+// ========================================
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = 'alert alert-' + (type == 'success' ? 'success' : 'danger') + ' position-fixed';
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = message +
+        '<button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>';
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 5000);
+}
+
+// ========================================
+// PAGE INITIALIZATION
+// ========================================
 document.addEventListener('DOMContentLoaded', function() {
-
+    console.log('🚀 Page loaded, initializing...');
+    
+    // Initialize technician count
+    updateSelectedCount();
+    
+    // Load assignment history
+    refreshAssignmentHistory();
+    
+    // Setup filter listener
+    document.getElementById('statusFilter').addEventListener('change', applyFilter);
+    
+    // If there's a success message, refresh history after 1 second
+    const successAlert = document.querySelector('.alert-success');
+    if (successAlert) {
+        console.log('✅ Success message detected, will refresh history...');
+        setTimeout(() => {
+            refreshAssignmentHistory();
+        }, 1000);
+    }
+    
+    // Handle pre-selected fields
     const taskSelect = document.getElementById('taskId');
-
     const prioritySelect = document.getElementById('priority');
-
     
-
-    // Check if fields were pre-filled
-
-    if (taskSelect.value && '${preSelectedRequestId}' !== '') {
-
-        // Add highlight animation
-
+    if (taskSelect.value) {
         taskSelect.classList.add('border-success', 'border-3');
-
         setTimeout(() => {
-
             taskSelect.classList.remove('border-success', 'border-3');
-
         }, 3000);
-
-        
-
-        // Show notification
-
         showToast('Yêu cầu dịch vụ đã được chọn sẵn!', 'success');
-
     }
-
     
-
-    if (prioritySelect.value && '${preSelectedPriority}' !== '') {
-
+    if (prioritySelect.value) {
         prioritySelect.classList.add('border-success', 'border-3');
-
         setTimeout(() => {
-
             prioritySelect.classList.remove('border-success', 'border-3');
-
         }, 3000);
-
     }
-
 });
 
+// Auto-refresh every 30 seconds
+setInterval(refreshAssignmentHistory, 30000);
     </script>
 
 </body>
