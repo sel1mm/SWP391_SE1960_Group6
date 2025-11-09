@@ -1,6 +1,9 @@
 package dal;
 
 import model.ContractAppendix;
+import model.RepairReportDetail;
+import dal.RepairReportDAO;
+import dal.PartDetailDAO;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -347,13 +350,222 @@ public class ContractAppendixDAO extends DBContext {
         return null;
     }
 
-// ✅ Xóa tất cả thiết bị trong phụ lục (để update lại)
+    // ✅ Xóa tất cả thiết bị trong phụ lục (để update lại)
     public void removeAllEquipmentFromAppendix(int appendixId) throws SQLException {
         String sql = "DELETE FROM ContractAppendixEquipment WHERE appendixId = ?";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, appendixId);
             ps.executeUpdate();
+        }
+    }
+    
+    /**
+     * Append repair report parts to contract as an appendix.
+     * This method is called when a repair report is approved.
+     * 
+     * Business rule: If contractId is provided, use it. Otherwise, find the latest Active contract
+     * for the equipment/customer associated with the report's ServiceRequest.
+     * 
+     * @param reportId The repair report ID
+     * @param contractId Optional contract ID (if null, will be discovered from ServiceRequest)
+     * @return The created appendix ID, or 0 if failed
+     * @throws SQLException If database error occurs or parts are no longer available
+     */
+    public int appendReportPartsToContract(int reportId, Integer contractId) throws SQLException {
+        boolean originalAutoCommit = connection.getAutoCommit();
+        
+        try {
+            connection.setAutoCommit(false);
+            
+            // Get repair report details
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            List<RepairReportDetail> details = reportDAO.getReportDetails(reportId);
+            
+            if (details == null || details.isEmpty()) {
+                System.out.println("⚠️ No parts found in repair report " + reportId);
+                connection.rollback();
+                return 0;
+            }
+            
+            // Get ServiceRequest info to find contract and equipment
+            String sql = "SELECT sr.contractId, sr.equipmentId, sr.createdBy " +
+                        "FROM ServiceRequest sr " +
+                        "JOIN RepairReport rr ON sr.requestId = rr.requestId " +
+                        "WHERE rr.reportId = ?";
+            
+            Integer finalContractId = contractId;
+            Integer equipmentId = null;
+            Integer customerId = null;
+            
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setInt(1, reportId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        if (finalContractId == null) {
+                            Integer srContractId = rs.getObject("contractId", Integer.class);
+                            finalContractId = srContractId;
+                        }
+                        equipmentId = rs.getObject("equipmentId", Integer.class);
+                        customerId = rs.getInt("createdBy");
+                    } else {
+                        connection.rollback();
+                        throw new SQLException("Repair report " + reportId + " not found or not linked to ServiceRequest");
+                    }
+                }
+            }
+            
+            // If contractId still not found, find latest Active contract for this equipment/customer
+            if (finalContractId == null && equipmentId != null && customerId != null) {
+                sql = "SELECT c.contractId " +
+                     "FROM Contract c " +
+                     "JOIN ContractEquipment ce ON c.contractId = ce.contractId " +
+                     "WHERE c.customerId = ? AND ce.equipmentId = ? AND c.status = 'Active' " +
+                     "ORDER BY c.createdDate DESC, c.contractId DESC " +
+                     "LIMIT 1";
+                
+                try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                    ps.setInt(1, customerId);
+                    ps.setInt(2, equipmentId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            finalContractId = rs.getInt("contractId");
+                            System.out.println("✅ Found latest Active contract: " + finalContractId);
+                        }
+                    }
+                }
+            }
+            
+            if (finalContractId == null) {
+                connection.rollback();
+                throw new SQLException("Cannot determine contract for repair report " + reportId + 
+                                     ". Please specify contractId or ensure ServiceRequest has valid contract/equipment.");
+            }
+            
+            // Verify contract exists and belongs to correct customer
+            sql = "SELECT customerId, status FROM Contract WHERE contractId = ?";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setInt(1, finalContractId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        connection.rollback();
+                        throw new SQLException("Contract " + finalContractId + " not found");
+                    }
+                    String contractStatus = rs.getString("status");
+                    if (!"Active".equals(contractStatus)) {
+                        System.out.println("⚠️ Contract " + finalContractId + " is not Active (status: " + contractStatus + ")");
+                        // Continue anyway, but log warning
+                    }
+                }
+            }
+            
+            // Check if report has already been appended (prevent duplicates)
+            sql = "SELECT COUNT(*) FROM ContractAppendixPart WHERE repairReportId = ?";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setInt(1, reportId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        connection.rollback();
+                        throw new SQLException("Repair report " + reportId + " has already been appended to a contract");
+                    }
+                }
+            }
+            
+            // Validate all parts are still available and lock them
+            PartDetailDAO partDetailDAO = new PartDetailDAO();
+            List<Integer> partDetailIdsToUpdate = new ArrayList<>();
+            
+            for (RepairReportDetail detail : details) {
+                // Validate quantity
+                int availableQty = partDetailDAO.getAvailableQuantityForPart(detail.getPartId());
+                if (detail.getQuantity() > availableQty) {
+                    connection.rollback();
+                    throw new SQLException("Part " + detail.getPartId() + " (" + detail.getPartName() + 
+                                        ") has insufficient quantity. Required: " + detail.getQuantity() + 
+                                        ", Available: " + availableQty);
+                }
+                
+                // If partDetailId is specified, validate and lock it
+                if (detail.getPartDetailId() != null) {
+                    var partDetail = partDetailDAO.lockAndValidatePartDetail(detail.getPartDetailId());
+                    if (partDetail == null) {
+                        connection.rollback();
+                        throw new SQLException("PartDetail " + detail.getPartDetailId() + " is not available");
+                    }
+                    partDetailIdsToUpdate.add(detail.getPartDetailId());
+                }
+            }
+            
+            // Calculate total amount
+            double totalAmount = details.stream()
+                .mapToDouble(d -> d.getUnitPrice().multiply(java.math.BigDecimal.valueOf(d.getQuantity())).doubleValue())
+                .sum();
+            
+            // Create ContractAppendix
+            sql = "INSERT INTO ContractAppendix (contractId, appendixType, appendixName, description, " +
+                 "effectiveDate, totalAmount, status, createdBy, createdAt) " +
+                 "VALUES (?, 'RepairPart', ?, ?, CURDATE(), ?, 'Approved', ?, NOW())";
+            
+            String appendixName = "Repair Parts from Report #" + reportId;
+            String description = "Parts automatically added when repair report #" + reportId + " was approved";
+            
+            int appendixId;
+            try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setInt(1, finalContractId);
+                ps.setString(2, appendixName);
+                ps.setString(3, description);
+                ps.setBigDecimal(4, java.math.BigDecimal.valueOf(totalAmount));
+                ps.setInt(5, customerId != null ? customerId : 1); // Use customerId or default
+                
+                ps.executeUpdate();
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        appendixId = rs.getInt(1);
+                    } else {
+                        connection.rollback();
+                        throw new SQLException("Failed to create ContractAppendix");
+                    }
+                }
+            }
+            
+            // Insert ContractAppendixPart rows and update PartDetail status
+            sql = "INSERT INTO ContractAppendixPart (appendixId, equipmentId, partId, quantity, unitPrice, " +
+                 "repairReportId, paymentStatus, approvedByCustomer, approvalDate, note) " +
+                 "VALUES (?, ?, ?, ?, ?, ?, 'Paid', TRUE, NOW(), ?)";
+            
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                for (RepairReportDetail detail : details) {
+                    ps.setInt(1, appendixId);
+                    ps.setInt(2, equipmentId != null ? equipmentId : 0); // May be null, use 0 as placeholder
+                    ps.setInt(3, detail.getPartId());
+                    ps.setInt(4, detail.getQuantity());
+                    ps.setBigDecimal(5, detail.getUnitPrice());
+                    ps.setInt(6, reportId);
+                    ps.setString(7, "Auto-added from approved repair report #" + reportId);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+            
+            // Update PartDetail status to 'InUse' for specified partDetailIds
+            if (!partDetailIdsToUpdate.isEmpty()) {
+                int updated = partDetailDAO.markPartDetailsAsInUse(partDetailIdsToUpdate, customerId != null ? customerId : 1);
+                if (updated != partDetailIdsToUpdate.size()) {
+                    System.out.println("⚠️ Warning: Only " + updated + " of " + partDetailIdsToUpdate.size() + 
+                                     " PartDetails were marked as InUse");
+                }
+            }
+            
+            connection.commit();
+            System.out.println("✅ Successfully appended repair report " + reportId + " to contract " + finalContractId);
+            return appendixId;
+            
+        } catch (SQLException e) {
+            connection.rollback();
+            System.err.println("❌ Error appending report parts to contract: " + e.getMessage());
+            throw e;
+        } finally {
+            connection.setAutoCommit(originalAutoCommit);
         }
     }
 }

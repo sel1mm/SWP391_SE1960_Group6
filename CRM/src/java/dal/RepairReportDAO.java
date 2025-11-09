@@ -1,6 +1,7 @@
 package dal;
 
 import model.RepairReport;
+import model.RepairReportDetail;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -156,6 +157,129 @@ public class RepairReportDAO extends MyDAO {
             }
         }
         return 0;
+    }
+    
+    /**
+     * Create a new repair report with details in a single transaction.
+     * Inserts the RepairReport header and all RepairReportDetail rows atomically.
+     * 
+     * @param report The repair report to insert
+     * @param details List of repair report detail lines (parts)
+     * @return The generated reportId, or 0 if insertion failed
+     * @throws SQLException If database error occurs (transaction will be rolled back)
+     */
+    public int insertReportWithDetails(RepairReport report, List<RepairReportDetail> details) throws SQLException {
+        boolean originalAutoCommit = con.getAutoCommit();
+        
+        try {
+            con.setAutoCommit(false);
+            
+            // Insert RepairReport header
+            xSql = "INSERT INTO RepairReport (requestId, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate, targetContractId) " +
+                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            ps = con.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, report.getRequestId());
+            ps.setInt(2, report.getTechnicianId());
+            ps.setString(3, report.getDetails());
+            ps.setString(4, report.getDiagnosis() != null ? report.getDiagnosis() : ""); // Keep diagnosis field but may be empty
+            ps.setBigDecimal(5, report.getEstimatedCost());
+            ps.setString(6, report.getQuotationStatus());
+            ps.setDate(7, Date.valueOf(report.getRepairDate()));
+            if (report.getTargetContractId() != null) {
+                ps.setInt(8, report.getTargetContractId());
+            } else {
+                ps.setNull(8, Types.INTEGER);
+            }
+            
+            int affected = ps.executeUpdate();
+            if (affected == 0) {
+                con.rollback();
+                return 0;
+            }
+            
+            // Get generated reportId
+            rs = ps.getGeneratedKeys();
+            int reportId;
+            if (rs.next()) {
+                reportId = rs.getInt(1);
+            } else {
+                con.rollback();
+                return 0;
+            }
+            
+            // Insert RepairReportDetail rows
+            if (details != null && !details.isEmpty()) {
+                xSql = "INSERT INTO RepairReportDetail (reportId, partId, partDetailId, quantity, unitPrice) " +
+                       "VALUES (?, ?, ?, ?, ?)";
+                ps = con.prepareStatement(xSql);
+                
+                for (RepairReportDetail detail : details) {
+                    ps.setInt(1, reportId);
+                    ps.setInt(2, detail.getPartId());
+                    if (detail.getPartDetailId() != null) {
+                        ps.setInt(3, detail.getPartDetailId());
+                    } else {
+                        ps.setNull(3, Types.INTEGER);
+                    }
+                    ps.setInt(4, detail.getQuantity());
+                    ps.setBigDecimal(5, detail.getUnitPrice());
+                    ps.addBatch();
+                }
+                
+                int[] batchResults = ps.executeBatch();
+                for (int result : batchResults) {
+                    if (result == PreparedStatement.EXECUTE_FAILED) {
+                        con.rollback();
+                        throw new SQLException("Failed to insert one or more repair report details");
+                    }
+                }
+            }
+            
+            con.commit();
+            return reportId;
+            
+        } catch (SQLException e) {
+            con.rollback();
+            throw e;
+        } finally {
+            con.setAutoCommit(originalAutoCommit);
+        }
+    }
+    
+    /**
+     * Get all details (parts) for a repair report.
+     */
+    public List<RepairReportDetail> getReportDetails(int reportId) throws SQLException {
+        List<RepairReportDetail> details = new ArrayList<>();
+        
+        xSql = "SELECT rrd.detailId, rrd.reportId, rrd.partId, rrd.partDetailId, rrd.quantity, rrd.unitPrice, " +
+               "       p.partName, pd.serialNumber, pd.location " +
+               "FROM RepairReportDetail rrd " +
+               "JOIN Part p ON rrd.partId = p.partId " +
+               "LEFT JOIN PartDetail pd ON rrd.partDetailId = pd.partDetailId " +
+               "WHERE rrd.reportId = ? " +
+               "ORDER BY rrd.detailId";
+        
+        ps = con.prepareStatement(xSql);
+        ps.setInt(1, reportId);
+        rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            RepairReportDetail detail = new RepairReportDetail();
+            detail.setDetailId(rs.getInt("detailId"));
+            detail.setReportId(rs.getInt("reportId"));
+            detail.setPartId(rs.getInt("partId"));
+            Integer partDetailId = rs.getObject("partDetailId", Integer.class);
+            detail.setPartDetailId(partDetailId);
+            detail.setQuantity(rs.getInt("quantity"));
+            detail.setUnitPrice(rs.getBigDecimal("unitPrice"));
+            detail.setPartName(rs.getString("partName"));
+            detail.setSerialNumber(rs.getString("serialNumber"));
+            detail.setLocation(rs.getString("location"));
+            details.add(detail);
+        }
+        
+        return details;
     }
     
     /**

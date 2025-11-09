@@ -17,6 +17,7 @@ public class RepairReport {
     private String quotationStatus;
     private LocalDate repairDate;
     private Integer invoiceDetailId;
+    private Integer targetContractId; // Which contract will receive the appendix
     private String technicianName; // For display purposes (not stored in DB)
 
     // Constructors
@@ -67,6 +68,9 @@ public class RepairReport {
     public String getTechnicianName() { return technicianName; }
     public void setTechnicianName(String technicianName) { this.technicianName = technicianName; }
 
+    public Integer getTargetContractId() { return targetContractId; }
+    public void setTargetContractId(Integer targetContractId) { this.targetContractId = targetContractId; }
+
     @Override
     public String toString() {
         return "RepairReport{" +
@@ -79,6 +83,7 @@ public class RepairReport {
                 ", quotationStatus='" + quotationStatus + '\'' +
                 ", repairDate=" + repairDate +
                 ", invoiceDetailId=" + invoiceDetailId +
+                ", targetContractId=" + targetContractId +
                 '}';
     }
 }
