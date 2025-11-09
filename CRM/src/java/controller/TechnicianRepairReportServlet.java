@@ -320,15 +320,8 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 // Diagnosis field is replaced by parts - keep empty or use summary
                 report.setDiagnosis(""); // Parts are stored in RepairReportDetail
                 
-                // Get targetContractId - which contract will receive the appendix
-                String targetContractIdStr = req.getParameter("targetContractId");
-                if (targetContractIdStr != null && !targetContractIdStr.trim().isEmpty()) {
-                    try {
-                        report.setTargetContractId(Integer.parseInt(targetContractIdStr));
-                    } catch (NumberFormatException e) {
-                        // Will be caught in validation
-                    }
-                }
+                // targetContractId removed - contract is automatically determined from ServiceRequest
+                // when the repair report is approved (via database trigger)
                 
                 // Get selected parts from session (scoped to this request)
                 String cartKey = "selectedParts_" + report.getRequestId();
@@ -340,14 +333,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 
                 List<String> validationErrors = new ArrayList<>();
                 
-                // Validate targetContractId is required when parts are present
-                if (parts != null && !parts.isEmpty()) {
-                    if (report.getTargetContractId() == null) {
-                        validationErrors.add("Target contract must be selected when parts are added");
-                    }
-                }
-                
-                // Run other validations
+                // Run validations (targetContractId validation removed - contract is auto-determined from ServiceRequest)
                 validationErrors.addAll(validateRepairReportInput(req, false, parts));
                 
                 // Calculate estimated cost from parts if not manually overridden

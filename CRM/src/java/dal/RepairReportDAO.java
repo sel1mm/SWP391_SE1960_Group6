@@ -174,9 +174,9 @@ public class RepairReportDAO extends MyDAO {
         try {
             con.setAutoCommit(false);
             
-            // Insert RepairReport header
-            xSql = "INSERT INTO RepairReport (requestId, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate, targetContractId) " +
-                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            // Insert RepairReport header (targetContractId column removed - contract is auto-determined from ServiceRequest via trigger)
+            xSql = "INSERT INTO RepairReport (requestId, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate) " +
+                   "VALUES (?, ?, ?, ?, ?, ?, ?)";
             ps = con.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, report.getRequestId());
             ps.setInt(2, report.getTechnicianId());
@@ -185,11 +185,7 @@ public class RepairReportDAO extends MyDAO {
             ps.setBigDecimal(5, report.getEstimatedCost());
             ps.setString(6, report.getQuotationStatus());
             ps.setDate(7, Date.valueOf(report.getRepairDate()));
-            if (report.getTargetContractId() != null) {
-                ps.setInt(8, report.getTargetContractId());
-            } else {
-                ps.setNull(8, Types.INTEGER);
-            }
+            // targetContractId column doesn't exist - contract is automatically determined from ServiceRequest when report is approved
             
             int affected = ps.executeUpdate();
             if (affected == 0) {

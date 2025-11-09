@@ -101,21 +101,7 @@
                     </div>
                   </div>
                   
-                  <!-- Contract Selection (for Appendix) - Shows after task selection -->
-                  <div class="col-md-6">
-                    <div class="mb-3" id="contractSelectionContainer" style="display: none;">
-                      <label for="targetContractId" class="form-label fw-bold">
-                        Select Contract for Appendix <span class="text-danger">*</span>
-                      </label>
-                      <select class="form-select" id="targetContractId" name="targetContractId" required>
-                        <option value="">-- Select which contract to attach this repair --</option>
-                      </select>
-                      <div class="form-text">
-                        <i class="bi bi-info-circle"></i> After customer approval, parts will be added as an appendix to this contract
-                      </div>
-                      <div class="invalid-feedback" id="targetContractIdError"></div>
-                    </div>
-                  </div>
+                  <!-- Contract Selection removed - Contract is automatically determined from ServiceRequest when report is approved -->
                 </div>
               </c:otherwise>
             </c:choose>
@@ -323,10 +309,7 @@
   const selectedPartsCount = document.getElementById('selectedPartsCount');
   const totalCost = document.getElementById('totalCost');
   const estimatedCostInput = document.getElementById('estimatedCost');
-  const contractSelectionContainer = document.getElementById('contractSelectionContainer');
-  const targetContractIdSelect = document.getElementById('targetContractId');
-  const targetContractDisplay = document.getElementById('targetContractDisplay');
-  const targetContractInfo = document.getElementById('targetContractInfo');
+  // Contract selection removed - contract is automatically determined from ServiceRequest
   
   // State
   let allParts = []; // All available parts loaded from server
@@ -360,10 +343,9 @@
     loadCartFromSession();
     updatePartsSearchState();
     
-    // If requestId is pre-selected (coming from Task Details), load contracts and parts immediately
+    // If requestId is pre-selected (coming from Task Details), load parts immediately
     if (requestIdSelect && requestIdSelect.value) {
       console.log('Request ID pre-selected:', requestIdSelect.value);
-      loadCustomerContracts(requestIdSelect.value);
       loadAllAvailableParts(requestIdSelect.value);
     } else {
       console.log('No request ID pre-selected, waiting for user selection');
@@ -379,8 +361,6 @@
         console.log('Loading data for request:', this.value);
         // Clear old cart when switching request
         clearCartAjax();
-        // Load customer contracts
-        loadCustomerContracts(this.value);
         // Load all available parts
         loadAllAvailableParts(this.value);
         // Enable search
@@ -389,7 +369,6 @@
         console.log('No request selected, disabling parts');
         // No request selected, disable search
         disablePartsSearch();
-        hideContractSelection();
         clearPartsList();
       }
     });
@@ -664,114 +643,7 @@
     }
   }
   
-  // Load customer contracts when request is selected
-  function loadCustomerContracts(requestId) {
-    console.log('=== loadCustomerContracts called with requestId:', requestId);
-    if (!requestId) {
-      hideContractSelection();
-      return;
-    }
-    
-    fetch(contextPath + '/technician/reports?action=getCustomerContracts&requestId=' + requestId)
-      .then(response => {
-        console.log('Contracts response status:', response.status);
-        return response.json();
-      })
-      .then(data => {
-        console.log('Contracts data:', data);
-        if (data.success && data.contracts && data.contracts.length > 0) {
-          displayContractSelection(data.contracts);
-        } else {
-          hideContractSelection();
-          if (data.contracts && data.contracts.length === 0) {
-            console.warn('Customer has no active contracts');
-            // Don't disable parts search, just warn
-            // Parts can still be added, contract selection is optional until parts are added
-          }
-        }
-      })
-      .catch(error => {
-        console.error('Load contracts error:', error);
-        hideContractSelection();
-      });
-  }
-  
-  function displayContractSelection(contracts) {
-    console.log('=== displayContractSelection called with', contracts?.length || 0, 'contracts');
-    if (!contractSelectionContainer || !targetContractIdSelect) {
-      console.error('❌ Contract selection elements not found');
-      return;
-    }
-    
-    // Clear existing options (except first)
-    targetContractIdSelect.innerHTML = '<option value="">-- Select which contract to attach this repair --</option>';
-    
-    // Add contract options
-    contracts.forEach(function(contract) {
-      const option = document.createElement('option');
-      option.value = contract.contractId;
-      option.textContent = 'Contract #' + contract.contractId + ' - ' + 
-                          contract.contractType + ' (' + contract.status + ') - ' +
-                          'Valid: ' + contract.startDate + ' to ' + contract.endDate;
-      targetContractIdSelect.appendChild(option);
-    });
-    
-    // Show container
-    contractSelectionContainer.style.display = 'block';
-    targetContractIdSelect.required = false; // Only required when parts are added
-    targetContractIdSelect.contractsData = contracts; // Store data
-    updateTargetContractDisplay(); // Update summary display
-    console.log('✅ Contract selection displayed');
-  }
-  
-  function hideContractSelection() {
-    if (contractSelectionContainer) {
-      contractSelectionContainer.style.display = 'none';
-      if (targetContractIdSelect) {
-        targetContractIdSelect.required = false;
-        targetContractIdSelect.innerHTML = '<option value="">-- Select which contract to attach this repair --</option>';
-        targetContractIdSelect.contractsData = null;
-      }
-    }
-    // Hide contract display in summary
-    if (targetContractDisplay) {
-      targetContractDisplay.style.display = 'none';
-    }
-  }
-  
-  // Event listener for contract selection
-  if (targetContractIdSelect) {
-    targetContractIdSelect.addEventListener('change', function() {
-      updateTargetContractDisplay();
-    });
-  }
-  
-  function updateTargetContractDisplay() {
-    if (!targetContractIdSelect || !targetContractDisplay || !targetContractInfo) return;
-    
-    const selectedContractId = targetContractIdSelect.value;
-    
-    if (!selectedContractId || selectedContractId === '') {
-      targetContractDisplay.style.display = 'none';
-      return;
-    }
-    
-    // Find the selected contract in the stored data
-    const contracts = targetContractIdSelect.contractsData;
-    if (!contracts) return;
-    
-    const selectedContract = contracts.find(c => c.contractId == selectedContractId);
-    if (!selectedContract) return;
-    
-    // Display the contract information
-    targetContractInfo.innerHTML = 
-      '<strong>Contract #' + selectedContract.contractId + '</strong><br>' +
-      'Type: ' + selectedContract.contractType + '<br>' +
-      'Status: <span class="badge bg-success">' + selectedContract.status + '</span><br>' +
-      'Valid: ' + selectedContract.startDate + ' to ' + selectedContract.endDate;
-    
-    targetContractDisplay.style.display = 'block';
-  }
+  // Contract selection functions removed - contract is automatically determined from ServiceRequest
   
   // ============================================
   // UTILITY FUNCTIONS
@@ -991,8 +863,7 @@
       estimatedCostInput.value = parseFloat(subtotal || 0).toFixed(2);
     }
     
-    // Update contract requirement based on parts count
-    updateContractRequirement();
+    // Contract requirement update removed - contract is automatically determined from ServiceRequest
     
     // Update selected parts list
     if (!selectedPartsList) return;
@@ -1095,20 +966,6 @@
   // FORM VALIDATION
   // ============================================
   
-  // Update contract requirement when parts are added/removed
-  function updateContractRequirement() {
-    const partsCount = selectedPartsCount ? parseInt(selectedPartsCount.textContent) || 0 : 0;
-    if (targetContractIdSelect && contractSelectionContainer.style.display !== 'none') {
-      if (partsCount > 0) {
-        targetContractIdSelect.required = true;
-        console.log('Contract selection is now required (parts added)');
-      } else {
-        targetContractIdSelect.required = false;
-        console.log('Contract selection is now optional (no parts)');
-      }
-    }
-  }
-  
   // Ensure at least one part is selected before submit
   const reportForm = document.getElementById('reportForm');
   if (reportForm) {
@@ -1119,17 +976,7 @@
         alert('Please select at least one part for the repair report.');
         return false;
       }
-      
-      // Validate contract is selected (if parts are present and contract selection is visible)
-      if (partsCount > 0 && targetContractIdSelect && contractSelectionContainer.style.display !== 'none') {
-        const contractId = targetContractIdSelect.value;
-        if (!contractId || contractId === '') {
-          e.preventDefault();
-          alert('Please select a contract for the repair appendix. Parts will be added to this contract after customer approval.');
-          targetContractIdSelect.focus();
-          return false;
-        }
-      }
+      // Contract validation removed - contract is automatically determined from ServiceRequest
     });
   }
   
