@@ -3,6 +3,7 @@ package dal;
 import model.Invoice;
 import model.InvoiceDetail;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,41 +14,39 @@ public class InvoiceDAO extends DBContext {
     // Lấy tất cả hóa đơn của một khách hàng
     public List<Invoice> getInvoicesByCustomerId(int customerId) {
         List<Invoice> invoices = new ArrayList<>();
-        String sql = "SELECT i.*, pt.method as PaymentMethod FROM Invoice i " +
+        String sql = "SELECT i.* FROM Invoice i " +
                      "JOIN Contract c ON i.ContractId = c.ContractId " +
-                     "LEFT JOIN Payment p ON i.InvoiceId = p.InvoiceId " +
-                     "LEFT JOIN PaymentTransaction pt ON p.PaymentId = pt.PaymentId " +
                      "WHERE c.CustomerId = ? " +
                      "ORDER BY i.IssueDate DESC";
-        
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             ResultSet rs = ps.executeQuery();
-            
+
             while (rs.next()) {
                 Invoice invoice = new Invoice();
                 invoice.setInvoiceId(rs.getInt("InvoiceId"));
                 invoice.setContractId(rs.getInt("ContractId"));
-                
+
                 Date issueDate = rs.getDate("IssueDate");
                 if (issueDate != null) {
                     invoice.setIssueDate(issueDate.toLocalDate());
                 }
-                
+
                 Date dueDate = rs.getDate("DueDate");
                 if (dueDate != null) {
                     invoice.setDueDate(dueDate.toLocalDate());
                 }
-                
+
                 invoice.setTotalAmount(rs.getDouble("TotalAmount"));
                 invoice.setStatus(rs.getString("Status"));
-                
-                // Thêm thông tin phương thức thanh toán
-                String paymentMethod = rs.getString("PaymentMethod");
+
+                // ✅ Lấy paymentMethod từ Invoice table
+                String paymentMethod = rs.getString("paymentMethod");
                 if (paymentMethod != null) {
                     invoice.setPaymentMethod(paymentMethod);
                 }
-                
+
                 invoices.add(invoice);
             }
         } catch (SQLException e) {
@@ -103,15 +102,13 @@ public class InvoiceDAO extends DBContext {
     }
     
     // Tìm kiếm hóa đơn nâng cao với nhiều tiêu chí
-    public List<Invoice> searchInvoicesAdvanced(int customerId, String keyword, String status, 
-            String paymentMethod, String sortBy, String fromDate, String toDate, 
+    public List<Invoice> searchInvoicesAdvanced(int customerId, String keyword, String status,
+            String paymentMethod, String sortBy, String fromDate, String toDate,
             String fromDueDate, String toDueDate) {
         List<Invoice> invoices = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT i.*, pt.method as PaymentMethod FROM Invoice i ");
+        sql.append("SELECT i.* FROM Invoice i ");
         sql.append("JOIN Contract c ON i.ContractId = c.ContractId ");
-        sql.append("LEFT JOIN Payment p ON i.InvoiceId = p.InvoiceId ");
-        sql.append("LEFT JOIN PaymentTransaction pt ON p.PaymentId = pt.PaymentId ");
         sql.append("WHERE c.CustomerId = ? ");
         
         List<Object> params = new ArrayList<>();
@@ -218,28 +215,35 @@ public class InvoiceDAO extends DBContext {
     // Lấy chi tiết một hóa đơn
     public Invoice getInvoiceById(int invoiceId) {
         String sql = "SELECT * FROM Invoice WHERE InvoiceId = ?";
-        
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, invoiceId);
             ResultSet rs = ps.executeQuery();
-            
+
             if (rs.next()) {
                 Invoice invoice = new Invoice();
                 invoice.setInvoiceId(rs.getInt("InvoiceId"));
                 invoice.setContractId(rs.getInt("ContractId"));
-                
+
                 Date issueDate = rs.getDate("IssueDate");
                 if (issueDate != null) {
                     invoice.setIssueDate(issueDate.toLocalDate());
                 }
-                
+
                 Date dueDate = rs.getDate("DueDate");
                 if (dueDate != null) {
                     invoice.setDueDate(dueDate.toLocalDate());
                 }
-                
+
                 invoice.setTotalAmount(rs.getDouble("TotalAmount"));
                 invoice.setStatus(rs.getString("Status"));
+
+                // ✅ Lấy paymentMethod từ Invoice table
+                String paymentMethod = rs.getString("paymentMethod");
+                if (paymentMethod != null) {
+                    invoice.setPaymentMethod(paymentMethod);
+                }
+
                 return invoice;
             }
         } catch (SQLException e) {
@@ -346,38 +350,35 @@ public class InvoiceDAO extends DBContext {
     // Phương thức test - lấy tất cả hóa đơn (không phân biệt customer)
     public List<Invoice> getAllInvoicesForTest() {
         List<Invoice> invoices = new ArrayList<>();
-        String sql = "SELECT i.*, pt.method as PaymentMethod FROM Invoice i " +
-                     "LEFT JOIN Payment p ON i.InvoiceId = p.InvoiceId " +
-                     "LEFT JOIN PaymentTransaction pt ON p.PaymentId = pt.PaymentId " +
-                     "ORDER BY i.InvoiceId DESC";
-        
+        String sql = "SELECT i.* FROM Invoice i ORDER BY i.InvoiceId DESC";
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ResultSet rs = ps.executeQuery();
-            
+
             while (rs.next()) {
                 Invoice invoice = new Invoice();
                 invoice.setInvoiceId(rs.getInt("InvoiceId"));
                 invoice.setContractId(rs.getInt("ContractId"));
-                
+
                 Date issueDate = rs.getDate("IssueDate");
                 if (issueDate != null) {
                     invoice.setIssueDate(issueDate.toLocalDate());
                 }
-                
+
                 Date dueDate = rs.getDate("DueDate");
                 if (dueDate != null) {
                     invoice.setDueDate(dueDate.toLocalDate());
                 }
-                
+
                 invoice.setTotalAmount(rs.getDouble("TotalAmount"));
                 invoice.setStatus(rs.getString("Status"));
-                
-                // Thêm thông tin phương thức thanh toán
-                String paymentMethod = rs.getString("PaymentMethod");
+
+                // ✅ Lấy paymentMethod từ Invoice table
+                String paymentMethod = rs.getString("paymentMethod");
                 if (paymentMethod != null) {
                     invoice.setPaymentMethod(paymentMethod);
                 }
-                
+
                 invoices.add(invoice);
             }
         } catch (SQLException e) {
@@ -536,5 +537,88 @@ public class InvoiceDAO extends DBContext {
         return categoryStats;
     }
     
+    /**
+     * Tạo Invoice mới (với paymentMethod)
+     */
+    public int createInvoice(int contractId, double totalAmount, String status, LocalDate dueDate, String paymentMethod) throws SQLException {
+        String sql = "INSERT INTO Invoice (contractId, issueDate, dueDate, totalAmount, status, paymentMethod) VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, contractId);
+            ps.setDate(2, Date.valueOf(LocalDate.now()));
+            if (dueDate != null) {
+                ps.setDate(3, Date.valueOf(dueDate));
+            } else {
+                ps.setDate(3, Date.valueOf(LocalDate.now().plusDays(30))); // Mặc định 30 ngày
+            }
+            ps.setDouble(4, totalAmount);
+            ps.setString(5, status);
+            ps.setString(6, paymentMethod);
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Tạo Invoice mới (backward compatibility - không có paymentMethod)
+     */
+    public int createInvoice(int contractId, double totalAmount, String status, LocalDate dueDate) throws SQLException {
+        return createInvoice(contractId, totalAmount, status, dueDate, null);
+    }
+    
+    /**
+     * Tạo InvoiceDetail
+     */
+    public int createInvoiceDetail(int invoiceId, String description, double amount) throws SQLException {
+        String sql = "INSERT INTO InvoiceDetail (invoiceId, description, amount) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, invoiceId);
+            ps.setString(2, description);
+            ps.setDouble(3, amount);
+            
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+    
+    /**
+     * Cập nhật trạng thái Invoice
+     */
+    public boolean updateInvoiceStatus(int invoiceId, String status) throws SQLException {
+        String sql = "UPDATE Invoice SET status = ? WHERE invoiceId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, invoiceId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Cập nhật thông tin thanh toán Invoice (status, paymentMethod, totalAmount)
+     */
+    public boolean updateInvoicePaymentInfo(int invoiceId, String status, String paymentMethod, double totalAmount) throws SQLException {
+        String sql = "UPDATE Invoice SET status = ?, paymentMethod = ?, totalAmount = ? WHERE invoiceId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setString(2, paymentMethod);
+            ps.setDouble(3, totalAmount);
+            ps.setInt(4, invoiceId);
+            return ps.executeUpdate() > 0;
+        }
+    }
 
 }
