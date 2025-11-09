@@ -57,91 +57,114 @@ public class MaintenanceScheduleDAO extends MyDAO {
     /**
      * Get all maintenance schedules
      */
-    public List<MaintenanceSchedule> getAllMaintenanceSchedules() {
-        List<MaintenanceSchedule> schedules = new ArrayList<>();
-        xSql = "SELECT * FROM MaintenanceSchedule ORDER BY scheduledDate ASC";
-        try {
-            ps = con.prepareStatement(xSql);
-            rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                schedules.add(mapResultSetToMaintenanceSchedule(rs));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeResources();
+   /**
+ * Get all maintenance schedules with technician name
+ */
+public List<MaintenanceSchedule> getAllMaintenanceSchedules() {
+    List<MaintenanceSchedule> schedules = new ArrayList<>();
+    xSql = "SELECT ms.*, a.fullName as technicianName " +
+           "FROM MaintenanceSchedule ms " +
+           "LEFT JOIN Account a ON ms.assignedTo = a.accountId " +
+           "ORDER BY ms.scheduledDate ASC";
+    try {
+        ps = con.prepareStatement(xSql);
+        rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            MaintenanceSchedule schedule = mapResultSetToMaintenanceSchedule(rs);
+            // ✅ THÊM DÒNG NÀY để set tên technician
+            schedule.setTechnicianName(rs.getString("technicianName"));
+            schedules.add(schedule);
         }
-        return schedules;
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        closeResources();
     }
+    return schedules;
+}
     
     /**
      * Get maintenance schedules by technician
      */
-    public List<MaintenanceSchedule> getSchedulesByTechnician(int technicianId) {
-        List<MaintenanceSchedule> schedules = new ArrayList<>();
-        xSql = "SELECT * FROM MaintenanceSchedule WHERE assignedTo = ? ORDER BY scheduledDate ASC";
-        try {
-            ps = con.prepareStatement(xSql);
-            ps.setInt(1, technicianId);
-            rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                schedules.add(mapResultSetToMaintenanceSchedule(rs));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeResources();
+public List<MaintenanceSchedule> getSchedulesByTechnician(int technicianId) {
+    List<MaintenanceSchedule> schedules = new ArrayList<>();
+    xSql = "SELECT ms.*, a.fullName as technicianName " +
+           "FROM MaintenanceSchedule ms " +
+           "LEFT JOIN Account a ON ms.assignedTo = a.accountId " +
+           "WHERE ms.assignedTo = ? ORDER BY ms.scheduledDate ASC";
+    try {
+        ps = con.prepareStatement(xSql);
+        ps.setInt(1, technicianId);
+        rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            MaintenanceSchedule schedule = mapResultSetToMaintenanceSchedule(rs);
+            schedule.setTechnicianName(rs.getString("technicianName"));
+            schedules.add(schedule);
         }
-        return schedules;
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        closeResources();
     }
+    return schedules;
+}
     
     /**
      * Get maintenance schedules by status
      */
     public List<MaintenanceSchedule> getSchedulesByStatus(String status) {
-        List<MaintenanceSchedule> schedules = new ArrayList<>();
-        xSql = "SELECT * FROM MaintenanceSchedule WHERE status = ? ORDER BY scheduledDate ASC";
-        try {
-            ps = con.prepareStatement(xSql);
-            ps.setString(1, status);
-            rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                schedules.add(mapResultSetToMaintenanceSchedule(rs));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeResources();
+    List<MaintenanceSchedule> schedules = new ArrayList<>();
+    xSql = "SELECT ms.*, a.fullName as technicianName " +
+           "FROM MaintenanceSchedule ms " +
+           "LEFT JOIN Account a ON ms.assignedTo = a.accountId " +
+           "WHERE ms.status = ? ORDER BY ms.scheduledDate ASC";
+    try {
+        ps = con.prepareStatement(xSql);
+        ps.setString(1, status);
+        rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            MaintenanceSchedule schedule = mapResultSetToMaintenanceSchedule(rs);
+            schedule.setTechnicianName(rs.getString("technicianName"));
+            schedules.add(schedule);
         }
-        return schedules;
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        closeResources();
     }
+    return schedules;
+}
     
     /**
      * Get upcoming maintenance schedules (next 7 days)
      */
     public List<MaintenanceSchedule> getUpcomingSchedules() {
-        List<MaintenanceSchedule> schedules = new ArrayList<>();
-        xSql = "SELECT * FROM MaintenanceSchedule " +
-               "WHERE scheduledDate BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) " +
-               "AND status IN ('Scheduled', 'Pending') " +
-               "ORDER BY scheduledDate ASC";
-        try {
-            ps = con.prepareStatement(xSql);
-            rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                schedules.add(mapResultSetToMaintenanceSchedule(rs));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeResources();
+    List<MaintenanceSchedule> schedules = new ArrayList<>();
+    xSql = "SELECT ms.*, a.fullName as technicianName " +
+           "FROM MaintenanceSchedule ms " +
+           "LEFT JOIN Account a ON ms.assignedTo = a.accountId " +
+           "WHERE ms.scheduledDate BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) " +
+           "AND ms.status IN ('Scheduled', 'Pending') " +
+           "ORDER BY ms.scheduledDate ASC";
+    try {
+        ps = con.prepareStatement(xSql);
+        rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            MaintenanceSchedule schedule = mapResultSetToMaintenanceSchedule(rs);
+            schedule.setTechnicianName(rs.getString("technicianName"));
+            schedules.add(schedule);
         }
-        return schedules;
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        closeResources();
     }
+    return schedules;
+}
     
     /**
      * Update maintenance schedule status
@@ -207,22 +230,27 @@ public class MaintenanceScheduleDAO extends MyDAO {
      * Get maintenance schedule by ID
      */
     public MaintenanceSchedule getScheduleById(int scheduleId) {
-        xSql = "SELECT * FROM MaintenanceSchedule WHERE scheduleId = ?";
-        try {
-            ps = con.prepareStatement(xSql);
-            ps.setInt(1, scheduleId);
-            rs = ps.executeQuery();
-            
-            if (rs.next()) {
-                return mapResultSetToMaintenanceSchedule(rs);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeResources();
+    xSql = "SELECT ms.*, a.fullName as technicianName " +
+           "FROM MaintenanceSchedule ms " +
+           "LEFT JOIN Account a ON ms.assignedTo = a.accountId " +
+           "WHERE ms.scheduleId = ?";
+    try {
+        ps = con.prepareStatement(xSql);
+        ps.setInt(1, scheduleId);
+        rs = ps.executeQuery();
+        
+        if (rs.next()) {
+            MaintenanceSchedule schedule = mapResultSetToMaintenanceSchedule(rs);
+            schedule.setTechnicianName(rs.getString("technicianName"));
+            return schedule;
         }
-        return null;
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        closeResources();
     }
+    return null;
+}
     
     /**
      * Get maintenance schedules with equipment and technician details
@@ -274,24 +302,28 @@ public class MaintenanceScheduleDAO extends MyDAO {
      * Get overdue maintenance schedules
      */
     public List<MaintenanceSchedule> getOverdueSchedules() {
-        List<MaintenanceSchedule> schedules = new ArrayList<>();
-        xSql = "SELECT * FROM MaintenanceSchedule " +
-               "WHERE scheduledDate < CURDATE() AND status IN ('Scheduled', 'Pending') " +
-               "ORDER BY scheduledDate ASC";
-        try {
-            ps = con.prepareStatement(xSql);
-            rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                schedules.add(mapResultSetToMaintenanceSchedule(rs));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeResources();
+    List<MaintenanceSchedule> schedules = new ArrayList<>();
+    xSql = "SELECT ms.*, a.fullName as technicianName " +
+           "FROM MaintenanceSchedule ms " +
+           "LEFT JOIN Account a ON ms.assignedTo = a.accountId " +
+           "WHERE ms.scheduledDate < CURDATE() AND ms.status IN ('Scheduled', 'Pending') " +
+           "ORDER BY ms.scheduledDate ASC";
+    try {
+        ps = con.prepareStatement(xSql);
+        rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            MaintenanceSchedule schedule = mapResultSetToMaintenanceSchedule(rs);
+            schedule.setTechnicianName(rs.getString("technicianName"));
+            schedules.add(schedule);
         }
-        return schedules;
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        closeResources();
     }
+    return schedules;
+}
     
     /**
      * Map ResultSet to MaintenanceSchedule object
