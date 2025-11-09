@@ -2534,6 +2534,40 @@ public class ServiceRequestDAO extends MyDAO {
             closeResources();
         }
     }
+    
+    
+    /**
+     * ✅ CẬP NHẬT TRẠNG THÁI THANH TOÁN CỦA SERVICE REQUEST
+     * Cập nhật paymentStatus khi tất cả linh kiện đã được thanh toán
+     * 
+     * @param requestId ID của service request
+     * @param paymentStatus Trạng thái thanh toán mới: 'Completed'
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean updatePaymentStatus(int requestId, String paymentStatus) {
+        String sql = "UPDATE ServiceRequest SET paymentStatus = ? WHERE requestId = ?";
+        
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setString(1, paymentStatus);
+            ps.setInt(2, requestId);
+            
+            int rowsAffected = ps.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                System.out.println("✅ Updated paymentStatus to '" + paymentStatus + "' for requestId " + requestId);
+                return true;
+            }
+            
+            return false;
+        } catch (Exception e) {
+            System.err.println("❌ Error updating paymentStatus: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
 
 
 }

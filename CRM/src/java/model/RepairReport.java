@@ -18,7 +18,8 @@ public class RepairReport {
     private LocalDate repairDate;
     private Integer invoiceDetailId;
     private Integer targetContractId; // Which contract will receive the appendix
-    private String technicianName; // For display purposes (not stored in DB)
+    private String technicianName;
+    private String technicianEmail;// For display purposes (not stored in DB)
 
     // Constructors
     public RepairReport() {}
@@ -70,6 +71,9 @@ public class RepairReport {
 
     public Integer getTargetContractId() { return targetContractId; }
     public void setTargetContractId(Integer targetContractId) { this.targetContractId = targetContractId; }
+    public String getTechnicianEmail() { return technicianEmail; }
+    public void setTechnicianEmail(String technicianEmail) { this.technicianEmail = technicianEmail; }
+    
 
     @Override
     public String toString() {

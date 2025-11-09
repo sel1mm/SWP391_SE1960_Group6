@@ -16,6 +16,8 @@ public class RepairReportDetail {
     
     // Display fields (not stored in DB, populated from joins)
     private String partName;
+    private String description;
+    private String paymentStatus;
     private String serialNumber;
     private String location;
     
@@ -57,6 +59,9 @@ public class RepairReportDetail {
     
     public Integer getPartDetailId() {
         return partDetailId;
+    }
+    public String getDescription() {
+        return description;
     }
     
     public void setPartDetailId(Integer partDetailId) {
@@ -102,6 +107,13 @@ public class RepairReportDetail {
     public void setLocation(String location) {
         this.location = location;
     }
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+    
     
     /**
      * Calculate line total (quantity * unitPrice)

@@ -17,6 +17,15 @@ import model.Equipment;
 import model.RepairReport;
 import dal.ServiceRequestDAO.ServiceRequestWithQuotation;
 import java.math.BigDecimal;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import dal.RepairReportDAO;
+import dal.WorkAssignmentDAO;
+import model.WorkAssignment;
+import model.RepairReportDetail;
+import java.io.PrintWriter;
+import java.time.format.DateTimeFormatter;
 
 @WebServlet(name = "ManagerServiceRequestServlet", urlPatterns = {"/managerServiceRequest"})
 public class ManagerServiceRequestServlet extends HttpServlet {
@@ -93,8 +102,14 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         // ✅ THÊM ACTION XEM CHI TIẾT
         if ("viewDetail".equals(action)) {
             handleViewDetail(request, response, customerId);
+        } else if ("viewJobsList".equals(action)) {
+            handleViewJobsList(request, response, customerId);
+        } else if ("viewJobDetail".equals(action)) {
+            handleViewJobDetail(request, response, customerId);
         } else if ("checkQuotation".equals(action)) {
             handleCheckQuotation(request, response, customerId);
+        } else if ("getQuotationDetails".equals(action)) {
+            handleGetQuotationDetails(request, response, customerId);
         } else if ("search".equals(action)) {
             handleSearch(request, response, customerId);
         } else if ("filter".equals(action)) {
@@ -121,6 +136,21 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
+        
+        System.out.println("========== doPost called ==========");
+        System.out.println("Action: " + action);
+        System.out.println("CustomerId: " + customerId);
+        
+        // ✅ TEST: Trả về response ngay lập tức để test
+        if ("testReject".equals(action)) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            PrintWriter out = response.getWriter();
+            out.write("{\"success\": true, \"message\": \"Test OK!\"}");
+            out.flush();
+            System.out.println("✅ Test response sent");
+            return;
+        }
 
         if ("CreateServiceRequest".equals(action)) {
             handleCreateRequest(request, response);
@@ -130,10 +160,14 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             handleCancelRequest(request, response);
         } else if ("AcceptQuotation".equals(action)) {
             handleAcceptQuotation(request, response, customerId);
-        } else if ("approveQuotation".equals(action)) {  // ✅ THÊM ACTION MỚI
+        } else if ("approveQuotation".equals(action)) {
             handleApproveQuotation(request, response, customerId);
-        } else if ("rejectQuotation".equals(action)) {  // ✅ THÊM ACTION MỚI
+        } else if ("rejectQuotation".equals(action)) {
             handleRejectQuotation(request, response, customerId);
+        } else if ("payForPart".equals(action)) {
+            handlePayForPart(request, response, customerId);
+        } else if ("cancelPart".equals(action)) {
+            handleCancelPart(request, response, customerId);
         }
     }
 
@@ -1176,19 +1210,93 @@ public class ManagerServiceRequestServlet extends HttpServlet {
     }
 
     /**
-     * ✅ XỬ LÝ TỪ CHỐI BÁO GIÁ
-     * Customer từ chối báo giá của technician
+     * ✅ XỬ LÝ TỪ CHỐI BÁO GIÁ CỦA KỸ THUẬT VIÊN CỤ THỂ
+     * Customer từ chối báo giá của 1 kỹ thuật viên (không ảnh hưởng người khác)
      */
     private void handleRejectQuotation(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
 
+        System.out.println("========== HANDLE REJECT QUOTATION ==========");
+        
+        try {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            PrintWriter out = response.getWriter();
+
+            String requestIdStr = request.getParameter("requestId");
+            String reportIdStr = request.getParameter("reportId");
+
+            System.out.println("requestId: " + requestIdStr);
+            System.out.println("reportId: " + reportIdStr);
+
+            if (requestIdStr == null || reportIdStr == null) {
+                System.out.println("❌ Missing required parameters");
+                String jsonResponse = "{\"success\": false, \"message\": \"Thiếu thông tin bắt buộc!\"}";
+                out.write(jsonResponse);
+                out.flush();
+                out.close();
+                return;
+            }
+
+            int requestId = Integer.parseInt(requestIdStr.trim());
+            int reportId = Integer.parseInt(reportIdStr.trim());
+
+            // Kiểm tra request có thuộc về customer không
+            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+
+            if (sr == null || sr.getCreatedBy() != customerId) {
+                String jsonResponse = "{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}";
+                out.write(jsonResponse);
+                out.flush();
+                out.close();
+                return;
+            }
+
+            // Cập nhật quotationStatus = 'Rejected' cho báo giá cụ thể
+            boolean success = serviceRequestDAO.updateQuotationStatus(reportId, "Rejected");
+
+            String jsonResponse;
+            if (success) {
+                System.out.println("✅ Customer " + customerId + " rejected quotation " + reportId + " for request " + requestId);
+                jsonResponse = "{\"success\": true, \"message\": \"Đã từ chối báo giá thành công!\"}";
+            } else {
+                System.out.println("❌ Failed to reject quotation");
+                jsonResponse = "{\"success\": false, \"message\": \"Không thể cập nhật trạng thái báo giá!\"}";
+            }
+            
+            System.out.println("📤 Sending response: " + jsonResponse);
+            out.write(jsonResponse);
+            out.flush();
+            out.close();
+
+        } catch (Exception e) {
+            System.err.println("❌ Error in handleRejectQuotation: " + e.getMessage());
+            e.printStackTrace();
+            
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            PrintWriter out = response.getWriter();
+            out.write("{\"success\": false, \"message\": \"Có lỗi xảy ra!\"}");
+            out.flush();
+            out.close();
+        }
+    }
+
+    /**
+     *  XỬ LÝ XEM DANH SÁCH CÔNG VIỆC (Modal A)
+     * Hiển thị danh sách các công việc sửa chữa cho yêu cầu "Đang Xử Lý"
+     */
+    private void handleViewJobsList(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
 
         String requestIdStr = request.getParameter("requestId");
 
         if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
-            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu không hợp lệ!\"}");
+            out.write("{\"success\": false, \"message\": \"Mã yêu cầu không hợp lệ!\"}");
             return;
         }
 
@@ -1199,34 +1307,432 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
 
             if (sr == null || sr.getCreatedBy() != customerId) {
-                response.getWriter().write("{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}");
+                out.write("{\"success\": false, \"message\": \"Bạn không có quyền xem yêu cầu này!\"}");
                 return;
             }
 
-            // Kiểm tra có báo giá không
-            RepairReport report = serviceRequestDAO.getRepairReportByRequestId(requestId);
+            // Lấy thông tin yêu cầu
+            Gson gson = new Gson();
+            JsonObject jsonResponse = new JsonObject();
+            jsonResponse.addProperty("success", true);
+            jsonResponse.addProperty("requestId", sr.getRequestId());
+            jsonResponse.addProperty("requestDate", sr.getRequestDate() != null ? 
+                new java.text.SimpleDateFormat("dd/MM/yyyy").format(sr.getRequestDate()) : "N/A");
+            jsonResponse.addProperty("contractId", sr.getContractId() != null ? 
+                "HD" + String.format("%03d", sr.getContractId()) : "N/A");
+            jsonResponse.addProperty("equipmentName", sr.getEquipmentName() != null ? sr.getEquipmentName() : "N/A");
+            jsonResponse.addProperty("description", sr.getDescription() != null ? sr.getDescription() : "");
+
+            // Lấy danh sách công việc từ RepairReport
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            List<RepairReport> reports = reportDAO.getRepairReportsByRequestId(requestId);
+
+            JsonArray jobsArray = new JsonArray();
+            
+            if (reports != null && !reports.isEmpty()) {
+                for (RepairReport report : reports) {
+                    JsonObject jobObj = new JsonObject();
+                    jobObj.addProperty("workId", report.getReportId());
+                    jobObj.addProperty("technicianName", report.getTechnicianName() != null ? 
+                        report.getTechnicianName() : "Chưa xác định");
+                    jobObj.addProperty("technicianEmail", report.getTechnicianEmail() != null ? 
+                        report.getTechnicianEmail() : "");
+                    jobObj.addProperty("status", report.getQuotationStatus() != null ? 
+                        report.getQuotationStatus() : "Pending");
+                    
+                    // Map status to display text
+                    String statusDisplay = "Chờ Duyệt";
+                    if ("Approved".equals(report.getQuotationStatus())) {
+                        statusDisplay = "Đã Duyệt";
+                    } else if ("Completed".equals(report.getQuotationStatus())) {
+                        statusDisplay = "Hoàn Thành";
+                    }
+                    jobObj.addProperty("statusDisplay", statusDisplay);
+                    
+                    jobObj.addProperty("repairDate", report.getRepairDate() != null ? 
+                        new java.text.SimpleDateFormat("dd/MM/yyyy").format(report.getRepairDate()) : null);
+                    
+                    // Lấy tổng chi phí
+                    BigDecimal totalCost = report.getEstimatedCost() != null ? 
+                        report.getEstimatedCost() : BigDecimal.ZERO;
+                    jobObj.addProperty("totalCost", totalCost.doubleValue());
+                    
+                    // Lấy trạng thái thanh toán từ InvoiceDetail
+                    String paymentStatus = reportDAO.getPaymentStatusByReportId(report.getReportId());
+                    jobObj.addProperty("paymentStatus", paymentStatus != null ? paymentStatus : "Pending");
+                    
+                    jobsArray.add(jobObj);
+                }
+            }
+
+            jsonResponse.add("jobs", jobsArray);
+            
+            out.write(gson.toJson(jsonResponse));
+            System.out.println("✅ Loaded " + jobsArray.size() + " jobs for request " + requestId);
+
+        } catch (NumberFormatException e) {
+            out.write("{\"success\": false, \"message\": \"Mã yêu cầu phải là số nguyên!\"}");
+        } catch (Exception e) {
+            System.err.println("❌ Error in handleViewJobsList: " + e.getMessage());
+            e.printStackTrace();
+            out.write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+        }
+    }
+
+    /**
+     * ✅ XỬ LÝ XEM CHI TIẾT CÔNG VIỆC (Modal B)
+     * Hiển thị chi tiết công việc cụ thể bao gồm linh kiện thay thế
+     */
+    private void handleViewJobDetail(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+
+        String workIdStr = request.getParameter("workId");
+
+        if (workIdStr == null || workIdStr.trim().isEmpty()) {
+            out.write("{\"success\": false, \"message\": \"Mã công việc không hợp lệ!\"}");
+            return;
+        }
+
+        try {
+            int workId = Integer.parseInt(workIdStr.trim());
+
+            // Lấy thông tin công việc từ RepairReport
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            RepairReport report = reportDAO.getRepairReportById(workId);
 
             if (report == null) {
-                response.getWriter().write("{\"success\": false, \"message\": \"Không tìm thấy báo giá!\"}");
+                out.write("{\"success\": false, \"message\": \"Không tìm thấy công việc!\"}");
                 return;
             }
 
-            // Cập nhật quotationStatus = 'Rejected'
-            boolean success = serviceRequestDAO.updateQuotationStatus(report.getReportId(), "Rejected");
+            // Kiểm tra quyền truy cập - công việc phải thuộc về request của customer
+            ServiceRequest sr = serviceRequestDAO.getRequestById(report.getRequestId());
+            if (sr == null || sr.getCreatedBy() != customerId) {
+                out.write("{\"success\": false, \"message\": \"Bạn không có quyền xem công việc này!\"}");
+                return;
+            }
+
+            Gson gson = new Gson();
+            JsonObject jsonResponse = new JsonObject();
+            jsonResponse.addProperty("success", true);
+
+            // Thông tin công việc
+            JsonObject jobObj = new JsonObject();
+            jobObj.addProperty("workId", report.getReportId());
+            jobObj.addProperty("requestId", report.getRequestId());
+            jobObj.addProperty("technicianName", report.getTechnicianName() != null ? 
+                report.getTechnicianName() : "Chưa xác định");
+            jobObj.addProperty("repairDate", report.getRepairDate() != null ? 
+                new java.text.SimpleDateFormat("dd/MM/yyyy").format(report.getRepairDate()) : "Chưa xác định");
+            jobObj.addProperty("status", report.getQuotationStatus() != null ? 
+                report.getQuotationStatus() : "Pending");
+            jobObj.addProperty("notes", report.getDetails() != null ? report.getDetails() : "");
+            
+            // Lấy trạng thái thanh toán
+            String paymentStatus = reportDAO.getPaymentStatusByReportId(report.getReportId());
+            jobObj.addProperty("paymentStatus", paymentStatus != null ? paymentStatus : "Pending");
+            
+            // Lấy ngày thanh toán nếu có
+            String paymentDate = reportDAO.getPaymentDateByReportId(report.getReportId());
+            jobObj.addProperty("paymentDate", paymentDate != null ? paymentDate : null);
+
+            // Lấy danh sách linh kiện thay thế
+            List<RepairReportDetail> parts = reportDAO.getRepairReportDetails(workId);
+            JsonArray partsArray = new JsonArray();
+            
+            if (parts != null && !parts.isEmpty()) {
+                for (RepairReportDetail part : parts) {
+                    JsonObject partObj = new JsonObject();
+                    partObj.addProperty("partName", part.getPartName() != null ? part.getPartName() : "N/A");
+                    partObj.addProperty("serialNumber", part.getSerialNumber() != null ? 
+                        part.getSerialNumber() : "N/A");
+                    partObj.addProperty("description", part.getDescription() != null ? 
+                        part.getDescription() : "");
+                    partObj.addProperty("quantity", part.getQuantity());
+                    
+                    BigDecimal unitPrice = part.getUnitPrice() != null ? 
+                        part.getUnitPrice() : BigDecimal.ZERO;
+                    partObj.addProperty("unitPrice", unitPrice.doubleValue());
+                    
+                    BigDecimal totalPrice = unitPrice.multiply(new BigDecimal(part.getQuantity()));
+                    partObj.addProperty("totalPrice", totalPrice.doubleValue());
+                    
+                    partsArray.add(partObj);
+                }
+            }
+
+            jobObj.add("parts", partsArray);
+            jsonResponse.add("job", jobObj);
+            
+            out.write(gson.toJson(jsonResponse));
+            System.out.println("✅ Loaded job detail for work " + workId + " with " + partsArray.size() + " parts");
+
+        } catch (NumberFormatException e) {
+            out.write("{\"success\": false, \"message\": \"Mã công việc phải là số nguyên!\"}");
+        } catch (Exception e) {
+            System.err.println("❌ Error in handleViewJobDetail: " + e.getMessage());
+            e.printStackTrace();
+            out.write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+        }
+    }
+
+    /**
+     * ✅ XỬ LÝ LẤY CHI TIẾT BÁO GIÁ (AJAX)
+     * Lấy danh sách các báo giá (repair reports) và linh kiện cho request "Đang Xử Lý"
+     */
+    private void handleGetQuotationDetails(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+
+        String requestIdStr = request.getParameter("requestId");
+
+        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+            out.write("{\"success\": false, \"message\": \"Mã yêu cầu không hợp lệ!\"}");
+            return;
+        }
+
+        try {
+            int requestId = Integer.parseInt(requestIdStr.trim());
+
+            // Kiểm tra request có thuộc về customer không
+            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+
+            if (sr == null || sr.getCreatedBy() != customerId) {
+                out.write("{\"success\": false, \"message\": \"Bạn không có quyền xem yêu cầu này!\"}");
+                return;
+            }
+
+            // Lấy danh sách repair reports
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            List<RepairReport> reports = reportDAO.getRepairReportsByRequestId(requestId);
+
+            Gson gson = new Gson();
+            JsonObject jsonResponse = new JsonObject();
+            jsonResponse.addProperty("success", true);
+
+            JsonArray quotationsArray = new JsonArray();
+
+            if (reports != null && !reports.isEmpty()) {
+                for (RepairReport report : reports) {
+                    JsonObject quotationObj = new JsonObject();
+                    quotationObj.addProperty("reportId", report.getReportId());
+                    quotationObj.addProperty("technicianName", report.getTechnicianName() != null ? 
+                        report.getTechnicianName() : "N/A");
+                    quotationObj.addProperty("workDescription", report.getDetails() != null ? 
+                        report.getDetails() : "N/A");
+                    
+                    BigDecimal estimatedCost = report.getEstimatedCost() != null ? 
+                        report.getEstimatedCost() : BigDecimal.ZERO;
+                    quotationObj.addProperty("estimatedCost", estimatedCost.doubleValue());
+                    
+                    quotationObj.addProperty("status", report.getQuotationStatus() != null ? 
+                        report.getQuotationStatus() : "Pending");
+                    
+                    // Fix: repairDate là LocalDate
+                    String repairDateStr = "N/A";
+                    if (report.getRepairDate() != null) {
+                        repairDateStr = report.getRepairDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    }
+                    quotationObj.addProperty("repairDate", repairDateStr);
+
+                    // Lấy danh sách linh kiện
+                    List<RepairReportDetail> parts = reportDAO.getRepairReportDetails(report.getReportId());
+                    JsonArray partsArray = new JsonArray();
+
+                    if (parts != null && !parts.isEmpty()) {
+                        for (RepairReportDetail part : parts) {
+                            JsonObject partObj = new JsonObject();
+                            partObj.addProperty("partDetailId", part.getDetailId());
+                            partObj.addProperty("partName", part.getPartName() != null ? 
+                                part.getPartName() : "N/A");
+                            partObj.addProperty("serialNumber", part.getSerialNumber() != null ? 
+                                part.getSerialNumber() : "N/A");
+                            partObj.addProperty("quantity", part.getQuantity());
+                            
+                            BigDecimal unitPrice = part.getUnitPrice() != null ? 
+                                part.getUnitPrice() : BigDecimal.ZERO;
+                            partObj.addProperty("unitPrice", unitPrice.doubleValue());
+                            
+                            // Lấy trạng thái thanh toán của linh kiện
+                            String paymentStatus = reportDAO.getPartPaymentStatus(part.getDetailId());
+                            partObj.addProperty("paymentStatus", paymentStatus != null ? 
+                                paymentStatus : "Pending");
+                            
+                            partsArray.add(partObj);
+                        }
+                    }
+
+                    quotationObj.add("parts", partsArray);
+                    quotationsArray.add(quotationObj);
+                }
+            }
+
+            jsonResponse.add("quotations", quotationsArray);
+            out.write(gson.toJson(jsonResponse));
+            
+            System.out.println("✅ Loaded " + quotationsArray.size() + " quotations for request " + requestId);
+
+        } catch (NumberFormatException e) {
+            out.write("{\"success\": false, \"message\": \"Mã yêu cầu phải là số nguyên!\"}");
+        } catch (Exception e) {
+            System.err.println("❌ Error in handleGetQuotationDetails: " + e.getMessage());
+            e.printStackTrace();
+            out.write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+        }
+    }
+
+    /**
+     * ✅ XỬ LÝ THANH TOÁN CHO 1 LINH KIỆN CỤ THỂ
+     * Customer thanh toán cho 1 linh kiện trong báo giá
+     */
+    private void handlePayForPart(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+
+        String requestIdStr = request.getParameter("requestId");
+        String reportIdStr = request.getParameter("reportId");
+        String partDetailIdStr = request.getParameter("partDetailId");
+
+        if (requestIdStr == null || reportIdStr == null || partDetailIdStr == null) {
+            out.write("{\"success\": false, \"message\": \"Thiếu thông tin bắt buộc!\"}");
+            return;
+        }
+
+        try {
+            int requestId = Integer.parseInt(requestIdStr.trim());
+            int reportId = Integer.parseInt(reportIdStr.trim());
+            int partDetailId = Integer.parseInt(partDetailIdStr.trim());
+
+            // Kiểm tra request có thuộc về customer không
+            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+
+            if (sr == null || sr.getCreatedBy() != customerId) {
+                out.write("{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}");
+                return;
+            }
+
+            // Kiểm tra trạng thái request phải là "Đang Xử Lý"
+            if (!"Đang Xử Lý".equals(sr.getDisplayStatus())) {
+                out.write("{\"success\": false, \"message\": \"Chỉ có thể thanh toán cho yêu cầu đang xử lý!\"}");
+                return;
+            }
+
+            // Cập nhật trạng thái thanh toán cho linh kiện
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            boolean success = reportDAO.updatePartPaymentStatus(partDetailId, "Completed");
 
             if (success) {
-                System.out.println("✅ Customer rejected quotation for request " + requestId);
-                response.getWriter().write("{\"success\": true, \"message\": \"Đã từ chối báo giá!\"}");
+                System.out.println("✅ Customer " + customerId + " paid for part " + partDetailId);
+                
+                // Kiểm tra xem tất cả linh kiện đã thanh toán chưa
+                boolean allPartsPaid = reportDAO.checkAllPartsPaid(requestId);
+                
+                if (allPartsPaid) {
+                    // Nếu tất cả linh kiện đã thanh toán → cập nhật paymentStatus của request
+                    serviceRequestDAO.updatePaymentStatus(requestId, "Completed");
+                    System.out.println("✅ All parts paid → Request " + requestId + " payment completed");
+                    
+                    out.write("{\"success\": true, \"message\": \"Thanh toán thành công! Tất cả linh kiện đã được thanh toán.\", \"requestCompleted\": true}");
+                } else {
+                    out.write("{\"success\": true, \"message\": \"Thanh toán linh kiện thành công!\", \"requestCompleted\": false}");
+                }
             } else {
-                response.getWriter().write("{\"success\": false, \"message\": \"Không thể cập nhật trạng thái báo giá!\"}");
+                out.write("{\"success\": false, \"message\": \"Không thể cập nhật trạng thái thanh toán!\"}");
             }
 
         } catch (NumberFormatException e) {
-            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu phải là số nguyên!\"}");
+            out.write("{\"success\": false, \"message\": \"Thông tin không hợp lệ!\"}");
         } catch (Exception e) {
-            System.err.println("❌ Error rejecting quotation: " + e.getMessage());
+            System.err.println("❌ Error in handlePayForPart: " + e.getMessage());
             e.printStackTrace();
-            response.getWriter().write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+            out.write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+        }
+    }
+
+    /**
+     * ✅ XỬ LÝ HỦY 1 LINH KIỆN CỤ THỂ (CHỈ HỦY LINH KIỆN ĐÓ)
+     * Đánh dấu linh kiện là "Cancelled" trong RepairReportDetail
+     */
+    private void handleCancelPart(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
+        System.out.println("========== HANDLE CANCEL PART ==========");
+        
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+
+        String requestIdStr = request.getParameter("requestId");
+        String reportIdStr = request.getParameter("reportId");
+        String partDetailIdStr = request.getParameter("partDetailId");
+
+        System.out.println("requestId: " + requestIdStr);
+        System.out.println("reportId: " + reportIdStr);
+        System.out.println("partDetailId: " + partDetailIdStr);
+
+        if (requestIdStr == null || reportIdStr == null || partDetailIdStr == null) {
+            System.out.println("❌ Missing required parameters");
+            out.write("{\"success\": false, \"message\": \"Thiếu thông tin bắt buộc!\"}");
+            out.flush();
+            return;
+        }
+
+        try {
+            int requestId = Integer.parseInt(requestIdStr.trim());
+            int reportId = Integer.parseInt(reportIdStr.trim());
+            int partDetailId = Integer.parseInt(partDetailIdStr.trim());
+
+            // Kiểm tra request có thuộc về customer không
+            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+
+            if (sr == null || sr.getCreatedBy() != customerId) {
+                out.write("{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}");
+                return;
+            }
+
+            // Kiểm tra trạng thái request phải là "Đang Xử Lý"
+            if (!"Đang Xử Lý".equals(sr.getDisplayStatus())) {
+                out.write("{\"success\": false, \"message\": \"Chỉ có thể hủy linh kiện khi yêu cầu đang xử lý!\"}");
+                return;
+            }
+
+            // Hủy linh kiện cụ thể (đánh dấu status = "Cancelled")
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            boolean success = reportDAO.cancelPartDetail(partDetailId);
+
+            if (success) {
+                System.out.println("✅ Customer " + customerId + " cancelled part " + partDetailId + " in request " + requestId);
+                String jsonResponse = "{\"success\": true, \"message\": \"Đã hủy linh kiện thành công!\"}";
+                System.out.println("Sending response: " + jsonResponse);
+                out.write(jsonResponse);
+                out.flush();
+            } else {
+                System.out.println("❌ Failed to cancel part");
+                String jsonResponse = "{\"success\": false, \"message\": \"Không thể hủy linh kiện!\"}";
+                System.out.println("Sending response: " + jsonResponse);
+                out.write(jsonResponse);
+                out.flush();
+            }
+
+        } catch (NumberFormatException e) {
+            System.err.println("❌ NumberFormatException: " + e.getMessage());
+            out.write("{\"success\": false, \"message\": \"Thông tin không hợp lệ!\"}");
+            out.flush();
+        } catch (Exception e) {
+            System.err.println("❌ Error in handleCancelPart: " + e.getMessage());
+            e.printStackTrace();
+            out.write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+            out.flush();
         }
     }
 
