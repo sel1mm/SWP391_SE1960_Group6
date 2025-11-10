@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <div class="container-fluid">
   <div class="row mb-3 align-items-center">
@@ -166,7 +167,7 @@
                   <div class="list-group-item">
                     <div class="d-flex w-100 justify-content-between">
                       <h6 class="mb-1">Report #${report.reportId}</h6>
-                      <small class="text-muted">$${report.estimatedCost}</small>
+                      <small class="text-muted">₫<fmt:formatNumber value="${report.estimatedCost * 26000}" type="number" maxFractionDigits="0"/></small>
                     </div>
                     <p class="mb-1">${fn:escapeXml(report.details)}</p>
                     <small class="text-primary">

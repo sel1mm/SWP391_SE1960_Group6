@@ -219,7 +219,7 @@
                   </div>
                   <div class="form-text">
                     <c:choose>
-                      <c:when test="${not empty subtotal}">
+                      <c:when test="${not empty subtotal && subtotal > 0}">
                         Auto-calculated from parts: ₫<span id="autoCalculatedVnd"><fmt:formatNumber value="${subtotal * 26000}" type="number" maxFractionDigits="0"/></span>. You can override if needed.
                       </c:when>
                       <c:otherwise>
