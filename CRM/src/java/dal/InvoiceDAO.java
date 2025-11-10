@@ -639,5 +639,40 @@ public class InvoiceDAO extends DBContext {
             return ps.executeUpdate() > 0;
         }
     }
+public boolean hasInvoiceDetail(int invoiceId) {
+    String sql = "SELECT COUNT(*) FROM InvoiceDetail WHERE invoiceId = ?";
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setInt(1, invoiceId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            int count = rs.getInt(1);
+            System.out.println("✅ InvoiceDetail count for invoiceId=" + invoiceId + ": " + count);
+            return count > 0;
+        }
+    } catch (SQLException e) {
+        System.err.println("❌ Error checking InvoiceDetail: " + e.getMessage());
+        e.printStackTrace();
+    }
+    return false;
+}
+
+/**
+ * ✅ Xóa tất cả InvoiceDetail pending cho invoiceId (cleanup)
+ */
+public boolean deletePendingInvoiceDetails(int invoiceId) {
+    String sql = "DELETE FROM InvoiceDetail WHERE invoiceId = ? AND paymentStatus = 'Pending'";
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setInt(1, invoiceId);
+        int rowsAffected = ps.executeUpdate();
+        if (rowsAffected > 0) {
+            System.out.println("✅ Deleted " + rowsAffected + " pending InvoiceDetail(s) for invoiceId=" + invoiceId);
+        }
+        return rowsAffected > 0;
+    } catch (SQLException e) {
+        System.err.println("❌ Error deleting pending InvoiceDetails: " + e.getMessage());
+        e.printStackTrace();
+    }
+    return false;
+}
 
 }

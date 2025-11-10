@@ -190,14 +190,6 @@ public class PaymentServlet extends HttpServlet {
                     );
                     
                     if (invoiceId > 0) {
-                        // Tạo InvoiceDetail
-                        invoiceDAO.createInvoiceDetail(
-                            invoiceId, 
-                            "Thanh toán cho yêu cầu dịch vụ #" + requestId + 
-                            (repairReport.getTechnicianName() != null ? 
-                                " - Kỹ thuật viên: " + repairReport.getTechnicianName() : ""), 
-                            amount
-                        );
                         
                         // Tạo Payment pending và link với reportId
                         int paymentId = paymentDAO.createPaymentWithReport(
@@ -415,237 +407,291 @@ public class PaymentServlet extends HttpServlet {
      * Xử lý thanh toán tiền mặt
      */
     private void handleCashPayment(HttpServletRequest request, HttpServletResponse response,
-                                   HttpSession session, ServiceRequest sr, RepairReport report,
-                                   double paymentAmount, int requestId) throws Exception {
-        if (response.isCommitted()) {
-            return;
-        }
+                               HttpSession session, ServiceRequest sr, RepairReport report,
+                               double paymentAmount, int requestId) throws Exception {
+    if (response.isCommitted()) {
+        return;
+    }
+    
+    response.reset();
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+    
+    int contractId = sr.getContractId() != null ? sr.getContractId() : 0;
+    if (contractId <= 0) {
+        response.getWriter().write("{\"success\":false,\"error\":\"Không tìm thấy hợp đồng!\"}");
+        response.getWriter().flush();
+        return;
+    }
+    
+    try {
+        System.out.println("\n" + "=".repeat(80));
+        System.out.println("========== CASH PAYMENT PROCESSING START ==========");
+        System.out.println("=".repeat(80));
+        System.out.println("✅ RequestId: " + requestId);
+        System.out.println("✅ ContractId: " + contractId);
+        System.out.println("✅ PaymentAmount: " + paymentAmount);
+        System.out.println("✅ HasReport: " + (report != null));
         
-        response.reset();
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        
-        int contractId = sr.getContractId() != null ? sr.getContractId() : 0;
-        if (contractId <= 0) {
-            response.getWriter().write("{\"success\":false,\"error\":\"Không tìm thấy hợp đồng!\"}");
+        // ✅ Bước 1: Kiểm tra status hiện tại
+        System.out.println("\n--- Step 1: Check current status ---");
+        ServiceRequest currentSR = serviceRequestDAO.getRequestById(requestId);
+        if (currentSR != null) {
+            System.out.println("✅ Current ServiceRequest status: " + currentSR.getStatus());
+        } else {
+            System.err.println("❌ ERROR: ServiceRequest not found! RequestId=" + requestId);
+            response.getWriter().write("{\"success\":false,\"error\":\"Không tìm thấy yêu cầu dịch vụ!\"}");
             response.getWriter().flush();
             return;
         }
         
-        try {
-            System.out.println("\n" + "=".repeat(80));
-            System.out.println("========== CASH PAYMENT PROCESSING START ==========");
-            System.out.println("=".repeat(80));
-            System.out.println("✅ RequestId: " + requestId);
-            System.out.println("✅ ContractId: " + contractId);
-            System.out.println("✅ PaymentAmount: " + paymentAmount);
-            System.out.println("✅ HasReport: " + (report != null));
-            
-            // ✅ Bước 1: Kiểm tra status hiện tại
-            System.out.println("\n--- Step 1: Check current status ---");
-            ServiceRequest currentSR = serviceRequestDAO.getRequestById(requestId);
-            if (currentSR != null) {
-                System.out.println("✅ Current ServiceRequest status: " + currentSR.getStatus());
+        // ✅ Bước 2: Sử dụng hoặc tạo Invoice
+        System.out.println("\n--- Step 2: Get or Create Invoice ---");
+        int invoiceId;
+        Integer pendingInvoiceId = (Integer) session.getAttribute("pendingInvoiceId");
+        
+        if (pendingInvoiceId != null && pendingInvoiceId > 0) {
+            // ✅ Sử dụng invoice pending đã tạo sẵn và update status
+            invoiceId = pendingInvoiceId;
+            boolean updated = invoiceDAO.updateInvoicePaymentInfo(
+                invoiceId, 
+                "Paid", 
+                "Cash", 
+                paymentAmount
+            );
+            if (updated) {
+                System.out.println("✅ Updated existing pending invoice to Paid: " + invoiceId);
             } else {
-                System.err.println("❌ ERROR: ServiceRequest not found! RequestId=" + requestId);
-                response.getWriter().write("{\"success\":false,\"error\":\"Không tìm thấy yêu cầu dịch vụ!\"}");
+                System.err.println("❌ ERROR: Failed to update pending invoice!");
+                response.getWriter().write("{\"success\":false,\"error\":\"Không thể cập nhật hóa đơn!\"}");
                 response.getWriter().flush();
                 return;
             }
-            
-            // ✅ Bước 2: Sử dụng hoặc tạo Invoice
-            System.out.println("\n--- Step 2: Get or Create Invoice ---");
-            int invoiceId;
-            Integer pendingInvoiceId = (Integer) session.getAttribute("pendingInvoiceId");
-            
-            if (pendingInvoiceId != null && pendingInvoiceId > 0) {
-                // ✅ Sử dụng invoice pending đã tạo sẵn và update status
-                invoiceId = pendingInvoiceId;
-                boolean updated = invoiceDAO.updateInvoicePaymentInfo(
-                    invoiceId, 
-                    "Paid", 
-                    "Cash", 
-                    paymentAmount
-                );
-                if (updated) {
-                    System.out.println("✅ Updated existing pending invoice to Paid: " + invoiceId);
-                } else {
-                    System.err.println("❌ ERROR: Failed to update pending invoice!");
-                    response.getWriter().write("{\"success\":false,\"error\":\"Không thể cập nhật hóa đơn!\"}");
-                    response.getWriter().flush();
-                    return;
-                }
+        } else {
+            // ✅ Tạo invoice mới nếu không có pending invoice
+            invoiceId = invoiceDAO.createInvoice(contractId, paymentAmount, "Paid", 
+                                                LocalDate.now().plusDays(30), "Cash");
+            if (invoiceId <= 0) {
+                System.err.println("❌ ERROR: Failed to create invoice!");
+                response.getWriter().write("{\"success\":false,\"error\":\"Không thể tạo hóa đơn!\"}");
+                response.getWriter().flush();
+                return;
+            }
+            System.out.println("✅ Invoice created with ID: " + invoiceId);
+        }
+        
+        // ✅ Bước 3: Xóa InvoiceDetail pending cũ (nếu có)
+        System.out.println("\n--- Step 3: Cleaning up old pending InvoiceDetails ---");
+        try {
+            boolean cleaned = invoiceDAO.deletePendingInvoiceDetails(invoiceId);
+            if (cleaned) {
+                System.out.println("✅ Cleaned up old pending InvoiceDetails for invoiceId=" + invoiceId);
             } else {
-                // ✅ Tạo invoice mới nếu không có pending invoice
-                invoiceId = invoiceDAO.createInvoice(contractId, paymentAmount, "Paid", 
-                                                    LocalDate.now().plusDays(30), "Cash");
-                if (invoiceId <= 0) {
-                    System.err.println("❌ ERROR: Failed to create invoice!");
-                    response.getWriter().write("{\"success\":false,\"error\":\"Không thể tạo hóa đơn!\"}");
-                    response.getWriter().flush();
-                    return;
-                }
-                System.out.println("✅ Invoice created with ID: " + invoiceId);
+                System.out.println("ℹ️ No pending InvoiceDetails to clean for invoiceId=" + invoiceId);
             }
-            
-            // ✅ Bước 3: Tạo InvoiceDetail với paymentStatus = "Completed"
-            System.out.println("\n--- Step 3: Creating InvoiceDetail ---");
-            String invoiceDesc = "Thanh toán tiền mặt cho yêu cầu #" + requestId;
-            if (report != null && report.getTechnicianName() != null) {
-                invoiceDesc += " - Kỹ thuật viên: " + report.getTechnicianName();
-            }
-            int invoiceDetailId = invoiceDAO.createInvoiceDetail(invoiceId, invoiceDesc, paymentAmount, "Completed");
-            System.out.println("✅ InvoiceDetail created with ID: " + invoiceDetailId + ", paymentStatus=Completed");
-            
-            // ✅ Bước 4: Tạo Payment Completed
-            System.out.println("\n--- Step 4: Creating Payment ---");
-            int paymentId = -1;
-            if (report != null && report.getReportId() > 0) {
-                paymentId = paymentDAO.createPaymentWithReport(
-                    invoiceId, 
-                    paymentAmount, 
-                    "Completed", 
-                    report.getReportId()
-                );
-                System.out.println("✅ Payment created with reportId: " + report.getReportId());
-            } else {
-                paymentId = paymentDAO.createPayment(invoiceId, paymentAmount, "Completed");
-                System.out.println("✅ Payment created without reportId");
-            }
-            System.out.println("✅ PaymentId: " + paymentId);
-            
-            // ✅ Bước 5: Tạo PaymentTransaction
-            System.out.println("\n--- Step 5: Creating PaymentTransaction ---");
-            if (paymentId > 0) {
-                Integer customerId = (Integer) session.getAttribute("session_login_id");
-                if (customerId != null && customerId > 0) {
-                    int transactionId = paymentDAO.createPaymentTransaction(
-                        paymentId, 
-                        customerId, 
-                        paymentAmount, 
-                        "Cash", 
-                        "Completed"
-                    );
-                    System.out.println("✅ PaymentTransaction created with ID: " + transactionId);
-                } else {
-                    System.err.println("⚠️ WARNING: CustomerId is null or invalid!");
-                }
-            }
-            
-            // ✅ Bước 6: CẬP NHẬT ServiceRequest.status = Completed
-            System.out.println("\n--- Step 6: Updating ServiceRequest status ---");
-            System.out.println("✅ About to update requestId=" + requestId + " to status='Completed'");
-            
-            try {
-                boolean statusUpdated = serviceRequestDAO.updateStatusBoolean(requestId, "Completed");
-                
-                if (statusUpdated) {
-                    System.out.println("✅ SUCCESS: ServiceRequest status updated to Completed!");
-                    
-                    // ✅ Verify lại status trong DB
-                    ServiceRequest verifiedSR = serviceRequestDAO.getRequestById(requestId);
-                    if (verifiedSR != null) {
-                        System.out.println("✅ VERIFIED: New status in DB = " + verifiedSR.getStatus());
-                        if (!"Completed".equals(verifiedSR.getStatus())) {
-                            System.err.println("❌ ERROR: Status was not updated correctly in DB!");
-                            System.err.println("❌ Expected: Completed, Got: " + verifiedSR.getStatus());
-                        }
-                    } else {
-                        System.err.println("❌ ERROR: Cannot verify - ServiceRequest not found after update!");
-                    }
-                } else {
-                    System.err.println("❌ ERROR: updateStatusBoolean returned false!");
-                    System.err.println("❌ No rows were affected by the UPDATE statement!");
-                }
-            } catch (Exception e) {
-                System.err.println("❌ EXCEPTION when updating status: " + e.getMessage());
-                e.printStackTrace();
-            }
-            
-            // ✅ Bước 7: Cập nhật RepairReport.quotationStatus = Approved
-            System.out.println("\n--- Step 7: Updating RepairReport quotationStatus ---");
-            if (report != null && report.getReportId() > 0) {
-                try {
-                    boolean reportUpdated = serviceRequestDAO.updateRepairReportQuotationStatus(
-                        report.getReportId(), 
-                        "Approved"
-                    );
-                    
-                    if (reportUpdated) {
-                        System.out.println("✅ SUCCESS: RepairReport quotationStatus updated to Approved!");
-                    } else {
-                        System.err.println("⚠️ WARNING: RepairReport quotationStatus was not updated!");
-                    }
-                } catch (Exception e) {
-                    System.err.println("❌ ERROR updating RepairReport: " + e.getMessage());
-                    e.printStackTrace();
-                }
-            } else {
-                System.out.println("ℹ️ No RepairReport to update (report is null or reportId <= 0)");
-            }
-            
-            // ✅ Bước 8: Xóa Payment pending cũ (nếu có)
-            System.out.println("\n--- Step 8: Cleaning up pending payment ---");
-            Integer pendingPaymentId = (Integer) session.getAttribute("pendingPaymentId");
-            if (pendingPaymentId != null && pendingPaymentId > 0) {
-                try {
-                    boolean deleted = paymentDAO.deletePendingPayment(pendingPaymentId);
-                    if (deleted) {
-                        System.out.println("✅ Deleted old pending payment: " + pendingPaymentId);
-                        session.removeAttribute("pendingPaymentId");
-                    } else {
-                        System.err.println("⚠️ WARNING: Could not delete pending payment: " + pendingPaymentId);
-                    }
-                } catch (Exception e) {
-                    System.err.println("❌ ERROR deleting pending payment: " + e.getMessage());
-                }
-            } else {
-                System.out.println("ℹ️ No pending payment to delete");
-            }
-            
-            // ✅ Bước 9: Xóa pending session data và lưu thông tin mới
-            session.removeAttribute("pendingInvoiceId");
-            session.removeAttribute("pendingRequestId");
-            session.removeAttribute("pendingReportId");
-            session.removeAttribute("pendingPaymentId");
-            
-            session.setAttribute("lastPaidInvoiceId", invoiceId);
-            session.setAttribute("lastPaidRequestId", requestId);
-            System.out.println("✅ Session data cleaned and updated");
-            
-            // ✅ Summary
-            System.out.println("\n" + "=".repeat(80));
-            System.out.println("========== CASH PAYMENT SUCCESS SUMMARY ==========");
-            System.out.println("=".repeat(80));
-            System.out.println("✅ InvoiceId: " + invoiceId + " (Status: Paid, Method: Cash)");
-            System.out.println("✅ PaymentId: " + paymentId + " (Status: Completed)");
-            System.out.println("✅ RequestId: " + requestId + " (Status: Should be Completed)");
-            if (report != null) {
-                System.out.println("✅ ReportId: " + report.getReportId() + " (QuotationStatus: Should be Approved)");
-                System.out.println("✅ TechnicianName: " + report.getTechnicianName());
-            }
-            System.out.println("=".repeat(80) + "\n");
-            
-            // ✅ Trả về JSON success
-            response.getWriter().write("{\"success\":true,\"message\":\"Thanh toán thành công!\",\"redirectUrl\":\"" + 
-                                      request.getContextPath() + "/managerServiceRequest?success=cash_payment_success\"}");
-            response.getWriter().flush();
-            
         } catch (Exception e) {
-            System.err.println("\n" + "=".repeat(80));
-            System.err.println("========== CASH PAYMENT ERROR ==========");
-            System.err.println("=".repeat(80));
-            System.err.println("❌ Exception type: " + e.getClass().getName());
-            System.err.println("❌ Error message: " + e.getMessage());
-            System.err.println("❌ Stack trace:");
+            System.err.println("⚠️ Error cleaning pending InvoiceDetails: " + e.getMessage());
+        }
+        
+        // ✅ Bước 4: Tạo InvoiceDetail với paymentStatus = "Completed"
+        System.out.println("\n--- Step 4: Creating InvoiceDetail ---");
+        String invoiceDesc = "Thanh toán tiền mặt cho yêu cầu #" + requestId;
+        if (report != null && report.getTechnicianName() != null) {
+            invoiceDesc += " - Kỹ thuật viên: " + report.getTechnicianName();
+        }
+        
+        // ✅ CHECK TRƯỚC KHI TẠO (Double safety)
+        try {
+            if (!invoiceDAO.hasInvoiceDetail(invoiceId)) {
+                int invoiceDetailId = invoiceDAO.createInvoiceDetail(
+                    invoiceId, 
+                    invoiceDesc, 
+                    paymentAmount, 
+                    "Completed"
+                );
+                
+                if (invoiceDetailId > 0) {
+                    System.out.println("✅ SUCCESS: InvoiceDetail created with ID: " + invoiceDetailId);
+                    System.out.println("   - InvoiceId: " + invoiceId);
+                    System.out.println("   - Description: " + invoiceDesc);
+                    System.out.println("   - Amount: " + paymentAmount);
+                    System.out.println("   - PaymentStatus: Completed");
+                } else {
+                    System.err.println("❌ ERROR: Failed to create InvoiceDetail!");
+                    response.getWriter().write("{\"success\":false,\"error\":\"Không thể tạo chi tiết hóa đơn!\"}");
+                    response.getWriter().flush();
+                    return;
+                }
+            } else {
+                // Trường hợp đã có rồi (race condition), update thay vì tạo mới
+                System.out.println("⚠️ WARNING: InvoiceDetail already exists for invoiceId=" + invoiceId);
+                System.out.println("   → Updating paymentStatus to Completed instead...");
+                
+                boolean updated = invoiceDAO.updateInvoiceDetailPaymentStatus(invoiceId, "Completed");
+                if (updated) {
+                    System.out.println("✅ Updated existing InvoiceDetail paymentStatus to Completed");
+                } else {
+                    System.err.println("❌ ERROR: Failed to update InvoiceDetail paymentStatus!");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("❌ EXCEPTION when creating InvoiceDetail: " + e.getMessage());
             e.printStackTrace();
-            System.err.println("=".repeat(80) + "\n");
-            
-            response.getWriter().write("{\"success\":false,\"error\":\"Có lỗi xảy ra: " + 
+            response.getWriter().write("{\"success\":false,\"error\":\"Lỗi tạo chi tiết hóa đơn: " + 
                                       e.getMessage().replace("\"", "\\\"") + "\"}");
             response.getWriter().flush();
+            return;
         }
+        
+        // ✅ Bước 5: Tạo Payment Completed
+        System.out.println("\n--- Step 5: Creating Payment ---");
+        int paymentId = -1;
+        if (report != null && report.getReportId() > 0) {
+            paymentId = paymentDAO.createPaymentWithReport(
+                invoiceId, 
+                paymentAmount, 
+                "Completed", 
+                report.getReportId()
+            );
+            System.out.println("✅ Payment created with reportId: " + report.getReportId());
+        } else {
+            paymentId = paymentDAO.createPayment(invoiceId, paymentAmount, "Completed");
+            System.out.println("✅ Payment created without reportId");
+        }
+        System.out.println("✅ PaymentId: " + paymentId);
+        
+        // ✅ Bước 6: Tạo PaymentTransaction
+        System.out.println("\n--- Step 6: Creating PaymentTransaction ---");
+        if (paymentId > 0) {
+            Integer customerId = (Integer) session.getAttribute("session_login_id");
+            if (customerId != null && customerId > 0) {
+                int transactionId = paymentDAO.createPaymentTransaction(
+                    paymentId, 
+                    customerId, 
+                    paymentAmount, 
+                    "Cash", 
+                    "Completed"
+                );
+                System.out.println("✅ PaymentTransaction created with ID: " + transactionId);
+            } else {
+                System.err.println("⚠️ WARNING: CustomerId is null or invalid!");
+            }
+        }
+        
+        // ✅ Bước 7: CẬP NHẬT ServiceRequest.status = Completed
+        System.out.println("\n--- Step 7: Updating ServiceRequest status ---");
+        System.out.println("✅ About to update requestId=" + requestId + " to status='Completed'");
+        
+        try {
+            boolean statusUpdated = serviceRequestDAO.updateStatusBoolean(requestId, "Completed");
+            
+            if (statusUpdated) {
+                System.out.println("✅ SUCCESS: ServiceRequest status updated to Completed!");
+                
+                // ✅ Verify lại status trong DB
+                ServiceRequest verifiedSR = serviceRequestDAO.getRequestById(requestId);
+                if (verifiedSR != null) {
+                    System.out.println("✅ VERIFIED: New status in DB = " + verifiedSR.getStatus());
+                    if (!"Completed".equals(verifiedSR.getStatus())) {
+                        System.err.println("❌ ERROR: Status was not updated correctly in DB!");
+                        System.err.println("❌ Expected: Completed, Got: " + verifiedSR.getStatus());
+                    }
+                } else {
+                    System.err.println("❌ ERROR: Cannot verify - ServiceRequest not found after update!");
+                }
+            } else {
+                System.err.println("❌ ERROR: updateStatusBoolean returned false!");
+                System.err.println("❌ No rows were affected by the UPDATE statement!");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ EXCEPTION when updating status: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        // ✅ Bước 8: Cập nhật RepairReport.quotationStatus = Approved
+        System.out.println("\n--- Step 8: Updating RepairReport quotationStatus ---");
+        if (report != null && report.getReportId() > 0) {
+            try {
+                boolean reportUpdated = serviceRequestDAO.updateRepairReportQuotationStatus(
+                    report.getReportId(), 
+                    "Approved"
+                );
+                
+                if (reportUpdated) {
+                    System.out.println("✅ SUCCESS: RepairReport quotationStatus updated to Approved!");
+                } else {
+                    System.err.println("⚠️ WARNING: RepairReport quotationStatus was not updated!");
+                }
+            } catch (Exception e) {
+                System.err.println("❌ ERROR updating RepairReport: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("ℹ️ No RepairReport to update (report is null or reportId <= 0)");
+        }
+        
+        // ✅ Bước 9: Xóa Payment pending cũ (nếu có)
+        System.out.println("\n--- Step 9: Cleaning up pending payment ---");
+        Integer pendingPaymentId = (Integer) session.getAttribute("pendingPaymentId");
+        if (pendingPaymentId != null && pendingPaymentId > 0) {
+            try {
+                boolean deleted = paymentDAO.deletePendingPayment(pendingPaymentId);
+                if (deleted) {
+                    System.out.println("✅ Deleted old pending payment: " + pendingPaymentId);
+                    session.removeAttribute("pendingPaymentId");
+                } else {
+                    System.err.println("⚠️ WARNING: Could not delete pending payment: " + pendingPaymentId);
+                }
+            } catch (Exception e) {
+                System.err.println("❌ ERROR deleting pending payment: " + e.getMessage());
+            }
+        } else {
+            System.out.println("ℹ️ No pending payment to delete");
+        }
+        
+        // ✅ Bước 10: Xóa pending session data và lưu thông tin mới
+        session.removeAttribute("pendingInvoiceId");
+        session.removeAttribute("pendingRequestId");
+        session.removeAttribute("pendingReportId");
+        session.removeAttribute("pendingPaymentId");
+        
+        session.setAttribute("lastPaidInvoiceId", invoiceId);
+        session.setAttribute("lastPaidRequestId", requestId);
+        System.out.println("✅ Session data cleaned and updated");
+        
+        // ✅ Summary
+        System.out.println("\n" + "=".repeat(80));
+        System.out.println("========== CASH PAYMENT SUCCESS SUMMARY ==========");
+        System.out.println("=".repeat(80));
+        System.out.println("✅ InvoiceId: " + invoiceId + " (Status: Paid, Method: Cash)");
+        System.out.println("✅ PaymentId: " + paymentId + " (Status: Completed)");
+        System.out.println("✅ RequestId: " + requestId + " (Status: Should be Completed)");
+        if (report != null) {
+            System.out.println("✅ ReportId: " + report.getReportId() + " (QuotationStatus: Should be Approved)");
+            System.out.println("✅ TechnicianName: " + report.getTechnicianName());
+        }
+        System.out.println("=".repeat(80) + "\n");
+        
+        // ✅ Trả về JSON success
+        response.getWriter().write("{\"success\":true,\"message\":\"Thanh toán thành công!\",\"redirectUrl\":\"" + 
+                                  request.getContextPath() + "/managerServiceRequest?success=cash_payment_success\"}");
+        response.getWriter().flush();
+        
+    } catch (Exception e) {
+        System.err.println("\n" + "=".repeat(80));
+        System.err.println("========== CASH PAYMENT ERROR ==========");
+        System.err.println("=".repeat(80));
+        System.err.println("❌ Exception type: " + e.getClass().getName());
+        System.err.println("❌ Error message: " + e.getMessage());
+        System.err.println("❌ Stack trace:");
+        e.printStackTrace();
+        System.err.println("=".repeat(80) + "\n");
+        
+        response.getWriter().write("{\"success\":false,\"error\":\"Có lỗi xảy ra: " + 
+                                  e.getMessage().replace("\"", "\\\"") + "\"}");
+        response.getWriter().flush();
     }
+}
     
     private List<Map<String, Object>> getContractEquipmentWithDetails(int contractId) {
         List<Map<String, Object>> list = new ArrayList<>();
