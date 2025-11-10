@@ -1,7 +1,9 @@
 package controller;
 
 import dal.WorkTaskDAO;
+import dal.RepairReportDAO;
 import model.WorkTask;
+import model.RepairReport;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -76,6 +78,16 @@ public class TechnicianTaskServlet extends HttpServlet {
             int page = parseInt(req.getParameter("page"), 1);
             int pageSize = Math.min(parseInt(req.getParameter("pageSize"), 10), 100);
             
+            // Handle success/error messages from URL parameters (from redirects)
+            String successParam = req.getParameter("success");
+            String errorParam = req.getParameter("error");
+            if (successParam != null && !successParam.isEmpty()) {
+                req.setAttribute("success", successParam);
+            }
+            if (errorParam != null && !errorParam.isEmpty()) {
+                req.setAttribute("error", errorParam);
+            }
+            
             WorkTaskDAO taskDAO = new WorkTaskDAO();
             List<WorkTaskDAO.WorkTaskWithCustomer> tasksWithCustomer = taskDAO.findByTechnicianIdWithCustomer(technicianId, searchQuery, statusFilter, page, pageSize);
             int totalTasks = taskDAO.getTaskCountForTechnicianWithCustomer(technicianId, statusFilter);
@@ -116,40 +128,125 @@ public class TechnicianTaskServlet extends HttpServlet {
         if ("updateStatus".equals(action) && taskIdParam != null) {
             try {
                 int taskId = Integer.parseInt(taskIdParam);
-                String newStatus = req.getParameter("status");
+                // Read newStatus from form (changed from "status" to avoid conflict with filter parameter)
+                String newStatus = req.getParameter("newStatus");
                 
                 if (newStatus == null || newStatus.trim().isEmpty()) {
-                    req.setAttribute("error", "Status is required");
-                    doGet(req, resp);
+                    // Preserve filter parameters when showing error
+                    String preservedQ = sanitize(req.getParameter("q"));
+                    String preservedStatus = sanitize(req.getParameter("status"));
+                    String preservedPage = req.getParameter("page");
+                    String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Status is required");
+                    resp.sendRedirect(redirectUrl);
                     return;
                 }
+                
+                // Preserve filter parameters
+                String preservedQ = sanitize(req.getParameter("q"));
+                String preservedStatus = sanitize(req.getParameter("status"));
+                String preservedPage = req.getParameter("page");
                 
                 WorkTaskDAO taskDAO = new WorkTaskDAO();
                 WorkTask task = taskDAO.findById(taskId);
                 
                 if (task != null && task.getTechnicianId() == sessionId.intValue()) {
-                    boolean updated = taskDAO.updateTaskStatus(taskId, newStatus.trim());
+                    String trimmedStatus = newStatus.trim();
+                    
+                    // ✅ VALIDATION: Check if trying to complete task with pending repair report
+                    if ("Completed".equals(trimmedStatus) && task.getRequestId() != null) {
+                        try {
+                            RepairReportDAO reportDAO = new RepairReportDAO();
+                            RepairReport report = reportDAO.findByRequestId(task.getRequestId());
+                            
+                            if (report != null) {
+                                String quotationStatus = report.getQuotationStatus();
+                                
+                                // Block completion if customer hasn't responded (status is still Pending)
+                                if (quotationStatus != null && "Pending".equals(quotationStatus)) {
+                                    String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Cannot complete task: Customer has not yet responded to the repair report quotation. Please wait for customer approval or rejection.");
+                                    resp.sendRedirect(redirectUrl);
+                                    return;
+                                }
+                                
+                                // Allow if status is Approved or Rejected (customer has responded)
+                                // If status is null or other value, also allow (edge case)
+                            }
+                            // If no repair report exists, allow completion (task might not require repair report)
+                            
+                        } catch (SQLException e) {
+                            System.err.println("❌ Error checking repair report status: " + e.getMessage());
+                            e.printStackTrace();
+                            String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Error validating repair report status: " + e.getMessage());
+                            resp.sendRedirect(redirectUrl);
+                            return;
+                        }
+                    }
+                    
+                    // Proceed with status update
+                    boolean updated = taskDAO.updateTaskStatus(taskId, trimmedStatus);
+                    
+                    // Redirect with preserved filter parameters
                     if (updated) {
-                        req.setAttribute("success", "Task status updated successfully");
+                        String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "success", "Task status updated successfully");
+                        resp.sendRedirect(redirectUrl);
                     } else {
-                        req.setAttribute("error", "Failed to update task status");
+                        String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Failed to update task status");
+                        resp.sendRedirect(redirectUrl);
                     }
                 } else {
-                    req.setAttribute("error", "Task not found or not assigned to you");
+                    String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Task not found or not assigned to you");
+                    resp.sendRedirect(redirectUrl);
                 }
-                
-                doGet(req, resp);
                 
             } catch (SQLException e) {
                 throw new ServletException("Database error: " + e.getMessage(), e);
             } catch (NumberFormatException e) {
-                req.setAttribute("error", "Invalid task ID");
-                doGet(req, resp);
+                String preservedQ = sanitize(req.getParameter("q"));
+                String preservedStatus = sanitize(req.getParameter("status"));
+                String preservedPage = req.getParameter("page");
+                String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Invalid task ID");
+                resp.sendRedirect(redirectUrl);
+            } catch (IOException e) {
+                throw new ServletException("Redirect error: " + e.getMessage(), e);
             }
         } else {
-            req.setAttribute("error", "Invalid action");
-            doGet(req, resp);
+            String preservedQ = sanitize(req.getParameter("q"));
+            String preservedStatus = sanitize(req.getParameter("status"));
+            String preservedPage = req.getParameter("page");
+            String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Invalid action");
+            try {
+                resp.sendRedirect(redirectUrl);
+            } catch (IOException e) {
+                throw new ServletException("Redirect error: " + e.getMessage(), e);
+            }
         }
+    }
+
+    /**
+     * Build task list URL with preserved filter parameters and optional message
+     */
+    private String buildTaskListUrlWithMessage(HttpServletRequest req, String q, String status, String page, String messageType, String message) {
+        StringBuilder url = new StringBuilder();
+        url.append(req.getContextPath()).append("/technician/tasks");
+        
+        boolean hasParams = false;
+        if (q != null && !q.isEmpty()) {
+            url.append(hasParams ? "&" : "?").append("q=").append(java.net.URLEncoder.encode(q, java.nio.charset.StandardCharsets.UTF_8));
+            hasParams = true;
+        }
+        if (status != null && !status.isEmpty()) {
+            url.append(hasParams ? "&" : "?").append("status=").append(java.net.URLEncoder.encode(status, java.nio.charset.StandardCharsets.UTF_8));
+            hasParams = true;
+        }
+        if (page != null && !page.isEmpty()) {
+            url.append(hasParams ? "&" : "?").append("page=").append(page);
+            hasParams = true;
+        }
+        if (messageType != null && message != null) {
+            url.append(hasParams ? "&" : "?").append(messageType).append("=").append(java.net.URLEncoder.encode(message, java.nio.charset.StandardCharsets.UTF_8));
+        }
+        
+        return url.toString();
     }
 
     private String sanitize(String s) {

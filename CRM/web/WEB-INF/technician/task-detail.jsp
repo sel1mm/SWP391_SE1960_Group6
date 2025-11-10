@@ -206,9 +206,13 @@
         <div class="modal-body">
           <input type="hidden" name="action" value="updateStatus">
           <input type="hidden" name="taskId" id="modalTaskId">
+          <!-- Preserve filter parameters (if coming from task list) -->
+          <input type="hidden" name="q" id="preserveQ" value="">
+          <input type="hidden" name="status" id="preserveStatus" value="">
+          <input type="hidden" name="page" id="preservePage" value="">
           <div class="mb-3">
             <label for="statusSelect" class="form-label">New Status</label>
-            <select class="form-select" name="status" id="statusSelect" required>
+            <select class="form-select" name="newStatus" id="statusSelect" required>
               <option value="">Select Status</option>
               <option value="Pending">Pending</option>
               <option value="Assigned">Assigned</option>
