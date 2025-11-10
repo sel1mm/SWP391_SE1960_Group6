@@ -216,23 +216,76 @@ public class RepairReportDAO extends MyDAO {
                 return 0;
             }
 
-            // Insert RepairReportDetail rows
+            // Insert RepairReportDetail rows and reserve PartDetail records
             if (details != null && !details.isEmpty()) {
                 xSql = "INSERT INTO RepairReportDetail (reportId, partId, partDetailId, quantity, unitPrice) "
                         + "VALUES (?, ?, ?, ?, ?)";
                 ps = con.prepareStatement(xSql);
 
                 for (RepairReportDetail detail : details) {
-                    ps.setInt(1, reportId);
-                    ps.setInt(2, detail.getPartId());
-                    if (detail.getPartDetailId() != null) {
-                        ps.setInt(3, detail.getPartDetailId());
-                    } else {
-                        ps.setNull(3, Types.INTEGER);
+                    int partId = detail.getPartId();
+                    int quantity = detail.getQuantity();
+                    
+                    // Select available PartDetail records for this part (up to quantity needed)
+                    List<Integer> reservedPartDetailIds = new ArrayList<>();
+                    String selectSql = "SELECT partDetailId FROM PartDetail " +
+                                     "WHERE partId = ? AND status = 'Available' " +
+                                     "ORDER BY partDetailId ASC " +
+                                     "LIMIT ? FOR UPDATE";
+                    
+                    try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
+                        selectPs.setInt(1, partId);
+                        selectPs.setInt(2, quantity);
+                        try (ResultSet selectRs = selectPs.executeQuery()) {
+                            while (selectRs.next()) {
+                                reservedPartDetailIds.add(selectRs.getInt("partDetailId"));
+                            }
+                        }
                     }
-                    ps.setInt(4, detail.getQuantity());
-                    ps.setBigDecimal(5, detail.getUnitPrice());
-                    ps.addBatch();
+                    
+                    // Validate we have enough available parts
+                    if (reservedPartDetailIds.size() < quantity) {
+                        con.rollback();
+                        throw new SQLException("Insufficient available parts for partId " + partId + 
+                                             ". Required: " + quantity + ", Available: " + reservedPartDetailIds.size());
+                    }
+                    
+                    // Update PartDetail status to 'InUse' for reserved parts
+                    if (!reservedPartDetailIds.isEmpty()) {
+                        String updateSql = "UPDATE PartDetail SET status = 'InUse', " +
+                                         "lastUpdatedBy = ?, lastUpdatedDate = ? " +
+                                         "WHERE partDetailId IN (";
+                        StringBuilder updateSqlBuilder = new StringBuilder(updateSql);
+                        for (int i = 0; i < reservedPartDetailIds.size(); i++) {
+                            if (i > 0) updateSqlBuilder.append(",");
+                            updateSqlBuilder.append("?");
+                        }
+                        updateSqlBuilder.append(")");
+                        
+                        try (PreparedStatement updatePs = con.prepareStatement(updateSqlBuilder.toString())) {
+                            updatePs.setInt(1, report.getTechnicianId() != null ? report.getTechnicianId() : 1);
+                            updatePs.setDate(2, Date.valueOf(java.time.LocalDate.now()));
+                            for (int i = 0; i < reservedPartDetailIds.size(); i++) {
+                                updatePs.setInt(i + 3, reservedPartDetailIds.get(i));
+                            }
+                            int updated = updatePs.executeUpdate();
+                            if (updated != reservedPartDetailIds.size()) {
+                                con.rollback();
+                                throw new SQLException("Failed to reserve all PartDetail records for partId " + partId);
+                            }
+                        }
+                    }
+                    
+                    // Insert RepairReportDetail - for quantity > 1, we need to insert multiple rows
+                    // Each row represents one PartDetail instance
+                    for (int i = 0; i < reservedPartDetailIds.size(); i++) {
+                        ps.setInt(1, reportId);
+                        ps.setInt(2, partId);
+                        ps.setInt(3, reservedPartDetailIds.get(i));
+                        ps.setInt(4, 1); // Each row is quantity 1 (one PartDetail instance)
+                        ps.setBigDecimal(5, detail.getUnitPrice());
+                        ps.addBatch();
+                    }
                 }
 
                 int[] batchResults = ps.executeBatch();
@@ -307,6 +360,121 @@ public class RepairReportDAO extends MyDAO {
 
         int affected = ps.executeUpdate();
         return affected > 0;
+    }
+    
+    /**
+     * Update repair report with new parts list
+     * Releases old reserved parts and reserves new ones
+     * @param report The repair report to update
+     * @param newDetails New list of parts
+     * @return true if successful
+     */
+    public boolean updateReportWithDetails(RepairReport report, List<RepairReportDetail> newDetails) throws SQLException {
+        boolean originalAutoCommit = con.getAutoCommit();
+        
+        try {
+            con.setAutoCommit(false);
+            
+            // 1. Return old reserved parts to Available
+            returnReservedPartsToAvailable(report.getReportId());
+            
+            // 2. Delete old RepairReportDetail rows
+            xSql = "DELETE FROM RepairReportDetail WHERE reportId = ?";
+            ps = con.prepareStatement(xSql);
+            ps.setInt(1, report.getReportId());
+            ps.executeUpdate();
+            
+            // 3. Update report header
+            boolean headerUpdated = updateRepairReport(report);
+            if (!headerUpdated) {
+                con.rollback();
+                return false;
+            }
+            
+            // 4. Reserve new parts and insert new details (reuse logic from insertReportWithDetails)
+            if (newDetails != null && !newDetails.isEmpty()) {
+                xSql = "INSERT INTO RepairReportDetail (reportId, partId, partDetailId, quantity, unitPrice) "
+                        + "VALUES (?, ?, ?, ?, ?)";
+                ps = con.prepareStatement(xSql);
+
+                for (RepairReportDetail detail : newDetails) {
+                    int partId = detail.getPartId();
+                    int quantity = detail.getQuantity();
+                    
+                    // Reserve specific PartDetail records
+                    List<Integer> reservedPartDetailIds = new ArrayList<>();
+                    String selectSql = "SELECT partDetailId FROM PartDetail " +
+                                     "WHERE partId = ? AND status = 'Available' " +
+                                     "ORDER BY partDetailId ASC " +
+                                     "LIMIT ? FOR UPDATE";
+                    
+                    try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
+                        selectPs.setInt(1, partId);
+                        selectPs.setInt(2, quantity);
+                        try (ResultSet selectRs = selectPs.executeQuery()) {
+                            while (selectRs.next()) {
+                                reservedPartDetailIds.add(selectRs.getInt("partDetailId"));
+                            }
+                        }
+                    }
+                    
+                    if (reservedPartDetailIds.size() < quantity) {
+                        con.rollback();
+                        throw new SQLException("Insufficient available parts for partId " + partId + 
+                                             ". Required: " + quantity + ", Available: " + reservedPartDetailIds.size());
+                    }
+                    
+                    // Update PartDetail status to 'InUse'
+                    if (!reservedPartDetailIds.isEmpty()) {
+                        String updateSql = "UPDATE PartDetail SET status = 'InUse', " +
+                                         "lastUpdatedBy = ?, lastUpdatedDate = ? " +
+                                         "WHERE partDetailId IN (";
+                        StringBuilder updateSqlBuilder = new StringBuilder(updateSql);
+                        for (int i = 0; i < reservedPartDetailIds.size(); i++) {
+                            if (i > 0) updateSqlBuilder.append(",");
+                            updateSqlBuilder.append("?");
+                        }
+                        updateSqlBuilder.append(")");
+                        
+                        try (PreparedStatement updatePs = con.prepareStatement(updateSqlBuilder.toString())) {
+                            updatePs.setInt(1, report.getTechnicianId() != null ? report.getTechnicianId() : 1);
+                            updatePs.setDate(2, Date.valueOf(java.time.LocalDate.now()));
+                            for (int i = 0; i < reservedPartDetailIds.size(); i++) {
+                                updatePs.setInt(i + 3, reservedPartDetailIds.get(i));
+                            }
+                            updatePs.executeUpdate();
+                        }
+                    }
+                    
+                    // Insert RepairReportDetail rows
+                    for (int i = 0; i < reservedPartDetailIds.size(); i++) {
+                        ps.setInt(1, report.getReportId());
+                        ps.setInt(2, partId);
+                        ps.setInt(3, reservedPartDetailIds.get(i));
+                        ps.setInt(4, 1);
+                        ps.setBigDecimal(5, detail.getUnitPrice());
+                        ps.addBatch();
+                    }
+                }
+                
+                int[] batchResults = ps.executeBatch();
+                for (int result : batchResults) {
+                    if (result == PreparedStatement.EXECUTE_FAILED) {
+                        con.rollback();
+                        throw new SQLException("Failed to insert one or more repair report details");
+                    }
+                }
+            }
+            
+            con.commit();
+            return true;
+            
+        } catch (SQLException e) {
+            con.rollback();
+            throw e;
+        } finally {
+            con.setAutoCommit(originalAutoCommit);
+        }
     }
 
     /**
@@ -937,8 +1105,57 @@ public class RepairReportDAO extends MyDAO {
         return "Pending";
     }
      /**
-     * ✅ Hủy 1 linh kiện cụ thể (đánh dấu status = "Cancelled")
-     * @param partDetailId - ID của PartDetail cần hủy
+     * Return reserved parts to Available status when report is rejected
+     * This method finds all PartDetail records linked to this report and returns them to Available
+     * @param reportId ID of the repair report
+     * @return number of PartDetail records returned to Available
+     */
+    public int returnReservedPartsToAvailable(int reportId) throws SQLException {
+        // Get all partDetailIds linked to this report
+        List<Integer> partDetailIds = new ArrayList<>();
+        String selectSql = "SELECT DISTINCT partDetailId FROM RepairReportDetail " +
+                         "WHERE reportId = ? AND partDetailId IS NOT NULL";
+        
+        try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
+            selectPs.setInt(1, reportId);
+            try (ResultSet rs = selectPs.executeQuery()) {
+                while (rs.next()) {
+                    partDetailIds.add(rs.getInt("partDetailId"));
+                }
+            }
+        }
+        
+        if (partDetailIds.isEmpty()) {
+            return 0;
+        }
+        
+        // Update PartDetail status back to 'Available'
+        StringBuilder updateSql = new StringBuilder(
+            "UPDATE PartDetail SET status = 'Available', " +
+            "lastUpdatedBy = 1, lastUpdatedDate = ? " +
+            "WHERE partDetailId IN ("
+        );
+        for (int i = 0; i < partDetailIds.size(); i++) {
+            if (i > 0) updateSql.append(",");
+            updateSql.append("?");
+        }
+        updateSql.append(") AND status = 'InUse'");
+        
+        int updated = 0;
+        try (PreparedStatement updatePs = con.prepareStatement(updateSql.toString())) {
+            updatePs.setDate(1, Date.valueOf(java.time.LocalDate.now()));
+            for (int i = 0; i < partDetailIds.size(); i++) {
+                updatePs.setInt(i + 2, partDetailIds.get(i));
+            }
+            updated = updatePs.executeUpdate();
+        }
+        
+        return updated;
+    }
+    
+    /**
+     * Hủy 1 linh kiện cụ thể (đánh dấu status = "Cancelled")
+     * @param partDetailId ID của PartDetail cần hủy
      * @return true nếu hủy thành công
      */
     public boolean cancelPartDetail(int partDetailId) throws SQLException {

@@ -2541,7 +2541,7 @@ public class ServiceRequestDAO extends MyDAO {
     
     
     /**
-     * ✅ CẬP NHẬT TRẠNG THÁI BÁO GIÁ (quotationStatus)
+     * Cập nhật trạng thái báo giá (quotationStatus)
      * Customer đồng ý hoặc từ chối báo giá
      * 
      * @param reportId ID của repair report
@@ -2552,6 +2552,18 @@ public class ServiceRequestDAO extends MyDAO {
         String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
         
         try {
+            // Get old status before update
+            String oldStatus = null;
+            String getOldStatusSql = "SELECT quotationStatus FROM RepairReport WHERE reportId = ?";
+            try (PreparedStatement getStatusPs = con.prepareStatement(getOldStatusSql)) {
+                getStatusPs.setInt(1, reportId);
+                try (ResultSet rs = getStatusPs.executeQuery()) {
+                    if (rs.next()) {
+                        oldStatus = rs.getString("quotationStatus");
+                    }
+                }
+            }
+            
             ps = con.prepareStatement(sql);
             ps.setString(1, quotationStatus);
             ps.setInt(2, reportId);
@@ -2559,13 +2571,23 @@ public class ServiceRequestDAO extends MyDAO {
             int rowsAffected = ps.executeUpdate();
             
             if (rowsAffected > 0) {
-                System.out.println("✅ Updated quotationStatus to '" + quotationStatus + "' for reportId " + reportId);
+                // If status changed to 'Rejected', return reserved parts to Available
+                if ("Rejected".equals(quotationStatus) && "Pending".equals(oldStatus)) {
+                    try {
+                        dal.RepairReportDAO reportDAO = new dal.RepairReportDAO();
+                        reportDAO.returnReservedPartsToAvailable(reportId);
+                    } catch (Exception e) {
+                        System.err.println("Error returning reserved parts: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+                
                 return true;
             }
             
             return false;
         } catch (Exception e) {
-            System.err.println("❌ Error updating quotationStatus: " + e.getMessage());
+            System.err.println("Error updating quotationStatus: " + e.getMessage());
             e.printStackTrace();
             return false;
         } finally {
@@ -2593,21 +2615,41 @@ public class ServiceRequestDAO extends MyDAO {
 public boolean updateRepairReportQuotationStatus(int reportId, String quotationStatus) {
     String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
     try {
+        // Get old status before update
+        String oldStatus = null;
+        String getOldStatusSql = "SELECT quotationStatus FROM RepairReport WHERE reportId = ?";
+        try (PreparedStatement getStatusPs = con.prepareStatement(getOldStatusSql)) {
+            getStatusPs.setInt(1, reportId);
+            try (ResultSet rs = getStatusPs.executeQuery()) {
+                if (rs.next()) {
+                    oldStatus = rs.getString("quotationStatus");
+                }
+            }
+        }
+        
         ps = con.prepareStatement(sql);
         ps.setString(1, quotationStatus);
         ps.setInt(2, reportId);
         
         int rowsAffected = ps.executeUpdate();
         if (rowsAffected > 0) {
-            System.out.println("✅ Updated RepairReport quotationStatus: reportId=" + reportId + 
-                             ", quotationStatus=" + quotationStatus);
+            // If status changed to 'Rejected', return reserved parts to Available
+            if ("Rejected".equals(quotationStatus) && "Pending".equals(oldStatus)) {
+                try {
+                    dal.RepairReportDAO reportDAO = new dal.RepairReportDAO();
+                    reportDAO.returnReservedPartsToAvailable(reportId);
+                } catch (Exception e) {
+                    System.err.println("Error returning reserved parts: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
             return true;
         } else {
-            System.err.println("⚠️ No rows updated for reportId=" + reportId);
             return false;
         }
     } catch (SQLException e) {
-        System.err.println("❌ Error updating quotation status: " + e.getMessage());
+        System.err.println("Error updating quotation status: " + e.getMessage());
         e.printStackTrace();
         return false;
     } finally {

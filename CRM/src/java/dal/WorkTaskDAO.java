@@ -429,13 +429,34 @@ public class WorkTaskDAO extends MyDAO {
 //    }
     
     /**
-     * Get assigned tasks for technician that are not completed or cancelled (for report creation)
+     * Inner class for WorkTask with customer and request information
      */
-    public List<WorkTask> getAssignedTasksForReport(int technicianId) throws SQLException {
-        List<WorkTask> tasks = new ArrayList<>();
+    public static class WorkTaskForReport {
+        public WorkTask task;
+        public Integer customerId;
+        public String customerName;
+        public String requestType;
+        
+        public WorkTask getTask() { return task; }
+        public Integer getCustomerId() { return customerId; }
+        public String getCustomerName() { return customerName; }
+        public String getRequestType() { return requestType; }
+    }
+    
+    /**
+     * Get assigned tasks for technician that are not completed or cancelled (for report creation)
+     * Includes customer info and requestType from ServiceRequest
+     */
+    public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throws SQLException {
+        List<WorkTaskForReport> tasks = new ArrayList<>();
         xSql = "SELECT wt.taskId, wt.requestId, wt.scheduleId, wt.technicianId, " +
-               "wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status " +
-               "FROM WorkTask wt WHERE wt.technicianId = ? AND wt.status NOT IN ('Completed', 'Cancelled') " +
+               "wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status, " +
+               "sr.createdBy as customerId, a.fullName as customerName, sr.requestType " +
+               "FROM WorkTask wt " +
+               "LEFT JOIN ServiceRequest sr ON wt.requestId = sr.requestId " +
+               "LEFT JOIN Account a ON sr.createdBy = a.accountId " +
+               "WHERE wt.technicianId = ? AND wt.status NOT IN ('Completed', 'Cancelled') " +
+               "AND wt.requestId IS NOT NULL " +
                "ORDER BY wt.startDate ASC";
         
         ps = con.prepareStatement(xSql);
@@ -443,7 +464,12 @@ public class WorkTaskDAO extends MyDAO {
         rs = ps.executeQuery();
         
         while (rs.next()) {
-            tasks.add(mapResultSetToWorkTask(rs));
+            WorkTaskForReport taskForReport = new WorkTaskForReport();
+            taskForReport.task = mapResultSetToWorkTask(rs);
+            taskForReport.customerId = rs.getObject("customerId", Integer.class);
+            taskForReport.customerName = rs.getString("customerName");
+            taskForReport.requestType = rs.getString("requestType");
+            tasks.add(taskForReport);
         }
         
         return tasks;
