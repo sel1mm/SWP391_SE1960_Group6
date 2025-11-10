@@ -634,6 +634,63 @@
             display: block;
             color: #ccc;
         }
+
+        /* ===== PAGINATION STYLES ===== */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .pagination {
+            display: flex;
+            gap: 5px;
+            list-style: none;
+        }
+
+        .pagination a, .pagination span {
+            padding: 8px 14px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #495057;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .pagination a:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+            transform: translateY(-1px);
+        }
+
+        .pagination .active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+            font-weight: 600;
+        }
+
+        .pagination .disabled {
+            color: #adb5bd;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .page-info {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -641,9 +698,9 @@
     <div class="sidebar">
         <div class="sidebar-logo">CRM System</div>
         <div class="sidebar-menu">
-            <a href="storekeeper" class="active"><i class="fas fa-home"></i><span>Trang chủ</span></a>
+            <a href="statistic" class="active"><i class="fas fa-home"></i><span>Trang chủ</span></a>
             <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
-            <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
+            <a href="storekeeper"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
             <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
             <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị</span></a>
             <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
@@ -691,16 +748,16 @@
                             <label><i class="fas fa-search"></i> Search (Model / Description)</label>
                             <input type="text" name="search" id="searchInput" 
                                    placeholder="Nhập từ khóa tìm kiếm..." 
-                                   value="${searchKeyword != null ? searchKeyword : ''}">
+                                   value="${param.search != null ? param.search : ''}">
                         </div>
 
-                        <div class="filter-group">
+                                <div class="filter-group">
                             <label><i class="fas fa-filter"></i> Category</label>
                             <select name="categoryFilter" id="categoryFilter">
-                                <option value="all">-- All Categories --</option>
+                                <option value="">-- All Categories --</option>
                                 <c:forEach items="${categories}" var="cat">
                                     <option value="${cat.categoryId}" 
-                                            ${categoryFilter != null && categoryFilter == cat.categoryId.toString() ? 'selected' : ''}>
+                                            ${param.categoryFilter eq cat.categoryId ? 'selected' : ''}>
                                         ${cat.categoryName}
                                     </option>
                                 </c:forEach>
@@ -708,17 +765,17 @@
                         </div>
 
                         <div class="filter-group">
-                            <label><i class="fas fa-sort"></i> Sort by ID</label>
-                            <select name="sortById" id="sortById">
+                            <label><i class="fas fa-sort"></i> Sort by Name</label>
+                            <select name="sortByName" id="sortByName">
                                 <option value="">-- Default --</option>
-                                <option value="asc" ${sortById == 'asc' ? 'selected' : ''}>ID ↑ (Tăng dần)</option>
-                                <option value="desc" ${sortById == 'desc' ? 'selected' : ''}>ID ↓ (Giảm dần)</option>
+                                <option value="asc" ${param.sortByName == 'asc' ? 'selected' : ''}>A-Z</option>
+                                <option value="desc" ${param.sortByName == 'desc' ? 'selected' : ''}>Z-A</option>
                             </select>
                         </div>
 
                         <div class="filter-buttons">
                             <button type="submit" class="btn-filter">
-                                <i class="fas fa-search"></i> Filter & Search
+                                <i class="fas fa-search"></i> Apply
                             </button>
                             <button type="button" class="btn-reset" onclick="resetFilters()">
                                 <i class="fas fa-redo"></i> Reset
@@ -788,6 +845,64 @@
                             </c:forEach>
                         </tbody>
                     </table>
+
+                    <!-- ===== PAGINATION ===== -->
+                    <c:if test="${totalPages > 1}">
+                        <div class="pagination-container">
+                            <div class="page-info">
+                                Trang ${currentPage} / ${totalPages} (Tổng ${totalRecords} models)
+                            </div>
+                            <ul class="pagination">
+                                <!-- First Page -->
+                                <li>
+                                    <a href="?page=1&search=${param.search}&categoryFilter=${param.categoryFilter}&sortByName=${param.sortByName}" 
+                                       class="${currentPage == 1 ? 'disabled' : ''}">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                </li>
+                                
+                                <!-- Previous Page -->
+                                <li>
+                                    <a href="?page=${currentPage - 1}&search=${param.search}&categoryFilter=${param.categoryFilter}&sortByName=${param.sortByName}" 
+                                       class="${currentPage == 1 ? 'disabled' : ''}">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+
+                                <!-- Page Numbers -->
+                                <c:forEach begin="${startPage}" end="${endPage}" var="i">
+                                    <li>
+                                        <c:choose>
+                                            <c:when test="${i == currentPage}">
+                                                <span class="active">${i}</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <a href="?page=${i}&search=${param.search}&categoryFilter=${param.categoryFilter}&sortByName=${param.sortByName}">
+                                                    ${i}
+                                                </a>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </li>
+                                </c:forEach>
+
+                                <!-- Next Page -->
+                                <li>
+                                    <a href="?page=${currentPage + 1}&search=${param.search}&categoryFilter=${param.categoryFilter}&sortByName=${param.sortByName}" 
+                                       class="${currentPage == totalPages ? 'disabled' : ''}">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+
+                                <!-- Last Page -->
+                                <li>
+                                    <a href="?page=${totalPages}&search=${param.search}&categoryFilter=${param.categoryFilter}&sortByName=${param.sortByName}" 
+                                       class="${currentPage == totalPages ? 'disabled' : ''}">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </c:if>
                 </c:when>
                 <c:otherwise>
                     <div class="no-results">
@@ -807,7 +922,7 @@
                             <i class="fas fa-plus-circle"></i> Thêm thiết bị (Model có sẵn)
                         </div>
                         <div class="mode-btn" id="newModelBtn" onclick="selectMode('new')">
-                            <i class="fas fa-star"></i> Tạo Model mới
+                            <i class="fas fa-star"></i> Thêm thiết bị (Model chưa được tạo)
                         </div>
                     </div>
 
@@ -820,9 +935,9 @@
                             <label>Chọn Model *</label>
                             <select name="selectedModel" id="selectedModel">
                                 <option value="">-- Chọn Model --</option>
-                                <c:forEach items="${groupedList}" var="group">
-                                    <option value="${group.model}">
-                                        ${group.model}
+                                <c:forEach items="${allModels}" var="model">
+                                    <option value="${model}">
+                                        ${model}
                                     </option>
                                 </c:forEach>
                             </select>
@@ -894,9 +1009,6 @@
         let currentMode = 'existing';
 
         function resetFilters() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('categoryFilter').value = 'all';
-            document.getElementById('sortById').value = '';
             window.location.href = 'numberEquipment';
         }
 

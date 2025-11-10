@@ -7,7 +7,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>CRM System - Chi tiết thiết bị</title>
+    <title>CRM System - Chi tiết linh kiện</title>
 
     <style>
         * {
@@ -876,9 +876,9 @@
     <div class="sidebar">
         <div class="sidebar-logo">CRM System</div>
         <div class="sidebar-menu">
-            <a href="storekeeper"><i class="fas fa-home"></i><span>Trang chủ</span></a>
+            <a href="statistic"><i class="fas fa-home"></i><span>Trang chủ</span></a>
             <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
-            <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
+            <a href="storekeeper"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
             <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
             <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị</span></a>
             <a href="PartDetailHistoryServlet"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>
@@ -900,7 +900,7 @@
     <!-- Main Content -->
     <div class="container">
         <div class="content">
-            <h2>Chi tiết thiết bị</h2>
+            <h2>Chi tiết linh kiện</h2>
 
             <!-- ✅ SUCCESS & ERROR MESSAGES -->
             <c:if test="${not empty sessionScope.successMessage}">
@@ -1227,7 +1227,7 @@
                     // ✅ NẾU CHƯA PHẢI INUSE → CHO PHÉP CHỌN TẤT CẢ (BAO GỒM INUSE)
                     statusSelect.innerHTML = `
                         <option value="Available">Available</option>
-                        <option value="InUse">InUse</option>
+                       
                         <option value="Faulty">Faulty</option>
                         <option value="Retired">Retired</option>
                     `;
