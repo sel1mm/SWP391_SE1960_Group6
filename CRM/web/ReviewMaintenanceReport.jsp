@@ -314,11 +314,15 @@
             opacity: 0.9;
         }
         
-        .status-pending { background-color: #ffc107; color: #000; }
-        .status-approved { background-color: #28a745; }
-        .status-rejected { background-color: #dc3545; }
-        .status-revision { background-color: #fd7e14; }
-        .status-completed { background-color: #17a2b8; }
+        .status-pending { background-color: #ffc107; color: #00000; }
+.status-approved { background-color: #28a745; color: #00000; }
+.status-rejected { background-color: #dc3545; color: #00000; }
+.status-revision { background-color: #fd7e14; color: #00000; }
+.status-completed { background-color: #17a2b8; color: #00000; }
+.status-scheduled { background-color: #007bff; color: #00000; }
+.status-in-progress { background-color: #17a2b8; color: #00000; }
+.status-pending-review { background-color: #fd7e14; color: #00000; }
+.status-cancelled { background-color: #6c757d; color: #00000; }
         
         /* Priority indicators */
         .priority-indicator {
@@ -466,25 +470,20 @@
 
             <!-- Statistics Cards -->
             <div class="row mb-4">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="stats-card">
                         <div class="stats-number">${totalReports}</div>
                         <div class="stats-label">Tổng Báo Cáo</div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="stats-card">
-                        <div class="stats-number">${pendingCount}</div>
-                        <div class="stats-label">Chờ Duyệt</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
+                
+                <div class="col-md-4">
                     <div class="stats-card">
                         <div class="stats-number">${approvedCount}</div>
                         <div class="stats-label">Đã Duyệt</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="stats-card">
                         <div class="stats-number">${rejectedCount}</div>
                         <div class="stats-label">Bị Từ Chối</div>
@@ -543,7 +542,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Yêu Cầu</th>
-                                            <th>Thiết Bị</th>
+                                            <th>Hợp Đồng</th>
                                             <th>KTV</th>
                                             <th>Ngày Bảo Trì</th>
                                             <th>Loại</th>
@@ -568,18 +567,42 @@
                                                 </td>
                                                 <td>
                                                     <c:choose>
-                                                        <c:when test="${schedule.equipmentId != null}">
-                                                            #${schedule.equipmentId}
+                                                        <c:when test="${schedule.contractId != null}">
+                                                            #${schedule.contractId}
+                                                            <c:if test="${not empty contractDetailsMap && contractDetailsMap[schedule.contractId] != null}">
+                                                                - ${contractDetailsMap[schedule.contractId]}
+                                                            </c:if>
                                                         </c:when>
                                                         <c:otherwise>
                                                             <span class="text-muted">N/A</span>
                                                         </c:otherwise>
                                                     </c:choose>
                                                 </td>
-                                                <td>KTV #${schedule.assignedTo}</td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${schedule.assignedTo != null}">
+                                                            KTV 
+                                                            <c:if test="${not empty technicianNamesMap && technicianNamesMap[schedule.assignedTo] != null}">
+                                                                ${technicianNamesMap[schedule.assignedTo]}
+                                                            </c:if>
+                                                            (#${schedule.assignedTo})
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="text-muted">N/A</span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
                                                 <td>${schedule.scheduledDate}</td>
                                                 <td>
-                                                    <span class="badge bg-info">${schedule.scheduleType}</span>
+                                                    <span class="badge bg-info">
+                                                        <c:choose>
+                                                            <c:when test="${schedule.scheduleType == 'Preventive'}">Bảo Trì Định Kỳ</c:when>
+                                                            <c:when test="${schedule.scheduleType == 'Corrective'}">Bảo Trì Sửa Chữa</c:when>
+                                                            <c:when test="${schedule.scheduleType == 'Emergency'}">Bảo Trì Khẩn Cấp</c:when>
+                                                            <c:when test="${schedule.scheduleType == 'Inspection'}">Kiểm Tra</c:when>
+                                                            <c:otherwise>${schedule.scheduleType}</c:otherwise>
+                                                        </c:choose>
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <span class="priority-indicator priority-${schedule.priorityId == 1 ? 'low' : 
@@ -591,7 +614,16 @@
                                                 </td>
                                                 <td>
                                                     <span class="badge status-${schedule.status.toLowerCase().replace(' ', '-')}">
-                                                        ${schedule.status}
+                                                        <c:choose>
+                                                            <c:when test="${schedule.status == 'Pending'}">Chờ Xử Lý</c:when>
+                                                            <c:when test="${schedule.status == 'In Progress'}">Đang Thực Hiện</c:when>
+                                                            <c:when test="${schedule.status == 'Completed'}">Hoàn Thành</c:when>
+                                                            <c:when test="${schedule.status == 'Approved'}">Đã Duyệt</c:when>
+                                                            <c:when test="${schedule.status == 'Rejected'}">Bị Từ Chối</c:when>
+                                                            <c:when test="${schedule.status == 'Pending Review'}">Chờ Duyệt</c:when>
+                                                            <c:when test="${schedule.status == 'Cancelled'}">Đã Hủy</c:when>
+                                                            <c:otherwise>${schedule.status}</c:otherwise>
+                                                        </c:choose>
                                                     </span>
                                                 </td>
                                                 <td>
@@ -609,12 +641,12 @@
                                                                     title="Phê duyệt">
                                                                 <i class="fas fa-check"></i>
                                                             </button>
-                                                            <button class="btn btn-outline-danger action-btn" 
+<!--                                                            <button class="btn btn-outline-danger action-btn" 
                                                                     data-action="reject"
                                                                     data-schedule-id="<c:out value='${schedule.scheduleId}' escapeXml='true'/>"
                                                                     title="Từ chối">
                                                                 <i class="fas fa-times"></i>
-                                                            </button>
+                                                            </button>-->
                                                             <button class="btn btn-outline-warning action-btn" 
                                                                     data-action="revision"
                                                                     data-schedule-id="<c:out value='${schedule.scheduleId}' escapeXml='true'/>"
@@ -669,10 +701,31 @@
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </td>
-                                                        <td>KTV #${schedule.assignedTo}</td>
+                                                        <td>
+                                                            <c:choose>
+                                                                <c:when test="${schedule.assignedTo != null}">
+                                                                    KTV 
+                                                                    <c:if test="${not empty technicianNamesMap && technicianNamesMap[schedule.assignedTo] != null}">
+                                                                        ${technicianNamesMap[schedule.assignedTo]}
+                                                                    </c:if>
+                                                                    (#${schedule.assignedTo})
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span class="text-muted">N/A</span>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </td>
                                                         <td>${schedule.scheduledDate}</td>
                                                         <td>
-                                                            <span class="badge bg-info">${schedule.scheduleType}</span>
+                                                            <span class="badge bg-info">
+                                                                <c:choose>
+                                                                    <c:when test="${schedule.scheduleType == 'Preventive'}">Bảo Trì Định Kỳ</c:when>
+                                                                    <c:when test="${schedule.scheduleType == 'Corrective'}">Bảo Trì Sửa Chữa</c:when>
+                                                                    <c:when test="${schedule.scheduleType == 'Emergency'}">Bảo Trì Khẩn Cấp</c:when>
+                                                                    <c:when test="${schedule.scheduleType == 'Inspection'}">Kiểm Tra</c:when>
+                                                                    <c:otherwise>${schedule.scheduleType}</c:otherwise>
+                                                                </c:choose>
+                                                            </span>
                                                         </td>
                                                         <td>
                                                             <span class="priority-indicator priority-${schedule.priorityId == 1 ? 'low' : 
@@ -759,10 +812,31 @@
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </td>
-                                                        <td>KTV #${schedule.assignedTo}</td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${schedule.assignedTo != null}">
+                                                            KTV 
+                                                            <c:if test="${not empty technicianNamesMap && technicianNamesMap[schedule.assignedTo] != null}">
+                                                                ${technicianNamesMap[schedule.assignedTo]}
+                                                            </c:if>
+                                                            (#${schedule.assignedTo})
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="text-muted">N/A</span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
                                                         <td>${schedule.scheduledDate}</td>
                                                         <td>
-                                                            <span class="badge bg-info">${schedule.scheduleType}</span>
+                                                            <span class="badge bg-info">
+                                                                <c:choose>
+                                                                    <c:when test="${schedule.scheduleType == 'Preventive'}">Bảo Trì Định Kỳ</c:when>
+                                                                    <c:when test="${schedule.scheduleType == 'Corrective'}">Bảo Trì Sửa Chữa</c:when>
+                                                                    <c:when test="${schedule.scheduleType == 'Emergency'}">Bảo Trì Khẩn Cấp</c:when>
+                                                                    <c:when test="${schedule.scheduleType == 'Inspection'}">Kiểm Tra</c:when>
+                                                                    <c:otherwise>${schedule.scheduleType}</c:otherwise>
+                                                                </c:choose>
+                                                            </span>
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
@@ -830,7 +904,20 @@
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </td>
-                                                        <td>KTV #${schedule.assignedTo}</td>
+                                                        <td>
+                                                            <c:choose>
+                                                                <c:when test="${schedule.assignedTo != null}">
+                                                                    KTV 
+                                                                    <c:if test="${not empty technicianNamesMap && technicianNamesMap[schedule.assignedTo] != null}">
+                                                                        ${technicianNamesMap[schedule.assignedTo]}
+                                                                    </c:if>
+                                                                    (#${schedule.assignedTo})
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span class="text-muted">N/A</span>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </td>
                                                         <td>${schedule.scheduledDate}</td>
                                                         <td>
                                                             <span class="badge bg-info">${schedule.scheduleType}</span>
@@ -894,7 +981,20 @@
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </td>
-                                                        <td>KTV #${schedule.assignedTo}</td>
+                                                        <td>
+                                                            <c:choose>
+                                                                <c:when test="${schedule.assignedTo != null}">
+                                                                    KTV 
+                                                                    <c:if test="${not empty technicianNamesMap && technicianNamesMap[schedule.assignedTo] != null}">
+                                                                        ${technicianNamesMap[schedule.assignedTo]}
+                                                                    </c:if>
+                                                                    (#${schedule.assignedTo})
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span class="text-muted">N/A</span>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </td>
                                                         <td>${schedule.scheduledDate}</td>
                                                         <td>
                                                             <span class="badge bg-info">${schedule.scheduleType}</span>
@@ -1119,7 +1219,7 @@
                                 '</span></p>' +
                             '</div>' +
                             '<div class="col-md-6">' +
-                                '<p><strong>KTV Phụ Trách:</strong> KTV #' + schedule.assignedTo + '</p>' +
+                                '<p><strong>KTV Phụ Trách:</strong> KTV ' + (data.technicianName ? data.technicianName + ' ' : '') + '(#' + schedule.assignedTo + ')' + '</p>' +
                                 '<p><strong>Độ Ưu Tiên:</strong> ' +
                                     '<span class="priority-indicator priority-' + (schedule.priorityId == 1 ? 'low' : 
                                                                                     schedule.priorityId == 2 ? 'medium' : 
@@ -1132,6 +1232,25 @@
                             '</div>' +
                         '</div>' +
                     '</div>';
+
+                // Contract information section (Technician must include Contract Name and ID)
+                if (schedule.contractId) {
+                    content += '<div class="report-section">' +
+                        '<h6><i class="fas fa-file-contract me-2"></i>Thông Tin Hợp Đồng</h6>' +
+                        '<div class="row">' +
+                            '<div class="col-md-6">' +
+                                '<p><strong>ID Hợp Đồng:</strong> #' + schedule.contractId + '</p>' +
+                                '<p><strong>Tên/Chi Tiết Hợp Đồng:</strong> ' + (data.contract && data.contract.details ? data.contract.details : 'N/A') + '</p>' +
+                                '<p><strong>Loại Hợp Đồng:</strong> ' + (data.contract && data.contract.contractType ? data.contract.contractType : 'N/A') + '</p>' +
+                            '</div>' +
+                            '<div class="col-md-6">' +
+                                '<p><strong>Ngày Ký:</strong> ' + (data.contract && data.contract.contractDate ? data.contract.contractDate : 'N/A') + '</p>' +
+                                '<p><strong>Trạng Thái:</strong> ' + (data.contract && data.contract.status ? data.contract.status : 'N/A') + '</p>' +
+                                '<p><strong>Khách Hàng:</strong> ' + (data.contract && (data.contract.customerName || data.contract.customerId) ? (data.contract.customerName || ('#' + data.contract.customerId)) : 'N/A') + '</p>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                }
                 
                 if (serviceRequest) {
                     content += '<div class="report-section">' +

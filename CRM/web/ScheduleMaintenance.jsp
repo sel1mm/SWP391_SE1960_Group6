@@ -457,6 +457,56 @@
     font-weight: 700;
     color: #667eea;
 }
+.technician-item-schedule {
+    transition: all 0.3s ease;
+    border-radius: 5px;
+}
+
+.technician-item-schedule:hover {
+    background-color: rgba(102, 126, 234, 0.08) !important;
+}
+
+.form-check-input {
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.form-check-label {
+    margin-left: 10px;
+}
+/* Request dropdown styles */
+.request-item {
+    transition: all 0.3s ease;
+}
+
+.request-item:hover {
+    background-color: rgba(102, 126, 234, 0.08) !important;
+    border-color: #667eea !important;
+    transform: translateX(3px);
+}
+
+.request-item.hidden {
+    display: none !important;
+}
+
+#requestSearchBox {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 8px 12px;
+    transition: all 0.3s;
+}
+
+#requestSearchBox:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    outline: none;
+}
     </style>
 </head>
 <body>
@@ -571,17 +621,89 @@
                                 <input type="hidden" name="action" value="createSchedule">
                                 
                                 <div class="mb-3">
-                                    <label for="requestId" class="form-label">Yêu Cầu Dịch Vụ</label>
-                                    <select class="form-select" id="requestId" name="requestId">
-                                        <option value="">Chọn yêu cầu dịch vụ (tùy chọn)...</option>
-                                        <c:forEach var="request" items="${approvedRequests}">
-                                            <option value="${request.requestId}" 
-                                                    ${prefilledRequestId != null && prefilledRequestId == request.requestId ? 'selected' : ''}>
-                                                #${request.requestId} - ${request.requestType}
-                                            </option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
+    <label for="requestId" class="form-label">Yêu Cầu Dịch Vụ</label>
+    
+    <!-- Dropdown Button -->
+    <div class="dropdown w-100">
+        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" 
+                type="button" 
+                id="requestDropdown" 
+                data-bs-toggle="dropdown" 
+                aria-expanded="false"
+                style="height: 40px;">
+            <span id="requestDropdownText">Chọn yêu cầu dịch vụ...</span>
+        </button>
+        
+        <!-- Dropdown Menu with Search -->
+        <div class="dropdown-menu w-100 p-3" 
+             aria-labelledby="requestDropdown" 
+             style="max-height: 400px; overflow-y: auto;"
+             onclick="event.stopPropagation();">
+            
+            <!-- Search Box -->
+            <div class="mb-3">
+                <input type="text" 
+                       class="form-control" 
+                       id="requestSearchBox" 
+                       placeholder="🔍 Tìm kiếm theo ID hoặc mô tả..."
+                       onkeyup="filterRequests()"
+                       onclick="event.stopPropagation()">
+            </div>
+            
+            <!-- Clear Selection Button -->
+            <div class="mb-3 pb-3 border-bottom">
+                <button type="button" 
+                        class="btn btn-sm btn-outline-secondary w-100" 
+                        onclick="clearRequestSelection()">
+                    <i class="fas fa-times me-1"></i>Xóa Lựa Chọn
+                </button>
+            </div>
+            
+            <!-- Request List -->
+            <div id="requestListContainer">
+                <c:forEach var="request" items="${approvedRequests}">
+    <div class="request-item p-2 rounded mb-2" 
+         style="border: 1px solid #e9ecef; cursor: pointer; transition: all 0.3s;"
+         data-request-id="${request.requestId}"
+         data-request-desc="${fn:toLowerCase(request.description)}"
+         data-contract-id="${request.contractId}"
+         onclick="selectRequest(${request.requestId}, '${fn:escapeXml(request.description)}', ${request.contractId != null ? request.contractId : 'null'})">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <strong>ID: ${request.requestId}</strong>
+                <p class="mb-0 text-muted small">${request.description}</p>
+            </div>
+        </div>
+    </div>
+</c:forEach>
+                
+                <c:if test="${empty approvedRequests}">
+                    <div class="text-center text-muted py-3" id="noRequestMessage">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p class="mb-0">Không có yêu cầu nào</p>
+                    </div>
+                </c:if>
+                
+                <!-- No Results Message -->
+                <div class="text-center text-muted py-3 d-none" id="noRequestResults">
+                    <i class="fas fa-search fa-2x mb-2"></i>
+                    <p class="mb-0">Không tìm thấy yêu cầu</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden input to store selected value -->
+    <input type="hidden" id="requestId" name="requestId" value="${prefilledRequestId}">
+    
+    <!-- Display selected request -->
+    <div class="mt-2" id="selectedRequestDisplay" style="display: none;">
+        <span class="badge bg-success">
+            <i class="fas fa-check-circle me-1"></i>
+            <span id="selectedRequestText"></span>
+        </span>
+    </div>
+</div>
                                 
                                 <div class="mb-3">
                                     <label for="contractId" class="form-label">Hợp Đồng</label>
@@ -599,17 +721,90 @@
                                 
                                 
                                 <div class="mb-3">
-                                    <label for="assignedTo" class="form-label">Kỹ Thuật Viên <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="assignedTo" name="assignedTo" required>
-                                        <option value="">Chọn kỹ thuật viên...</option>
-                                        <c:forEach var="technician" items="${availableTechnicians}">
-                                            <option value="${technician.technicianId}">
-                                                KTV #${technician.technicianId} 
-                                                (Khả năng: ${technician.availableCapacity}/${technician.maxConcurrentTasks})
-                                            </option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
+    <label class="form-label">Kỹ Thuật Viên <span class="text-danger">*</span></label>
+    
+    <!-- Dropdown Button -->
+    <div class="dropdown w-100">
+        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" 
+                type="button" 
+                id="technicianDropdown" 
+                data-bs-toggle="dropdown" 
+                aria-expanded="false"
+                style="height: 40px;">
+            <span id="dropdownButtonText">Chọn kỹ thuật viên...</span>
+        </button>
+        
+        <!-- Dropdown Menu with Checkboxes -->
+        <div class="dropdown-menu w-100 p-3" 
+             aria-labelledby="technicianDropdown" 
+             style="max-height: 400px; overflow-y: auto;"
+             onclick="event.stopPropagation();">
+            
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 mb-3 pb-3 border-bottom">
+                <button type="button" class="btn btn-sm btn-outline-primary flex-fill" onclick="selectAllTechniciansSchedule()">
+                    <i class="fas fa-check-square me-1"></i>Chọn Tất Cả
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" onclick="deselectAllTechniciansSchedule()">
+                    <i class="fas fa-square me-1"></i>Bỏ Chọn
+                </button>
+            </div>
+            
+            <!-- Technician List -->
+            <c:forEach var="technician" items="${availableTechnicians}">
+                <div class="form-check mb-2 p-2 technician-item-schedule rounded" 
+                     style="border-left: 3px solid transparent; transition: all 0.3s;">
+                    <input class="form-check-input technician-checkbox-schedule" 
+                           type="checkbox" 
+                           name="technicianIds" 
+                           value="${technician.technicianId}"
+                           id="tech_schedule_${technician.technicianId}"
+                           data-capacity="${technician.availableCapacity}"
+                           data-name="${technician.technicianName}"
+                           onchange="updateSelectedCountSchedule()">
+                    <label class="form-check-label w-100" for="tech_schedule_${technician.technicianId}" style="cursor: pointer;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${technician.technicianName}</strong>
+                                <small class="text-muted d-block">(ID: ${technician.technicianId})</small>
+                            </div>
+                            <div class="text-end">
+                                <c:set var="maxPoints" value="${technician.maxConcurrentTasks}" />
+                                <c:set var="currentPoints" value="${technician.currentActiveTasks}" />
+                                <c:set var="availablePoints" value="${maxPoints - currentPoints}" />
+                                <c:choose>
+                                    <c:when test="${availablePoints >= 3}">
+                                        <span class="badge bg-success">Sẵn sàng </span>
+                                    </c:when>
+                                    <c:when test="${availablePoints >= 1}">
+                                        <span class="badge bg-warning text-dark">Gần đầy </span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="badge bg-danger">Quá tải </span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </c:forEach>
+            
+            <c:if test="${empty availableTechnicians}">
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-user-slash fa-2x mb-2"></i>
+                    <p class="mb-0">Không có kỹ thuật viên khả dụng</p>
+                </div>
+            </c:if>
+        </div>
+    </div>
+    
+    <!-- Selected Count Badge -->
+    <div class="mt-2">
+        <span class="badge bg-info" id="selectedCountSchedule">Đã chọn: 0</span>
+    </div>
+    
+    <small class="text-danger d-none" id="technicianErrorSchedule">Vui lòng chọn ít nhất một kỹ thuật viên</small>
+</div>
                                 
                                 <div class="mb-3">
                                     <label for="scheduledDate" class="form-label">Ngày Giờ Bảo Trì <span class="text-danger">*</span></label>
@@ -628,16 +823,7 @@
                                     </select>
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label for="recurrenceRule" class="form-label">Quy Tắc Lặp Lại</label>
-                                    <select class="form-select" id="recurrenceRule" name="recurrenceRule">
-                                        <option value="">Không lặp lại</option>
-                                        <option value="WEEKLY">Hàng tuần</option>
-                                        <option value="MONTHLY">Hàng tháng</option>
-                                        <option value="QUARTERLY">Hàng quý</option>
-                                        <option value="YEARLY">Hàng năm</option>
-                                    </select>
-                                </div>
+                                
                                 
                                 <div class="mb-3">
                                     <label for="priorityId" class="form-label">Độ Ưu Tiên</label>
@@ -754,7 +940,17 @@
                                         </c:choose>
                                     </td>
                                     
-                                    <td>KTV #${schedule.assignedTo}</td>
+                                    <td>
+    <c:choose>
+        <c:when test="${not empty schedule.technicianName}">
+            ${schedule.technicianName}
+            <span class="text-muted small">(#${schedule.assignedTo})</span>
+        </c:when>
+        <c:otherwise>
+            KTV #${schedule.assignedTo}
+        </c:otherwise>
+    </c:choose>
+</td>
                                     <td>${schedule.scheduledDate}</td>
                                     <td>
                                         <span class="badge bg-info">${schedule.scheduleType}</span>
@@ -857,16 +1053,7 @@
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="editRecurrenceRule" class="form-label">Quy Tắc Lặp Lại</label>
-                                <select class="form-select" id="editRecurrenceRule" name="recurrenceRule">
-                                    <option value="">Không lặp lại</option>
-                                    <option value="WEEKLY">Hàng tuần</option>
-                                    <option value="MONTHLY">Hàng tháng</option>
-                                    <option value="QUARTERLY">Hàng quý</option>
-                                    <option value="YEARLY">Hàng năm</option>
-                                </select>
-                            </div>
+                            
                             <div class="col-md-6 mb-3">
                                 <label for="editPriorityId" class="form-label">Độ Ưu Tiên</label>
                                 <select class="form-select" id="editPriorityId" name="priorityId" disabled>
@@ -902,7 +1089,7 @@
         <c:forEach var="schedule" items="${allSchedules}" varStatus="status">
         {
             "id": "<c:out value='${schedule.scheduleId}' escapeXml='true'/>",
-            "title": "<c:out value='${schedule.scheduleType}' escapeXml='true'/> - KTV #<c:out value='${schedule.assignedTo}' escapeXml='true'/>",
+            "title": "<c:out value='${schedule.scheduleType}' escapeXml='true'/> - KTV ID:<c:out value='${schedule.assignedTo}' escapeXml='true'/>",
             "start": "<c:out value='${schedule.scheduledDate}' escapeXml='true'/>", 
 
             "className": "fc-event-<c:out value='${fn:toLowerCase(fn:replace(schedule.status, " ", "-"))}' escapeXml='true'/>",
@@ -1225,7 +1412,7 @@ function editSchedule(scheduleId) {
         document.getElementById('editScheduledDate').value = scheduledDateStr;
         
         document.getElementById('editScheduleType').value = data.scheduleType || 'Preventive';
-        document.getElementById('editRecurrenceRule').value = data.recurrenceRule || '';
+        
         document.getElementById('editPriorityId').value = data.priorityId || '2';
         
         const statusMap = {
@@ -1373,6 +1560,213 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
         
         showToast('Thêm thông tin thành công', 'success');
+    }
+});
+function updateSelectedCountSchedule() {
+    const checkboxes = document.querySelectorAll('.technician-checkbox-schedule:checked');
+    const count = checkboxes.length;
+    document.getElementById('selectedCountSchedule').textContent = 'Đã chọn: ' + count;
+    
+    // Highlight selected items
+    document.querySelectorAll('.technician-item-schedule').forEach(item => {
+        const checkbox = item.querySelector('.technician-checkbox-schedule');
+        if (checkbox.checked) {
+            item.style.borderLeftColor = '#667eea';
+            item.style.backgroundColor = 'rgba(102, 126, 234, 0.05)';
+        } else {
+            item.style.borderLeftColor = 'transparent';
+            item.style.backgroundColor = 'transparent';
+        }
+    });
+    
+    // Hide error message when at least one is selected
+    if (count > 0) {
+        document.getElementById('technicianErrorSchedule').classList.add('d-none');
+    }
+}
+
+function selectAllTechniciansSchedule() {
+    const checkboxes = document.querySelectorAll('.technician-checkbox-schedule');
+    checkboxes.forEach(cb => {
+        if (parseInt(cb.dataset.capacity) > 0) {
+            cb.checked = true;
+        }
+    });
+    updateSelectedCountSchedule();
+}
+
+function deselectAllTechniciansSchedule() {
+    const checkboxes = document.querySelectorAll('.technician-checkbox-schedule');
+    checkboxes.forEach(cb => cb.checked = false);
+    updateSelectedCountSchedule();
+}
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize count
+    if (typeof updateSelectedCountSchedule === 'function') {
+        updateSelectedCountSchedule();
+    }
+    
+    // Add validation to schedule form
+    const scheduleForm = document.getElementById('scheduleForm');
+    if (scheduleForm) {
+        scheduleForm.addEventListener('submit', function(e) {
+            const checkedBoxes = document.querySelectorAll('.technician-checkbox-schedule:checked');
+            
+            // Validate: At least one technician must be selected
+            if (checkedBoxes.length === 0) {
+                e.preventDefault();
+                document.getElementById('technicianErrorSchedule').classList.remove('d-none');
+                alert('⚠️ Vui lòng chọn ít nhất một kỹ thuật viên!');
+                return false;
+            }
+            
+            // Check capacity for each selected technician
+            let hasOverloadedTech = false;
+            let overloadedNames = [];
+            
+            checkedBoxes.forEach(cb => {
+                if (parseInt(cb.dataset.capacity) <= 0) {
+                    hasOverloadedTech = true;
+                    overloadedNames.push(cb.dataset.name);
+                }
+            });
+            
+            if (hasOverloadedTech) {
+                e.preventDefault();
+                alert('⚠️ Các kỹ thuật viên sau đã quá tải:\n' + overloadedNames.join('\n') + 
+                      '\n\nVui lòng bỏ chọn họ trước khi lập lịch!');
+                return false;
+            }
+            
+            // Validate other required fields
+            const scheduledDate = document.getElementById('scheduledDate').value;
+            const scheduleType = document.getElementById('scheduleType').value;
+            
+            if (!scheduledDate || !scheduleType) {
+                e.preventDefault();
+                alert('⚠️ Vui lòng điền đầy đủ thông tin bắt buộc!');
+                return false;
+            }
+            
+            // Confirm assignment
+            const confirmMsg = `✅ Bạn có chắc muốn lập lịch bảo trì cho ${checkedBoxes.length} kỹ thuật viên?\n\n` +
+                               Array.from(checkedBoxes).map(cb => '• ' + cb.dataset.name).join('\n');
+            
+            if (!confirm(confirmMsg)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+});
+// Thêm vào cuối phần <script>
+
+function filterRequests() {
+    const searchValue = document.getElementById('requestSearchBox').value.toLowerCase().trim();
+    const requestItems = document.querySelectorAll('.request-item');
+    let visibleCount = 0;
+    
+    requestItems.forEach(item => {
+        const requestId = item.getAttribute('data-request-id');
+        const requestDesc = item.getAttribute('data-request-desc');
+        
+        // Search by ID or Description (dùng includes để tìm bất kỳ ký tự nào)
+        const matchesSearch = requestId.includes(searchValue) || 
+                             requestDesc.includes(searchValue);
+        
+        if (matchesSearch) {
+            item.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            item.classList.add('hidden');
+        }
+    });
+    
+    // Show/hide "no results" message
+    const noResultsMsg = document.getElementById('noRequestResults');
+    if (visibleCount === 0 && searchValue !== '') {
+        noResultsMsg.classList.remove('d-none');
+    } else {
+        noResultsMsg.classList.add('d-none');
+    }
+}
+
+function selectRequest(requestId, description, contractId) {
+    // Set hidden input value
+    document.getElementById('requestId').value = requestId;
+    
+    // Update button text
+    const buttonText = 'ID: ' + requestId + ' - ' + description.substring(0, 50) + 
+                      (description.length > 50 ? '...' : '');
+    document.getElementById('requestDropdownText').textContent = buttonText;
+    
+    // Show selected badge
+    document.getElementById('selectedRequestText').textContent = 'ID: ' + requestId;
+    document.getElementById('selectedRequestDisplay').style.display = 'block';
+    
+    // ✅ TỰ ĐỘNG SET CONTRACT
+    if (contractId && contractId !== 'null') {
+        const contractSelect = document.getElementById('contractId');
+        contractSelect.value = contractId;
+        
+        // Highlight contract field
+        contractSelect.classList.add('border-success');
+        contractSelect.style.borderWidth = '3px';
+    } else {
+        // Reset contract nếu không có
+        const contractSelect = document.getElementById('contractId');
+        contractSelect.value = '';
+        contractSelect.classList.remove('border-success');
+        contractSelect.style.borderWidth = '';
+    }
+    
+    // Close dropdown
+    const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('requestDropdown'));
+    if (dropdown) {
+        dropdown.hide();
+    }
+    
+    // Highlight the form field
+    const dropdownButton = document.querySelector('#requestDropdown');
+    dropdownButton.classList.add('border-success');
+    dropdownButton.style.borderWidth = '3px';
+}
+function clearRequestSelection() {
+    // Clear hidden input
+    document.getElementById('requestId').value = '';
+    
+    // Reset button text
+    document.getElementById('requestDropdownText').textContent = 'Chọn yêu cầu dịch vụ...';
+    
+    // Hide selected badge
+    document.getElementById('selectedRequestDisplay').style.display = 'none';
+    
+    // Remove highlight
+    const dropdownButton = document.querySelector('#requestDropdown');
+    dropdownButton.classList.remove('border-success');
+    dropdownButton.style.borderWidth = '';
+    
+    // ✅ CLEAR CONTRACT
+    const contractSelect = document.getElementById('contractId');
+    contractSelect.value = '';
+    contractSelect.classList.remove('border-success');
+    contractSelect.style.borderWidth = '';
+    
+    // Clear search box
+    document.getElementById('requestSearchBox').value = '';
+    filterRequests();
+}
+
+// Handle pre-filled value on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const prefilledValue = document.getElementById('requestId').value;
+    if (prefilledValue) {
+        // Find and display the pre-filled request
+        const requestItem = document.querySelector('.request-item[data-request-id="' + prefilledValue + '"]');
+        if (requestItem) {
+            const desc = requestItem.querySelector('.text-muted').textContent;
+            selectRequest(prefilledValue, desc);
+        }
     }
 });
     </script>

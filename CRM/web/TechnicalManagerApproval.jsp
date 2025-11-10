@@ -814,11 +814,12 @@
             </c:choose>
         </div>
 
-       <!-- Search & Filter Bar - THAY THẾ PHẦN NÀY -->
+       <!-- Search & Filter Bar - COMPLETE VERSION -->
 <div class="search-filter-bar">
     <form action="${pageContext.request.contextPath}/technicalManagerApproval" method="get" class="row g-3">
         <input type="hidden" name="viewMode" value="${viewMode}">
         
+        <!-- Search Box -->
         <div class="col-md-4">
             <div class="input-group">
                 <input type="text" class="form-control" name="keyword"
@@ -829,29 +830,33 @@
             </div>
         </div>
         
+        <!-- Priority Filter -->
         <div class="col-md-3">
             <select class="form-select" name="priority" id="filterPriority">
-                <option value="">-- Tất Cả Mức Độ --</option>
+                <option value="">-- Mức Độ --</option>
                 <option value="Urgent" ${filterPriority == 'Urgent' ? 'selected' : ''}>Khẩn Cấp</option>
                 <option value="High" ${filterPriority == 'High' ? 'selected' : ''}>Cao</option>
                 <option value="Normal" ${filterPriority == 'Normal' ? 'selected' : ''}>Bình Thường</option>
             </select>
         </div>
         
-        <!-- Hiển thị bộ lọc khác nhau tùy theo trang -->
+        <!-- Different filters based on view mode -->
         <c:choose>
             <c:when test="${viewMode == 'history'}">
-                <!-- Bộ lọc cho trang Lịch Sử - Theo Trạng Thái -->
+                <!-- History View: Status Filter -->
                 <div class="col-md-3">
                     <select class="form-select" name="statusFilter" id="filterStatus">
-                        <option value="">-- Tất Cả Trạng Thái --</option>
+                        <option value="">-- Trạng Thái --</option>
                         <option value="Approved" ${statusFilter == 'Approved' ? 'selected' : ''}>Đã Duyệt</option>
                         <option value="Rejected" ${statusFilter == 'Rejected' ? 'selected' : ''}>Đã Từ Chối</option>
                     </select>
                 </div>
+                
+                <!-- History View: Request Type Filter -->
+                
             </c:when>
             <c:otherwise>
-                <!-- Bộ lọc cho trang Chính - Theo Tình Trạng Khẩn -->
+                <!-- Assigned View: Urgency Filter -->
                 <div class="col-md-3">
                     <select class="form-select" name="urgency" id="filterUrgency">
                         <option value="">-- Tình Trạng Khẩn --</option>
@@ -863,6 +868,7 @@
             </c:otherwise>
         </c:choose>
         
+        <!-- Filter Button -->
         <div class="col-md-2">
             <button type="submit" name="action" value="filter" class="btn btn-info w-100">
                 <i class="fas fa-filter"></i> Lọc
@@ -870,6 +876,7 @@
         </div>
     </form>
     
+    <!-- Clear Filter Button -->
     <c:if test="${searchMode || filterMode}">
         <div class="mt-3">
             <a href="${pageContext.request.contextPath}/technicalManagerApproval?${viewMode == 'history' ? 'action=history' : ''}" 
@@ -1022,30 +1029,11 @@
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                                                         <c:if test="${request.status == 'Approved'}">
-    <c:choose>
-        <%-- Nếu là Service (Bảo trì) → Lập lịch bảo trì --%>
-        <c:when test="${request.requestType == 'Service'}">
-             <a href="${pageContext.request.contextPath}/scheduleMaintenance?requestId=${request.requestId}&contractId=${request.contractId}&priority=${request.priorityLevel}"
-               class="btn btn-sm btn-success"
-               title="Lập Lịch Bảo Trì">
-                <i class="fas fa-calendar-plus"></i>
-            </a>
-        </c:when>
-        <%-- Nếu là Warranty (Bảo hành) → Phân công công việc --%>
-        <c:when test="${request.requestType == 'Warranty'}">
-            <a href="${pageContext.request.contextPath}/assignWork?requestId=${request.requestId}&priority=${request.priorityLevel}"
-               class="btn btn-sm btn-success"
-               title="Phân Công Công Việc">
-                <i class="fas fa-user-plus"></i>
-            </a>
-        </c:when>
-        <%-- Fallback: nếu không xác định được loại --%>
-        <c:otherwise>
-            <button class="btn btn-sm btn-secondary" disabled title="Loại yêu cầu không xác định">
-                <i class="fas fa-question"></i>
-            </button>
-        </c:otherwise>
-    </c:choose>
+    <a href="${pageContext.request.contextPath}/assignWork?requestId=${request.requestId}&priority=${request.priorityLevel}"
+       class="btn btn-sm btn-success"
+       title="Phân Công Công Việc">
+        <i class="fas fa-user-plus"></i>
+    </a>
 </c:if>
                                             </c:when>
                                             <c:when test="${request.status == 'Awaiting Approval'}">
@@ -1105,7 +1093,7 @@
                     </tbody>
                 </table>
                 
-   <!-- Pagination -->
+<!-- Pagination - UPDATED VERSION -->
 <c:if test="${totalPages > 1}">
     <div class="d-flex justify-content-between align-items-center mt-4">
         <div class="text-muted">
@@ -1130,6 +1118,10 @@
         </c:if>
         <c:if test="${not empty statusFilter}">
             <c:set var="baseUrl" value="${baseUrl}&statusFilter=${statusFilter}" />
+        </c:if>
+        <!-- ✅ NEW: Keep requestTypeFilter in pagination -->
+        <c:if test="${not empty requestTypeFilter}">
+            <c:set var="baseUrl" value="${baseUrl}&requestTypeFilter=${requestTypeFilter}" />
         </c:if>
 
         <!-- ====== Action gốc tùy theo viewMode ====== -->
@@ -1276,7 +1268,7 @@
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Loại Hợp Đồng:</span>
-                            <span class="detail-value" id="viewContractType"></span>
+                            <span class="detail-value" id="viewRequestType"></span>
                         </div>
                     </div>
 
@@ -1541,7 +1533,7 @@
                 document.getElementById('viewEquipmentId').textContent = data.equipmentId || 'N/A';
                 document.getElementById('viewEquipmentModel').textContent = data.equipmentName || 'N/A';
                 document.getElementById('viewEquipmentSerial').textContent = data.serialNumber || 'N/A';
-                document.getElementById('viewContractType').textContent = data.contractType || 'N/A';
+                document.getElementById('viewRequestType').textContent = data.requestType || 'N/A';
                 
                 document.getElementById('viewDescription').textContent = data.description || 'Không có mô tả';
                 

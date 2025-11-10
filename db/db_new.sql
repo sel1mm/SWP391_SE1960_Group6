@@ -3098,3 +3098,17 @@ DELIMITER ;
 ALTER TABLE Contract 
 ADD COLUMN createdDate DATETIME DEFAULT NULL AFTER details;
 
+
+ALTER TABLE InvoiceDetail 
+ADD COLUMN repairReportDetailId INT NULL AFTER invoiceId,
+ADD COLUMN quantity INT NULL AFTER repairReportDetailId,
+ADD COLUMN unitPrice DECIMAL(12,2) NULL AFTER quantity,
+ADD COLUMN totalPrice DECIMAL(12,2) NULL AFTER unitPrice,
+ADD COLUMN paymentStatus VARCHAR(20) DEFAULT 'Pending' AFTER totalPrice,
+ADD COLUMN paymentDate DATE NULL AFTER paymentStatus;
+
+
+ALTER TABLE InvoiceDetail
+ADD CONSTRAINT FK_InvoiceDetail_RepairReportDetail
+FOREIGN KEY (repairReportDetailId) REFERENCES RepairReportDetail(detailId);
+DESCRIBE InvoiceDetail;

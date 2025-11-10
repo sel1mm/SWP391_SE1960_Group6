@@ -72,12 +72,15 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             } else if ("getCustomerContracts".equals(action)) {
                 handleGetCustomerContractsAjax(req, resp);
                 return;
+            } else if ("checkExistingReport".equals(action)) {
+                handleCheckExistingReportAjax(req, resp, technicianId);
+                return;
             }
 
             if ("create".equals(action)) {
                 // Show create form with assigned tasks dropdown
                 WorkTaskDAO workTaskDAO = new WorkTaskDAO();
-                List<WorkTask> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
+                List<WorkTaskDAO.WorkTaskForReport> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
                 
                 Integer requestId = null;
                 if (requestIdParam != null && !requestIdParam.trim().isEmpty()) {
@@ -451,7 +454,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     req.setAttribute("validationErrors", validationErrors);
                     req.setAttribute("requestId", report.getRequestId());
                     // Get assigned tasks for dropdown
-                    List<WorkTask> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
+                    List<WorkTaskDAO.WorkTaskForReport> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
                     req.setAttribute("assignedTasks", assignedTasks);
                     req.setAttribute("pageTitle", "Create Repair Report");
                     req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
@@ -1667,6 +1670,45 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Handle AJAX check for existing repair report
+     */
+    private void handleCheckExistingReportAjax(HttpServletRequest req, HttpServletResponse resp, int technicianId) throws IOException {
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+        
+        try {
+            String requestIdStr = req.getParameter("requestId");
+            if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+                resp.getWriter().write("{\"exists\":false,\"error\":\"Missing requestId\"}");
+                return;
+            }
+            
+            int requestId = Integer.parseInt(requestIdStr);
+            
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            RepairReport existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
+            
+            if (existingReport != null) {
+                resp.getWriter().write("{\"exists\":true,\"reportId\":" + existingReport.getReportId() + "}");
+            } else {
+                resp.getWriter().write("{\"exists\":false}");
+            }
+        } catch (NumberFormatException e) {
+            resp.getWriter().write("{\"exists\":false,\"error\":\"Invalid requestId format\"}");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("SQLException in handleCheckExistingReportAjax: " + e.getMessage());
+            resp.setStatus(500);
+            resp.getWriter().write("{\"exists\":false,\"error\":\"Database error: " + escapeJsonString(e.getMessage()) + "\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Exception in handleCheckExistingReportAjax: " + e.getMessage());
+            resp.setStatus(500);
+            resp.getWriter().write("{\"exists\":false,\"error\":\"Error: " + escapeJsonString(e.getMessage()) + "\"}");
+        }
+    }
+    
     /**
      * Helper method to escape JSON strings
      */

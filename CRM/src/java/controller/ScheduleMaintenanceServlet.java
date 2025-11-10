@@ -149,8 +149,9 @@ public class ScheduleMaintenanceServlet extends HttpServlet {
         
         try {
             // Get approved service requests that need maintenance scheduling
-            List<ServiceRequest> approvedRequests = serviceRequestDAO.getRequestsByStatus("Approved");
-            request.setAttribute("approvedRequests", approvedRequests);
+           // Get approved service requests - HIỂN THỊ TẤT CẢ
+List<ServiceRequest> approvedRequests = serviceRequestDAO.getRequestsByStatus("Approved");
+request.setAttribute("approvedRequests", approvedRequests);
             
             // Get available technicians
             List<TechnicianWorkload> availableTechnicians = technicianWorkloadDAO.getAvailableTechnicians();
@@ -228,7 +229,7 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
         String requestIdStr = request.getParameter("requestId");
         String contractIdStr = request.getParameter("contractId");
         String equipmentIdStr = request.getParameter("equipmentId");
-        String assignedToStr = request.getParameter("assignedTo");
+        String[] technicianIds = request.getParameterValues("technicianIds"); // ✅ ĐỔI THÀNH MẢNG
         String scheduledDateStr = request.getParameter("scheduledDate");
         String scheduleType = request.getParameter("scheduleType");
         String recurrenceRule = request.getParameter("recurrenceRule");
@@ -236,9 +237,9 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
 
         // --- Validate thông tin bắt buộc ---
         if (scheduledDateStr == null || scheduledDateStr.trim().isEmpty() ||
-            assignedToStr == null || assignedToStr.trim().isEmpty() ||
+            technicianIds == null || technicianIds.length == 0 ||
             scheduleType == null || scheduleType.trim().isEmpty()) {
-            session.setAttribute("errorMessage", "Vui lòng điền đầy đủ thông tin bắt buộc!");
+            session.setAttribute("errorMessage", "⚠️ Vui lòng điền đầy đủ thông tin bắt buộc!");
             response.sendRedirect("scheduleMaintenance");
             return;
         }
@@ -247,7 +248,6 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
         Integer requestId = (requestIdStr != null && !requestIdStr.trim().isEmpty()) ? Integer.parseInt(requestIdStr) : null;
         Integer contractId = (contractIdStr != null && !contractIdStr.trim().isEmpty()) ? Integer.parseInt(contractIdStr) : null;
         Integer equipmentId = (equipmentIdStr != null && !equipmentIdStr.trim().isEmpty()) ? Integer.parseInt(equipmentIdStr) : null;
-        int assignedTo = Integer.parseInt(assignedToStr);
         int priorityId = (priorityIdStr != null && !priorityIdStr.trim().isEmpty()) ? Integer.parseInt(priorityIdStr) : 2;
 
         // --- Chuyển đổi ngày giờ ---
@@ -256,99 +256,92 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
         Timestamp scheduledTimestamp = new Timestamp(parsedDate.getTime());
         LocalDate scheduledDate = scheduledTimestamp.toLocalDateTime().toLocalDate();
 
-        // --- Kiểm tra khả năng KTV THEO PRIORITY ---
-        TechnicianWorkload technicianWorkload = technicianWorkloadDAO.getWorkloadByTechnician(assignedTo);
-        if (technicianWorkload == null) {
-            session.setAttribute("errorMessage", "Không tìm thấy thông tin workload của kỹ thuật viên!");
-            response.sendRedirect("scheduleMaintenance");
-            return;
-        }
-
-        // Tính workload points theo priority
-        int workloadPoints = calculateWorkloadPoints(priorityId);
-        int maxCapacity = technicianWorkload.getMaxConcurrentTasks();
-        int currentLoad = technicianWorkload.getCurrentActiveTasks();
-        int newTotalLoad = currentLoad + workloadPoints;
-
-        // ✅ KIỂM TRA VƯỢT QUÁ GIỚI HẠN
-        if (newTotalLoad > maxCapacity) {
-            String priorityName = priorityId == 4 ? "Khẩn Cấp" : 
-                                  priorityId == 3 ? "Cao" : 
-                                  priorityId == 2 ? "Trung Bình" : "Thấp";
+        // ✅ LOOP QUA TỪNG TECHNICIAN
+        int successCount = 0;
+        StringBuilder errors = new StringBuilder();
+        
+        for (String techIdStr : technicianIds) {
+            int technicianId = Integer.parseInt(techIdStr);
             
-            session.setAttribute("errorMessage", 
-                String.format("⚠️ KHÔNG THỂ PHÂN CÔNG! Kỹ thuật viên #%d đang có %d/%d points. " +
-                              "Độ ưu tiên '%s' cần +%d points → Tổng sẽ là %d/%d (VƯỢT QUÁ GIỚI HẠN). " +
-                              "Vui lòng chọn kỹ thuật viên khác hoặc giảm độ ưu tiên!",
-                              assignedTo, currentLoad, maxCapacity, priorityName, 
-                              workloadPoints, newTotalLoad, maxCapacity));
-            response.sendRedirect("scheduleMaintenance");
-            return;
-        }
+            // ✅ CHECK DUPLICATE SCHEDULE
+            if (isDuplicateSchedule(requestId, contractId, technicianId, scheduledDate)) {
+                errors.append("KTV #").append(technicianId).append(" đã có lịch cho yêu cầu này rồi. ");
+                continue;
+            }
+            
+            // Kiểm tra khả năng KTV
+            TechnicianWorkload technicianWorkload = technicianWorkloadDAO.getWorkloadByTechnician(technicianId);
+            if (technicianWorkload == null) {
+                errors.append("Không tìm thấy workload của KTV #").append(technicianId).append(". ");
+                continue;
+            }
 
-        // --- Tạo MaintenanceSchedule ---
-        MaintenanceSchedule schedule = new MaintenanceSchedule();
-        if (requestId != null) schedule.setRequestId(requestId);
-        if (contractId != null) schedule.setContractId(contractId);
-        if (equipmentId != null) schedule.setEquipmentId(equipmentId);
+            int workloadPoints = calculateWorkloadPoints(priorityId);
+            int maxCapacity = technicianWorkload.getMaxConcurrentTasks();
+            int currentLoad = technicianWorkload.getCurrentActiveTasks();
+            int newTotalLoad = currentLoad + workloadPoints;
 
-        schedule.setAssignedTo(assignedTo);
-        schedule.setScheduledDate(scheduledDate);
-        schedule.setScheduleType(scheduleType);
-        schedule.setRecurrenceRule(recurrenceRule);
-        schedule.setStatus("Scheduled");
-        schedule.setPriorityId(priorityId);
+            if (newTotalLoad > maxCapacity) {
+                errors.append("KTV #").append(technicianId).append(" quá tải. ");
+                continue;
+            }
 
-        int scheduleId = maintenanceScheduleDAO.createMaintenanceSchedule(schedule);
+            // --- Tạo MaintenanceSchedule ---
+            MaintenanceSchedule schedule = new MaintenanceSchedule();
+            if (requestId != null) schedule.setRequestId(requestId);
+            if (contractId != null) schedule.setContractId(contractId);
+            if (equipmentId != null) schedule.setEquipmentId(equipmentId);
 
-        if (scheduleId > 0) {
-            // ✅ TẠO WORKTASK
-            WorkTaskDAO workTaskDAO = new WorkTaskDAO();
-            WorkTask task = new WorkTask();
-            task.setScheduleId(scheduleId);
-            task.setRequestId(requestId);
-            task.setTechnicianId(assignedTo);
-            task.setTaskType("Scheduled");
-            task.setTaskDetails("Bảo trì " + scheduleType + 
-                                (equipmentId != null ? " thiết bị #" + equipmentId : ""));
-            task.setStartDate(scheduledDate);
-            task.setEndDate(scheduledDate);
-            task.setStatus("Assigned");
+            schedule.setAssignedTo(technicianId);
+            schedule.setScheduledDate(scheduledDate);
+            schedule.setScheduleType(scheduleType);
+            schedule.setRecurrenceRule(recurrenceRule);
+            schedule.setStatus("Scheduled");
+            schedule.setPriorityId(priorityId);
 
-            int taskId = workTaskDAO.createWorkTask(task);
+            int scheduleId = maintenanceScheduleDAO.createMaintenanceSchedule(schedule);
 
-            if (taskId > 0) {
-                // ✅ QUAN TRỌNG: Trigger đã tự động cộng 1, giờ cộng thêm (workloadPoints - 1)
-                int additionalPoints = workloadPoints - 1; // Urgent: 3-1=2, High: 2-1=1, Normal: 1-1=0
-                
-                if (additionalPoints > 0) {
-                    boolean workloadUpdated = technicianWorkloadDAO.incrementWorkloadByPoints(assignedTo, additionalPoints);
-                    
-                    if (workloadUpdated) {
-                        session.setAttribute("successMessage", 
-                            String.format("✅ Lập lịch bảo trì thành công! KTV #%d nhận +%d points (Priority: %s)", 
-                                assignedTo, workloadPoints, 
-                                priorityId == 4 ? "Urgent" : priorityId == 3 ? "High" : "Normal"));
-                    } else {
-                        session.setAttribute("successMessage", "Lập lịch thành công nhưng cập nhật workload thất bại!");
+            if (scheduleId > 0) {
+                // Tạo WorkTask
+                WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+                WorkTask task = new WorkTask();
+                task.setScheduleId(scheduleId);
+                task.setRequestId(requestId);
+                task.setTechnicianId(technicianId);
+                task.setTaskType("Scheduled");
+                task.setTaskDetails("Bảo trì " + scheduleType);
+                task.setStartDate(scheduledDate);
+                task.setEndDate(scheduledDate);
+                task.setStatus("Assigned");
+
+                int taskId = workTaskDAO.createWorkTask(task);
+
+                if (taskId > 0) {
+                    int additionalPoints = workloadPoints - 1;
+                    if (additionalPoints > 0) {
+                        technicianWorkloadDAO.incrementWorkloadByPoints(technicianId, additionalPoints);
                     }
+                    successCount++;
                 } else {
-                    // Normal priority: trigger đã cộng đủ rồi
-                    session.setAttribute("successMessage", 
-                        String.format("✅ Lập lịch bảo trì thành công! KTV #%d nhận +%d point (Priority: Normal)", 
-                            assignedTo, workloadPoints));
+                    errors.append("Không thể tạo task cho KTV #").append(technicianId).append(". ");
                 }
             } else {
-                session.setAttribute("errorMessage", "Lập lịch thành công nhưng tạo công việc thất bại!");
+                errors.append("Lập lịch thất bại cho KTV #").append(technicianId).append(". ");
             }
-        } else {
-            session.setAttribute("errorMessage", "Lỗi khi lập lịch bảo trì!");
+        }
+
+        // Success message
+        if (successCount > 0) {
+            session.setAttribute("successMessage", 
+                String.format("✅ Lập lịch bảo trì thành công cho %d kỹ thuật viên!", successCount));
+        }
+        
+        if (errors.length() > 0) {
+            session.setAttribute("errorMessage", "⚠️ " + errors.toString());
         }
 
     } catch (ParseException e) {
         session.setAttribute("errorMessage", "Định dạng ngày giờ không hợp lệ!");
-    } catch (NumberFormatException e) {
-        session.setAttribute("errorMessage", "Dữ liệu số không hợp lệ!");
     } catch (Exception e) {
         e.printStackTrace();
         session.setAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
@@ -356,6 +349,31 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
 
     response.sendRedirect("scheduleMaintenance");
 }
+
+// ✅ NEW METHOD: Check duplicate schedule
+private boolean isDuplicateSchedule(Integer requestId, Integer contractId, int technicianId, LocalDate scheduledDate) {
+    try {
+        List<MaintenanceSchedule> existingSchedules = maintenanceScheduleDAO.getSchedulesByTechnician(technicianId);
+        
+        for (MaintenanceSchedule schedule : existingSchedules) {
+            // Check same request/contract/date
+            boolean sameRequest = (requestId != null && requestId.equals(schedule.getRequestId()));
+            boolean sameContract = (contractId != null && contractId.equals(schedule.getContractId()));
+            boolean sameDate = scheduledDate.equals(schedule.getScheduledDate());
+            boolean notCancelled = !"Cancelled".equals(schedule.getStatus());
+            
+            if ((sameRequest || sameContract) && sameDate && notCancelled) {
+                return true;
+            }
+        }
+        
+        return false;
+    } catch (Exception e) {
+        System.err.println("Error checking duplicate schedule: " + e.getMessage());
+        return false;
+    }
+}
+
 
 
     

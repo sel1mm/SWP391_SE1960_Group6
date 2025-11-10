@@ -5,6 +5,7 @@ import dal.RequestApprovalDAO;
 import dal.AccountDAO;
 import dal.ContractDAO;
 import dal.NotificationDAO;
+import dal.WorkTaskDAO;
 
 import model.ServiceRequest;
 import model.ServiceRequestDetailDTO2;
@@ -25,6 +26,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.stream.Collectors;
 import model.Notification;
+import model.WorkTask;
 
 @WebServlet(name = "TechnicalManagerApprovalServlet", urlPatterns = {"/technicalManagerApproval"})
 public class TechnicalManagerApprovalServlet extends HttpServlet {
@@ -253,13 +255,28 @@ private ContractDAO contractDAO;
     /**
      * Handle history view with pagination and new filters
      */
-   private void handleHistory(HttpServletRequest request, HttpServletResponse response, int managerId)
+  /**
+ * Handle history view with pagination and filters
+ * ✅ ENHANCED: Hide requests that have ANY WorkTask (even if Completed)
+ */
+/**
+ * Handle history view with pagination and filters
+ * ✅ ENHANCED: Hide requests that have ANY WorkTask (even if Completed)
+ * ✅ NEW: Added requestType filter
+ */
+/**
+ * Handle history view with pagination and filters
+ * ✅ ENHANCED: Hide requests that have ANY WorkTask (even if Completed)
+ * ✅ NEW: Added requestType filter
+ */
+private void handleHistory(HttpServletRequest request, HttpServletResponse response, int managerId)
         throws ServletException, IOException, SQLException {
 
     // Lấy các tham số filter và search
     String keyword = request.getParameter("keyword");
     String priority = request.getParameter("priority");
     String statusFilter = request.getParameter("statusFilter");
+    String requestTypeFilter = request.getParameter("requestTypeFilter"); // ✅ NEW
 
     // Lấy số trang
     int page = 1;
@@ -273,16 +290,27 @@ private ContractDAO contractDAO;
         }
     }
 
-    // Lấy toàn bộ request lịch sử
+    // ✅ BƯỚC 1: Lấy toàn bộ request lịch sử (không phải Awaiting Approval)
     List<ServiceRequest> allRequests = serviceRequestDAO.getAllRequestsHistory();
     List<ServiceRequest> filteredRequests = allRequests.stream()
             .filter(req -> !"Awaiting Approval".equalsIgnoreCase(req.getStatus()))
             .collect(Collectors.toList());
 
-    // Áp dụng search
+    // ✅ BƯỚC 2: ẨN CÁC REQUEST ĐÃ CÓ WORKTASK (dù Completed hay Active)
+    WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+    List<ServiceRequest> visibleRequests = new ArrayList<>();
+    
+    for (ServiceRequest req : filteredRequests) {
+        List<WorkTask> existingTasks = workTaskDAO.findByRequestId(req.getRequestId());
+        if (existingTasks.isEmpty()) {
+            visibleRequests.add(req);
+        }
+    }
+
+    // ✅ BƯỚC 3: Áp dụng search trên danh sách đã lọc
     if (keyword != null && !keyword.trim().isEmpty()) {
         String keywordLower = keyword.trim().toLowerCase();
-        filteredRequests = filteredRequests.stream()
+        visibleRequests = visibleRequests.stream()
                 .filter(req -> req.getDescription().toLowerCase().contains(keywordLower)
                         || String.valueOf(req.getRequestId()).contains(keyword.trim())
                         || (req.getCustomerName() != null && req.getCustomerName().toLowerCase().contains(keywordLower))
@@ -290,9 +318,9 @@ private ContractDAO contractDAO;
                 .collect(Collectors.toList());
     }
 
-    // Áp dụng filter
+    // ✅ BƯỚC 4: Áp dụng filter Priority, Status & RequestType
     List<ServiceRequest> finalFilteredRequests = new ArrayList<>();
-    for (ServiceRequest req : filteredRequests) {
+    for (ServiceRequest req : visibleRequests) {
         boolean matchesPriority = (priority == null || priority.trim().isEmpty() ||
                 priority.equalsIgnoreCase(req.getPriorityLevel()));
 
@@ -301,12 +329,18 @@ private ContractDAO contractDAO;
             matchesStatus = statusFilter.equalsIgnoreCase(req.getStatus());
         }
 
-        if (matchesPriority && matchesStatus) {
+        // ✅ NEW: Filter by requestType
+        boolean matchesRequestType = true;
+        if (requestTypeFilter != null && !requestTypeFilter.trim().isEmpty()) {
+            matchesRequestType = requestTypeFilter.equalsIgnoreCase(req.getRequestType());
+        }
+
+        if (matchesPriority && matchesStatus && matchesRequestType) {
             finalFilteredRequests.add(req);
         }
     }
 
-    // Tính toán phân trang
+    // ✅ BƯỚC 5: Tính toán phân trang
     int totalRecords = finalFilteredRequests.size();
     int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
 
@@ -322,14 +356,14 @@ private ContractDAO contractDAO;
         requests = finalFilteredRequests.subList(startIndex, endIndex);
     }
 
-    // Thống kê
+    // ✅ BƯỚC 6: Thống kê (dựa trên danh sách đã lọc)
     int totalRequests = finalFilteredRequests.size();
     int approvedCount = (int) finalFilteredRequests.stream()
             .filter(req -> "Approved".equalsIgnoreCase(req.getStatus())).count();
     int rejectedCount = (int) finalFilteredRequests.stream()
             .filter(req -> "Rejected".equalsIgnoreCase(req.getStatus())).count();
 
-    // Gửi dữ liệu sang JSP
+    // ✅ BƯỚC 7: Gửi dữ liệu sang JSP
     request.setAttribute("requests", requests);
     request.setAttribute("totalCount", totalRequests);
     request.setAttribute("approvedCount", approvedCount);
@@ -343,11 +377,13 @@ private ContractDAO contractDAO;
     request.setAttribute("keyword", keyword);
     request.setAttribute("filterPriority", priority);
     request.setAttribute("statusFilter", statusFilter);
+    request.setAttribute("requestTypeFilter", requestTypeFilter); // ✅ NEW
     
     // Đánh dấu có filter/search
     boolean hasFilters = (keyword != null && !keyword.trim().isEmpty()) ||
                         (priority != null && !priority.trim().isEmpty()) ||
-                        (statusFilter != null && !statusFilter.trim().isEmpty());
+                        (statusFilter != null && !statusFilter.trim().isEmpty()) ||
+                        (requestTypeFilter != null && !requestTypeFilter.trim().isEmpty()); // ✅ NEW
     request.setAttribute("searchMode", hasFilters);
     request.setAttribute("filterMode", hasFilters);
 
@@ -358,203 +394,257 @@ private ContractDAO contractDAO;
     /**
      * Handle search with pagination
      */
-    private void handleSearch(HttpServletRequest request, HttpServletResponse response, int managerId)
-            throws ServletException, IOException, SQLException {
+   private void handleSearch(HttpServletRequest request, HttpServletResponse response, int managerId)
+        throws ServletException, IOException, SQLException {
 
-        String keyword = request.getParameter("keyword");
-        String viewMode = request.getParameter("viewMode");
+    String keyword = request.getParameter("keyword");
+    String viewMode = request.getParameter("viewMode");
 
-        // Get page number
-        int page = 1;
-        String pageParam = request.getParameter("page");
-        if (pageParam != null && !pageParam.isEmpty()) {
-            try {
-                page = Integer.parseInt(pageParam);
-                if (page < 1) page = 1;
-            } catch (NumberFormatException e) {
-                page = 1;
-            }
+    // Get page number
+    int page = 1;
+    String pageParam = request.getParameter("page");
+    if (pageParam != null && !pageParam.isEmpty()) {
+        try {
+            page = Integer.parseInt(pageParam);
+            if (page < 1) page = 1;
+        } catch (NumberFormatException e) {
+            page = 1;
         }
+    }
 
-        if (keyword == null || keyword.trim().isEmpty()) {
-            if ("history".equalsIgnoreCase(viewMode)) {
-                handleHistory(request, response, managerId);
-            } else {
-                displayAssignedRequests(request, response, managerId);
-            }
-            return;
-        }
-
-        // Get data based on view mode
-        List<ServiceRequest> allRequests;
+    if (keyword == null || keyword.trim().isEmpty()) {
         if ("history".equalsIgnoreCase(viewMode)) {
-            allRequests = serviceRequestDAO.getAllRequestsHistory().stream()
-                    .filter(req -> !"Awaiting Approval".equalsIgnoreCase(req.getStatus()))
-                    .collect(Collectors.toList());
+            handleHistory(request, response, managerId);
         } else {
-            allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
+            displayAssignedRequests(request, response, managerId);
         }
+        return;
+    }
 
-        // Filter by keyword
-        String keywordLower = keyword.trim().toLowerCase();
-        List<ServiceRequest> filteredRequests = allRequests.stream()
-                .filter(req -> req.getDescription().toLowerCase().contains(keywordLower)
-                        || String.valueOf(req.getRequestId()).contains(keyword.trim())
-                        || (req.getCustomerName() != null && req.getCustomerName().toLowerCase().contains(keywordLower)))
+    // ✅ Get data based on view mode
+    List<ServiceRequest> allRequests;
+    if ("history".equalsIgnoreCase(viewMode)) {
+        allRequests = serviceRequestDAO.getAllRequestsHistory().stream()
+                .filter(req -> !"Awaiting Approval".equalsIgnoreCase(req.getStatus()))
                 .collect(Collectors.toList());
-
-        // Calculate pagination
-        int totalRecords = filteredRequests.size();
-        int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
-        int startIndex = (page - 1) * RECORDS_PER_PAGE;
-        int endIndex = Math.min(startIndex + RECORDS_PER_PAGE, totalRecords);
-        
-        List<ServiceRequest> requests = filteredRequests.subList(startIndex, endIndex);
-
-        // Set statistics based on view mode
-        if ("history".equalsIgnoreCase(viewMode)) {
-            int totalCount = filteredRequests.size();
-            int approvedCount = (int) filteredRequests.stream()
-                    .filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
-            int rejectedCount = (int) filteredRequests.stream()
-                    .filter(r -> "Rejected".equalsIgnoreCase(r.getStatus())).count();
-
-            request.setAttribute("totalCount", totalCount);
-            request.setAttribute("approvedCount", approvedCount);
-            request.setAttribute("rejectedCount", rejectedCount);
-        } else {
-            int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
-            int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
-            int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
-            int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
-
-            request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
-            request.setAttribute("urgentCount", urgentCount);
-            request.setAttribute("todayCount", todayCount);
-            request.setAttribute("approvedToday", approvedToday);
-        }
-
-        request.setAttribute("requests", requests);
-        request.setAttribute("keyword", keyword);
-        request.setAttribute("searchMode", true);
-        request.setAttribute("viewMode", viewMode);
-        request.setAttribute("currentPage", page);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("totalRecords", totalRecords);
-
-        request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
+    } else {
+        allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
     }
 
-    /**
-     * Handle filter with pagination and new status filters for history
-     */
-    private void handleFilter(HttpServletRequest request, HttpServletResponse response, int managerId)
-            throws ServletException, IOException, SQLException {
-
-        String priority = request.getParameter("priority");
-        String urgency = request.getParameter("urgency");
-        String statusFilter = request.getParameter("statusFilter"); // New parameter for history view
-        String viewMode = request.getParameter("viewMode");
-
-        // Get page number
-        int page = 1;
-        String pageParam = request.getParameter("page");
-        if (pageParam != null && !pageParam.isEmpty()) {
-            try {
-                page = Integer.parseInt(pageParam);
-                if (page < 1) page = 1;
-            } catch (NumberFormatException e) {
-                page = 1;
-            }
-        }
-
-        // Get data based on view mode
-        List<ServiceRequest> allRequests;
-        if ("history".equalsIgnoreCase(viewMode)) {
-            allRequests = serviceRequestDAO.getAllRequestsHistory().stream()
-                    .filter(req -> !"Awaiting Approval".equalsIgnoreCase(req.getStatus()))
-                    .collect(Collectors.toList());
-        } else {
-            allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
-        }
-
-        // Apply filters
-        List<ServiceRequest> filteredRequests = new ArrayList<>();
+    // ✅ FILTER OUT REQUESTS WITH WORKTASK (for history view only)
+    if ("history".equalsIgnoreCase(viewMode)) {
+        WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+        List<ServiceRequest> visibleRequests = new ArrayList<>();
+        
         for (ServiceRequest req : allRequests) {
-            boolean matchesPriority = (priority == null || priority.trim().isEmpty() ||
-                    priority.equalsIgnoreCase(req.getPriorityLevel()));
-
-            boolean matchesUrgency = true;
-            // Only apply urgency filter for non-history view
-            if (!"history".equalsIgnoreCase(viewMode) && urgency != null && !urgency.trim().isEmpty()) {
-                int daysPending = req.getDaysPending();
-                switch (urgency) {
-                    case "Urgent":
-                        matchesUrgency = daysPending >= 7;
-                        break;
-                    case "High":
-                        matchesUrgency = daysPending >= 3 && daysPending < 7;
-                        break;
-                    case "Normal":
-                        matchesUrgency = daysPending < 3;
-                        break;
-                }
-            }
-
-            boolean matchesStatus = true;
-            // Apply status filter for history view
-            if ("history".equalsIgnoreCase(viewMode) && statusFilter != null && !statusFilter.trim().isEmpty()) {
-                matchesStatus = statusFilter.equalsIgnoreCase(req.getStatus());
-            }
-
-            if (matchesPriority && matchesUrgency && matchesStatus) {
-                filteredRequests.add(req);
+            List<WorkTask> existingTasks = workTaskDAO.findByRequestId(req.getRequestId());
+            if (existingTasks.isEmpty()) {
+                visibleRequests.add(req);
             }
         }
-
-        // Calculate pagination
-        int totalRecords = filteredRequests.size();
-        int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
-        int startIndex = (page - 1) * RECORDS_PER_PAGE;
-        int endIndex = Math.min(startIndex + RECORDS_PER_PAGE, totalRecords);
-        
-        List<ServiceRequest> requests = filteredRequests.subList(startIndex, endIndex);
-
-        // Set statistics based on view mode
-        if ("history".equalsIgnoreCase(viewMode)) {
-            int totalCount = filteredRequests.size();
-            int approvedCount = (int) filteredRequests.stream()
-                    .filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
-            int rejectedCount = (int) filteredRequests.stream()
-                    .filter(r -> "Rejected".equalsIgnoreCase(r.getStatus())).count();
-
-            request.setAttribute("totalCount", totalCount);
-            request.setAttribute("approvedCount", approvedCount);
-            request.setAttribute("rejectedCount", rejectedCount);
-            request.setAttribute("statusFilter", statusFilter);
-        } else {
-            int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
-            int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
-            int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
-            int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
-
-            request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
-            request.setAttribute("urgentCount", urgentCount);
-            request.setAttribute("todayCount", todayCount);
-            request.setAttribute("approvedToday", approvedToday);
-            request.setAttribute("filterUrgency", urgency);
-        }
-
-        request.setAttribute("requests", requests);
-        request.setAttribute("filterPriority", priority);
-        request.setAttribute("filterMode", true);
-        request.setAttribute("viewMode", viewMode);
-        request.setAttribute("currentPage", page);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("totalRecords", totalRecords);
-
-        request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
+        allRequests = visibleRequests;
     }
+
+    // Filter by keyword
+    String keywordLower = keyword.trim().toLowerCase();
+    List<ServiceRequest> filteredRequests = allRequests.stream()
+            .filter(req -> req.getDescription().toLowerCase().contains(keywordLower)
+                    || String.valueOf(req.getRequestId()).contains(keyword.trim())
+                    || (req.getCustomerName() != null && req.getCustomerName().toLowerCase().contains(keywordLower))
+                    || (req.getEquipmentName() != null && req.getEquipmentName().toLowerCase().contains(keywordLower)))
+            .collect(Collectors.toList());
+
+    // Calculate pagination
+    int totalRecords = filteredRequests.size();
+    int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
+    
+    if (totalPages > 0 && page > totalPages) {
+        page = totalPages;
+    }
+    
+    int startIndex = (page - 1) * RECORDS_PER_PAGE;
+    int endIndex = Math.min(startIndex + RECORDS_PER_PAGE, totalRecords);
+    
+    List<ServiceRequest> requests = new ArrayList<>();
+    if (startIndex < totalRecords) {
+        requests = filteredRequests.subList(startIndex, endIndex);
+    }
+
+    // Set statistics based on view mode
+    if ("history".equalsIgnoreCase(viewMode)) {
+        int totalCount = filteredRequests.size();
+        int approvedCount = (int) filteredRequests.stream()
+                .filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
+        int rejectedCount = (int) filteredRequests.stream()
+                .filter(r -> "Rejected".equalsIgnoreCase(r.getStatus())).count();
+
+        request.setAttribute("totalCount", totalCount);
+        request.setAttribute("approvedCount", approvedCount);
+        request.setAttribute("rejectedCount", rejectedCount);
+    } else {
+        int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
+        int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
+        int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
+        int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
+
+        request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
+        request.setAttribute("urgentCount", urgentCount);
+        request.setAttribute("todayCount", todayCount);
+        request.setAttribute("approvedToday", approvedToday);
+    }
+
+    request.setAttribute("requests", requests);
+    request.setAttribute("keyword", keyword);
+    request.setAttribute("searchMode", true);
+    request.setAttribute("viewMode", viewMode);
+    request.setAttribute("currentPage", page);
+    request.setAttribute("totalPages", totalPages);
+    request.setAttribute("totalRecords", totalRecords);
+
+    request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
+}
+
+/**
+ * Handle filter with pagination and new status/requestType filters for history
+ * ✅ UPDATED: Support requestType filter
+ */
+private void handleFilter(HttpServletRequest request, HttpServletResponse response, int managerId)
+        throws ServletException, IOException, SQLException {
+
+    String priority = request.getParameter("priority");
+    String urgency = request.getParameter("urgency");
+    String statusFilter = request.getParameter("statusFilter");
+    String requestTypeFilter = request.getParameter("requestTypeFilter"); // ✅ NEW
+    String viewMode = request.getParameter("viewMode");
+
+    // Get page number
+    int page = 1;
+    String pageParam = request.getParameter("page");
+    if (pageParam != null && !pageParam.isEmpty()) {
+        try {
+            page = Integer.parseInt(pageParam);
+            if (page < 1) page = 1;
+        } catch (NumberFormatException e) {
+            page = 1;
+        }
+    }
+
+    // ✅ Get data based on view mode
+    List<ServiceRequest> allRequests;
+    if ("history".equalsIgnoreCase(viewMode)) {
+        allRequests = serviceRequestDAO.getAllRequestsHistory().stream()
+                .filter(req -> !"Awaiting Approval".equalsIgnoreCase(req.getStatus()))
+                .collect(Collectors.toList());
+    } else {
+        allRequests = serviceRequestDAO.getPendingRequestsWithDetails();
+    }
+
+    // ✅ FILTER OUT REQUESTS WITH WORKTASK (for history view only)
+    if ("history".equalsIgnoreCase(viewMode)) {
+        WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+        List<ServiceRequest> visibleRequests = new ArrayList<>();
+        
+        for (ServiceRequest req : allRequests) {
+            List<WorkTask> existingTasks = workTaskDAO.findByRequestId(req.getRequestId());
+            if (existingTasks.isEmpty()) {
+                visibleRequests.add(req);
+            }
+        }
+        allRequests = visibleRequests;
+    }
+
+    // Apply filters
+    List<ServiceRequest> filteredRequests = new ArrayList<>();
+    for (ServiceRequest req : allRequests) {
+        boolean matchesPriority = (priority == null || priority.trim().isEmpty() ||
+                priority.equalsIgnoreCase(req.getPriorityLevel()));
+
+        boolean matchesUrgency = true;
+        // Only apply urgency filter for non-history view
+        if (!"history".equalsIgnoreCase(viewMode) && urgency != null && !urgency.trim().isEmpty()) {
+            int daysPending = req.getDaysPending();
+            switch (urgency) {
+                case "Urgent":
+                    matchesUrgency = daysPending >= 7;
+                    break;
+                case "High":
+                    matchesUrgency = daysPending >= 3 && daysPending < 7;
+                    break;
+                case "Normal":
+                    matchesUrgency = daysPending < 3;
+                    break;
+            }
+        }
+
+        boolean matchesStatus = true;
+        // Apply status filter for history view
+        if ("history".equalsIgnoreCase(viewMode) && statusFilter != null && !statusFilter.trim().isEmpty()) {
+            matchesStatus = statusFilter.equalsIgnoreCase(req.getStatus());
+        }
+
+        // ✅ NEW: Apply requestType filter for history view
+        boolean matchesRequestType = true;
+        if ("history".equalsIgnoreCase(viewMode) && requestTypeFilter != null && !requestTypeFilter.trim().isEmpty()) {
+            matchesRequestType = requestTypeFilter.equalsIgnoreCase(req.getRequestType());
+        }
+
+        if (matchesPriority && matchesUrgency && matchesStatus && matchesRequestType) {
+            filteredRequests.add(req);
+        }
+    }
+
+    // Calculate pagination
+    int totalRecords = filteredRequests.size();
+    int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
+    
+    if (totalPages > 0 && page > totalPages) {
+        page = totalPages;
+    }
+    
+    int startIndex = (page - 1) * RECORDS_PER_PAGE;
+    int endIndex = Math.min(startIndex + RECORDS_PER_PAGE, totalRecords);
+    
+    List<ServiceRequest> requests = new ArrayList<>();
+    if (startIndex < totalRecords) {
+        requests = filteredRequests.subList(startIndex, endIndex);
+    }
+
+    // Set statistics based on view mode
+    if ("history".equalsIgnoreCase(viewMode)) {
+        int totalCount = filteredRequests.size();
+        int approvedCount = (int) filteredRequests.stream()
+                .filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
+        int rejectedCount = (int) filteredRequests.stream()
+                .filter(r -> "Rejected".equalsIgnoreCase(r.getStatus())).count();
+
+        request.setAttribute("totalCount", totalCount);
+        request.setAttribute("approvedCount", approvedCount);
+        request.setAttribute("rejectedCount", rejectedCount);
+        request.setAttribute("statusFilter", statusFilter);
+        request.setAttribute("requestTypeFilter", requestTypeFilter); // ✅ NEW
+    } else {
+        int awaitingApprovalCount = serviceRequestDAO.getRequestCountByStatus("Awaiting Approval");
+        int urgentCount = serviceRequestDAO.getRequestCountByPriority("Urgent", "Awaiting Approval");
+        int todayCount = serviceRequestDAO.getRequestsCreatedTodayByStatus("Awaiting Approval");
+        int approvedToday = requestApprovalDAO.getApprovalsToday(managerId);
+
+        request.setAttribute("awaitingApprovalCount", awaitingApprovalCount);
+        request.setAttribute("urgentCount", urgentCount);
+        request.setAttribute("todayCount", todayCount);
+        request.setAttribute("approvedToday", approvedToday);
+        request.setAttribute("filterUrgency", urgency);
+    }
+
+    request.setAttribute("requests", requests);
+    request.setAttribute("filterPriority", priority);
+    request.setAttribute("filterMode", true);
+    request.setAttribute("viewMode", viewMode);
+    request.setAttribute("currentPage", page);
+    request.setAttribute("totalPages", totalPages);
+    request.setAttribute("totalRecords", totalRecords);
+
+    request.getRequestDispatcher("/TechnicalManagerApproval.jsp").forward(request, response);
+}
 
     /**
      * Handle request approval
@@ -821,7 +911,7 @@ private void handleRejectRequest(HttpServletRequest request, HttpServletResponse
                 json.append("\"equipmentId\": ").append(requestDetail.getEquipmentId()).append(",");
                 json.append("\"equipmentName\": \"").append(escapeJson(requestDetail.getEquipmentModel())).append("\",");
                 json.append("\"serialNumber\": \"").append(escapeJson(requestDetail.getSerialNumber())).append("\",");
-                json.append("\"contractType\": \"").append(escapeJson(requestDetail.getContractType())).append("\",");
+                json.append("\"requestType\": \"").append(escapeJson(requestDetail.getRequestType())).append("\",");
                 json.append("\"description\": \"").append(escapeJson(requestDetail.getDescription())).append("\"");
                 json.append("}");
                 

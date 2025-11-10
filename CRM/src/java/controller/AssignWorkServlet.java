@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 @WebServlet(name = "AssignWorkServlet", urlPatterns = {"/assignWork"})
 public class AssignWorkServlet extends HttpServlet {
@@ -135,15 +136,14 @@ private void handleAssignWork(HttpServletRequest request, HttpServletResponse re
         throws ServletException, IOException, SQLException {
 
     try {
-        // ========== STEP 1: VALIDATE INPUT PARAMETERS ==========
         String requestIdParam = request.getParameter("taskId");
-        String technicianIdParam = request.getParameter("technicianId");
+        String[] technicianIds = request.getParameterValues("technicianIds"); // ← Lấy mảng
         String estimatedDurationStr = request.getParameter("estimatedDuration");
         String requiredSkills = request.getParameter("requiredSkills");
         String priority = request.getParameter("priority");
 
-        // Validate required fields
-        if (requestIdParam == null || technicianIdParam == null || 
+        // Validate
+        if (requestIdParam == null || technicianIds == null || technicianIds.length == 0 ||
             estimatedDurationStr == null || estimatedDurationStr.trim().isEmpty()) {
             session.setAttribute("errorMessage", "⚠️ Vui lòng điền đầy đủ thông tin!");
             response.sendRedirect(request.getContextPath() + "/assignWork");
@@ -151,110 +151,100 @@ private void handleAssignWork(HttpServletRequest request, HttpServletResponse re
         }
 
         int requestId = Integer.parseInt(requestIdParam);
-        int technicianId = Integer.parseInt(technicianIdParam);
         BigDecimal estimatedDuration = new BigDecimal(estimatedDurationStr);
 
-        // Set default priority if not provided
         if (priority == null || priority.trim().isEmpty()) {
             priority = "Normal";
         }
 
-        // ========== STEP 1.5: CHECK DUPLICATE ASSIGNMENT ==========
-        if (isDuplicateAssignment(requestId, technicianId)) {
-            session.setAttribute("errorMessage", 
-                String.format("⚠️ KHÔNG THỂ PHÂN CÔNG! Nhiệm vụ #%d đã được giao cho Kỹ thuật viên #%d rồi. " +
-                            "Một kỹ thuật viên không thể nhận cùng một nhiệm vụ hai lần!",
-                            requestId, technicianId));
-            response.sendRedirect(request.getContextPath() + "/assignWork");
-            return;
-        }
-
-        // ========== STEP 2: CHECK TECHNICIAN WORKLOAD CAPACITY ==========
-        int workloadPoints = calculateWorkloadPoints(priority);
-        TechnicianWorkload workload = technicianWorkloadDAO.getWorkloadByTechnician(technicianId);
+        // Loop qua từng technician và tạo assignment
+        int successCount = 0;
+        StringBuilder errors = new StringBuilder();
         
-        if (workload == null) {
-            session.setAttribute("errorMessage", 
-                "❌ Không tìm thấy thông tin workload của kỹ thuật viên #" + technicianId);
-            response.sendRedirect(request.getContextPath() + "/assignWork");
-            return;
-        }
-
-        int maxCapacity = workload.getMaxConcurrentTasks();
-        int currentLoad = workload.getCurrentActiveTasks();
-        int newTotalLoad = currentLoad + workloadPoints;
-
-        // Validate workload capacity
-        if (newTotalLoad > maxCapacity) {
-            session.setAttribute("errorMessage", 
-                String.format("⚠️ KHÔNG THỂ PHÂN CÔNG! Vượt quá khối lượng công việc được giao " 
-                            ,
-                            technicianId));
-            response.sendRedirect(request.getContextPath() + "/assignWork");
-            return;
-        }
-
-        // ========== STEP 3: CREATE WORKTASK ==========
-        WorkTaskDAO workTaskDAO = new WorkTaskDAO();
-        WorkTask task = new WorkTask();
-        task.setRequestId(requestId);
-        task.setScheduleId(null);
-        task.setTechnicianId(technicianId);
-        task.setTaskType("Request");
-        task.setTaskDetails("Task generated from service request #" + requestId);
-        task.setStartDate(LocalDate.now());
-        task.setEndDate(LocalDate.now().plusDays(3));
-        task.setStatus("Assigned");
-
-        int taskId = workTaskDAO.createWorkTask(task);
-        
-        if (taskId <= 0) {
-            session.setAttribute("errorMessage", "❌ Không thể tạo WorkTask! Vui lòng thử lại.");
-            response.sendRedirect(request.getContextPath() + "/assignWork");
-            return;
-        }
-
-        // ========== STEP 4: CREATE WORK ASSIGNMENT ==========
-        WorkAssignment assignment = new WorkAssignment();
-        assignment.setTaskId(taskId);
-        assignment.setAssignedBy(managerId);
-        assignment.setAssignedTo(technicianId);
-        assignment.setAssignmentDate(LocalDateTime.now());
-        assignment.setEstimatedDuration(estimatedDuration);
-        assignment.setRequiredSkills(requiredSkills != null ? requiredSkills : "");
-        assignment.setPriority(priority);
-        assignment.setAcceptedByTechnician(false);
-
-        int assignmentId = workAssignmentDAO.createWorkAssignment(assignment);
-        
-        if (assignmentId <= 0) {
-            // Rollback: Delete the created task
-            workTaskDAO.deleteTaskById(taskId);
-            session.setAttribute("errorMessage", "❌ Phân công thất bại! Vui lòng thử lại.");
-            response.sendRedirect(request.getContextPath() + "/assignWork");
-            return;
-        }
-
-        // ========== STEP 5: UPDATE WORKLOAD ==========
-        // Trigger already incremented by 1, need to add additional points
-        int additionalPoints = workloadPoints - 1; // Urgent: 3-1=2, High: 2-1=1, Normal: 1-1=0
-        
-        if (additionalPoints > 0) {
-            boolean workloadUpdated = technicianWorkloadDAO.incrementWorkloadByPoints(technicianId, additionalPoints);
-            if (!workloadUpdated) {
-                System.err.println("Warning: Failed to update additional workload points for technician #" + technicianId);
+        for (String techIdStr : technicianIds) {
+            int technicianId = Integer.parseInt(techIdStr);
+            
+            // Check duplicate
+            if (isDuplicateAssignment(requestId, technicianId)) {
+                errors.append("KTV #").append(technicianId).append(" đã được giao việc này rồi. ");
+                continue;
             }
+
+            // Check workload
+            int workloadPoints = calculateWorkloadPoints(priority);
+            TechnicianWorkload workload = technicianWorkloadDAO.getWorkloadByTechnician(technicianId);
+            
+            if (workload == null) {
+                errors.append("Không tìm thấy workload của KTV #").append(technicianId).append(". ");
+                continue;
+            }
+
+            int maxCapacity = workload.getMaxConcurrentTasks();
+            int currentLoad = workload.getCurrentActiveTasks();
+            int newTotalLoad = currentLoad + workloadPoints;
+
+            if (newTotalLoad > maxCapacity) {
+                errors.append("KTV #").append(technicianId).append(" quá tải. ");
+                continue;
+            }
+
+            // Create WorkTask
+            WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+            WorkTask task = new WorkTask();
+            task.setRequestId(requestId);
+            task.setScheduleId(null);
+            task.setTechnicianId(technicianId);
+            task.setTaskType("Request");
+            task.setTaskDetails("Task generated from service request #" + requestId);
+            task.setStartDate(LocalDate.now());
+            task.setEndDate(LocalDate.now().plusDays(3));
+            task.setStatus("Assigned");
+
+            int taskId = workTaskDAO.createWorkTask(task);
+            
+            if (taskId <= 0) {
+                errors.append("Không thể tạo task cho KTV #").append(technicianId).append(". ");
+                continue;
+            }
+
+            // Create WorkAssignment
+            WorkAssignment assignment = new WorkAssignment();
+            assignment.setTaskId(taskId);
+            assignment.setAssignedBy(managerId);
+            assignment.setAssignedTo(technicianId);
+            assignment.setAssignmentDate(LocalDateTime.now());
+            assignment.setEstimatedDuration(estimatedDuration);
+            assignment.setRequiredSkills(requiredSkills != null ? requiredSkills : "");
+            assignment.setPriority(priority);
+            assignment.setAcceptedByTechnician(false);
+
+            int assignmentId = workAssignmentDAO.createWorkAssignment(assignment);
+            
+            if (assignmentId <= 0) {
+                workTaskDAO.deleteTaskById(taskId);
+                errors.append("Phân công thất bại cho KTV #").append(technicianId).append(". ");
+                continue;
+            }
+
+            // Update workload
+            int additionalPoints = workloadPoints - 1;
+            if (additionalPoints > 0) {
+                technicianWorkloadDAO.incrementWorkloadByPoints(technicianId, additionalPoints);
+            }
+
+            successCount++;
         }
 
-        // ========== STEP 6: SUCCESS MESSAGE ==========
-        session.setAttribute("successMessage", 
-            String.format("✅ Phân công thành công", 
-                        requestId, technicianId, currentLoad, newTotalLoad, maxCapacity, 
-                        priority, workloadPoints));
+        // Success message
+        if (successCount > 0) {
+            session.setAttribute("successMessage", 
+                String.format("✅ Phân công thành công cho %d kỹ thuật viên!", successCount));
+        }
+        
+        if (errors.length() > 0) {
+            session.setAttribute("errorMessage", "⚠️ " + errors.toString());
+        }
 
-    } catch (NumberFormatException e) {
-        session.setAttribute("errorMessage", "❌ Dữ liệu không hợp lệ! Vui lòng kiểm tra lại.");
-        e.printStackTrace();
     } catch (Exception e) {
         session.setAttribute("errorMessage", "❌ Lỗi hệ thống: " + e.getMessage());
         e.printStackTrace();
@@ -297,32 +287,57 @@ private boolean isDuplicateAssignment(int requestId, int technicianId) {
     /**
      * Display the assign work page with all necessary data
      */
-    private void displayAssignWorkPage(HttpServletRequest request, HttpServletResponse response, 
-                                       int managerId, String preSelectedRequestId, String preSelectedPriority)
-            throws ServletException, IOException, SQLException {
+    /**
+ * Display the assign work page with all necessary data
+ */
+/**
+ * Display the assign work page with all necessary data
+ */
+/**
+ * Display the assign work page with all necessary data
+ */
+private void displayAssignWorkPage(HttpServletRequest request, HttpServletResponse response, 
+                                   int managerId, String preSelectedRequestId, String preSelectedPriority)
+        throws ServletException, IOException, SQLException {
+    
+    List<TechnicianWorkload> availableTechnicians = technicianWorkloadDAO.getTechniciansForAssignment();
+    request.setAttribute("availableTechnicians", availableTechnicians);
+    
+    // ✅ LỌC CÁC REQUEST CHƯA TỪNG CÓ WORKTASK
+    List<ServiceRequest> allApprovedRequests = serviceRequestDAO.getRequestsByStatus("Approved");
+    List<ServiceRequest> pendingRequests = new ArrayList<>();
+    
+    WorkTaskDAO workTaskDAO = new WorkTaskDAO();
+    
+    for (ServiceRequest req : allApprovedRequests) {
+        // Kiểm tra xem request này đã có task chưa (bất kể status)
+        List<WorkTask> existingTasks = workTaskDAO.findByRequestId(req.getRequestId());
         
-        List<TechnicianWorkload> availableTechnicians = technicianWorkloadDAO.getTechniciansForAssignment();
-        request.setAttribute("availableTechnicians", availableTechnicians);
-        
-        List<ServiceRequest> pendingRequests = serviceRequestDAO.getRequestsByStatus("Approved");
-        request.setAttribute("pendingRequests", pendingRequests);
-        
-        List<TechnicianSkill> allSkills = technicianSkillDAO.getAllTechnicianSkills();
-        request.setAttribute("allSkills", allSkills);
-        
-        List<WorkAssignment> assignmentHistory = workAssignmentDAO.getAssignmentsByManager(managerId);
-        request.setAttribute("assignmentHistory", assignmentHistory);
-        
-        if (preSelectedRequestId != null && !preSelectedRequestId.trim().isEmpty()) {
-            request.setAttribute("preSelectedRequestId", preSelectedRequestId);
+        // ✅ NẾU CHƯA CÓ TASK NÀO → Hiển thị
+        // ❌ NẾU ĐÃ CÓ TASK (dù Completed hay Active) → Ẩn
+        if (existingTasks.isEmpty()) {
+            pendingRequests.add(req);
         }
-        
-        if (preSelectedPriority != null && !preSelectedPriority.trim().isEmpty()) {
-            request.setAttribute("preSelectedPriority", preSelectedPriority);
-        }
-        
-        request.getRequestDispatcher("/AssignWork.jsp").forward(request, response);
     }
+    
+    request.setAttribute("pendingRequests", pendingRequests);
+    
+    List<TechnicianSkill> allSkills = technicianSkillDAO.getAllTechnicianSkills();
+    request.setAttribute("allSkills", allSkills);
+    
+    List<WorkAssignment> assignmentHistory = workAssignmentDAO.getAssignmentsByManager(managerId);
+    request.setAttribute("assignmentHistory", assignmentHistory);
+    
+    if (preSelectedRequestId != null && !preSelectedRequestId.trim().isEmpty()) {
+        request.setAttribute("preSelectedRequestId", preSelectedRequestId);
+    }
+    
+    if (preSelectedPriority != null && !preSelectedPriority.trim().isEmpty()) {
+        request.setAttribute("preSelectedPriority", preSelectedPriority);
+    }
+    
+    request.getRequestDispatcher("/AssignWork.jsp").forward(request, response);
+}
 
     /**
      * Get available technicians as JSON
