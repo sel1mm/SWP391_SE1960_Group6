@@ -1433,4 +1433,37 @@ public Equipment getEquipmentGroupedByModelSingle(String model) {
     }
     return null;
 }
+public List<Equipment> getEquipmentByContract(int contractId) throws SQLException {
+    List<Equipment> list = new ArrayList<>();
+    
+    String sql = "SELECT DISTINCT e.equipmentId, e.serialNumber, e.model, e.description, "
+            + "e.installDate, e.categoryId, c.categoryName, "
+            + "e.lastUpdatedBy, e.lastUpdatedDate, a.username "
+            + "FROM Equipment e "
+            + "INNER JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId "
+            + "LEFT JOIN Category c ON e.categoryId = c.categoryId "
+            + "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId "
+            + "WHERE ce.contractId = ? "
+            + "ORDER BY e.model, e.serialNumber";
+    
+    System.out.println("📊 DAO: Executing query for contractId: " + contractId);
+    
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setInt(1, contractId);
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Equipment equipment = mapResultSetToEquipment(rs);
+                list.add(equipment);
+                System.out.println("  - Found: " + equipment.getModel() + " (ID: " + equipment.getEquipmentId() + ")");
+            }
+        }
+    } catch (SQLException e) {
+        System.out.println("❌ DAO Error getting equipment by contractId: " + e.getMessage());
+        throw e;
+    }
+    
+    System.out.println("✅ DAO: Returning " + list.size() + " equipment");
+    return list;
+}
 }

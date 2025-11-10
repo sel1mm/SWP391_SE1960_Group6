@@ -507,6 +507,305 @@
     box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
     outline: none;
 }
+.request-item {
+    transition: all 0.3s ease;
+}
+
+.request-item:hover {
+    background-color: rgba(102, 126, 234, 0.08) !important;
+    border-color: #667eea !important;
+    transform: translateX(3px);
+}
+
+.request-item.hidden {
+    display: none !important;
+}
+
+/* Customer and Equipment dropdown styles */
+.customer-item.hidden,
+.equipment-item.hidden {
+    display: none !important;
+}
+
+.customer-item:hover,
+.equipment-item:hover {
+    background-color: rgba(102, 126, 234, 0.08) !important;
+    border-color: #667eea !important;
+    transform: translateX(3px);
+}
+/* ===== MODAL STYLING ===== */
+#editScheduleModal .modal-dialog {
+    max-width: 900px;
+}
+
+#editScheduleModal .modal-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+#editScheduleModal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 30px;
+    border-bottom: none;
+}
+
+#editScheduleModal .modal-title {
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+#editScheduleModal .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+}
+
+#editScheduleModal .btn-close:hover {
+    opacity: 1;
+}
+
+#editScheduleModal .modal-body {
+    padding: 30px;
+    background: #f8f9fa;
+}
+
+/* ===== REPORT SECTIONS ===== */
+.report-section {
+    background: white;
+    border-radius: 15px;
+    padding: 20px 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #667eea;
+    transition: all 0.3s ease;
+}
+
+.report-section:hover {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.report-section h6 {
+    color: #667eea;
+    font-weight: 700;
+    margin-bottom: 20px;
+    font-size: 1.05rem;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.report-section h6 i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.report-section p {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 0.95rem;
+}
+
+.report-section p strong {
+    color: #495057;
+    font-weight: 600;
+    min-width: 150px;
+    margin-right: 10px;
+}
+
+.report-section p span {
+    color: #6c757d;
+    flex: 1;
+}
+
+/* ===== EDITABLE FIELDS STYLING ===== */
+.report-section .form-select,
+.report-section .form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+    background: white;
+    font-size: 0.9rem;
+}
+
+.report-section .form-select:focus,
+.report-section .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    outline: none;
+}
+
+.report-section .form-select:hover,
+.report-section .form-control:hover {
+    border-color: #667eea;
+}
+
+.report-section .form-control:disabled {
+    background: #f1f3f5;
+    color: #6c757d;
+    cursor: not-allowed;
+    border-color: #dee2e6;
+}
+
+/* ===== BADGES & STATUS ===== */
+.report-section .badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+#editStatusDisplay {
+    font-weight: 600;
+    text-align: center;
+}
+
+/* ===== MODAL FOOTER ===== */
+#editScheduleModal .modal-footer {
+    background: white;
+    border-top: 2px solid #e9ecef;
+    padding: 20px 30px;
+    border-radius: 0 0 20px 20px;
+}
+
+#editScheduleModal .modal-footer .btn {
+    padding: 10px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+#editScheduleModal .modal-footer .btn-secondary {
+    background: #6c757d;
+    border: none;
+}
+
+#editScheduleModal .modal-footer .btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+#editScheduleModal .modal-footer .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+#editScheduleModal .modal-footer .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* ===== PRIORITY INDICATOR ===== */
+.priority-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse-priority 2s infinite;
+}
+
+.priority-low {
+    background-color: #28a745;
+}
+
+.priority-medium {
+    background-color: #ffc107;
+}
+
+.priority-high {
+    background-color: #fd7e14;
+}
+
+.priority-critical {
+    background-color: #dc3545;
+    animation: pulse-critical 1.5s infinite;
+}
+
+@keyframes pulse-priority {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes pulse-critical {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(220, 53, 69, 0);
+    }
+}
+
+/* ===== ROW SPACING ===== */
+.report-section .row {
+    margin-bottom: 0;
+}
+
+.report-section .col-md-6 {
+    padding-right: 20px;
+    padding-left: 20px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    #editScheduleModal .modal-dialog {
+        max-width: 95%;
+        margin: 10px auto;
+    }
+    
+    .report-section {
+        padding: 15px;
+    }
+    
+    .report-section p strong {
+        min-width: 120px;
+        font-size: 0.9rem;
+    }
+    
+    .report-section .form-select,
+    .report-section .form-control {
+        width: 100% !important;
+        min-width: 100% !important;
+        margin-top: 5px;
+    }
+}
+
+/* ===== DATETIME INPUT STYLING ===== */
+input[type="datetime-local"] {
+    min-width: 220px !important;
+}
+
+/* ===== SELECT STYLING ===== */
+select.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+}
+
+/* ===== SMOOTH TRANSITIONS ===== */
+#editScheduleModal .modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+}
+
+#editScheduleModal .modal.show .modal-dialog {
+    transform: none;
+}
     </style>
 </head>
 <body>
@@ -620,23 +919,23 @@
                             <form action="scheduleMaintenance" method="post" id="scheduleForm">
                                 <input type="hidden" name="action" value="createSchedule">
                                 
-                                <div class="mb-3">
-    <label for="requestId" class="form-label">Yêu Cầu Dịch Vụ</label>
+                                  <div class="mb-3">
+    <label for="customerId" class="form-label">Khách Hàng</label>
     
     <!-- Dropdown Button -->
     <div class="dropdown w-100">
         <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" 
                 type="button" 
-                id="requestDropdown" 
+                id="customerDropdown" 
                 data-bs-toggle="dropdown" 
                 aria-expanded="false"
                 style="height: 40px;">
-            <span id="requestDropdownText">Chọn yêu cầu dịch vụ...</span>
+            <span id="customerDropdownText">Chọn khách hàng...</span>
         </button>
         
         <!-- Dropdown Menu with Search -->
         <div class="dropdown-menu w-100 p-3" 
-             aria-labelledby="requestDropdown" 
+             aria-labelledby="customerDropdown" 
              style="max-height: 400px; overflow-y: auto;"
              onclick="event.stopPropagation();">
             
@@ -644,9 +943,9 @@
             <div class="mb-3">
                 <input type="text" 
                        class="form-control" 
-                       id="requestSearchBox" 
-                       placeholder="🔍 Tìm kiếm theo ID hoặc mô tả..."
-                       onkeyup="filterRequests()"
+                       id="customerSearchBox" 
+                       placeholder="🔍 Tìm kiếm theo tên, ID hoặc email..."
+                       onkeyup="filterCustomers()"
                        onclick="event.stopPropagation()">
             </div>
             
@@ -654,70 +953,159 @@
             <div class="mb-3 pb-3 border-bottom">
                 <button type="button" 
                         class="btn btn-sm btn-outline-secondary w-100" 
-                        onclick="clearRequestSelection()">
+                        onclick="clearCustomerSelection()">
                     <i class="fas fa-times me-1"></i>Xóa Lựa Chọn
                 </button>
             </div>
             
-            <!-- Request List -->
-            <div id="requestListContainer">
-                <c:forEach var="request" items="${approvedRequests}">
-    <div class="request-item p-2 rounded mb-2" 
+            <!-- Customer List -->
+            <div id="customerListContainer">
+                <c:forEach var="customer" items="${customerList}">
+    <div class="customer-item p-2 rounded mb-2" 
          style="border: 1px solid #e9ecef; cursor: pointer; transition: all 0.3s;"
-         data-request-id="${request.requestId}"
-         data-request-desc="${fn:toLowerCase(request.description)}"
-         data-contract-id="${request.contractId}"
-         onclick="selectRequest(${request.requestId}, '${fn:escapeXml(request.description)}', ${request.contractId != null ? request.contractId : 'null'})">
+         data-customer-id="${customer.accountId}"
+         data-customer-name="${fn:toLowerCase(customer.fullName)}"
+         data-customer-email="${fn:toLowerCase(customer.email)}"
+         onclick="selectCustomer(${customer.accountId}, '${fn:escapeXml(customer.fullName)}', '${fn:escapeXml(customer.email)}')">
         <div class="d-flex justify-content-between align-items-start">
             <div>
-                <strong>ID: ${request.requestId}</strong>
-                <p class="mb-0 text-muted small">${request.description}</p>
+                <strong>${customer.fullName}</strong>
+                <p class="mb-0 text-muted small">ID: ${customer.accountId} | ${customer.email}</p>
             </div>
         </div>
     </div>
 </c:forEach>
                 
-                <c:if test="${empty approvedRequests}">
-                    <div class="text-center text-muted py-3" id="noRequestMessage">
-                        <i class="fas fa-inbox fa-2x mb-2"></i>
-                        <p class="mb-0">Không có yêu cầu nào</p>
+                <c:if test="${empty customerList}">
+                    <div class="text-center text-muted py-3" id="noCustomerMessage">
+                        <i class="fas fa-user-slash fa-2x mb-2"></i>
+                        <p class="mb-0">Không có khách hàng nào</p>
                     </div>
                 </c:if>
                 
                 <!-- No Results Message -->
-                <div class="text-center text-muted py-3 d-none" id="noRequestResults">
+                <div class="text-center text-muted py-3 d-none" id="noCustomerResults">
                     <i class="fas fa-search fa-2x mb-2"></i>
-                    <p class="mb-0">Không tìm thấy yêu cầu</p>
+                    <p class="mb-0">Không tìm thấy khách hàng</p>
                 </div>
             </div>
         </div>
     </div>
     
     <!-- Hidden input to store selected value -->
-    <input type="hidden" id="requestId" name="requestId" value="${prefilledRequestId}">
+    <input type="hidden" id="customerId" name="customerId" value="${prefilledCustomerId}">
     
-    <!-- Display selected request -->
-    <div class="mt-2" id="selectedRequestDisplay" style="display: none;">
+    <!-- Display selected customer -->
+    <div class="mt-2" id="selectedCustomerDisplay" style="display: none;">
         <span class="badge bg-success">
             <i class="fas fa-check-circle me-1"></i>
-            <span id="selectedRequestText"></span>
+            <span id="selectedCustomerText"></span>
         </span>
     </div>
 </div>
                                 
-                                <div class="mb-3">
-                                    <label for="contractId" class="form-label">Hợp Đồng</label>
-                                    <select class="form-select" id="contractId" name="contractId">
-                                        <option value="">Chọn hợp đồng (tùy chọn)...</option>
-                                        <c:forEach var="contract" items="${contractList}">
-                                            <option value="${contract.contractId}"
-                                                    ${prefilledContractId != null && prefilledContractId == contract.contractId ? 'selected' : ''}>
-                                                #${contract.contractId} - ${contract.details}
-                                            </option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
-                                
+                                <!-- Thay thế phần contract dropdown hiện tại -->
+<div class="mb-3">
+    <label for="contractId" class="form-label">Hợp Đồng</label>
+    <select class="form-select" id="contractId" name="contractId">
+        <option value="">Chọn hợp đồng (tùy chọn)...</option>
+      <c:forEach var="contract" items="${contractList}">
+    <option value="${contract.contractId}"
+            data-customer-id="${contract.customerId}"
+            ${prefilledContractId != null && prefilledContractId == contract.contractId ? 'selected' : ''}>
+        #${contract.contractId} - ${contract.details}
+        <c:if test="${not empty contract.customerId}">
+            (KH: ${contract.customerId})
+        </c:if>
+    </option>
+</c:forEach>
+    </select>
+</div>
+                              <!-- Equipment Dropdown -->
+<div class="mb-3">
+    <label for="equipmentId" class="form-label">Thiết Bị (Tùy chọn)</label>
+    
+    <!-- Dropdown Button -->
+    <div class="dropdown w-100">
+        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" 
+                type="button" 
+                id="equipmentDropdown" 
+                data-bs-toggle="dropdown" 
+                aria-expanded="false"
+                style="height: 40px;">
+            <span id="equipmentDropdownText">Chọn thiết bị...</span>
+        </button>
+        
+        <!-- Dropdown Menu with Search -->
+        <div class="dropdown-menu w-100 p-3" 
+             aria-labelledby="equipmentDropdown" 
+             style="max-height: 400px; overflow-y: auto;"
+             onclick="event.stopPropagation();">
+            
+            <!-- Search Box -->
+            <div class="mb-3">
+                <input type="text" 
+                       class="form-control" 
+                       id="equipmentSearchBox" 
+                       placeholder="🔍 Tìm kiếm thiết bị..."
+                       onkeyup="filterEquipment()"
+                       onclick="event.stopPropagation()">
+            </div>
+            
+            <!-- Clear Selection Button -->
+            <div class="mb-3 pb-3 border-bottom">
+                <button type="button" 
+                        class="btn btn-sm btn-outline-secondary w-100" 
+                        onclick="clearEquipmentSelection()">
+                    <i class="fas fa-times me-1"></i>Xóa Lựa Chọn
+                </button>
+            </div>
+            
+            <!-- Equipment List -->
+            <div id="equipmentListContainer">
+                <c:forEach var="equipment" items="${equipmentList}">
+    <div class="equipment-item p-2 rounded mb-2" 
+         style="border: 1px solid #e9ecef; cursor: pointer; transition: all 0.3s;"
+         data-equipment-id="${equipment.equipmentId}"
+         data-equipment-model="${fn:toLowerCase(equipment.model)}"
+         data-equipment-serial="${fn:toLowerCase(equipment.serialNumber)}"
+         onclick="selectEquipment(${equipment.equipmentId}, '${fn:escapeXml(equipment.model)}', '${fn:escapeXml(equipment.serialNumber)}')">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <strong>${equipment.model}</strong>
+                <p class="mb-0 text-muted small">Serial: ${equipment.serialNumber}</p>
+            </div>
+        </div>
+    </div>
+</c:forEach>
+                
+                <c:if test="${empty equipmentList}">
+                    <div class="text-center text-muted py-3" id="noEquipmentMessage">
+                        <i class="fas fa-tools fa-2x mb-2"></i>
+                        <p class="mb-0">Không có thiết bị nào</p>
+                    </div>
+                </c:if>
+                
+                <!-- No Results Message -->
+                <div class="text-center text-muted py-3 d-none" id="noEquipmentResults">
+                    <i class="fas fa-search fa-2x mb-2"></i>
+                    <p class="mb-0">Không tìm thấy thiết bị</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden input to store selected value -->
+    <input type="hidden" id="equipmentId" name="equipmentId">
+    
+    <!-- Display selected equipment -->
+    <div class="mt-2" id="selectedEquipmentDisplay" style="display: none;">
+        <span class="badge bg-success">
+            <i class="fas fa-check-circle me-1"></i>
+            <span id="selectedEquipmentText"></span>
+        </span>
+    </div>
+</div>  
                                 
                                 
                                 <div class="mb-3">
@@ -908,102 +1296,148 @@
             </div>
 
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover" id="scheduleTable">
-                        <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>Yêu Cầu</th>
-                                
-                                <th>KTV</th>
-                                <th>Ngày Bảo Trì</th>
-                                <th>Loại</th>
-                                <th>Độ Ưu Tiên</th>
-                                <th>Trạng Thái</th>
-                                <th>Hành Động</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="schedule" items="${allSchedules}">
-                                <tr data-schedule-id="${schedule.scheduleId}"
-                                    data-status="${schedule.status}"
-                                    data-date="${schedule.scheduledDate}">
-                                    <td>#${schedule.scheduleId}</td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${schedule.requestId != null}">
-                                                #${schedule.requestId}
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="text-muted">N/A</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    
-                                    <td>
-    <c:choose>
-        <c:when test="${not empty schedule.technicianName}">
-            ${schedule.technicianName}
-            <span class="text-muted small">(#${schedule.assignedTo})</span>
-        </c:when>
-        <c:otherwise>
-            KTV #${schedule.assignedTo}
-        </c:otherwise>
-    </c:choose>
-</td>
-                                    <td>${schedule.scheduledDate}</td>
-                                    <td>
-                                        <span class="badge bg-info">${schedule.scheduleType}</span>
-                                    </td>
-                                    <td>
-                                        <span class="priority-indicator priority-${schedule.priorityId == 1 ? 'low' : 
-                                                                            schedule.priorityId == 2 ? 'medium' : 
-                                                                            schedule.priorityId == 3 ? 'high' : 'critical'}"></span>
-                                        ${schedule.priorityId == 1 ? 'Thấp' : 
-                                          schedule.priorityId == 2 ? 'Trung Bình' : 
-                                          schedule.priorityId == 3 ? 'Cao' : 'Khẩn Cấp'}
-                                    </td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${schedule.status == 'Scheduled'}">
-                                                <span class="badge bg-primary">Đã Lên Lịch</span>
-                                            </c:when>
-                                            <c:when test="${schedule.status == 'In Progress'}">
-                                                <span class="badge bg-warning">Đang Thực Hiện</span>
-                                            </c:when>
-                                            <c:when test="${schedule.status == 'Completed'}">
-                                                <span class="badge bg-success">Hoàn Thành</span>
-                                            </c:when>
-                                            <c:when test="${schedule.status == 'Cancelled'}">
-                                                <span class="badge bg-secondary">Hủy Bỏ</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-secondary">${schedule.status}</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-primary schedule-action-btn" 
-                                                    data-action="edit"
-                                                    data-schedule-id="<c:out value='${schedule.scheduleId}' escapeXml='true'/>"
-                                                    title="Chỉnh sửa">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-outline-danger schedule-action-btn" 
-                                                    data-action="delete"
-                                                    data-schedule-id="<c:out value='${schedule.scheduleId}' escapeXml='true'/>"
-                                                    title="Xóa"
-                                                    <c:if test='${schedule.status == "Completed" || schedule.status == "In Progress"}'>disabled</c:if>>
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                        </tbody>
-                    </table>
-                </div>
+    <div class="table-responsive">
+        <table class="table table-hover" id="scheduleTable">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Khách Hàng</th>
+                    <th>Thiết Bị</th>
+                    <th>Hợp Đồng</th>
+                    <th>KTV</th>
+                    <th>Ngày Bảo Trì</th>
+                    <th>Loại</th>
+                    <th>Độ Ưu Tiên</th>
+                    <th>Trạng Thái</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <c:forEach var="schedule" items="${allSchedules}">
+                    <tr data-schedule-id="${schedule.scheduleId}"
+                        data-status="${schedule.status}"
+                        data-date="${schedule.scheduledDate}">
+                        <td>#${schedule.scheduleId}</td>
+                        
+                        <!-- ✅ Khách Hàng -->
+                        <td>
+                            <c:choose>
+                                <c:when test="${not empty schedule.customerName}">
+                                    ${schedule.customerName}
+                                    <small class="text-muted d-block">ID: ${schedule.customerId}</small>
+                                </c:when>
+                                <c:when test="${schedule.customerId != null}">
+                                    <span class="text-muted">KH #${schedule.customerId}</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="text-muted">N/A</span>
+                                </c:otherwise>
+                            </c:choose>
+                        </td>
+                        
+                        <!-- ✅ Thiết Bị: Model (Serial Number) -->
+                        <td>
+                            <c:choose>
+                                <c:when test="${not empty schedule.equipmentModel}">
+                                    <strong>${schedule.equipmentModel}</strong>
+                                    <small class="text-muted d-block">Serial: ${schedule.equipmentSerial}</small>
+                                </c:when>
+                                <c:when test="${schedule.equipmentId != null}">
+                                    <span class="text-muted">TB #${schedule.equipmentId}</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="text-muted">N/A</span>
+                                </c:otherwise>
+                            </c:choose>
+                        </td>
+                        
+                        <!-- ✅ Hợp Đồng: Details -->
+                        <td>
+                            <c:choose>
+                                <c:when test="${not empty schedule.contractDetails}">
+                                    ${fn:substring(schedule.contractDetails, 0, 30)}
+                                    <c:if test="${fn:length(schedule.contractDetails) > 30}">...</c:if>
+                                    <small class="text-muted d-block">HD #${schedule.contractId}</small>
+                                </c:when>
+                                <c:when test="${schedule.contractId != null}">
+                                    <span class="text-muted">HD #${schedule.contractId}</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="text-muted">N/A</span>
+                                </c:otherwise>
+                            </c:choose>
+                        </td>
+                        
+                        <!-- KTV -->
+                        <td>
+                            <c:choose>
+                                <c:when test="${not empty schedule.technicianName}">
+                                    ${schedule.technicianName}
+                                    <small class="text-muted d-block">(#${schedule.assignedTo})</small>
+                                </c:when>
+                                <c:otherwise>
+                                    KTV #${schedule.assignedTo}
+                                </c:otherwise>
+                            </c:choose>
+                        </td>
+                        
+                        <td>${schedule.scheduledDate}</td>
+                        
+                        <td>
+                            <span class="badge bg-info">${schedule.scheduleType}</span>
+                        </td>
+                        
+                        <td>
+                            <span class="priority-indicator priority-${schedule.priorityId == 1 ? 'low' : 
+                                                                schedule.priorityId == 2 ? 'medium' : 
+                                                                schedule.priorityId == 3 ? 'high' : 'critical'}"></span>
+                            ${schedule.priorityId == 1 ? 'Thấp' : 
+                              schedule.priorityId == 2 ? 'Trung Bình' : 
+                              schedule.priorityId == 3 ? 'Cao' : 'Khẩn Cấp'}
+                        </td>
+                        
+                        <td>
+                            <c:choose>
+                                <c:when test="${schedule.status == 'Scheduled'}">
+                                    <span class="badge bg-primary">Đã Lên Lịch</span>
+                                </c:when>
+                                <c:when test="${schedule.status == 'In Progress'}">
+                                    <span class="badge bg-warning">Đang Thực Hiện</span>
+                                </c:when>
+                                <c:when test="${schedule.status == 'Completed'}">
+                                    <span class="badge bg-success">Hoàn Thành</span>
+                                </c:when>
+                                <c:when test="${schedule.status == 'Cancelled'}">
+                                    <span class="badge bg-secondary">Hủy Bỏ</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="badge bg-secondary">${schedule.status}</span>
+                                </c:otherwise>
+                            </c:choose>
+                        </td>
+                        
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary schedule-action-btn" 
+                                        data-action="edit"
+                                        data-schedule-id="<c:out value='${schedule.scheduleId}' escapeXml='true'/>"
+                                        title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger schedule-action-btn" 
+                                        data-action="delete"
+                                        data-schedule-id="<c:out value='${schedule.scheduleId}' escapeXml='true'/>"
+                                        title="Xóa"
+                                        <c:if test='${schedule.status == "Completed" || schedule.status == "In Progress"}'>disabled</c:if>>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </c:forEach>
+            </tbody>
+        </table>
+    </div>
                 
                 <!-- Pagination -->
                 <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
@@ -1022,66 +1456,143 @@
     </div>
 </div>
 
-    <!-- Edit Schedule Modal -->
-    <div class="modal fade" id="editScheduleModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Chỉnh Sửa Lịch Bảo Trì</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+   <!-- Edit Schedule Modal -->
+<div class="modal fade" id="editScheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Chi Tiết Lịch Bảo Trì</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <!-- ✅ THÊM FORM BẮT ĐẦU TỪ ĐÂY -->
+            <form id="editScheduleForm" method="POST" action="scheduleMaintenance">
+                <input type="hidden" name="action" value="updateSchedule">
+                <input type="hidden" id="editScheduleId" name="scheduleId">
+                
                 <div class="modal-body">
-                    <form id="editScheduleForm">
-                        <input type="hidden" name="action" value="updateSchedule">
-                        <input type="hidden" name="scheduleId" id="editScheduleId">
-                        
+                    <!-- ===== THÔNG TIN LỊCH BẢO TRÌ ===== -->
+                    <div class="report-section">
+                        <h6><i class="fas fa-calendar me-2"></i>Thông Tin Lịch Bảo Trì</h6>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="editScheduledDate" class="form-label">Ngày Giờ Bảo Trì</label>
-                                <input type="datetime-local" class="form-control" id="editScheduledDate" 
-                                       name="scheduledDate" required>
+                            <div class="col-md-6">
+                                <p><strong>ID Lịch:</strong> <span id="viewScheduleId"></span></p>
+                                <p>
+                                    <strong>Loại Bảo Trì:</strong>
+                                    <select class="form-select form-select-sm d-inline-block w-auto" 
+                                            id="editScheduleType" 
+                                            name="scheduleType" 
+                                            required>
+                                        <option value="Preventive">Bảo Trì Định Kỳ</option>
+                                        <option value="Corrective">Bảo Trì Sửa Chữa</option>
+                                        <option value="Emergency">Bảo Trì Khẩn Cấp</option>
+                                        <option value="Inspection">Kiểm Tra</option>
+                                    </select>
+                                </p>
+                                <p>
+                                    <strong>Ngày Giờ Bảo Trì:</strong>
+                                    <input type="datetime-local" 
+                                           class="form-control form-control-sm d-inline-block w-auto" 
+                                           id="editScheduledDate" 
+                                           name="scheduledDate"
+                                           required
+                                           style="min-width: 200px;">
+                                </p>
+                                <p>
+                                    <strong>Độ Ưu Tiên:</strong>
+                                    <select class="form-select form-select-sm d-inline-block w-auto" 
+                                            id="editPriorityId" 
+                                            name="priorityId"
+                                            required disabled>
+                                        <option value="1">Thấp</option>
+                                        <option value="2">Trung Bình</option>
+                                        <option value="3">Cao</option>
+                                        <option value="4">Khẩn Cấp</option>
+                                    </select>
+                                </p>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="editScheduleType" class="form-label">Loại Bảo Trì</label>
-                                <select class="form-select" id="editScheduleType" name="scheduleType" required>
-                                    <option value="Preventive">Bảo Trì Định Kỳ</option>
-                                    <option value="Corrective">Bảo Trì Sửa Chữa</option>
-                                    <option value="Emergency">Bảo Trì Khẩn Cấp</option>
-                                    <option value="Inspection">Kiểm Tra</option>
-                                </select>
+                            <div class="col-md-6">
+                                <p>
+                                    <strong>Trạng Thái:</strong> 
+                                    <input type="text" 
+                                           class="form-control form-control-sm d-inline-block w-auto" 
+                                           id="editStatusDisplay"
+                                           disabled
+                                           style="min-width: 150px;">
+                                </p>
+                                <p><strong>Quy Tắc Lặp:</strong> <span id="viewRecurrence">Không lặp lại</span></p>
                             </div>
                         </div>
-                        
-                        <div class="row">
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="editPriorityId" class="form-label">Độ Ưu Tiên</label>
-                                <select class="form-select" id="editPriorityId" name="priorityId" disabled>
-                                    <option value="1">Thấp</option>
-                                    <option value="2">Trung Bình</option>
-                                    <option value="3">Cao</option>
-                                    <option value="4">Khẩn Cấp</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                       <div class="mb-3">
-                        <label for="editStatusDisplay" class="form-label">Trạng Thái</label>
-                        <input type="text" class="form-control" id="editStatusDisplay" readonly 
-                               style="background-color: #e9ecef; cursor: not-allowed;">
-                        
                     </div>
-                    </form>
+
+                    <!-- ===== THÔNG TIN HỢP ĐỒNG ===== -->
+                    <div class="report-section" id="contractSection" style="display: none;">
+                        <h6><i class="fas fa-file-contract me-2"></i>Thông Tin Hợp Đồng</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>ID Hợp Đồng:</strong> <span id="viewContractId"></span></p>
+                                <p><strong>Tên/Chi Tiết:</strong> <span id="viewContractDetails"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Loại Hợp Đồng:</strong> <span id="viewContractType"></span></p>
+                                <p><strong>Ngày Ký:</strong> <span id="viewContractDate"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== THÔNG TIN KHÁCH HÀNG ===== -->
+                    <div class="report-section" id="customerSection" style="display: none;">
+                        <h6><i class="fas fa-user me-2"></i>Thông Tin Khách Hàng</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>ID Khách Hàng:</strong> <span id="viewCustomerId"></span></p>
+                                <p><strong>Tên Khách Hàng:</strong> <span id="viewCustomerName"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Email:</strong> <span id="viewCustomerEmail"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== THÔNG TIN THIẾT BỊ ===== -->
+                    <div class="report-section" id="equipmentSection" style="display: none;">
+                        <h6><i class="fas fa-tools me-2"></i>Thông Tin Thiết Bị</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>ID Thiết Bị:</strong> <span id="viewEquipmentId"></span></p>
+                                <p><strong>Model:</strong> <span id="viewEquipmentModel"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Serial Number:</strong> <span id="viewEquipmentSerial"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== THÔNG TIN KỸ THUẬT VIÊN ===== -->
+                    <div class="report-section">
+                        <h6><i class="fas fa-user-cog me-2"></i>Kỹ Thuật Viên Phụ Trách</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>ID KTV:</strong> <span id="viewTechnicianId"></span></p>
+                                <p><strong>Tên KTV:</strong> <span id="viewTechnicianName"></span></p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary" onclick="saveScheduleChanges()">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Đóng
+                    </button>
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-2"></i>Lưu Thay Đổi
                     </button>
                 </div>
-            </div>
+            </form>
+            <!-- ✅ ĐÓNG FORM -->
         </div>
     </div>
+</div>
 
     <!-- JSON Data Island for Schedule Events -->
     <script type="application/json" id="scheduleData">
@@ -1382,9 +1893,13 @@ function changePage(page) {
         });
     }
 }
-
+// ===== SỬA FUNCTION editSchedule =====
 function editSchedule(scheduleId) {
-    document.getElementById('editScheduleForm').reset();
+    // Reset form trước khi load data mới
+    const form = document.getElementById('editScheduleForm');
+    if (form) {
+        form.reset();
+    }
     
     fetch('scheduleMaintenance?action=getScheduleDetails&scheduleId=' + scheduleId)
     .then(response => {
@@ -1397,9 +1912,17 @@ function editSchedule(scheduleId) {
             return;
         }
         
-        document.getElementById('editScheduleId').value = data.scheduleId;
+        const schedule = data.schedule;
         
-        let scheduledDateStr = data.scheduledDate;
+        // ===== SET EDITABLE FIELDS =====
+        document.getElementById('editScheduleId').value = schedule.scheduleId;
+        document.getElementById('viewScheduleId').textContent = '#' + schedule.scheduleId;
+        
+        // Set Schedule Type
+        document.getElementById('editScheduleType').value = schedule.scheduleType || 'Preventive';
+        
+        // Set Scheduled Date
+        let scheduledDateStr = schedule.scheduledDate;
         if (typeof scheduledDateStr === 'string') {
             if (scheduledDateStr.length === 10) {
                 scheduledDateStr = scheduledDateStr + 'T00:00';
@@ -1411,10 +1934,10 @@ function editSchedule(scheduleId) {
         }
         document.getElementById('editScheduledDate').value = scheduledDateStr;
         
-        document.getElementById('editScheduleType').value = data.scheduleType || 'Preventive';
+        // Set Priority
+        document.getElementById('editPriorityId').value = schedule.priorityId || '2';
         
-        document.getElementById('editPriorityId').value = data.priorityId || '2';
-        
+        // ===== SET READONLY/DISPLAY FIELDS =====
         const statusMap = {
             'Scheduled': 'Đã Lên Lịch',
             'In Progress': 'Đang Thực Hiện',
@@ -1422,8 +1945,45 @@ function editSchedule(scheduleId) {
             'Cancelled': 'Hủy Bỏ'
         };
         
-        document.getElementById('editStatusDisplay').value = statusMap[data.status] || data.status;
+        document.getElementById('editStatusDisplay').value = statusMap[schedule.status] || schedule.status;
+        document.getElementById('viewRecurrence').textContent = schedule.recurrenceRule || 'Không lặp lại';
         
+        // ===== CONTRACT SECTION =====
+        if (data.contract) {
+            document.getElementById('contractSection').style.display = 'block';
+            document.getElementById('viewContractId').textContent = '#' + data.contract.contractId;
+            document.getElementById('viewContractDetails').textContent = data.contract.details || 'N/A';
+            document.getElementById('viewContractType').textContent = data.contract.contractType || 'N/A';
+            document.getElementById('viewContractDate').textContent = data.contract.contractDate || 'N/A';
+        } else {
+            document.getElementById('contractSection').style.display = 'none';
+        }
+        
+        // ===== CUSTOMER SECTION =====
+        if (data.customerName) {
+            document.getElementById('customerSection').style.display = 'block';
+            document.getElementById('viewCustomerId').textContent = '#' + schedule.customerId;
+            document.getElementById('viewCustomerName').textContent = data.customerName;
+            document.getElementById('viewCustomerEmail').textContent = data.customerEmail || 'N/A';
+        } else {
+            document.getElementById('customerSection').style.display = 'none';
+        }
+        
+        // ===== EQUIPMENT SECTION =====
+        if (data.equipment) {
+            document.getElementById('equipmentSection').style.display = 'block';
+            document.getElementById('viewEquipmentId').textContent = '#' + data.equipment.equipmentId;
+            document.getElementById('viewEquipmentModel').textContent = data.equipment.model || 'N/A';
+            document.getElementById('viewEquipmentSerial').textContent = data.equipment.serialNumber || 'N/A';
+        } else {
+            document.getElementById('equipmentSection').style.display = 'none';
+        }
+        
+        // ===== TECHNICIAN SECTION =====
+        document.getElementById('viewTechnicianId').textContent = '#' + schedule.assignedTo;
+        document.getElementById('viewTechnicianName').textContent = data.technicianName || 'N/A';
+        
+        // Show modal
         const modal = new bootstrap.Modal(document.getElementById('editScheduleModal'));
         modal.show();
     })
@@ -1435,35 +1995,65 @@ function editSchedule(scheduleId) {
 
 function saveScheduleChanges() {
     const form = document.getElementById('editScheduleForm');
-    const formData = new FormData(form);
     
-    const scheduledDate = document.getElementById('editScheduledDate').value;
-    const scheduleType = document.getElementById('editScheduleType').value;
-    
-    if (!scheduledDate || !scheduleType) {
-        showToast('Vui lòng điền đầy đủ thông tin!', 'error');
+    if (!form) {
+        console.error('❌ Form không tồn tại!');
+        showToast('Lỗi: Không tìm thấy form!', 'error');
         return;
     }
     
+    // Validate required fields
+    const scheduleId = document.getElementById('editScheduleId').value;
+    const scheduledDate = document.getElementById('editScheduledDate').value;
+    const scheduleType = document.getElementById('editScheduleType').value;
+    const priorityId = document.getElementById('editPriorityId').value;
+    
+    if (!scheduleId || !scheduledDate || !scheduleType || !priorityId) {
+        showToast('⚠️ Vui lòng điền đầy đủ thông tin!', 'error');
+        return;
+    }
+    
+    // Create FormData
+    const formData = new FormData();
+    formData.append('action', 'updateSchedule');
+    formData.append('scheduleId', scheduleId);
+    formData.append('scheduledDate', scheduledDate);
+    formData.append('scheduleType', scheduleType);
+    formData.append('priorityId', priorityId);
+    
+    console.log('📤 Sending data:', {
+        scheduleId: scheduleId,
+        scheduledDate: scheduledDate,
+        scheduleType: scheduleType,
+        priorityId: priorityId
+    });
+    
+    // Send request
     fetch('scheduleMaintenance', {
         method: 'POST',
-        body: new URLSearchParams(formData)
+        body: formData
     })
     .then(response => {
+        console.log('📥 Response status:', response.status);
         if (response.ok) {
-            showToast('Cập nhật thành công!', 'success');
+            showToast('✅ Cập nhật thành công!', 'success');
+            
+            // Close modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('editScheduleModal'));
             if (modal) modal.hide();
+            
+            // Reload page after 1 second
             setTimeout(() => location.reload(), 1000);
         } else {
             return response.text().then(text => {
-                showToast('Lỗi: ' + text, 'error');
+                console.error('❌ Server error:', text);
+                showToast('❌ Lỗi: ' + text, 'error');
             });
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        showToast('Lỗi khi cập nhật!', 'error');
+        console.error('❌ Fetch error:', error);
+        showToast('❌ Lỗi khi cập nhật: ' + error.message, 'error');
     });
 }
 
@@ -1769,6 +2359,320 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// ===== CUSTOMER SELECTION FUNCTIONS =====
+function filterCustomers() {
+    const searchValue = document.getElementById('customerSearchBox').value.toLowerCase().trim();
+    const customerItems = document.querySelectorAll('.customer-item');
+    let visibleCount = 0;
+    
+    customerItems.forEach(item => {
+        const customerId = item.getAttribute('data-customer-id');
+        const customerName = item.getAttribute('data-customer-name');
+        const customerEmail = item.getAttribute('data-customer-email');
+        
+        const matchesSearch = customerId.includes(searchValue) || 
+                             customerName.includes(searchValue) ||
+                             customerEmail.includes(searchValue);
+        
+        if (matchesSearch) {
+            item.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            item.classList.add('hidden');
+        }
+    });
+    
+    const noResultsMsg = document.getElementById('noCustomerResults');
+    if (visibleCount === 0 && searchValue !== '') {
+        noResultsMsg.classList.remove('d-none');
+    } else {
+        noResultsMsg.classList.add('d-none');
+    }
+}
+// Cập nhật function selectCustomer hiện tại
+function selectCustomer(customerId, fullName, email) {
+    document.getElementById('customerId').value = customerId;
+    
+    const buttonText = fullName + ' (ID: ' + customerId + ')';
+    document.getElementById('customerDropdownText').textContent = buttonText;
+    
+    document.getElementById('selectedCustomerText').textContent = fullName + ' - ' + email;
+    document.getElementById('selectedCustomerDisplay').style.display = 'block';
+    
+    const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('customerDropdown'));
+    if (dropdown) dropdown.hide();
+    
+    const dropdownButton = document.querySelector('#customerDropdown');
+    dropdownButton.classList.add('border-success');
+    dropdownButton.style.borderWidth = '3px';
+    
+    // ✅ TỰ ĐỘNG LỌC CONTRACTS
+    filterContractsByCustomer();
+}
+// Cập nhật function clearCustomerSelection hiện tại
+function clearCustomerSelection() {
+    document.getElementById('customerId').value = '';
+    document.getElementById('customerDropdownText').textContent = 'Chọn khách hàng...';
+    document.getElementById('selectedCustomerDisplay').style.display = 'none';
+    
+    const dropdownButton = document.querySelector('#customerDropdown');
+    dropdownButton.classList.remove('border-success');
+    dropdownButton.style.borderWidth = '';
+    
+    document.getElementById('customerSearchBox').value = '';
+    filterCustomers();
+    
+    // ✅ RESET CONTRACT FILTER
+    const contractSelect = document.getElementById('contractId');
+    contractSelect.value = '';
+    const contractOptions = contractSelect.querySelectorAll('option');
+    contractOptions.forEach(option => {
+        option.style.display = 'block';
+    });
+}
+
+// Handle pre-filled customer on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const customerIdInput = document.getElementById('customerId');
+    if (customerIdInput && customerIdInput.value) {
+        const prefilledValue = customerIdInput.value;
+        const customerItem = document.querySelector('.customer-item[data-customer-id="' + prefilledValue + '"]');
+        if (customerItem) {
+            const name = customerItem.querySelector('strong').textContent;
+            const emailText = customerItem.querySelector('.text-muted').textContent;
+            const email = emailText.split('|')[1] ? emailText.split('|')[1].trim() : '';
+            selectCustomer(prefilledValue, name, email);
+        }
+    }
+});
+// Thêm vào cuối phần <script> trong ScheduleMaintenance.jsp
+function filterContractsByCustomer() {
+    const customerId = document.getElementById('customerId').value;
+    const contractSelect = document.getElementById('contractId');
+    const contractOptions = contractSelect.querySelectorAll('option');
+    
+    console.log('🔍 Filter by Customer ID:', customerId); // Debug
+    
+    // Reset tất cả contracts
+    contractOptions.forEach(option => {
+        if (option.value === '') {
+            option.style.display = 'block'; // Giữ option "Chọn hợp đồng"
+            return;
+        }
+        
+        const optionCustomerId = option.getAttribute('data-customer-id');
+        
+        console.log('  Option:', option.value, 'Customer:', optionCustomerId); // Debug
+        
+        // ✅ SO SÁNH DẠNG CHUỖI để tránh lỗi type mismatch
+        if (!customerId || optionCustomerId == customerId) {
+            option.style.display = 'block';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    // Reset contract selection khi đổi customer
+    contractSelect.value = '';
+    
+    console.log('✅ Filter completed'); // Debug
+}
+function selectCustomer(customerId, fullName, email) {
+    document.getElementById('customerId').value = customerId;
+    
+    const buttonText = fullName + ' (ID: ' + customerId + ')';
+    document.getElementById('customerDropdownText').textContent = buttonText;
+    
+    document.getElementById('selectedCustomerText').textContent = fullName + ' - ' + email;
+    document.getElementById('selectedCustomerDisplay').style.display = 'block';
+    
+    const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('customerDropdown'));
+    if (dropdown) dropdown.hide();
+    
+    const dropdownButton = document.querySelector('#customerDropdown');
+    dropdownButton.classList.add('border-success');
+    dropdownButton.style.borderWidth = '3px';
+    
+    // ✅ TỰ ĐỘNG LỌC CONTRACTS
+    filterContractsByCustomer();
+    
+    // ⚠️ DEBUG: Kiểm tra số contract match
+    const contractSelect = document.getElementById('contractId');
+    const visibleOptions = Array.from(contractSelect.options).filter(opt => 
+        opt.value !== '' && opt.style.display !== 'none'
+    );
+    
+    console.log('📊 Customer ID:', customerId);
+    console.log('📊 Visible Contracts:', visibleOptions.length);
+    
+    if (visibleOptions.length === 0) {
+        alert('⚠️ Khách hàng này chưa có hợp đồng nào!\nVui lòng chọn khách hàng khác hoặc tạo hợp đồng mới.');
+    }
+}
+// ===== EQUIPMENT SELECTION FUNCTIONS =====
+function filterEquipment() {
+    const searchValue = document.getElementById('equipmentSearchBox').value.toLowerCase().trim();
+    const equipmentItems = document.querySelectorAll('.equipment-item');
+    let visibleCount = 0;
+    
+    equipmentItems.forEach(item => {
+        const equipmentId = item.getAttribute('data-equipment-id');
+        const equipmentModel = item.getAttribute('data-equipment-model');
+        const equipmentSerial = item.getAttribute('data-equipment-serial');
+        
+        const matchesSearch = equipmentId.includes(searchValue) || 
+                             equipmentModel.includes(searchValue) ||
+                             equipmentSerial.includes(searchValue);
+        
+        if (matchesSearch) {
+            item.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            item.classList.add('hidden');
+        }
+    });
+    
+    const noResultsMsg = document.getElementById('noEquipmentResults');
+    if (visibleCount === 0 && searchValue !== '') {
+        noResultsMsg.classList.remove('d-none');
+    } else {
+        noResultsMsg.classList.add('d-none');
+    }
+}
+
+function selectEquipment(equipmentId, model, serialNumber) {
+    document.getElementById('equipmentId').value = equipmentId;
+    
+    const buttonText = model + ' - ' + serialNumber;
+    document.getElementById('equipmentDropdownText').textContent = buttonText;
+    
+    document.getElementById('selectedEquipmentText').textContent = buttonText;
+    document.getElementById('selectedEquipmentDisplay').style.display = 'block';
+    
+    const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('equipmentDropdown'));
+    if (dropdown) dropdown.hide();
+    
+    const dropdownButton = document.querySelector('#equipmentDropdown');
+    dropdownButton.classList.add('border-success');
+    dropdownButton.style.borderWidth = '3px';
+}
+
+function clearEquipmentSelection() {
+    document.getElementById('equipmentId').value = '';
+    document.getElementById('equipmentDropdownText').textContent = 'Chọn thiết bị...';
+    document.getElementById('selectedEquipmentDisplay').style.display = 'none';
+    
+    const dropdownButton = document.querySelector('#equipmentDropdown');
+    dropdownButton.classList.remove('border-success');
+    dropdownButton.style.borderWidth = '';
+    
+    document.getElementById('equipmentSearchBox').value = '';
+    filterEquipment();
+}
+// ===== AUTO FILTER EQUIPMENT KHI CHỌN CONTRACT =====
+document.addEventListener('DOMContentLoaded', function() {
+    const contractSelect = document.getElementById('contractId');
+    
+    if (contractSelect) {
+        contractSelect.addEventListener('change', function() {
+            filterEquipmentByContract();
+        });
+        
+        // Auto filter nếu có pre-filled contract
+        const prefilledContractId = contractSelect.value;
+        if (prefilledContractId) {
+            filterEquipmentByContract();
+        }
+    }
+});
+
+function filterEquipmentByContract() {
+    const contractSelect = document.getElementById('contractId');
+    const selectedContractId = contractSelect.value;
+    
+    const equipmentItems = document.querySelectorAll('.equipment-item');
+    
+    console.log('🔍 Filter equipment by contract:', selectedContractId);
+    
+    if (!selectedContractId || selectedContractId === '') {
+        // Hiện tất cả equipment nếu không chọn contract
+        equipmentItems.forEach(item => {
+            item.classList.remove('hidden');
+            item.style.display = 'block';
+        });
+        
+        // ✅ SAFE: Check before use
+        const noEquipmentMsg = document.getElementById('noEquipmentMessage');
+        if (noEquipmentMsg) {
+            noEquipmentMsg.style.display = 'none';
+        }
+        return;
+    }
+    
+    // Gọi AJAX để lấy equipment của contract
+    fetch('scheduleMaintenance?action=getEquipmentByContract&contractId=' + selectedContractId)
+        .then(response => response.json())
+        .then(data => {
+            console.log('✅ Received equipment:', data);
+            
+            if (!data || data.length === 0) {
+                // Ẩn tất cả equipment
+                equipmentItems.forEach(item => {
+                    item.classList.add('hidden');
+                    item.style.display = 'none';
+                });
+                
+                // ✅ SAFE: Create message if not exists
+                let noEquipmentMsg = document.getElementById('noEquipmentMessage');
+                if (!noEquipmentMsg) {
+                    // Tạo mới nếu chưa có
+                    noEquipmentMsg = document.createElement('div');
+                    noEquipmentMsg.id = 'noEquipmentMessage';
+                    noEquipmentMsg.className = 'text-center text-muted py-3';
+                    document.getElementById('equipmentListContainer').appendChild(noEquipmentMsg);
+                }
+                
+                noEquipmentMsg.style.display = 'block';
+                noEquipmentMsg.innerHTML = 
+                    '<i class="fas fa-tools fa-2x mb-2"></i>' +
+                    '<p class="mb-0">Hợp đồng này chưa có thiết bị nào</p>';
+                
+                // Clear selection
+                clearEquipmentSelection();
+                return;
+            }
+            
+            // Lấy danh sách equipment IDs từ contract
+            const validEquipmentIds = data.map(eq => eq.equipmentId.toString());
+            
+            let visibleCount = 0;
+            equipmentItems.forEach(item => {
+                const equipmentId = item.getAttribute('data-equipment-id');
+                
+                if (validEquipmentIds.includes(equipmentId)) {
+                    item.classList.remove('hidden');
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.classList.add('hidden');
+                    item.style.display = 'none';
+                }
+            });
+            
+            // ✅ SAFE: Check before use
+            const noEquipmentMsg = document.getElementById('noEquipmentMessage');
+            if (noEquipmentMsg) {
+                noEquipmentMsg.style.display = (visibleCount === 0) ? 'block' : 'none';
+            }
+            
+            console.log('📊 Visible equipment count:', visibleCount);
+        })
+        .catch(error => {
+            console.error('❌ Error filtering equipment:', error);
+            alert('Lỗi khi lọc thiết bị theo hợp đồng!');
+        });
+}
     </script>
         </div> <!-- content-wrapper -->
     </div> <!-- main-content -->

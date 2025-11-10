@@ -13,6 +13,11 @@ public class MaintenanceSchedule {
     private String status;
     private int priorityId;
     private String technicianName; 
+    private Integer customerId;
+    private String customerName;
+private String equipmentModel;
+private String equipmentSerial;
+private String contractDetails;
     public MaintenanceSchedule() {
     }
 
@@ -115,5 +120,42 @@ public class MaintenanceSchedule {
     public void setTechnicianName(String technicianName) {
         this.technicianName = technicianName;
     }
-    
+    public Integer getCustomerId() {
+    return customerId;
+}
+
+public void setCustomerId(Integer customerId) {
+    this.customerId = customerId;
+}
+public String getCustomerName() {
+    return customerName;
+}
+
+public void setCustomerName(String customerName) {
+    this.customerName = customerName;
+}
+
+public String getEquipmentModel() {
+    return equipmentModel;
+}
+
+public void setEquipmentModel(String equipmentModel) {
+    this.equipmentModel = equipmentModel;
+}
+
+public String getEquipmentSerial() {
+    return equipmentSerial;
+}
+
+public void setEquipmentSerial(String equipmentSerial) {
+    this.equipmentSerial = equipmentSerial;
+}
+
+public String getContractDetails() {
+    return contractDetails;
+}
+
+public void setContractDetails(String contractDetails) {
+    this.contractDetails = contractDetails;
+}
 }
