@@ -453,26 +453,49 @@ public class PaymentServlet extends HttpServlet {
                 return;
             }
             
-            // ✅ Bước 2: Tạo Invoice Paid
-            System.out.println("\n--- Step 2: Creating Invoice ---");
-            int invoiceId = invoiceDAO.createInvoice(contractId, paymentAmount, "Paid", 
-                                                    LocalDate.now().plusDays(30), "Cash");
-            if (invoiceId <= 0) {
-                System.err.println("❌ ERROR: Failed to create invoice!");
-                response.getWriter().write("{\"success\":false,\"error\":\"Không thể tạo hóa đơn!\"}");
-                response.getWriter().flush();
-                return;
-            }
-            System.out.println("✅ Invoice created with ID: " + invoiceId);
+            // ✅ Bước 2: Sử dụng hoặc tạo Invoice
+            System.out.println("\n--- Step 2: Get or Create Invoice ---");
+            int invoiceId;
+            Integer pendingInvoiceId = (Integer) session.getAttribute("pendingInvoiceId");
             
-            // ✅ Bước 3: Tạo InvoiceDetail
+            if (pendingInvoiceId != null && pendingInvoiceId > 0) {
+                // ✅ Sử dụng invoice pending đã tạo sẵn và update status
+                invoiceId = pendingInvoiceId;
+                boolean updated = invoiceDAO.updateInvoicePaymentInfo(
+                    invoiceId, 
+                    "Paid", 
+                    "Cash", 
+                    paymentAmount
+                );
+                if (updated) {
+                    System.out.println("✅ Updated existing pending invoice to Paid: " + invoiceId);
+                } else {
+                    System.err.println("❌ ERROR: Failed to update pending invoice!");
+                    response.getWriter().write("{\"success\":false,\"error\":\"Không thể cập nhật hóa đơn!\"}");
+                    response.getWriter().flush();
+                    return;
+                }
+            } else {
+                // ✅ Tạo invoice mới nếu không có pending invoice
+                invoiceId = invoiceDAO.createInvoice(contractId, paymentAmount, "Paid", 
+                                                    LocalDate.now().plusDays(30), "Cash");
+                if (invoiceId <= 0) {
+                    System.err.println("❌ ERROR: Failed to create invoice!");
+                    response.getWriter().write("{\"success\":false,\"error\":\"Không thể tạo hóa đơn!\"}");
+                    response.getWriter().flush();
+                    return;
+                }
+                System.out.println("✅ Invoice created with ID: " + invoiceId);
+            }
+            
+            // ✅ Bước 3: Tạo InvoiceDetail với paymentStatus = "Completed"
             System.out.println("\n--- Step 3: Creating InvoiceDetail ---");
             String invoiceDesc = "Thanh toán tiền mặt cho yêu cầu #" + requestId;
             if (report != null && report.getTechnicianName() != null) {
                 invoiceDesc += " - Kỹ thuật viên: " + report.getTechnicianName();
             }
-            int invoiceDetailId = invoiceDAO.createInvoiceDetail(invoiceId, invoiceDesc, paymentAmount);
-            System.out.println("✅ InvoiceDetail created with ID: " + invoiceDetailId);
+            int invoiceDetailId = invoiceDAO.createInvoiceDetail(invoiceId, invoiceDesc, paymentAmount, "Completed");
+            System.out.println("✅ InvoiceDetail created with ID: " + invoiceDetailId + ", paymentStatus=Completed");
             
             // ✅ Bước 4: Tạo Payment Completed
             System.out.println("\n--- Step 4: Creating Payment ---");
@@ -580,9 +603,15 @@ public class PaymentServlet extends HttpServlet {
                 System.out.println("ℹ️ No pending payment to delete");
             }
             
-            // ✅ Bước 9: Lưu thông tin vào session
+            // ✅ Bước 9: Xóa pending session data và lưu thông tin mới
+            session.removeAttribute("pendingInvoiceId");
+            session.removeAttribute("pendingRequestId");
+            session.removeAttribute("pendingReportId");
+            session.removeAttribute("pendingPaymentId");
+            
             session.setAttribute("lastPaidInvoiceId", invoiceId);
             session.setAttribute("lastPaidRequestId", requestId);
+            System.out.println("✅ Session data cleaned and updated");
             
             // ✅ Summary
             System.out.println("\n" + "=".repeat(80));

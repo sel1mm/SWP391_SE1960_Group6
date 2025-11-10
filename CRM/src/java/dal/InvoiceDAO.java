@@ -567,32 +567,51 @@ public class InvoiceDAO extends DBContext {
     }
 
     /**
-     * Tạo Invoice mới (backward compatibility - không có paymentMethod)
+     * Tạo InvoiceDetail với paymentStatus
      */
-    public int createInvoice(int contractId, double totalAmount, String status, LocalDate dueDate) throws SQLException {
-        return createInvoice(contractId, totalAmount, status, dueDate, null);
-    }
-    
-    /**
-     * Tạo InvoiceDetail
-     */
-    public int createInvoiceDetail(int invoiceId, String description, double amount) throws SQLException {
-        String sql = "INSERT INTO InvoiceDetail (invoiceId, description, amount) VALUES (?, ?, ?)";
+    public int createInvoiceDetail(int invoiceId, String description, double amount, String paymentStatus) throws SQLException {
+        String sql = "INSERT INTO InvoiceDetail (invoiceId, description, amount, paymentStatus) VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, invoiceId);
             ps.setString(2, description);
             ps.setDouble(3, amount);
+            ps.setString(4, paymentStatus);
             
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
                 try (ResultSet rs = ps.getGeneratedKeys()) {
                     if (rs.next()) {
-                        return rs.getInt(1);
+                        int detailId = rs.getInt(1);
+                        System.out.println("✅ InvoiceDetail created: detailId=" + detailId + ", paymentStatus=" + paymentStatus);
+                        return detailId;
                     }
                 }
             }
         }
         return -1;
+    }
+    
+    /**
+     * Tạo InvoiceDetail (backward compatibility - default paymentStatus = "Pending")
+     */
+    public int createInvoiceDetail(int invoiceId, String description, double amount) throws SQLException {
+        return createInvoiceDetail(invoiceId, description, amount, "Pending");
+    }
+    
+    /**
+     * Cập nhật paymentStatus của InvoiceDetail theo invoiceId
+     */
+    public boolean updateInvoiceDetailPaymentStatus(int invoiceId, String paymentStatus) throws SQLException {
+        String sql = "UPDATE InvoiceDetail SET paymentStatus = ? WHERE invoiceId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, paymentStatus);
+            ps.setInt(2, invoiceId);
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("✅ Updated InvoiceDetail paymentStatus: invoiceId=" + invoiceId + ", paymentStatus=" + paymentStatus);
+            }
+            return rowsAffected > 0;
+        }
     }
     
     /**

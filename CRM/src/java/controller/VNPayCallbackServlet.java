@@ -121,6 +121,14 @@ public class VNPayCallbackServlet extends HttpServlet {
                         System.err.println("⚠️ Failed to update invoice: invoiceId=" + pendingInvoiceId);
                     }
                     
+                    // ✅ Update InvoiceDetail paymentStatus to Completed
+                    boolean detailUpdated = invoiceDAO.updateInvoiceDetailPaymentStatus(pendingInvoiceId, "Completed");
+                    if (detailUpdated) {
+                        System.out.println("✅ InvoiceDetail paymentStatus updated to Completed");
+                    } else {
+                        System.err.println("⚠️ Failed to update InvoiceDetail paymentStatus");
+                    }
+                    
                     // 5.2 Create or update Payment record
                     int paymentId;
                     if (pendingPaymentId != null && pendingPaymentId > 0) {
