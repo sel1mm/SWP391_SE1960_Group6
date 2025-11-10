@@ -881,9 +881,9 @@
     <div class="sidebar">
         <div class="sidebar-logo">CRM System</div>
         <div class="sidebar-menu">
-            <a href="storekeeper"><i class="fas fa-home"></i><span>Trang chủ</span></a>
+            <a href="statistic"><i class="fas fa-home"></i><span>Trang chủ</span></a>
             <a href="manageProfile"><i class="fas fa-user-circle"></i><span>Hồ Sơ</span></a>
-            <a href="#"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
+            <a href="storekeeper"><i class="fas fa-chart-line"></i><span>Thống kê</span></a>
             <a href="numberPart"><i class="fas fa-list"></i><span>Danh sách linh kiện</span></a>
             <a href="numberEquipment"><i class="fas fa-list"></i><span>Danh sách thiết bị</span></a>
             <a href="PartDetailHistoryServlet" class="active"><i class="fas fa-history"></i><span>Lịch sử giao dịch</span></a>

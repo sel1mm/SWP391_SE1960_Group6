@@ -306,6 +306,29 @@
             cursor: not-allowed;
         }
 
+        .btn-resend .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(33, 37, 41, 0.3);
+            border-top-color: #212529;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: none;
+        }
+
+        .btn-resend.loading .spinner {
+            display: block;
+        }
+
+        .btn-resend.loading:disabled {
+            background: #212529;
+            color: white;
+        }
+
+        .btn-resend.loading:disabled .spinner {
+            border-top-color: white;
+        }
+
         .timer {
             display: inline-block;
             font-weight: 600;
@@ -410,8 +433,9 @@
             <!-- Resend Section -->
             <div class="resend-section">
                 <p class="resend-text">Didn't receive the code?</p>
-                <form action="resendOtp" method="post" style="display: inline;">
+                <form id="resendForm" action="resendOtp2" method="post" style="display: inline;">
                     <button type="submit" class="btn-resend" id="resendBtn">
+                        <div class="spinner"></div>
                         <i class="fas fa-redo"></i>
                         <span>Resend OTP</span>
                     </button>
@@ -430,6 +454,7 @@
         let timeLeft = 5 * 60; // 5 minutes in seconds
         const countdownElement = document.getElementById('countdown');
         const resendBtn = document.getElementById('resendBtn');
+        let countdownInterval;
 
         function updateCountdown() {
             const minutes = Math.floor(timeLeft / 60);
@@ -441,6 +466,7 @@
                 countdownElement.style.color = '#e53e3e';
                 resendBtn.disabled = false;
                 showMessage('error', 'OTP has expired. Please request a new one.');
+                clearInterval(countdownInterval);
                 return;
             }
 
@@ -449,10 +475,10 @@
             }
 
             timeLeft--;
-            setTimeout(updateCountdown, 1000);
         }
 
         // Start countdown
+        countdownInterval = setInterval(updateCountdown, 1000);
         updateCountdown();
 
         // Auto-focus on OTP input
@@ -463,7 +489,7 @@
             this.value = this.value.replace(/[^0-9]/g, '');
         });
 
-        // Form submission
+        // Verify form submission
         document.getElementById('otpForm').addEventListener('submit', function(e) {
             const otpInput = document.getElementById('otpInput').value;
             const verifyBtn = document.getElementById('verifyBtn');
@@ -476,6 +502,21 @@
 
             verifyBtn.classList.add('loading');
             verifyBtn.disabled = true;
+        });
+
+        // Resend form submission
+        document.getElementById('resendForm').addEventListener('submit', function(e) {
+            const resendBtn = document.getElementById('resendBtn');
+            
+            resendBtn.classList.add('loading');
+            resendBtn.disabled = true;
+
+            // Reset countdown when resending
+            clearInterval(countdownInterval);
+            timeLeft = 5 * 60;
+            countdownElement.style.color = '#212529';
+            countdownInterval = setInterval(updateCountdown, 1000);
+            updateCountdown();
         });
 
         // Show message function
@@ -505,11 +546,8 @@
             });
         });
 
-        // Disable resend button initially
-        resendBtn.disabled = true;
-        setTimeout(function() {
-            resendBtn.disabled = false;
-        }, 30000); // Enable after 30 seconds
+        // Enable resend button immediately (recommended for better UX)
+        resendBtn.disabled = false;
     </script>
 </body>
 </html>

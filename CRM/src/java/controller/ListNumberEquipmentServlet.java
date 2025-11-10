@@ -20,14 +20,15 @@ import model.Category;
 import model.Equipment;
 
 /**
- * ListNumberEquipmentServlet - Quản lý danh sách thiết bị với Grouped View
- * Updated: Support filter, search, and sort
+ * ListNumberEquipmentServlet - Quản lý danh sách thiết bị với Grouped View và Pagination
+ * Fixed: Filter, Search, Pagination, và Add Mode
  */
 @WebServlet(name = "ListNumberEquipmentServlet", urlPatterns = {"/numberEquipment"})
 public class ListNumberEquipmentServlet extends HttpServlet {
     
     private EquipmentDAO dao = new EquipmentDAO();
     private CategoryDAO categoryDAO = new CategoryDAO();
+    private static final int RECORDS_PER_PAGE = 10;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -52,64 +53,110 @@ public class ListNumberEquipmentServlet extends HttpServlet {
         // ===== LẤY CÁC THAM SỐ FILTER =====
         String searchKeyword = request.getParameter("search");
         String categoryFilter = request.getParameter("categoryFilter");
-        String sortById = request.getParameter("sortById");
+        String sortByName = request.getParameter("sortByName");
         
         System.out.println("=== FILTER PARAMETERS ===");
         System.out.println("Search: " + searchKeyword);
         System.out.println("Category Filter: " + categoryFilter);
-        System.out.println("Sort by ID: " + sortById);
+        System.out.println("Sort by Name: " + sortByName);
 
-        // ===== LOAD GROUPED EQUIPMENT LIST =====
-        List<Equipment> groupedList = dao.getEquipmentGroupedByModel();
-        System.out.println("Total grouped items before filter: " + groupedList.size());
+        // ===== LOAD TẤT CẢ GROUPED EQUIPMENT LIST =====
+        List<Equipment> allGroupedList = dao.getEquipmentGroupedByModel();
+        System.out.println("Total grouped items before filter: " + allGroupedList.size());
         
         // ===== APPLY SEARCH FILTER =====
         if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
             String keyword = searchKeyword.trim().toLowerCase();
-            groupedList = groupedList.stream()
+            allGroupedList = allGroupedList.stream()
                 .filter(eq -> 
                     (eq.getModel() != null && eq.getModel().toLowerCase().contains(keyword)) ||
                     (eq.getDescription() != null && eq.getDescription().toLowerCase().contains(keyword))
                 )
                 .collect(Collectors.toList());
-            System.out.println("After search filter: " + groupedList.size() + " items");
+            System.out.println("After search filter: " + allGroupedList.size() + " items");
         }
         
         // ===== APPLY CATEGORY FILTER =====
-        if (categoryFilter != null && !"all".equals(categoryFilter) && !categoryFilter.trim().isEmpty()) {
+        if (categoryFilter != null && !categoryFilter.trim().isEmpty()) {
             try {
                 int catId = Integer.parseInt(categoryFilter);
-                groupedList = groupedList.stream()
-                    .filter(eq -> eq.getCategoryId() == catId)
+                allGroupedList = allGroupedList.stream()
+                    .filter(eq -> {
+                        Integer equipCatId = eq.getCategoryId();
+                        return equipCatId != null && equipCatId == catId;
+                    })
                     .collect(Collectors.toList());
-                System.out.println("After category filter: " + groupedList.size() + " items");
+                System.out.println("After category filter: " + allGroupedList.size() + " items");
             } catch (NumberFormatException e) {
                 System.out.println("Invalid category ID: " + categoryFilter);
             }
         }
         
-        // ===== APPLY SORT BY ID =====
-        if (sortById != null && !sortById.trim().isEmpty()) {
-            if ("asc".equals(sortById)) {
-                groupedList.sort(Comparator.comparingInt(Equipment::getEquipmentId));
-                System.out.println("Sorted by ID ascending");
-            } else if ("desc".equals(sortById)) {
-                groupedList.sort(Comparator.comparingInt(Equipment::getEquipmentId).reversed());
-                System.out.println("Sorted by ID descending");
+        // ===== APPLY SORT BY NAME =====
+        if (sortByName != null && !sortByName.trim().isEmpty()) {
+            if ("asc".equals(sortByName)) {
+                allGroupedList.sort(Comparator.comparing(eq -> eq.getModel() != null ? eq.getModel().toLowerCase() : ""));
+                System.out.println("Sorted by Name ascending");
+            } else if ("desc".equals(sortByName)) {
+                allGroupedList.sort(Comparator.comparing((Equipment eq) -> eq.getModel() != null ? eq.getModel().toLowerCase() : "").reversed());
+                System.out.println("Sorted by Name descending");
             }
         }
         
-        System.out.println("Final result count: " + groupedList.size());
+        int totalRecords = allGroupedList.size();
+        System.out.println("Total records after filtering: " + totalRecords);
+        
+        // ===== PAGINATION LOGIC =====
+        int currentPage = 1;
+        String pageParam = request.getParameter("page");
+        if (pageParam != null && !pageParam.trim().isEmpty()) {
+            try {
+                currentPage = Integer.parseInt(pageParam);
+            } catch (NumberFormatException e) {
+                currentPage = 1;
+            }
+        }
+        
+        int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
+        if (totalPages == 0) totalPages = 1;
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        
+        int startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
+        int endIndex = Math.min(startIndex + RECORDS_PER_PAGE, totalRecords);
+        
+        List<Equipment> groupedList = new ArrayList<>();
+        if (totalRecords > 0) {
+            groupedList = allGroupedList.subList(startIndex, endIndex);
+        }
+        
+        System.out.println("Pagination: Page " + currentPage + "/" + totalPages);
+        System.out.println("Displaying records: " + startIndex + " to " + endIndex);
+        
+        // ===== CALCULATE PAGE RANGE FOR DISPLAY =====
+        int startPage = Math.max(1, currentPage - 2);
+        int endPage = Math.min(totalPages, currentPage + 2);
         
         // ===== LOAD CATEGORIES =====
         List<Category> categories = categoryDAO.getCategoriesByType("Equipment");
         
+        // ===== LOAD ALL UNIQUE MODELS (không filter) cho dropdown =====
+        List<Equipment> allModelsRaw = dao.getEquipmentGroupedByModel();
+        List<String> allModels = allModelsRaw.stream()
+            .map(Equipment::getModel)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+        
         // ===== SET ATTRIBUTES =====
         request.setAttribute("groupedList", groupedList);
         request.setAttribute("categories", categories);
-        request.setAttribute("searchKeyword", searchKeyword);
-        request.setAttribute("categoryFilter", categoryFilter);
-        request.setAttribute("sortById", sortById);
+        request.setAttribute("allModels", allModels);
+        request.setAttribute("currentPage", currentPage);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalRecords", totalRecords);
+        request.setAttribute("startPage", startPage);
+        request.setAttribute("endPage", endPage);
         
         // Forward về JSP
         request.getRequestDispatcher("numberEquipment.jsp").forward(request, response);
@@ -247,6 +294,7 @@ public class ListNumberEquipmentServlet extends HttpServlet {
             // ===== MODE: EXISTING MODEL =====
             if ("existing".equals(addMode)) {
                 String selectedModel = request.getParameter("selectedModel");
+                System.out.println("Selected Model from form: " + selectedModel);
                 
                 if (selectedModel == null || selectedModel.trim().isEmpty()) {
                     session.setAttribute("errorMessage", "❌ Vui lòng chọn Model!");
@@ -254,23 +302,32 @@ public class ListNumberEquipmentServlet extends HttpServlet {
                     return;
                 }
                 
-                Equipment modelTemplate = dao.getEquipmentGroupedByModelSingle(selectedModel.trim());
-                if (modelTemplate == null) {
-                    session.setAttribute("errorMessage", "❌ Không tìm thấy Model!");
+                // Lấy tất cả equipment có model này
+                List<Equipment> existingModels = dao.getEquipmentByModel(selectedModel.trim());
+                
+                if (existingModels == null || existingModels.isEmpty()) {
+                    session.setAttribute("errorMessage", "❌ Không tìm thấy Model: " + selectedModel);
                     response.sendRedirect("numberEquipment");
                     return;
                 }
                 
+                // Lấy thông tin từ equipment đầu tiên (vì cùng model thì thông tin giống nhau)
+                Equipment modelTemplate = existingModels.get(0);
+                
                 equipment.setModel(modelTemplate.getModel());
                 equipment.setDescription(modelTemplate.getDescription());
                 
-                if (modelTemplate.getCategoryId() > 0) {
-                    equipment.setCategoryId(modelTemplate.getCategoryId());
+                Integer catId = modelTemplate.getCategoryId();
+                if (catId != null && catId > 0) {
+                    equipment.setCategoryId(catId);
                 } else {
-                    equipment.setCategoryId(-1);
+                    equipment.setCategoryId(null);
                 }
                 
                 System.out.println("Using existing model: " + selectedModel);
+                System.out.println("Template - Model: " + modelTemplate.getModel());
+                System.out.println("Template - Description: " + modelTemplate.getDescription());
+                System.out.println("Template - CategoryId: " + modelTemplate.getCategoryId());
             }
             // ===== MODE: NEW MODEL =====
             else {
@@ -302,8 +359,8 @@ public class ListNumberEquipmentServlet extends HttpServlet {
                 }
                 
                 // Check duplicate model
-                Equipment existingModel = dao.getEquipmentGroupedByModelSingle(model.trim());
-                if (existingModel != null) {
+                List<Equipment> existingModel = dao.getEquipmentByModel(model.trim());
+                if (existingModel != null && !existingModel.isEmpty()) {
                     session.setAttribute("errorMessage", "❌ Model '" + model.trim() + "' đã tồn tại!");
                     response.sendRedirect("numberEquipment");
                     return;
@@ -315,7 +372,7 @@ public class ListNumberEquipmentServlet extends HttpServlet {
                 if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
                     equipment.setCategoryId(Integer.parseInt(categoryIdStr));
                 } else {
-                    equipment.setCategoryId(-1);
+                    equipment.setCategoryId(null);
                 }
                 
                 System.out.println("Creating new model: " + model);
@@ -448,6 +505,6 @@ public class ListNumberEquipmentServlet extends HttpServlet {
 
     @Override
     public String getServletInfo() {
-        return "ListNumberEquipment Servlet - with filter, search and sort support";
+        return "ListNumberEquipment Servlet - with pagination, filter, search and sort support";
     }
 }

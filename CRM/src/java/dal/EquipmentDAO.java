@@ -267,15 +267,16 @@ public class EquipmentDAO extends DBContext {
     /**
      * Get equipment by category
      */
-    public List<Equipment> getEquipmentGroupedByModel() {
+public List<Equipment> getEquipmentGroupedByModel() {
     List<Equipment> list = new ArrayList<>();
     String sql = "SELECT e.model, " +
+                "e.categoryId, " +
                 "c.categoryName, " +
                 "e.description, " +
                 "COUNT(*) as totalCount " +
                 "FROM Equipment e " +
                 "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
-                "GROUP BY e.model, c.categoryName, e.description " +
+                "GROUP BY e.model, e.categoryId, c.categoryName, e.description " +
                 "ORDER BY e.model";
     
     try (PreparedStatement ps = connection.prepareStatement(sql);
@@ -284,13 +285,25 @@ public class EquipmentDAO extends DBContext {
         while (rs.next()) {
             Equipment eq = new Equipment();
             eq.setModel(rs.getString("model"));
+            
+            // Xử lý categoryId (có thể null)
+            int categoryId = rs.getInt("categoryId");
+            if (rs.wasNull()) {
+                eq.setCategoryId(null);
+            } else {
+                eq.setCategoryId(categoryId);
+            }
+            
             eq.setCategoryName(rs.getString("categoryName"));
             eq.setDescription(rs.getString("description"));
-         
             list.add(eq);
         }
+        
+        System.out.println("✅ Loaded " + list.size() + " grouped equipment models");
+        
     } catch (SQLException e) {
-        System.out.println("Error in getEquipmentGroupedByModel: " + e.getMessage());
+        System.out.println("❌ Error in getEquipmentGroupedByModel: " + e.getMessage());
+        e.printStackTrace();
     }
     return list;
 }
