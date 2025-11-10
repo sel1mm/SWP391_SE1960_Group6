@@ -13,46 +13,56 @@ public class MaintenanceScheduleDAO extends MyDAO {
      * Create a new maintenance schedule
      */
     public int createMaintenanceSchedule(MaintenanceSchedule schedule) {
-        xSql = "INSERT INTO MaintenanceSchedule (requestId, contractId, equipmentId, assignedTo, " +
-               "scheduledDate, scheduleType, recurrenceRule, status, priorityId) " +
-               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try {
-            ps = con.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
-            ps.setInt(1, schedule.getRequestId());
-            // Handle nullable contractId
-            if (schedule.getContractId() != null) {
-                ps.setInt(2, schedule.getContractId());
-            } else {
-                ps.setNull(2, Types.INTEGER);
-            }
-            // Handle nullable equipmentId
-            if (schedule.getEquipmentId() != null) {
-                ps.setInt(3, schedule.getEquipmentId());
-            } else {
-                ps.setNull(3, Types.INTEGER);
-            }
-            ps.setInt(4, schedule.getAssignedTo());
-            ps.setTimestamp(5, Timestamp.valueOf(schedule.getScheduledDate().atStartOfDay()));
-            ps.setString(6, schedule.getScheduleType());
-            ps.setString(7, schedule.getRecurrenceRule());
-            ps.setString(8, schedule.getStatus());
-            ps.setInt(9, schedule.getPriorityId());
-            
-            int affectedRows = ps.executeUpdate();
-            if (affectedRows > 0) {
-                rs = ps.getGeneratedKeys();
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-            }
-            return -1;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return -1;
-        } finally {
-            closeResources();
+    // ✅ BỎ requestId, THÊM customerId
+    xSql = "INSERT INTO MaintenanceSchedule (customerId, contractId, equipmentId, assignedTo, " +
+           "scheduledDate, scheduleType, recurrenceRule, status, priorityId) " +
+           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    try {
+        ps = con.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
+        
+        // ✅ INDEX 1: customerId (nullable)
+        if (schedule.getCustomerId() != null) {
+            ps.setInt(1, schedule.getCustomerId());
+        } else {
+            ps.setNull(1, Types.INTEGER);
         }
+        
+        // ✅ INDEX 2: contractId (nullable)
+        if (schedule.getContractId() != null) {
+            ps.setInt(2, schedule.getContractId());
+        } else {
+            ps.setNull(2, Types.INTEGER);
+        }
+        
+        // ✅ INDEX 3: equipmentId (nullable)
+        if (schedule.getEquipmentId() != null) {
+            ps.setInt(3, schedule.getEquipmentId());
+        } else {
+            ps.setNull(3, Types.INTEGER);
+        }
+        
+        ps.setInt(4, schedule.getAssignedTo());
+        ps.setTimestamp(5, Timestamp.valueOf(schedule.getScheduledDate().atStartOfDay()));
+        ps.setString(6, schedule.getScheduleType());
+        ps.setString(7, schedule.getRecurrenceRule());
+        ps.setString(8, schedule.getStatus());
+        ps.setInt(9, schedule.getPriorityId());
+        
+        int affectedRows = ps.executeUpdate();
+        if (affectedRows > 0) {
+            rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return -1;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return -1;
+    } finally {
+        closeResources();
     }
+}
     
     /**
      * Get all maintenance schedules
@@ -62,18 +72,34 @@ public class MaintenanceScheduleDAO extends MyDAO {
  */
 public List<MaintenanceSchedule> getAllMaintenanceSchedules() {
     List<MaintenanceSchedule> schedules = new ArrayList<>();
-    xSql = "SELECT ms.*, a.fullName as technicianName " +
+    
+    xSql = "SELECT ms.*, " +
+           "a.fullName as technicianName, " +
+           "c.fullName as customerName, " +
+           "e.model as equipmentModel, " +
+           "e.serialNumber as equipmentSerial, " +
+           "con.details as contractDetails " +
            "FROM MaintenanceSchedule ms " +
            "LEFT JOIN Account a ON ms.assignedTo = a.accountId " +
-           "ORDER BY ms.scheduledDate ASC";
+           "LEFT JOIN Account c ON ms.customerId = c.accountId " +
+           "LEFT JOIN Equipment e ON ms.equipmentId = e.equipmentId " +
+           "LEFT JOIN Contract con ON ms.contractId = con.contractId " +
+           "ORDER BY ms.scheduledDate DESC";
+    
     try {
         ps = con.prepareStatement(xSql);
         rs = ps.executeQuery();
         
         while (rs.next()) {
             MaintenanceSchedule schedule = mapResultSetToMaintenanceSchedule(rs);
-            // ✅ THÊM DÒNG NÀY để set tên technician
+            
+            // ✅ Set các thông tin JOIN
             schedule.setTechnicianName(rs.getString("technicianName"));
+            schedule.setCustomerName(rs.getString("customerName"));
+            schedule.setEquipmentModel(rs.getString("equipmentModel"));
+            schedule.setEquipmentSerial(rs.getString("equipmentSerial"));
+            schedule.setContractDetails(rs.getString("contractDetails"));
+            
             schedules.add(schedule);
         }
     } catch (Exception e) {
@@ -116,10 +142,21 @@ public List<MaintenanceSchedule> getSchedulesByTechnician(int technicianId) {
      */
     public List<MaintenanceSchedule> getSchedulesByStatus(String status) {
     List<MaintenanceSchedule> schedules = new ArrayList<>();
-    xSql = "SELECT ms.*, a.fullName as technicianName " +
+    
+    xSql = "SELECT ms.*, " +
+           "a.fullName as technicianName, " +
+           "c.fullName as customerName, " +
+           "e.model as equipmentModel, " +
+           "e.serialNumber as equipmentSerial, " +
+           "con.details as contractDetails " +
            "FROM MaintenanceSchedule ms " +
            "LEFT JOIN Account a ON ms.assignedTo = a.accountId " +
-           "WHERE ms.status = ? ORDER BY ms.scheduledDate ASC";
+           "LEFT JOIN Account c ON ms.customerId = c.accountId " +
+           "LEFT JOIN Equipment e ON ms.equipmentId = e.equipmentId " +
+           "LEFT JOIN Contract con ON ms.contractId = con.contractId " +
+           "WHERE ms.status = ? " +
+           "ORDER BY ms.scheduledDate DESC";
+    
     try {
         ps = con.prepareStatement(xSql);
         ps.setString(1, status);
@@ -128,6 +165,10 @@ public List<MaintenanceSchedule> getSchedulesByTechnician(int technicianId) {
         while (rs.next()) {
             MaintenanceSchedule schedule = mapResultSetToMaintenanceSchedule(rs);
             schedule.setTechnicianName(rs.getString("technicianName"));
+            schedule.setCustomerName(rs.getString("customerName"));
+            schedule.setEquipmentModel(rs.getString("equipmentModel"));
+            schedule.setEquipmentSerial(rs.getString("equipmentSerial"));
+            schedule.setContractDetails(rs.getString("contractDetails"));
             schedules.add(schedule);
         }
     } catch (Exception e) {
@@ -189,42 +230,52 @@ public List<MaintenanceSchedule> getSchedulesByTechnician(int technicianId) {
     /**
      * Update maintenance schedule
      */
-    public boolean updateMaintenanceSchedule(MaintenanceSchedule schedule) {
-        xSql = "UPDATE MaintenanceSchedule SET requestId = ?, contractId = ?, equipmentId = ?, " +
-               "assignedTo = ?, scheduledDate = ?, scheduleType = ?, recurrenceRule = ?, " +
-               "status = ?, priorityId = ? WHERE scheduleId = ?";
-        try {
-            ps = con.prepareStatement(xSql);
-            ps.setInt(1, schedule.getRequestId());
-            // Handle nullable contractId
-            if (schedule.getContractId() != null) {
-                ps.setInt(2, schedule.getContractId());
-            } else {
-                ps.setNull(2, Types.INTEGER);
-            }
-            // Handle nullable equipmentId
-            if (schedule.getEquipmentId() != null) {
-                ps.setInt(3, schedule.getEquipmentId());
-            } else {
-                ps.setNull(3, Types.INTEGER);
-            }
-            ps.setInt(4, schedule.getAssignedTo());
-            ps.setTimestamp(5, Timestamp.valueOf(schedule.getScheduledDate().atStartOfDay()));
-            ps.setString(6, schedule.getScheduleType());
-            ps.setString(7, schedule.getRecurrenceRule());
-            ps.setString(8, schedule.getStatus());
-            ps.setInt(9, schedule.getPriorityId());
-            ps.setInt(10, schedule.getScheduleId());
-            
-            int affectedRows = ps.executeUpdate();
-            return affectedRows > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        } finally {
-            closeResources();
+   public boolean updateMaintenanceSchedule(MaintenanceSchedule schedule) {
+    // ✅ BỎ requestId, THÊM customerId
+    xSql = "UPDATE MaintenanceSchedule SET customerId = ?, contractId = ?, equipmentId = ?, " +
+           "assignedTo = ?, scheduledDate = ?, scheduleType = ?, recurrenceRule = ?, " +
+           "status = ?, priorityId = ? WHERE scheduleId = ?";
+    try {
+        ps = con.prepareStatement(xSql);
+        
+        // ✅ INDEX 1: customerId (nullable)
+        if (schedule.getCustomerId() != null) {
+            ps.setInt(1, schedule.getCustomerId());
+        } else {
+            ps.setNull(1, Types.INTEGER);
         }
+        
+        // INDEX 2: contractId (nullable)
+        if (schedule.getContractId() != null) {
+            ps.setInt(2, schedule.getContractId());
+        } else {
+            ps.setNull(2, Types.INTEGER);
+        }
+        
+        // INDEX 3: equipmentId (nullable)
+        if (schedule.getEquipmentId() != null) {
+            ps.setInt(3, schedule.getEquipmentId());
+        } else {
+            ps.setNull(3, Types.INTEGER);
+        }
+        
+        ps.setInt(4, schedule.getAssignedTo());
+        ps.setTimestamp(5, Timestamp.valueOf(schedule.getScheduledDate().atStartOfDay()));
+        ps.setString(6, schedule.getScheduleType());
+        ps.setString(7, schedule.getRecurrenceRule());
+        ps.setString(8, schedule.getStatus());
+        ps.setInt(9, schedule.getPriorityId());
+        ps.setInt(10, schedule.getScheduleId());
+        
+        int affectedRows = ps.executeUpdate();
+        return affectedRows > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    } finally {
+        closeResources();
     }
+}
     
     /**
      * Get maintenance schedule by ID
@@ -329,35 +380,42 @@ public List<MaintenanceSchedule> getSchedulesByTechnician(int technicianId) {
      * Map ResultSet to MaintenanceSchedule object
      */
     private MaintenanceSchedule mapResultSetToMaintenanceSchedule(ResultSet rs) throws SQLException {
-        MaintenanceSchedule schedule = new MaintenanceSchedule();
-        schedule.setScheduleId(rs.getInt("scheduleId"));
-        schedule.setRequestId(rs.getInt("requestId"));
-        
-        // Handle nullable contractId
-        int contractId = rs.getInt("contractId");
-        if (!rs.wasNull()) {
-            schedule.setContractId(contractId);
-        } else {
-            schedule.setContractId(null);
-        }
-        
-        // Handle nullable equipmentId
-        int equipmentId = rs.getInt("equipmentId");
-        if (!rs.wasNull()) {
-            schedule.setEquipmentId(equipmentId);
-        } else {
-            schedule.setEquipmentId(null);
-        }
-        
-        schedule.setAssignedTo(rs.getInt("assignedTo"));
-        schedule.setScheduledDate(rs.getTimestamp("scheduledDate").toLocalDateTime().toLocalDate());
-        schedule.setScheduleType(rs.getString("scheduleType"));
-        schedule.setRecurrenceRule(rs.getString("recurrenceRule"));
-        schedule.setStatus(rs.getString("status"));
-        schedule.setPriorityId(rs.getInt("priorityId"));
-        
-        return schedule;
+    MaintenanceSchedule schedule = new MaintenanceSchedule();
+    schedule.setScheduleId(rs.getInt("scheduleId"));
+    
+    // ✅ BỎ requestId, THÊM customerId
+    int customerId = rs.getInt("customerId");
+    if (!rs.wasNull()) {
+        schedule.setCustomerId(customerId);
+    } else {
+        schedule.setCustomerId(null);
     }
+    
+    // Handle nullable contractId
+    int contractId = rs.getInt("contractId");
+    if (!rs.wasNull()) {
+        schedule.setContractId(contractId);
+    } else {
+        schedule.setContractId(null);
+    }
+    
+    // Handle nullable equipmentId
+    int equipmentId = rs.getInt("equipmentId");
+    if (!rs.wasNull()) {
+        schedule.setEquipmentId(equipmentId);
+    } else {
+        schedule.setEquipmentId(null);
+    }
+    
+    schedule.setAssignedTo(rs.getInt("assignedTo"));
+    schedule.setScheduledDate(rs.getTimestamp("scheduledDate").toLocalDateTime().toLocalDate());
+    schedule.setScheduleType(rs.getString("scheduleType"));
+    schedule.setRecurrenceRule(rs.getString("recurrenceRule"));
+    schedule.setStatus(rs.getString("status"));
+    schedule.setPriorityId(rs.getInt("priorityId"));
+    
+    return schedule;
+}
     
     /**
      * Close database resources
