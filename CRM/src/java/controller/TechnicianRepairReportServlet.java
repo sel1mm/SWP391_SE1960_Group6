@@ -2,6 +2,7 @@ package controller;
 
 import dal.RepairReportDAO;
 import dal.WorkTaskDAO;
+import dal.ServiceRequestDAO;
 import dal.PartDetailDAO;
 import dal.PartDAO;
 import model.RepairReport;
@@ -48,9 +49,11 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         String action = req.getParameter("action");
         String reportIdParam = req.getParameter("reportId");
         String requestIdParam = req.getParameter("requestId");
+        String scheduleIdParam = req.getParameter("scheduleId");
 
         try {
             RepairReportDAO reportDAO = new RepairReportDAO();
+            ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO();
             int technicianId = sessionId.intValue();
 
             // Handle AJAX requests for parts search and cart operations
@@ -83,7 +86,70 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 List<WorkTaskDAO.WorkTaskForReport> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
                 
                 Integer requestId = null;
-                if (requestIdParam != null && !requestIdParam.trim().isEmpty()) {
+                Integer scheduleId = null;
+                String selectedRequestType = null;
+                
+                // 1) If scheduleId is provided, derive effective requestId from MaintenanceSchedule
+                if (scheduleIdParam != null && !scheduleIdParam.trim().isEmpty()) {
+                    try {
+                        scheduleId = Integer.parseInt(scheduleIdParam);
+                        Integer effectiveReqId = getEffectiveRequestIdForSchedule(scheduleId);
+                        // For schedule-origin, allow no linked ServiceRequest. Use effectiveReqId if available.
+                        requestId = effectiveReqId;
+                        
+                        // Validate assignment for schedule/request context
+                        // If we have an effective request, reuse assignment/completion checks by request
+                        if (requestId != null) {
+                            if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
+                                req.setAttribute("error", "You are not assigned to this scheduled task");
+                                doGetReportList(req, resp, technicianId);
+                                return;
+                            }
+                            if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
+                                req.setAttribute("error", "Cannot create report for completed task");
+                                doGetReportList(req, resp, technicianId);
+                                return;
+                            }
+                        }
+                        // Duplicate check by schedule (preferred)
+                        try {
+                            RepairReport existingReportBySchedule = new RepairReportDAO().findByScheduleIdAndTechnician(scheduleId, technicianId);
+                            if (existingReportBySchedule != null) {
+                                resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReportBySchedule.getReportId());
+                                return;
+                            }
+                        } catch (SQLException ex) {
+                            System.err.println("Duplicate check by schedule failed: " + ex.getMessage());
+                        }
+                        
+                        // Set UI context for schedule-origin (maintenance)
+                        req.setAttribute("origin", "Schedule");
+                        req.setAttribute("isScheduleOrigin", true);
+                        req.setAttribute("selectedRequestType", "Maintenance");
+                        
+                        // Load schedule's customer info for display (via Contract -> Account)
+                        try {
+                            Map<String, Object> schedCustomer = getScheduleCustomerInfo(scheduleId);
+                            if (schedCustomer != null) {
+                                req.setAttribute("scheduleCustomerId", schedCustomer.get("customerAccountId"));
+                                req.setAttribute("scheduleCustomerName", schedCustomer.get("customerName"));
+                            }
+                            String taskStatus = getScheduleTaskStatus(technicianId, scheduleId);
+                            if (taskStatus != null) {
+                                req.setAttribute("scheduleTaskStatus", taskStatus);
+                            }
+                        } catch (SQLException ex) {
+                            System.err.println("Error loading schedule customer info: " + ex.getMessage());
+                        }
+                    } catch (NumberFormatException e) {
+                        req.setAttribute("error", "Invalid schedule ID");
+                        doGetReportList(req, resp, technicianId);
+                        return;
+                    }
+                }
+                
+                // 2) If requestId provided explicitly (request-origin)
+                if (requestId == null && requestIdParam != null && !requestIdParam.trim().isEmpty()) {
                     try {
                         requestId = Integer.parseInt(requestIdParam);
                         // Validate that technician is assigned to this request
@@ -111,6 +177,11 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                             // Log error but continue - allow creation if check fails
                             System.err.println("Error checking for existing report: " + e.getMessage());
                         }
+                        
+                        var serviceRequest = serviceRequestDAO.getRequestById(requestId);
+                        if (serviceRequest != null) {
+                            selectedRequestType = serviceRequest.getRequestType();
+                        }
                     } catch (NumberFormatException e) {
                         req.setAttribute("error", "Invalid request ID");
                         doGetReportList(req, resp, technicianId);
@@ -128,7 +199,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 }
                 
                 // Get selected parts from session (scoped to this request)
-                String cartKey = "selectedParts_" + (requestId != null ? requestId : "new");
+                String cartKey = (scheduleId != null)
+                        ? ("selectedParts_schedule_" + scheduleId)
+                        : ("selectedParts_" + (requestId != null ? requestId : "new"));
                 @SuppressWarnings("unchecked")
                 List<RepairReportDetail> selectedParts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
                 if (selectedParts == null) {
@@ -160,12 +233,17 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 req.setAttribute("partsSearchResults", req.getSession().getAttribute("partsSearchResults"));
 
                 req.setAttribute("requestId", requestId);
+                if (scheduleId != null) {
+                    req.setAttribute("scheduleId", scheduleId);
+                }
                 req.setAttribute("assignedTasks", assignedTasks);
                 req.setAttribute("availableParts", availableParts);
                 req.setAttribute("selectedParts", selectedParts);
                 req.setAttribute("subtotal", subtotal);
                 req.setAttribute("customerRequestInfo", customerRequestInfo);
                 req.setAttribute("customerContracts", customerContracts);
+                req.setAttribute("selectedRequestType", selectedRequestType);
+                req.setAttribute("isWarrantyRequest", "Warranty".equalsIgnoreCase(selectedRequestType));
                 req.setAttribute("pageTitle", "Create Repair Report");
                 req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
                 req.setAttribute("activePage", "reports");
@@ -203,6 +281,12 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     return;
                 }
                 
+                String selectedRequestType = null;
+                var serviceRequest = serviceRequestDAO.getRequestById(report.getRequestId());
+                if (serviceRequest != null) {
+                    selectedRequestType = serviceRequest.getRequestType();
+                }
+                
                 // Check if report can be edited (status must be Pending)
                 try {
                     if (!reportDAO.canTechnicianEditReport(reportId, technicianId)) {
@@ -218,7 +302,10 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 
                 // Load report details (parts) and put them in session for the cart
                 List<RepairReportDetail> reportDetails = reportDAO.getReportDetails(reportId);
-                String cartKey = "selectedParts_" + report.getRequestId();
+                Integer repScheduleId = report.getScheduleId();
+                String cartKey = repScheduleId != null
+                        ? "selectedParts_schedule_" + repScheduleId
+                        : "selectedParts_" + report.getRequestId();
                 req.getSession().setAttribute(cartKey, reportDetails);
                 
                 // Load available parts for the form
@@ -256,6 +343,8 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 req.setAttribute("pageTitle", "Edit Repair Report");
                 req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
                 req.setAttribute("activePage", "reports");
+                req.setAttribute("selectedRequestType", selectedRequestType);
+                req.setAttribute("isWarrantyRequest", "Warranty".equalsIgnoreCase(selectedRequestType));
                 req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
                 
             } else if ("detail".equals(action) && reportIdParam != null) {
@@ -266,8 +355,27 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 if (report != null && report.getTechnicianId() != null && report.getTechnicianId() == technicianId) {
                     // Load report details (parts)
                     List<RepairReportDetail> details = reportDAO.getReportDetails(reportId);
+                    Map<String, Object> customerRequestInfo = null;
+                    String detailRequestType = null;
+                    boolean detailIsWarranty = false;
+                    try {
+                        customerRequestInfo = getCustomerRequestInfo(report.getRequestId());
+                        if (customerRequestInfo != null) {
+                            detailRequestType = (String) customerRequestInfo.get("requestType");
+                            if (detailRequestType != null) {
+                                detailIsWarranty = "Warranty".equalsIgnoreCase(detailRequestType);
+                            }
+                        }
+                    } catch (SQLException e) {
+                        System.err.println("Error loading customer info for detail view: " + e.getMessage());
+                    }
+                    BigDecimal detailSubtotal = calculateSubtotal(details);
                     req.setAttribute("report", report);
                     req.setAttribute("reportDetails", details);
+                    req.setAttribute("customerRequestInfo", customerRequestInfo);
+                    req.setAttribute("selectedRequestType", detailRequestType);
+                    req.setAttribute("isWarrantyRequest", detailIsWarranty);
+                    req.setAttribute("subtotal", detailSubtotal);
                     req.setAttribute("pageTitle", "Repair Report Detail");
                     req.setAttribute("contentView", "/WEB-INF/technician/report-detail.jsp");
                     req.setAttribute("activePage", "reports");
@@ -336,6 +444,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         
         try {
             RepairReportDAO reportDAO = new RepairReportDAO();
+            ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO();
             int technicianId = sessionId.intValue();
             
             // Handle parts management actions
@@ -353,11 +462,21 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 return;
             } else if ("clearParts".equals(action)) {
                 String requestIdStr = req.getParameter("requestId");
+                String scheduleIdStr = req.getParameter("scheduleId");
+                HttpSession httpSession = req.getSession();
                 if (requestIdStr != null && !requestIdStr.trim().isEmpty()) {
-                    String cartKey = "selectedParts_" + requestIdStr;
-                    req.getSession().removeAttribute(cartKey);
+                    httpSession.removeAttribute("selectedParts_" + requestIdStr.trim());
                 }
-                resp.sendRedirect(req.getContextPath() + "/technician/reports?action=create&requestId=" + requestIdStr);
+                if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
+                    httpSession.removeAttribute("selectedParts_schedule_" + scheduleIdStr.trim());
+                }
+                StringBuilder redirect = new StringBuilder(req.getContextPath()).append("/technician/reports?action=create");
+                if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
+                    redirect.append("&scheduleId=").append(scheduleIdStr.trim());
+                } else if (requestIdStr != null && !requestIdStr.trim().isEmpty()) {
+                    redirect.append("&requestId=").append(requestIdStr.trim());
+                }
+                resp.sendRedirect(redirect.toString());
                 return;
             }
             
@@ -366,21 +485,41 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 WorkTaskDAO workTaskDAO = new WorkTaskDAO();
                 RepairReport report = new RepairReport();
                 String requestIdStr = req.getParameter("requestId");
+                String scheduleIdStr = req.getParameter("scheduleId");
                 
-                // Validate request ID
-                if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
-                    req.setAttribute("error", "Request ID is required");
-                    doGet(req, resp);
-                    return;
-                }
+                Integer requestId = null;
+                Integer scheduleId = null;
                 
-                int requestId;
-                try {
-                    requestId = Integer.parseInt(requestIdStr);
-                } catch (NumberFormatException e) {
-                    req.setAttribute("error", "Invalid request ID");
-                    doGet(req, resp);
-                    return;
+                // Accept either scheduleId (schedule-origin) or requestId (request-origin)
+                if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
+                    try {
+                        scheduleId = Integer.parseInt(scheduleIdStr);
+                        Integer effectiveReqId = getEffectiveRequestIdForSchedule(scheduleId);
+                        if (effectiveReqId == null) {
+                            req.setAttribute("error", "This schedule is not linked to any Service Request.");
+                            doGet(req, resp);
+                            return;
+                        }
+                        requestId = effectiveReqId;
+                    } catch (NumberFormatException e) {
+                        req.setAttribute("error", "Invalid schedule ID");
+                        doGet(req, resp);
+                        return;
+                    }
+                } else {
+                    // Validate request ID (request-origin)
+                    if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+                        req.setAttribute("error", "Request ID is required");
+                        doGet(req, resp);
+                        return;
+                    }
+                    try {
+                        requestId = Integer.parseInt(requestIdStr);
+                    } catch (NumberFormatException e) {
+                        req.setAttribute("error", "Invalid request ID");
+                        doGet(req, resp);
+                        return;
+                    }
                 }
                 
                 // Validate technician assignment and task status
@@ -398,7 +537,13 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 
                 // Check if a repair report already exists for this requestId by this technician
                 try {
-                    RepairReport existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
+                    RepairReport existingReport = null;
+                    if (scheduleId != null) {
+                        existingReport = reportDAO.findByScheduleIdAndTechnician(scheduleId, technicianId);
+                    }
+                    if (existingReport == null) {
+                        existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
+                    }
                     if (existingReport != null) {
                         // Report already exists, redirect to edit instead
                         req.setAttribute("error", "A repair report already exists for this task. Redirecting to edit...");
@@ -411,7 +556,23 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     return;
                 }
                 
+                String requestType = null;
+                boolean isWarranty = false;
+                if (requestId != null) {
+                    var serviceRequest = serviceRequestDAO.getRequestById(requestId);
+                    if (serviceRequest != null) {
+                        requestType = serviceRequest.getRequestType();
+                        isWarranty = "Warranty".equalsIgnoreCase(requestType);
+                    }
+                }
+                
                 report.setRequestId(requestId);
+                if (scheduleId != null) {
+                    report.setScheduleId(scheduleId);
+                    report.setOrigin("Schedule");
+                } else {
+                    report.setOrigin("ServiceRequest");
+                }
                 report.setTechnicianId(technicianId);
                 report.setDetails(req.getParameter("details"));
                 // Diagnosis field is replaced by parts - keep empty or use summary
@@ -421,7 +582,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 // when the repair report is approved (via database trigger)
                 
                 // Get selected parts from session (scoped to this request)
-                String cartKey = "selectedParts_" + report.getRequestId();
+                String cartKey = scheduleId != null
+                        ? "selectedParts_schedule_" + scheduleId
+                        : "selectedParts_" + report.getRequestId();
                 @SuppressWarnings("unchecked")
                 List<RepairReportDetail> parts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
                 if (parts == null) {
@@ -431,24 +594,31 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 List<String> validationErrors = new ArrayList<>();
                 
                 // Run validations (targetContractId validation removed - contract is auto-determined from ServiceRequest)
-                validationErrors.addAll(validateRepairReportInput(req, false, parts));
+                validationErrors.addAll(validateRepairReportInput(req, false, parts, isWarranty));
                 
                 // Calculate estimated cost from parts if not manually overridden
-                // Input is in VND, convert to USD for database storage
-                String estimatedCostStr = req.getParameter("estimatedCost");
+                // Warranty requests are always recorded as zero cost for the customer
                 BigDecimal estimatedCost;
-                if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
-                    try {
-                        // Input is in VND, convert to USD (divide by 26000)
-                        BigDecimal vndValue = new BigDecimal(estimatedCostStr);
-                        BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
-                        estimatedCost = usdValue;
-                    } catch (NumberFormatException e) {
-                        validationErrors.add("Invalid estimated cost format");
+                if (scheduleId != null) {
+                    // Schedule-origin: customer billed 0
+                    estimatedCost = BigDecimal.ZERO;
+                } else if (isWarranty) {
+                    estimatedCost = BigDecimal.ZERO;
+                } else {
+                    String estimatedCostStr = req.getParameter("estimatedCost");
+                    if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
+                        try {
+                            // Input is in VND, convert to USD (divide by 26000)
+                            BigDecimal vndValue = new BigDecimal(estimatedCostStr);
+                            BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
+                            estimatedCost = usdValue;
+                        } catch (NumberFormatException e) {
+                            validationErrors.add("Invalid estimated cost format");
+                            estimatedCost = calculateTotalFromParts(parts);
+                        }
+                    } else {
                         estimatedCost = calculateTotalFromParts(parts);
                     }
-                } else {
-                    estimatedCost = calculateTotalFromParts(parts);
                 }
                 report.setEstimatedCost(estimatedCost);
                 report.setRepairDate(LocalDate.parse(req.getParameter("repairDate")));
@@ -457,6 +627,53 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 if (!validationErrors.isEmpty()) {
                     req.setAttribute("validationErrors", validationErrors);
                     req.setAttribute("requestId", report.getRequestId());
+                    req.setAttribute("selectedRequestType", scheduleId != null ? "Maintenance" : requestType);
+                    req.setAttribute("isWarrantyRequest", isWarranty);
+                    req.setAttribute("selectedParts", parts);
+                    if (scheduleId != null) {
+                        req.setAttribute("scheduleId", scheduleId);
+                        req.setAttribute("origin", "Schedule");
+                        req.setAttribute("isScheduleOrigin", true);
+                        try {
+                            Map<String, Object> schedCustomer = getScheduleCustomerInfo(scheduleId);
+                            if (schedCustomer != null) {
+                                req.setAttribute("scheduleCustomerId", schedCustomer.get("customerAccountId"));
+                                req.setAttribute("scheduleCustomerName", schedCustomer.get("customerName"));
+                            }
+                            String taskStatus = getScheduleTaskStatus(technicianId, scheduleId);
+                            if (taskStatus != null) {
+                                req.setAttribute("scheduleTaskStatus", taskStatus);
+                            }
+                        } catch (SQLException ex) {
+                            System.err.println("Error loading schedule info: " + ex.getMessage());
+                        }
+                    } else {
+                        req.setAttribute("isScheduleOrigin", false);
+                    }
+                    try {
+                        req.setAttribute("availableParts", getAllAvailableParts());
+                    } catch (SQLException e) {
+                        req.setAttribute("availableParts", new ArrayList<Map<String, Object>>());
+                        req.setAttribute("error", "Error loading parts: " + e.getMessage());
+                    }
+                    req.setAttribute("subtotal", calculateSubtotal(parts));
+                    Map<String, Object> customerRequestInfo = null;
+                    List<Map<String, Object>> customerContracts = new ArrayList<>();
+                    try {
+                        customerRequestInfo = getCustomerRequestInfo(report.getRequestId());
+                        if (customerRequestInfo != null) {
+                            Integer customerAccountId = (Integer) customerRequestInfo.get("customerAccountId");
+                            if (customerAccountId != null) {
+                                customerContracts = getCustomerContracts(customerAccountId);
+                            }
+                        }
+                    } catch (SQLException e) {
+                        System.err.println("Error loading customer info: " + e.getMessage());
+                    }
+                    req.setAttribute("customerRequestInfo", customerRequestInfo);
+                    req.setAttribute("customerContracts", customerContracts);
+                    req.setAttribute("partsSearchQuery", req.getSession().getAttribute("partsSearchQuery"));
+                    req.setAttribute("partsSearchResults", req.getSession().getAttribute("partsSearchResults"));
                     // Get assigned tasks for dropdown
                     List<WorkTaskDAO.WorkTaskForReport> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
                     req.setAttribute("assignedTasks", assignedTasks);
@@ -525,6 +742,14 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     return;
                 }
                 
+                String requestType = null;
+                boolean isWarranty = false;
+                var serviceRequest = serviceRequestDAO.getRequestById(existingReport.getRequestId());
+                if (serviceRequest != null) {
+                    requestType = serviceRequest.getRequestType();
+                    isWarranty = "Warranty".equalsIgnoreCase(requestType);
+                }
+                
                 RepairReport report = new RepairReport();
                 report.setReportId(reportId);
                 report.setRequestId(existingReport.getRequestId()); // Use existing requestId
@@ -533,7 +758,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 report.setDiagnosis(""); // Parts replace diagnosis
                 
                 // Get selected parts from session (or existing parts if session is empty)
-                String cartKey = "selectedParts_" + existingReport.getRequestId();
+                String cartKey = existingReport.getScheduleId() != null
+                        ? "selectedParts_schedule_" + existingReport.getScheduleId()
+                        : "selectedParts_" + existingReport.getRequestId();
                 @SuppressWarnings("unchecked")
                 List<RepairReportDetail> parts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
                 if (parts == null || parts.isEmpty()) {
@@ -541,30 +768,60 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     parts = reportDAO.getReportDetails(reportId);
                 }
                 
-                // Input is in VND, convert to USD for database storage
-                String estimatedCostStr = req.getParameter("estimatedCost");
+                // Input is in VND, convert to USD for database storage (warranty -> zero)
                 BigDecimal estimatedCost;
-                if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
-                    try {
-                        // Input is in VND, convert to USD (divide by 26000)
-                        BigDecimal vndValue = new BigDecimal(estimatedCostStr);
-                        BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
-                        estimatedCost = usdValue;
-                    } catch (NumberFormatException e) {
+                if (isWarranty) {
+                    estimatedCost = BigDecimal.ZERO;
+                } else {
+                    String estimatedCostStr = req.getParameter("estimatedCost");
+                    if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
+                        try {
+                            // Input is in VND, convert to USD (divide by 26000)
+                            BigDecimal vndValue = new BigDecimal(estimatedCostStr);
+                            BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
+                            estimatedCost = usdValue;
+                        } catch (NumberFormatException e) {
+                            estimatedCost = calculateTotalFromParts(parts);
+                        }
+                    } else {
                         estimatedCost = calculateTotalFromParts(parts);
                     }
-                } else {
-                    estimatedCost = calculateTotalFromParts(parts);
                 }
                 report.setEstimatedCost(estimatedCost);
                 report.setRepairDate(existingReport.getRepairDate()); // Use existing repair date
                 report.setQuotationStatus("Pending"); // Keep as Pending
                 
                 // Validate input using new validation system
-                List<String> validationErrors = validateRepairReportInput(req, true, parts); // true = update mode
+                List<String> validationErrors = validateRepairReportInput(req, true, parts, isWarranty); // true = update mode
                 if (!validationErrors.isEmpty()) {
                     req.setAttribute("validationErrors", validationErrors);
                     req.setAttribute("report", report);
+                    req.setAttribute("selectedRequestType", requestType);
+                    req.setAttribute("isWarrantyRequest", isWarranty);
+                    req.setAttribute("selectedParts", parts);
+                    req.setAttribute("subtotal", calculateSubtotal(parts));
+                    try {
+                        req.setAttribute("availableParts", getAllAvailableParts());
+                    } catch (SQLException e) {
+                        req.setAttribute("availableParts", new ArrayList<Map<String, Object>>());
+                    }
+                    Map<String, Object> customerRequestInfo = null;
+                    List<Map<String, Object>> customerContracts = new ArrayList<>();
+                    try {
+                        customerRequestInfo = getCustomerRequestInfo(report.getRequestId());
+                        if (customerRequestInfo != null) {
+                            Integer customerAccountId = (Integer) customerRequestInfo.get("customerAccountId");
+                            if (customerAccountId != null) {
+                                customerContracts = getCustomerContracts(customerAccountId);
+                            }
+                        }
+                    } catch (SQLException e) {
+                        System.err.println("Error loading customer info: " + e.getMessage());
+                    }
+                    req.setAttribute("customerRequestInfo", customerRequestInfo);
+                    req.setAttribute("customerContracts", customerContracts);
+                    req.setAttribute("partsSearchQuery", req.getSession().getAttribute("partsSearchQuery"));
+                    req.setAttribute("partsSearchResults", req.getSession().getAttribute("partsSearchResults"));
                     req.setAttribute("pageTitle", "Edit Repair Report");
                     req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
                     req.setAttribute("activePage", "reports");
@@ -656,7 +913,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
     
-    private List<String> validateRepairReportInput(HttpServletRequest req, boolean isEditMode, List<RepairReportDetail> parts) {
+    private List<String> validateRepairReportInput(HttpServletRequest req, boolean isEditMode, List<RepairReportDetail> parts, boolean isWarranty) {
         List<String> errors = new ArrayList<>();
         
         // Validate details
@@ -666,9 +923,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         }
         
         // Validate parts (replaces diagnosis validation)
-        if (parts == null || parts.isEmpty()) {
+        if ((parts == null || parts.isEmpty()) && !isWarranty) {
             errors.add("At least one part must be selected");
-        } else {
+        } else if (parts != null && !parts.isEmpty()) {
             try {
                 PartDetailDAO partDetailDAO = new PartDetailDAO();
                 for (RepairReportDetail part : parts) {
@@ -711,11 +968,13 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         }
         
         // Validate estimated cost
-        String estimatedCostStr = req.getParameter("estimatedCost");
-        if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
-            TechnicianValidator.ValidationResult costResult = TechnicianValidator.validateEstimatedCost(estimatedCostStr);
-            if (!costResult.isValid()) {
-                errors.addAll(costResult.getErrors());
+        if (!isWarranty) {
+            String estimatedCostStr = req.getParameter("estimatedCost");
+            if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
+                TechnicianValidator.ValidationResult costResult = TechnicianValidator.validateEstimatedCost(estimatedCostStr);
+                if (!costResult.isValid()) {
+                    errors.addAll(costResult.getErrors());
+                }
             }
         }
         
@@ -926,6 +1185,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             throws ServletException, IOException, SQLException {
         String query = req.getParameter("searchQuery");
         String requestIdStr = req.getParameter("requestId");
+        String scheduleIdStr = req.getParameter("scheduleId");
 
         System.out.println("=== Parts Search Debug ===");
         System.out.println("Search query: " + query);
@@ -1091,23 +1351,38 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             throws ServletException, IOException {
         String partIdStr = req.getParameter("partId");
         String requestIdStr = req.getParameter("requestId");
+        String scheduleIdStr = req.getParameter("scheduleId");
         
         if (partIdStr == null) {
-            resp.sendRedirect(req.getContextPath() + "/technician/reports?action=create&requestId=" + requestIdStr);
+            StringBuilder redirectMiss = new StringBuilder(req.getContextPath()).append("/technician/reports?action=create");
+            if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
+                redirectMiss.append("&scheduleId=").append(scheduleIdStr.trim());
+            } else if (requestIdStr != null && !requestIdStr.trim().isEmpty()) {
+                redirectMiss.append("&requestId=").append(requestIdStr.trim());
+            }
+            resp.sendRedirect(redirectMiss.toString());
             return;
         }
         
         int partId = Integer.parseInt(partIdStr);
         
         // Get request-specific cart
-        String cartKey = "selectedParts_" + (requestIdStr != null ? requestIdStr : "new");
+        String cartKey = (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty())
+                ? ("selectedParts_schedule_" + scheduleIdStr.trim())
+                : ("selectedParts_" + (requestIdStr != null ? requestIdStr.trim() : "new"));
         @SuppressWarnings("unchecked")
         List<RepairReportDetail> selectedParts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
         if (selectedParts != null) {
             selectedParts.removeIf(detail -> detail.getPartId() == partId);
         }
         
-        resp.sendRedirect(req.getContextPath() + "/technician/reports?action=create&requestId=" + requestIdStr);
+        StringBuilder redirect = new StringBuilder(req.getContextPath()).append("/technician/reports?action=create");
+        if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
+            redirect.append("&scheduleId=").append(scheduleIdStr.trim());
+        } else if (requestIdStr != null && !requestIdStr.trim().isEmpty()) {
+            redirect.append("&requestId=").append(requestIdStr.trim());
+        }
+        resp.sendRedirect(redirect.toString());
     }
     
 
@@ -1155,6 +1430,65 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     info.put("requestDescription", rs.getString("requestDescription"));
                     info.put("requestType", rs.getString("requestType"));
                     return info;
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Resolve effective requestId from a scheduleId (MaintenanceSchedule)
+     */
+    private Integer getEffectiveRequestIdForSchedule(int scheduleId) throws SQLException {
+        String sql = "SELECT requestId FROM MaintenanceSchedule WHERE scheduleId = ?";
+        try (var con = new dal.DBContext().connection;
+             var ps = con.prepareStatement(sql)) {
+            ps.setInt(1, scheduleId);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getObject("requestId", Integer.class);
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Get schedule's customer info via Contract -> Account
+     */
+    private Map<String, Object> getScheduleCustomerInfo(int scheduleId) throws SQLException {
+        String sql = "SELECT a.accountId as customerAccountId, a.fullName as customerName " +
+                     "FROM MaintenanceSchedule ms " +
+                     "JOIN Contract c ON ms.contractId = c.contractId " +
+                     "JOIN Account a ON c.customerId = a.accountId " +
+                     "WHERE ms.scheduleId = ?";
+        try (var con = new dal.DBContext().connection;
+             var ps = con.prepareStatement(sql)) {
+            ps.setInt(1, scheduleId);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Map<String, Object> info = new LinkedHashMap<>();
+                    info.put("customerAccountId", rs.getInt("customerAccountId"));
+                    info.put("customerName", rs.getString("customerName"));
+                    return info;
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Get WorkTask status for this technician and scheduleId (if exists)
+     */
+    private String getScheduleTaskStatus(int technicianId, int scheduleId) throws SQLException {
+        String sql = "SELECT status FROM WorkTask WHERE technicianId = ? AND scheduleId = ? ORDER BY taskId DESC LIMIT 1";
+        try (var con = new dal.DBContext().connection;
+             var ps = con.prepareStatement(sql)) {
+            ps.setInt(1, technicianId);
+            ps.setInt(2, scheduleId);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("status");
                 }
             }
         }
@@ -1324,7 +1658,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         try {
             String partIdStr = req.getParameter("partId");
             String quantityStr = req.getParameter("quantity");
-
+            String requestIdParam = req.getParameter("requestId");
+            String scheduleIdParam = req.getParameter("scheduleId");
+            
             if (partIdStr == null || quantityStr == null) {
                 resp.getWriter().write("{\"success\":false,\"error\":\"Missing parameters\"}");
                 return;
@@ -1332,26 +1668,29 @@ public class TechnicianRepairReportServlet extends HttpServlet {
 
             int partId = Integer.parseInt(partIdStr);
             int quantity = Integer.parseInt(quantityStr);
+            HttpSession session = req.getSession();
+            String cartKey;
+            Integer requestIdForContext = null;
+            Integer scheduleIdForContext = null;
             
-            // Validate that there's a valid request with contract
-            String requestIdParam = req.getParameter("requestId");
-            if (requestIdParam == null || requestIdParam.trim().isEmpty()) {
-                resp.getWriter().write("{\"success\":false,\"error\":\"Missing requestId\"}");
+            if (requestIdParam != null && !requestIdParam.trim().isEmpty()) {
+                requestIdForContext = Integer.parseInt(requestIdParam.trim());
+                cartKey = "selectedParts_" + requestIdForContext;
+            } else if (scheduleIdParam != null && !scheduleIdParam.trim().isEmpty()) {
+                scheduleIdForContext = Integer.parseInt(scheduleIdParam.trim());
+                cartKey = "selectedParts_schedule_" + scheduleIdForContext;
+            } else {
+                resp.getWriter().write("{\"success\":false,\"error\":\"Missing requestId or scheduleId\"}");
                 return;
             }
             
-            // Get request-specific cart
-            int requestIdForCart = Integer.parseInt(requestIdParam);
-            String cartKey = "selectedParts_" + requestIdForCart;
-            HttpSession session = req.getSession();
             @SuppressWarnings("unchecked")
             List<RepairReportDetail> selectedParts = (List<RepairReportDetail>) session.getAttribute(cartKey);
             
-            // Validate contract exists
-            if (requestIdParam != null && !requestIdParam.trim().isEmpty()) {
+            // Validate contract exists for request-origin only
+            if (requestIdForContext != null) {
                 try {
-                    int requestId = Integer.parseInt(requestIdParam);
-                    Map<String, Object> customerInfo = getCustomerRequestInfo(requestId);
+                    Map<String, Object> customerInfo = getCustomerRequestInfo(requestIdForContext);
                     
                     if (customerInfo == null) {
                         resp.getWriter().write("{\"success\":false,\"error\":\"Invalid request or no contract found\"}");
@@ -1470,6 +1809,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         try {
             String partIdStr = req.getParameter("partId");
             String requestIdStr = req.getParameter("requestId");
+            String scheduleIdStr = req.getParameter("scheduleId");
             
             System.out.println("Received partId: '" + partIdStr + "' (type: " + (partIdStr != null ? partIdStr.getClass().getSimpleName() : "null") + ")");
             System.out.println("Received requestId: '" + requestIdStr + "' (type: " + (requestIdStr != null ? requestIdStr.getClass().getSimpleName() : "null") + ")");
@@ -1480,9 +1820,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 return;
             }
             
-            if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
-                System.out.println("ERROR: Missing requestId");
-                resp.getWriter().write("{\"success\":false,\"error\":\"Missing requestId\"}");
+            if ((requestIdStr == null || requestIdStr.trim().isEmpty()) && (scheduleIdStr == null || scheduleIdStr.trim().isEmpty())) {
+                System.out.println("ERROR: Missing requestId/scheduleId");
+                resp.getWriter().write("{\"success\":false,\"error\":\"Missing requestId or scheduleId\"}");
                 return;
             }
 
@@ -1497,7 +1837,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             }
             
             // Get request-specific cart
-            String cartKey = "selectedParts_" + requestIdStr.trim();
+            String cartKey = (requestIdStr != null && !requestIdStr.trim().isEmpty())
+                    ? ("selectedParts_" + requestIdStr.trim())
+                    : ("selectedParts_schedule_" + scheduleIdStr.trim());
             System.out.println("Cart key: " + cartKey);
             HttpSession session = req.getSession();
             @SuppressWarnings("unchecked")
@@ -1549,13 +1891,28 @@ public class TechnicianRepairReportServlet extends HttpServlet {
 
         try {
             String requestIdStr = req.getParameter("requestId");
-            int requestId = Integer.parseInt(requestIdStr);
+            String scheduleIdStr = req.getParameter("scheduleId");
+            Integer requestId = null;
+            Integer scheduleId = null;
+            if (requestIdStr != null && !requestIdStr.trim().isEmpty()) {
+                requestId = Integer.parseInt(requestIdStr);
+            } else if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
+                scheduleId = Integer.parseInt(scheduleIdStr);
+            } else {
+                resp.getWriter().write("{\"success\":false,\"error\":\"Missing requestId or scheduleId\"}");
+                return;
+            }
 
             // Get customer/request info
-            Map<String, Object> customerInfo = getCustomerRequestInfo(requestId);
+            Map<String, Object> customerInfo = null;
+            if (requestId != null) {
+                customerInfo = getCustomerRequestInfo(requestId);
+            }
 
             // Get selected parts from session (request-specific cart)
-            String cartKey = "selectedParts_" + requestId;
+            String cartKey = (requestId != null)
+                    ? ("selectedParts_" + requestId)
+                    : ("selectedParts_schedule_" + scheduleId);
             HttpSession session = req.getSession();
             @SuppressWarnings("unchecked")
             List<RepairReportDetail> selectedParts = (List<RepairReportDetail>) session.getAttribute(cartKey);
@@ -1614,11 +1971,15 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         
         try {
             String requestIdStr = req.getParameter("requestId");
+            String scheduleIdStr = req.getParameter("scheduleId");
             HttpSession session = req.getSession();
             
             if (requestIdStr != null && !requestIdStr.trim().isEmpty()) {
                 // Clear specific request's cart
                 String cartKey = "selectedParts_" + requestIdStr;
+                session.removeAttribute(cartKey);
+            } else if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
+                String cartKey = "selectedParts_schedule_" + scheduleIdStr;
                 session.removeAttribute(cartKey);
             }
             
@@ -1690,16 +2051,22 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
         
         try {
+            String scheduleIdStr = req.getParameter("scheduleId");
             String requestIdStr = req.getParameter("requestId");
-            if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
-                resp.getWriter().write("{\"exists\":false,\"error\":\"Missing requestId\"}");
-                return;
-            }
-            
-            int requestId = Integer.parseInt(requestIdStr);
             
             RepairReportDAO reportDAO = new RepairReportDAO();
-            RepairReport existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
+            RepairReport existingReport = null;
+            
+            if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
+                int scheduleId = Integer.parseInt(scheduleIdStr.trim());
+                existingReport = reportDAO.findByScheduleIdAndTechnician(scheduleId, technicianId);
+            } else if (requestIdStr != null && !requestIdStr.trim().isEmpty()) {
+                int requestId = Integer.parseInt(requestIdStr.trim());
+                existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
+            } else {
+                resp.getWriter().write("{\"exists\":false,\"error\":\"Missing identifier\"}");
+                return;
+            }
             
             if (existingReport != null) {
                 resp.getWriter().write("{\"exists\":true,\"reportId\":" + existingReport.getReportId() + "}");
@@ -1707,7 +2074,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 resp.getWriter().write("{\"exists\":false}");
             }
         } catch (NumberFormatException e) {
-            resp.getWriter().write("{\"exists\":false,\"error\":\"Invalid requestId format\"}");
+            resp.getWriter().write("{\"exists\":false,\"error\":\"Invalid identifier format\"}");
         } catch (SQLException e) {
             e.printStackTrace();
             System.err.println("SQLException in handleCheckExistingReportAjax: " + e.getMessage());

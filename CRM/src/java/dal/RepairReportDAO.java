@@ -150,16 +150,27 @@ public class RepairReportDAO extends MyDAO {
      * Create a new repair report
      */
     public int createRepairReport(RepairReport report) throws SQLException {
-        xSql = "INSERT INTO RepairReport (requestId, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        xSql = "INSERT INTO RepairReport (requestId, scheduleId, origin, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         ps = con.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
-        ps.setInt(1, report.getRequestId());
-        ps.setInt(2, report.getTechnicianId());
-        ps.setString(3, report.getDetails());
-        ps.setString(4, report.getDiagnosis());
-        ps.setBigDecimal(5, report.getEstimatedCost());
-        ps.setString(6, report.getQuotationStatus());
-        ps.setDate(7, Date.valueOf(report.getRepairDate()));
+        // requestId is primitive int in model; treat values <= 0 as NULL for DB
+        if (report.getRequestId() > 0) {
+            ps.setInt(1, report.getRequestId());
+        } else {
+            ps.setNull(1, Types.INTEGER);
+        }
+        if (report.getScheduleId() != null) {
+            ps.setInt(2, report.getScheduleId());
+        } else {
+            ps.setNull(2, Types.INTEGER);
+        }
+        ps.setString(3, report.getOrigin() != null ? report.getOrigin() : "ServiceRequest");
+        ps.setInt(4, report.getTechnicianId());
+        ps.setString(5, report.getDetails());
+        ps.setString(6, report.getDiagnosis());
+        ps.setBigDecimal(7, report.getEstimatedCost());
+        ps.setString(8, report.getQuotationStatus());
+        ps.setDate(9, Date.valueOf(report.getRepairDate()));
 
         int affected = ps.executeUpdate();
         if (affected > 0) {
@@ -187,17 +198,28 @@ public class RepairReportDAO extends MyDAO {
         try {
             con.setAutoCommit(false);
 
-            // Insert RepairReport header (targetContractId column removed - contract is auto-determined from ServiceRequest via trigger)
-            xSql = "INSERT INTO RepairReport (requestId, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            // Insert RepairReport header (supports both request-origin and schedule-origin)
+            xSql = "INSERT INTO RepairReport (requestId, scheduleId, origin, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             ps = con.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
-            ps.setInt(1, report.getRequestId());
-            ps.setInt(2, report.getTechnicianId());
-            ps.setString(3, report.getDetails());
-            ps.setString(4, report.getDiagnosis() != null ? report.getDiagnosis() : ""); // Keep diagnosis field but may be empty
-            ps.setBigDecimal(5, report.getEstimatedCost());
-            ps.setString(6, report.getQuotationStatus());
-            ps.setDate(7, Date.valueOf(report.getRepairDate()));
+            // requestId is primitive int; interpret <= 0 as NULL for DB
+            if (report.getRequestId() > 0) {
+                ps.setInt(1, report.getRequestId());
+            } else {
+                ps.setNull(1, Types.INTEGER);
+            }
+            if (report.getScheduleId() != null) {
+                ps.setInt(2, report.getScheduleId());
+            } else {
+                ps.setNull(2, Types.INTEGER);
+            }
+            ps.setString(3, report.getOrigin() != null ? report.getOrigin() : (report.getScheduleId() != null ? "Schedule" : "ServiceRequest"));
+            ps.setInt(4, report.getTechnicianId());
+            ps.setString(5, report.getDetails());
+            ps.setString(6, report.getDiagnosis() != null ? report.getDiagnosis() : ""); // Keep diagnosis field but may be empty
+            ps.setBigDecimal(7, report.getEstimatedCost());
+            ps.setString(8, report.getQuotationStatus());
+            ps.setDate(9, Date.valueOf(report.getRepairDate()));
             // targetContractId column doesn't exist - contract is automatically determined from ServiceRequest when report is approved
 
             int affected = ps.executeUpdate();
@@ -610,6 +632,33 @@ public class RepairReportDAO extends MyDAO {
             return rs.getInt(1);
         }
         return 0;
+    }
+
+    public RepairReport findByScheduleIdAndTechnician(int scheduleId, int technicianId) throws SQLException {
+        String sql = "SELECT * FROM RepairReport WHERE scheduleId = ? AND technicianId = ? LIMIT 1";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, scheduleId);
+            ps.setInt(2, technicianId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    RepairReport report = new RepairReport();
+                    report.setReportId(rs.getInt("reportId"));
+                    Integer reqId = rs.getObject("requestId", Integer.class);
+                    report.setRequestId(reqId != null ? reqId : 0);
+                    report.setScheduleId(rs.getObject("scheduleId", Integer.class));
+                    report.setTechnicianId(rs.getInt("technicianId"));
+                    report.setDetails(rs.getString("details"));
+                    report.setDiagnosis(rs.getString("diagnosis"));
+                    report.setEstimatedCost(rs.getBigDecimal("estimatedCost"));
+                    report.setQuotationStatus(rs.getString("quotationStatus"));
+                    Date d = rs.getDate("repairDate");
+                    if (d != null) report.setRepairDate(d.toLocalDate());
+                    report.setInvoiceDetailId(rs.getObject("invoiceDetailId", Integer.class));
+                    return report;
+                }
+            }
+        }
+        return null;
     }
 
     /**

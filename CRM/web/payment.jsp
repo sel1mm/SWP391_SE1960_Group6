@@ -310,6 +310,12 @@
                     <i class="fas fa-money-bill-wave"></i>
                     <span>Xác nhận thanh toán tiền mặt</span>
                 </button>
+                
+                <button type="button" class="btn-confirm-payment btn-vnpay-payment" onclick="confirmVNPayPayment()">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Thanh toán qua VNPay</span>
+                </button>
+
                 <div class="security-message">
                     <i class="fas fa-shield-alt"></i>
                     Giao dịch được bảo mật và mã hóa an toàn
@@ -401,7 +407,46 @@
             });
         }
         
-      
+        function confirmVNPayPayment() {
+            const finalRequestId = requestId;
+            if (!finalRequestId || finalRequestId <= 0) {
+                Swal.fire({ icon: 'error', title: 'Lỗi!', text: 'Không thể xác định mã yêu cầu!' });
+                return;
+            }
+            
+            Swal.fire({
+                title: 'Xác nhận thanh toán?',
+                text: 'Số tiền: ' + paymentAmount.toLocaleString('vi-VN') + ' VNĐ',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2196f3',
+                confirmButtonText: '✅ Xác nhận',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const params = new URLSearchParams();
+                    params.append('requestId', finalRequestId);
+                    params.append('paymentMethod', 'VNPay');
+
+                    fetch(contextPath + '/payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params.toString()
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Lỗi!', text: data.error || 'Có lỗi xảy ra!' });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({ icon: 'error', title: 'Lỗi!', text: error.message });
+                    });
+                }
+            });
+        }
     </script>
 </body>
 </html>

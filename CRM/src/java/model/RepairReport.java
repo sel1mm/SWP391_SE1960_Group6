@@ -10,6 +10,8 @@ import java.time.LocalDate;
 public class RepairReport {
     private int reportId;
     private int requestId;
+    private Integer scheduleId;
+    private String origin; // 'ServiceRequest' | 'Schedule'
     private Integer technicianId;
     private String details;
     private String diagnosis;
@@ -44,6 +46,12 @@ public class RepairReport {
 
     public int getRequestId() { return requestId; }
     public void setRequestId(int requestId) { this.requestId = requestId; }
+
+    public Integer getScheduleId() { return scheduleId; }
+    public void setScheduleId(Integer scheduleId) { this.scheduleId = scheduleId; }
+
+    public String getOrigin() { return origin; }
+    public void setOrigin(String origin) { this.origin = origin; }
 
     public Integer getTechnicianId() { return technicianId; }
     public void setTechnicianId(Integer technicianId) { this.technicianId = technicianId; }
@@ -80,6 +88,8 @@ public class RepairReport {
         return "RepairReport{" +
                 "reportId=" + reportId +
                 ", requestId=" + requestId +
+                ", scheduleId=" + scheduleId +
+                ", origin='" + origin + '\'' +
                 ", technicianId=" + technicianId +
                 ", details='" + details + '\'' +
                 ", diagnosis='" + diagnosis + '\'' +

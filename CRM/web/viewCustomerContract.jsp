@@ -1874,6 +1874,9 @@ async function viewContractDetailsWithAppendix(contractId) {
                     // ✅ NHÂN 26000 CHO TỔNG TIỀN
                     const totalAmountUSD = app.totalAmount || 0;
                     const totalAmountVND = totalAmountUSD * 26000;
+                    const isWarranty = !!app.warrantyCovered;
+                    const partsBadgeClass = isWarranty ? 'bg-warning text-dark' : 'bg-warning';
+                    const partsBadgeLabel = isWarranty ? 'Phụ lục linh kiện (Bảo hành)' : 'Phụ lục linh kiện';
                     
                     html += '<div class="appendix-item" style="border-left-color: #ffc107;">' +
                         '<div class="d-flex justify-content-between align-items-start">' +
@@ -1881,14 +1884,14 @@ async function viewContractDetailsWithAppendix(contractId) {
                         '<h6 class="mb-1">' +
                         '<i class="fas fa-wrench text-warning"></i> ' + app.appendixName +
                         '<span class="badge ' + statusBadge + ' ms-2">' + app.status + '</span>' +
-                        '<span class="badge bg-warning ms-1">Phụ lục linh kiện</span>' +
+                        '<span class="badge ' + partsBadgeClass + ' ms-1">' + partsBadgeLabel + '</span>' +
                         '</h6>' +
                         '<p class="mb-1 text-muted small">' + (app.description || 'Phụ lục linh kiện từ báo giá sửa chữa') + '</p>' +
                         '<p class="mb-1">' +
                         '<i class="fas fa-calendar"></i> Hiệu lực: <strong>' + app.effectiveDate + '</strong> | ' +
                         '<i class="fas fa-boxes"></i> Số linh kiện: <strong>' + (app.partCount || 0) + '</strong> | ' +
-                        '<i class="fas fa-money-bill-wave"></i> Tổng tiền: <strong class="text-success">' + 
-                        totalAmountVND.toLocaleString('vi-VN') + ' VNĐ</strong>' +  // ✅ ĐÃ NHÂN 26000
+                        '<i class="fas fa-money-bill-wave"></i> Tổng tiền: <strong class="' + (isWarranty ? 'text-muted' : 'text-success') + '">' + 
+                        (isWarranty ? '0 VNĐ (Bảo hành)' : totalAmountVND.toLocaleString('vi-VN') + ' VNĐ') + '</strong>' +
                         '</p>' +
                         '</div>' +
                         '<div class="btn-group">';
@@ -1912,7 +1915,18 @@ async function viewContractDetailsWithAppendix(contractId) {
                     
                 } else {
                     // ✅ XỬ LÝ CHO APPENDIX THÔNG THƯỜNG (AddEquipment, Other)
-                    const typeLabel = app.appendixType === 'AddEquipment' ? 'Thêm thiết bị' : 'Khác';
+                    let typeLabel = 'Khác';
+                    let typeBadgeClass = 'bg-secondary';
+                    if (app.warrantyCovered) {
+                        typeLabel = 'Phụ lục bảo hành';
+                        typeBadgeClass = 'bg-warning text-dark';
+                    } else if (app.appendixType === 'AddEquipment') {
+                        typeLabel = 'Thêm thiết bị';
+                        typeBadgeClass = 'bg-info';
+                    } else if (app.appendixType === 'RepairPart') {
+                        typeLabel = 'Linh kiện sửa chữa';
+                        typeBadgeClass = 'bg-info';
+                    }
                     
                     html += '<div class="appendix-item">' +
                         '<div class="d-flex justify-content-between align-items-start">' +
@@ -1920,7 +1934,7 @@ async function viewContractDetailsWithAppendix(contractId) {
                         '<h6 class="mb-1">' +
                         '<i class="fas fa-file-alt"></i> ' + app.appendixName +
                         '<span class="badge ' + statusBadge + ' ms-2">' + app.status + '</span>' +
-                        '<span class="badge bg-info ms-1">' + typeLabel + '</span>' +
+                        '<span class="badge ' + typeBadgeClass + ' ms-1">' + typeLabel + '</span>' +
                         '</h6>' +
                         '<p class="mb-1 text-muted small">' + (app.description || 'Không có mô tả') + '</p>' +
                         '<p class="mb-1">' +
@@ -3590,8 +3604,15 @@ async function openViewAppendixModal(appendixId) {
         const equipment = data.equipment || [];
         
         // Hiển thị thông tin phụ lục
-        document.getElementById('view-appendixType').value = 
-            appendix.appendixType === 'AddEquipment' ? 'Thêm thiết bị' : 'Khác';
+        let appendixTypeLabel = 'Khác';
+        if (appendix.warrantyCovered) {
+            appendixTypeLabel = 'Phụ lục bảo hành';
+        } else if (appendix.appendixType === 'AddEquipment') {
+            appendixTypeLabel = 'Thêm thiết bị';
+        } else if (appendix.appendixType === 'RepairPart') {
+            appendixTypeLabel = 'Linh kiện sửa chữa';
+        }
+        document.getElementById('view-appendixType').value = appendixTypeLabel;
         document.getElementById('view-appendixName').value = appendix.appendixName;
         document.getElementById('view-description').value = appendix.description || '';
         document.getElementById('view-effectiveDate').value = appendix.effectiveDate;

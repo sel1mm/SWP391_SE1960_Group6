@@ -48,7 +48,23 @@ public class TechnicianTaskServlet extends HttpServlet {
                 WorkTask task = taskDAO.findById(taskId);
                 
                 if (task != null && task.getTechnicianId() == technicianId) {
+                    RepairReport existingReport = null;
+                    RepairReportDAO reportDAO = new RepairReportDAO();
+                    try {
+                        if (task.getRequestId() != null) {
+                            existingReport = reportDAO.findByRequestIdAndTechnician(task.getRequestId(), technicianId);
+                        } else if (task.getScheduleId() != null) {
+                            existingReport = reportDAO.findByScheduleIdAndTechnician(task.getScheduleId(), technicianId);
+                        }
+                    } catch (SQLException e) {
+                        System.err.println("Error loading existing report: " + e.getMessage());
+                    }
                     req.setAttribute("task", task);
+                    req.setAttribute("existingReport", existingReport);
+                    // Also expose scheduleId so JSP can render Create Report for schedules
+                    if (task.getScheduleId() != null && task.getRequestId() == null) {
+                        req.setAttribute("effectiveScheduleId", task.getScheduleId());
+                    }
                     req.setAttribute("pageTitle", "Task Detail");
                     req.setAttribute("contentView", "/WEB-INF/technician/task-detail.jsp");
                     req.setAttribute("activePage", "tasks");
@@ -154,30 +170,24 @@ public class TechnicianTaskServlet extends HttpServlet {
                     String trimmedStatus = newStatus.trim();
                     
                     // ✅ VALIDATION: Check if trying to complete task with pending repair report
-                    // Only check if status is "Completed" and task has a requestId
-                    if ("Completed".equals(trimmedStatus) && task.getRequestId() != null) {
+                    if ("Completed".equals(trimmedStatus)) {
                         try {
                             RepairReportDAO reportDAO = new RepairReportDAO();
-                            // ✅ FIX: Use findByRequestIdAndTechnician to ensure we check the report
-                            // that belongs to THIS technician, not just any report for the requestId
-                            RepairReport report = reportDAO.findByRequestIdAndTechnician(task.getRequestId(), technicianId);
+                            RepairReport report = null;
+                            if (task.getRequestId() != null) {
+                                report = reportDAO.findByRequestIdAndTechnician(task.getRequestId(), technicianId);
+                            } else if (task.getScheduleId() != null) {
+                                report = reportDAO.findByScheduleIdAndTechnician(task.getScheduleId(), technicianId);
+                            }
                             
                             if (report != null) {
                                 String quotationStatus = report.getQuotationStatus();
-                                
-                                // Block completion if customer hasn't responded (status is still Pending)
                                 if (quotationStatus != null && "Pending".equals(quotationStatus)) {
                                     String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Cannot complete task: Customer has not yet responded to the repair report quotation. Please wait for customer approval or rejection.");
                                     resp.sendRedirect(redirectUrl);
                                     return;
                                 }
-                                
-                                // Allow if status is Approved or Rejected (customer has responded)
-                                // If status is null or other value, also allow (edge case)
                             }
-                            // If no repair report exists for this technician, allow completion
-                            // (task might not require repair report, or report belongs to different technician)
-                            
                         } catch (SQLException e) {
                             System.err.println("Error checking repair report status: " + e.getMessage());
                             e.printStackTrace();

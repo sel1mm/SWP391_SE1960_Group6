@@ -53,6 +53,8 @@ public class ContractAppendix {
     private LocalDateTime createdAt;
     private int equipmentCount;
     private boolean canEdit;
+    private boolean warrantyCovered;
+    private Integer warrantyReportId;
 
     public int getEquipmentCount() {
         return equipmentCount;
@@ -60,6 +62,22 @@ public class ContractAppendix {
 
     public void setEquipmentCount(int equipmentCount) {
         this.equipmentCount = equipmentCount;
+    }
+
+    public boolean isWarrantyCovered() {
+        return warrantyCovered;
+    }
+
+    public void setWarrantyCovered(boolean warrantyCovered) {
+        this.warrantyCovered = warrantyCovered;
+    }
+
+    public Integer getWarrantyReportId() {
+        return warrantyReportId;
+    }
+
+    public void setWarrantyReportId(Integer warrantyReportId) {
+        this.warrantyReportId = warrantyReportId;
     }
 
     public ContractAppendix() {
@@ -169,7 +187,7 @@ public class ContractAppendix {
 
     @Override
     public String toString() {
-        return "ContractAppendix{" + "appendixId=" + appendixId + ", contractId=" + contractId + ", appendixType=" + appendixType + ", appendixName=" + appendixName + ", description=" + description + ", effectiveDate=" + effectiveDate + ", totalAmount=" + totalAmount + ", status=" + status + ", fileAttachment=" + fileAttachment + ", createdBy=" + createdBy + ", createdAt=" + createdAt + '}';
+        return "ContractAppendix{" + "appendixId=" + appendixId + ", contractId=" + contractId + ", appendixType=" + appendixType + ", appendixName=" + appendixName + ", description=" + description + ", effectiveDate=" + effectiveDate + ", totalAmount=" + totalAmount + ", status=" + status + ", fileAttachment=" + fileAttachment + ", createdBy=" + createdBy + ", createdAt=" + createdAt + ", warrantyCovered=" + warrantyCovered + ", warrantyReportId=" + warrantyReportId + '}';
     }
 
 }

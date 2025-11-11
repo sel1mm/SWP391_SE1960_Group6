@@ -91,6 +91,9 @@
                   <c:choose>
                     <c:when test="${task.requestId != null}">
                       <a href="#" class="text-decoration-none">#${task.requestId}</a>
+                      <c:if test="${task.scheduleId != null}">
+                        <div class="text-muted small">Linked from schedule #${task.scheduleId}</div>
+                      </c:if>
                     </c:when>
                     <c:otherwise>
                       <span class="text-muted">Not linked</span>
@@ -179,11 +182,45 @@
             <button class="btn btn-primary" onclick="showStatusUpdateModal(${task.taskId}, '${task.status}')">
               <i class="bi bi-pencil me-1"></i>Update Status
             </button>
-            <c:if test="${task.requestId != null}">
-              <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=create&requestId=${task.requestId}">
-                <i class="bi bi-clipboard-plus me-1"></i>Create Report
-              </a>
-            </c:if>
+            <c:choose>
+              <c:when test="${task.requestId != null}">
+                <c:choose>
+                  <c:when test="${not empty existingReport}">
+                    <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=edit&reportId=${existingReport.reportId}">
+                      <i class="bi bi-clipboard-check me-1"></i>Edit Report
+                    </a>
+                  </c:when>
+                  <c:otherwise>
+                    <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=create&requestId=${task.requestId}">
+                      <i class="bi bi-clipboard-plus me-1"></i>Create Report
+                    </a>
+                  </c:otherwise>
+                </c:choose>
+              </c:when>
+              <c:otherwise>
+                <c:choose>
+                  <c:when test="${task.scheduleId != null}">
+                    <c:choose>
+                      <c:when test="${not empty existingReport}">
+                        <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=edit&reportId=${existingReport.reportId}">
+                          <i class="bi bi-clipboard-check me-1"></i>Edit Report
+                        </a>
+                      </c:when>
+                      <c:otherwise>
+                        <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=create&scheduleId=${task.scheduleId}">
+                          <i class="bi bi-clipboard-plus me-1"></i>Create Report
+                        </a>
+                      </c:otherwise>
+                    </c:choose>
+                  </c:when>
+                  <c:otherwise>
+                    <button class="btn btn-outline-secondary" type="button" disabled title="This task is not linked to any service request or schedule">
+                      <i class="bi bi-clipboard-x me-1"></i>Report Unavailable
+                    </button>
+                  </c:otherwise>
+                </c:choose>
+              </c:otherwise>
+            </c:choose>
             <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
               <i class="bi bi-file-earmark-text me-1"></i>View Contracts
             </a>

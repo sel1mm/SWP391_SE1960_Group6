@@ -67,15 +67,26 @@ public class WorkTaskDAO extends MyDAO {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT wt.taskId, wt.requestId, wt.scheduleId, wt.technicianId, ");
         sql.append("wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status, ");
-        sql.append("sr.createdBy as customerId, a.fullName as customerName, a.email as customerEmail, ");
+        // Customer derivation for both Request and Scheduled tasks
+        sql.append("COALESCE(a_ms.accountId, a_sr.accountId, a_c.accountId) AS customerId, ");
+        sql.append("COALESCE(a_ms.fullName, a_sr.fullName, a_c.fullName) AS customerName, ");
+        sql.append("COALESCE(a_ms.email, a_sr.email, a_c.email) AS customerEmail, ");
+        sql.append("COALESCE(wt.requestId, ms.requestId) AS effectiveRequestId, ");
         // Plan dates from latest WorkAssignment only
         sql.append("wa.assignmentDate AS planStart, ");
         sql.append("CASE WHEN wa.assignmentDate IS NOT NULL AND wa.estimatedDuration IS NOT NULL ");
         sql.append("THEN DATE_ADD(wa.assignmentDate, INTERVAL ROUND(wa.estimatedDuration * 60) MINUTE) ");
         sql.append("ELSE NULL END AS planDone ");
         sql.append("FROM WorkTask wt ");
-        sql.append("LEFT JOIN ServiceRequest sr ON wt.requestId = sr.requestId ");
-        sql.append("LEFT JOIN Account a ON sr.createdBy = a.accountId ");
+        // Join MaintenanceSchedule first, then ServiceRequest can reference ms.requestId
+        sql.append("LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId ");
+        // For Request-type (or schedule-linked) tasks: derive customer via ServiceRequest.createdBy
+        sql.append("LEFT JOIN ServiceRequest sr ON sr.requestId = COALESCE(wt.requestId, ms.requestId) ");
+        sql.append("LEFT JOIN Account a_sr ON sr.createdBy = a_sr.accountId ");
+        // For Scheduled-type tasks: prefer MaintenanceSchedule.customerId, else fallback via sr/contract
+        sql.append("LEFT JOIN Account a_ms ON ms.customerId = a_ms.accountId ");
+        sql.append("LEFT JOIN Contract c ON ms.contractId = c.contractId ");
+        sql.append("LEFT JOIN Account a_c ON c.customerId = a_c.accountId ");
         // Join latest assignment per task (most recent assignmentDate)
         sql.append("LEFT JOIN ( ");
         sql.append("  SELECT wa1.* FROM WorkAssignment wa1 ");
@@ -90,7 +101,8 @@ public class WorkTaskDAO extends MyDAO {
 
         // Add search filter
         if (searchQuery != null && !searchQuery.trim().isEmpty()) {
-            sql.append(" AND (wt.taskType LIKE ? OR wt.taskDetails LIKE ? OR CAST(wt.taskId AS CHAR) LIKE ? OR a.fullName LIKE ?)");
+            sql.append(" AND (wt.taskType LIKE ? OR wt.taskDetails LIKE ? OR CAST(wt.taskId AS CHAR) LIKE ? ");
+            sql.append(" OR COALESCE(a_ms.fullName, a_sr.fullName, a_c.fullName) LIKE ?)");
             String searchPattern = "%" + searchQuery.trim() + "%";
             params.add(searchPattern);
             params.add(searchPattern);
@@ -105,7 +117,7 @@ public class WorkTaskDAO extends MyDAO {
         }
 
         // Technician Tasks list: closest date first using endDate, then startDate (DESC)
-        sql.append(" ORDER BY COALESCE(wt.endDate, wt.startDate) DESC LIMIT ? OFFSET ?");
+        sql.append(" ORDER BY COALESCE(wt.endDate, wt.startDate, ms.scheduledDate) DESC LIMIT ? OFFSET ?");
         params.add(pageSize);
         params.add((page - 1) * pageSize);
 
@@ -118,6 +130,10 @@ public class WorkTaskDAO extends MyDAO {
         while (rs.next()) {
             WorkTaskWithCustomer taskWithCustomer = new WorkTaskWithCustomer();
             taskWithCustomer.task = mapResultSetToWorkTask(rs);
+            Integer effectiveRequestId = rs.getObject("effectiveRequestId", Integer.class);
+            if (effectiveRequestId != null) {
+                taskWithCustomer.task.setRequestId(effectiveRequestId);
+            }
             taskWithCustomer.customerId = rs.getObject("customerId", Integer.class);
             taskWithCustomer.customerName = rs.getString("customerName");
             taskWithCustomer.customerEmail = rs.getString("customerEmail");
@@ -170,13 +186,21 @@ public class WorkTaskDAO extends MyDAO {
      * Find a specific task by ID
      */
     public WorkTask findById(int taskId) throws SQLException {
-        xSql = "SELECT * FROM WorkTask WHERE taskId = ?";
+        xSql = "SELECT wt.*, COALESCE(wt.requestId, ms.requestId) AS effectiveRequestId "
+                + "FROM WorkTask wt "
+                + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
+                + "WHERE wt.taskId = ?";
         ps = con.prepareStatement(xSql);
         ps.setInt(1, taskId);
         rs = ps.executeQuery();
 
         if (rs.next()) {
-            return mapResultSetToWorkTask(rs);
+            WorkTask task = mapResultSetToWorkTask(rs);
+            Integer effectiveRequestId = rs.getObject("effectiveRequestId", Integer.class);
+            if (effectiveRequestId != null) {
+                task.setRequestId(effectiveRequestId);
+            }
+            return task;
         }
         return null;
     }
@@ -296,8 +320,8 @@ public class WorkTaskDAO extends MyDAO {
     public int getTaskCountForTechnicianWithCustomer(int technicianId, String statusFilter) throws SQLException {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT COUNT(*) FROM WorkTask wt ");
-        sql.append("LEFT JOIN ServiceRequest sr ON wt.requestId = sr.requestId ");
-        sql.append("LEFT JOIN Account a ON sr.createdBy = a.accountId ");
+        sql.append("LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId ");
+        sql.append("LEFT JOIN ServiceRequest sr ON sr.requestId = COALESCE(wt.requestId, ms.requestId) ");
         sql.append("WHERE wt.technicianId = ?");
 
         List<Object> params = new ArrayList<>();
@@ -493,17 +517,37 @@ public class WorkTaskDAO extends MyDAO {
 //        }
 //    }
     /**
-     * Inner class for WorkTask with customer and request information
+     * DTO for report dropdown entries
      */
     public static class WorkTaskForReport {
+        private int taskId;
+        private String origin;
+        private Integer requestId;
+        private Integer scheduleId;
+        private String taskStatus;
+        private Integer customerId;
+        private String customerName;
+        private String requestType;
+        private String displayLabel;
 
-        public WorkTask task;
-        public Integer customerId;
-        public String customerName;
-        public String requestType;
+        public int getTaskId() {
+            return taskId;
+        }
 
-        public WorkTask getTask() {
-            return task;
+        public String getOrigin() {
+            return origin;
+        }
+
+        public Integer getRequestId() {
+            return requestId;
+        }
+
+        public Integer getScheduleId() {
+            return scheduleId;
+        }
+
+        public String getTaskStatus() {
+            return taskStatus;
         }
 
         public Integer getCustomerId() {
@@ -517,6 +561,10 @@ public class WorkTaskDAO extends MyDAO {
         public String getRequestType() {
             return requestType;
         }
+
+        public String getDisplayLabel() {
+            return displayLabel;
+        }
     }
 
     /**
@@ -526,27 +574,54 @@ public class WorkTaskDAO extends MyDAO {
      */
     public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throws SQLException {
         List<WorkTaskForReport> tasks = new ArrayList<>();
-        xSql = "SELECT wt.taskId, wt.requestId, wt.scheduleId, wt.technicianId, "
-                + "wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status, "
-                + "sr.createdBy as customerId, a.fullName as customerName, sr.requestType "
-                + "FROM WorkTask wt "
-                + "LEFT JOIN ServiceRequest sr ON wt.requestId = sr.requestId "
-                + "LEFT JOIN Account a ON sr.createdBy = a.accountId "
-                + "WHERE wt.technicianId = ? AND wt.status NOT IN ('Completed', 'Cancelled') "
-                + "AND wt.requestId IS NOT NULL "
-                + "ORDER BY wt.startDate ASC";
+        String sql = """
+            SELECT wt.taskId,
+                   wt.requestId,
+                   wt.scheduleId,
+                   wt.status AS taskStatus,
+                   COALESCE(a_sr.accountId, a_sched.accountId) AS customerId,
+                   COALESCE(a_sr.fullName, a_sched.fullName) AS customerName,
+                   CASE WHEN wt.scheduleId IS NOT NULL THEN 'Schedule' ELSE 'ServiceRequest' END AS origin,
+                   CASE WHEN wt.scheduleId IS NOT NULL THEN 'Maintenance' ELSE COALESCE(sr.requestType, 'Service') END AS requestType,
+                   CASE
+                       WHEN wt.scheduleId IS NOT NULL THEN CONCAT('Scheduled Maintenance Task - ',
+                                                                COALESCE(a_sched.fullName, 'N/A'),
+                                                                ' (ID: ', COALESCE(a_sched.accountId, 0), ') - #',
+                                                                wt.scheduleId, ' (', wt.status, ')')
+                       ELSE CONCAT('Service Request Task - ',
+                                   COALESCE(a_sr.fullName, 'N/A'),
+                                   ' (ID: ', COALESCE(a_sr.accountId, 0), ') - #',
+                                   wt.requestId, ' (', wt.status, ')')
+                   END AS displayLabel,
+                   COALESCE(wt.startDate, ms.scheduledDate, wt.endDate, wt.taskId) AS sortKey
+            FROM WorkTask wt
+            LEFT JOIN ServiceRequest sr ON wt.requestId = sr.requestId
+            LEFT JOIN Account a_sr ON sr.createdBy = a_sr.accountId
+            LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId
+            LEFT JOIN Contract c ON ms.contractId = c.contractId
+            LEFT JOIN Account a_sched ON c.customerId = a_sched.accountId
+            WHERE wt.technicianId = ?
+              AND wt.status NOT IN ('Completed', 'Cancelled')
+            ORDER BY sortKey ASC, wt.taskId ASC
+        """;
 
-        ps = con.prepareStatement(xSql);
-        ps.setInt(1, technicianId);
-        rs = ps.executeQuery();
-
-        while (rs.next()) {
-            WorkTaskForReport taskForReport = new WorkTaskForReport();
-            taskForReport.task = mapResultSetToWorkTask(rs);
-            taskForReport.customerId = rs.getObject("customerId", Integer.class);
-            taskForReport.customerName = rs.getString("customerName");
-            taskForReport.requestType = rs.getString("requestType");
-            tasks.add(taskForReport);
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, technicianId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    WorkTaskForReport dto = new WorkTaskForReport();
+                    dto.taskId = rs.getInt("taskId");
+                    dto.requestId = rs.getObject("requestId", Integer.class);
+                    dto.scheduleId = rs.getObject("scheduleId", Integer.class);
+                    dto.taskStatus = rs.getString("taskStatus");
+                    dto.customerId = rs.getObject("customerId", Integer.class);
+                    dto.customerName = rs.getString("customerName");
+                    dto.origin = rs.getString("origin");
+                    dto.requestType = rs.getString("requestType");
+                    dto.displayLabel = rs.getString("displayLabel");
+                    tasks.add(dto);
+                }
+            }
         }
 
         return tasks;
@@ -556,7 +631,10 @@ public class WorkTaskDAO extends MyDAO {
      * Check if technician is assigned to a specific request ID
      */
     public boolean isTechnicianAssignedToRequest(int technicianId, int requestId) throws SQLException {
-        xSql = "SELECT COUNT(*) FROM WorkTask WHERE technicianId = ? AND requestId = ?";
+        xSql = "SELECT COUNT(*) FROM WorkTask wt "
+                + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
+                + "WHERE wt.technicianId = ? "
+                + "AND COALESCE(wt.requestId, ms.requestId) = ?";
         ps = con.prepareStatement(xSql);
         ps.setInt(1, technicianId);
         ps.setInt(2, requestId);
@@ -573,7 +651,11 @@ public class WorkTaskDAO extends MyDAO {
      * This ensures each technician can work independently on the same ServiceRequest
      */
     public boolean isTechnicianTaskCompleted(int technicianId, int requestId) throws SQLException {
-        xSql = "SELECT status FROM WorkTask WHERE technicianId = ? AND requestId = ?";
+        xSql = "SELECT wt.status FROM WorkTask wt "
+                + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
+                + "WHERE wt.technicianId = ? "
+                + "AND COALESCE(wt.requestId, ms.requestId) = ? "
+                + "LIMIT 1";
         ps = con.prepareStatement(xSql);
         ps.setInt(1, technicianId);
         ps.setInt(2, requestId);
@@ -583,6 +665,22 @@ public class WorkTaskDAO extends MyDAO {
             return "Completed".equals(rs.getString("status"));
         }
         return false; // No task found for this technician and request
+    }
+
+    /**
+     * Check if technician is assigned to a specific schedule ID
+     */
+    public boolean isTechnicianAssignedToSchedule(int technicianId, int scheduleId) throws SQLException {
+        xSql = "SELECT COUNT(*) FROM WorkTask WHERE technicianId = ? AND scheduleId = ?";
+        ps = con.prepareStatement(xSql);
+        ps.setInt(1, technicianId);
+        ps.setInt(2, scheduleId);
+        rs = ps.executeQuery();
+
+        if (rs.next()) {
+            return rs.getInt(1) > 0;
+        }
+        return false;
     }
 
     public List<WorkTask> findByScheduleId(int scheduleId) throws SQLException {
@@ -613,7 +711,10 @@ public class WorkTaskDAO extends MyDAO {
     }
 
     public int getTaskIdByRequestId(int requestId) throws SQLException {
-        String sql = "SELECT taskId FROM WorkTask WHERE requestId = ?";
+        String sql = "SELECT wt.taskId FROM WorkTask wt "
+                + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
+                + "WHERE COALESCE(wt.requestId, ms.requestId) = ? "
+                + "LIMIT 1";
         try (
                 PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, requestId);
