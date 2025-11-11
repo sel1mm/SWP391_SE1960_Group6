@@ -381,10 +381,10 @@
                                                 </button>
                                                 
                                                 <button class="btn btn-sm btn-outline-primary" 
-                                                        title="Xem thiết bị"
-                                                        onclick="viewEquipmentList('${contract.contractId}')">
-                                                    <i class="fas fa-tools"></i>
-                                                </button>
+                                                    title="Xem thiết bị"
+                                                    onclick="viewEquipmentList('${contract.contractId}')">
+                                                <i class="fas fa-tools"></i>
+                                            </button>
                                                     
                                                     <button class="btn btn-sm btn-outline-warning" 
                                                             title="Thêm phụ lục"
@@ -531,6 +531,7 @@
             </div>
 
             <div class="modal-body">
+                <!-- ĐẢM BẢO CÓ ĐÚNG ID NÀY -->
                 <div id="equipmentListContent">
                     <div class="text-center py-4">
                         <div class="spinner-border" role="status">
@@ -1096,6 +1097,57 @@
         </div>
     </div>
 </div>
+                                       
+<!-- Modal: View Repair Part Appendix Details -->
+<div class="modal fade" id="repairPartAppendixModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-tools me-2"></i> Chi Tiết Phụ Lục Linh Kiện
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong><i class="fas fa-file-alt"></i> Tên phụ lục:</strong>
+                            <span id="rp-appendixName"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong><i class="fas fa-calendar"></i> Ngày hiệu lực:</strong>
+                            <span id="rp-effectiveDate"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong><i class="fas fa-money-bill-wave"></i> Tổng tiền:</strong>
+                            <span id="rp-totalAmount" class="text-success fw-bold"></span>
+                        </div>
+                    </div>
+                    <div class="mt-2" id="rp-description"></div>
+                </div>
+
+                <h6 class="fw-bold mb-3">
+                    <i class="fas fa-list"></i> Danh sách linh kiện 
+                    (<span id="rp-partCount">0</span> linh kiện)
+                </h6>
+                
+                <div id="rp-partsContainer">
+                    <div class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -1155,60 +1207,142 @@ function viewContractDetails(contractId) {
 }
 
 async function viewEquipmentList(contractId) {
-    const modal = new bootstrap.Modal(document.getElementById("equipmentListModal"));
+    console.log("=== VIEW EQUIPMENT LIST CALLED ===");
+    console.log("Contract ID:", contractId);
+    
+    // Show modal
+    const modalElement = document.getElementById("equipmentListModal");
+    if (!modalElement) {
+        console.error("Modal element not found!");
+        alert("Không tìm thấy modal!");
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
+    console.log("Modal shown");
 
     const content = document.getElementById("equipmentListContent");
+    if (!content) {
+        console.error("Content element not found!");
+        return;
+    }
+    
+    // Show loading
+    content.innerHTML = '<div class="text-center py-4">' +
+                       '<div class="spinner-border" role="status"></div>' +
+                       '<p class="mt-2">Đang tải...</p>' +
+                       '</div>';
     
     try {
         const ctx = window.location.pathname.split("/")[1];
-        const response = await fetch("/" + ctx + "/getContractEquipment?contractId=" + contractId);
+        const url = "/" + ctx + "/getContractEquipment?contractId=" + contractId;
         
-        if (!response.ok) throw new Error("Không thể tải danh sách thiết bị");
+        console.log("Fetching from:", url);
+        
+        const response = await fetch(url);
+        console.log("Response status:", response.status);
+        
+        if (!response.ok) {
+            throw new Error("HTTP error " + response.status);
+        }
         
         const data = await response.json();
+        console.log("Response data:", data);
+        
+        if (!data.success) {
+            throw new Error(data.message || "Request failed");
+        }
         
         if (data.equipment && data.equipment.length > 0) {
+            console.log("Equipment count:", data.equipment.length);
+            console.log("First equipment:", data.equipment[0]);
+            
             let html = '<div class="table-responsive">' +
-                      '<table class="table table-hover">' +
+                      '<table class="table table-hover mb-0">' +
                       '<thead class="table-light">' +
                       '<tr>' +
-                      '<th>#</th>' +
-                      '<th>Model</th>' +
-                      '<th>Serial Number</th>' +
-                      '<th>Mô tả</th>' +
-                      '<th>Ngày lắp</th>' +
-                      '<th>Ngày bắt đầu</th>' +
-                      '<th>Ngày kết thúc</th>' +
-                      '<th>Giá</th>' +
+                      '<th style="width: 5%">#</th>' +
+                      '<th style="width: 18%">Model</th>' +
+                      '<th style="width: 15%">Serial Number</th>' +
+                      '<th style="width: 18%">Mô tả</th>' +
+                      '<th style="width: 11%">Ngày bắt đầu</th>' +
+                      '<th style="width: 11%">Ngày kết thúc</th>' +
+                      '<th style="width: 10%">Trạng thái</th>' +
+                      '<th style="width: 12%">Nguồn</th>' +
                       '</tr>' +
                       '</thead><tbody>';
             
             data.equipment.forEach((eq, index) => {
+                console.log(`Row ${index + 1}:`, {
+                    model: eq.model,
+                    startDate: eq.startDate,
+                    endDate: eq.endDate,
+                    status: eq.status,
+                    source: eq.source
+                });
+                
+                // Status badge
+                let statusBadge = 'bg-secondary';
+                let statusText = 'Unknown';
+                
+                if (eq.status === 'Active') {
+                    statusBadge = 'bg-success';
+                    statusText = 'Đang hoạt động';
+                } else if (eq.status === 'Expired') {
+                    statusBadge = 'bg-danger';
+                    statusText = 'Hết hạn';
+                } else if (eq.status === 'Pending') {
+                    statusBadge = 'bg-warning text-dark';
+                    statusText = 'Chưa bắt đầu';
+                }
+                
+                // Source badge
+                let sourceBadge = 'bg-secondary';
+                let sourceText = 'Unknown';
+                
+                if (eq.source === 'Contract') {
+                    sourceBadge = 'bg-primary';
+                    sourceText = 'Hợp đồng';
+                } else if (eq.source === 'Appendix') {
+                    sourceBadge = 'bg-warning text-dark';
+                    sourceText = 'Phụ lục';
+                }
+                
                 html += '<tr>' +
                        '<td>' + (index + 1) + '</td>' +
-                       '<td><strong>' + eq.model + '</strong></td>' +
-                       '<td><code>' + eq.serialNumber + '</code></td>' +
-                       '<td>' + (eq.description || '-') + '</td>' +
-                       '<td>' + (eq.installDate || '-') + '</td>' +
+                       '<td><strong>' + (eq.model || 'N/A') + '</strong></td>' +
+                       '<td><code>' + (eq.serialNumber || 'N/A') + '</code></td>' +
+                       '<td><small>' + (eq.description || '-') + '</small></td>' +
                        '<td>' + (eq.startDate || '-') + '</td>' +
                        '<td>' + (eq.endDate || '-') + '</td>' +
-                       '<td>' + (eq.price ? eq.price.toLocaleString('vi-VN') + ' VNĐ' : '-') + '</td>' +
+                       '<td><span class="badge ' + statusBadge + '">' + statusText + '</span></td>' +
+                       '<td><span class="badge ' + sourceBadge + '">' + sourceText + '</span></td>' +
                        '</tr>';
             });
             
             html += '</tbody></table></div>';
+            
+            console.log("Setting HTML, length:", html.length);
             content.innerHTML = html;
+            console.log("HTML set successfully");
+            
         } else {
+            console.log("No equipment found");
             content.innerHTML = '<div class="text-center py-4">' +
                               '<i class="fas fa-box-open fa-3x text-muted mb-3"></i>' +
                               '<h5 class="text-muted">Không có thiết bị nào</h5>' +
                               '</div>';
         }
     } catch (error) {
-        console.error("Error:", error);
-        content.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách thiết bị</div>';
+        console.error("Error in viewEquipmentList:", error);
+        content.innerHTML = '<div class="alert alert-danger">' +
+                          '<i class="fas fa-exclamation-circle me-2"></i>' +
+                          'Không thể tải danh sách thiết bị: ' + error.message +
+                          '</div>';
     }
+    
+    console.log("=== VIEW EQUIPMENT LIST END ===");
 }
 
 async function viewServiceRequests(contractId) {
@@ -1713,7 +1847,6 @@ function filterEquipment() {
 //    console.log('===== END SUBMIT =====');
 //});
 
-// Các function khác giữ nguyên
 // ✅ CẬP NHẬT FUNCTION viewContractDetailsWithAppendix
 async function viewContractDetailsWithAppendix(contractId) {
     viewContractDetails(contractId);
@@ -1735,82 +1868,112 @@ async function viewContractDetailsWithAppendix(contractId) {
             data.appendixes.forEach(function(app) {
                 const statusBadge = app.status === 'Approved' ? 'bg-success' :
                                   app.status === 'Draft' ? 'bg-warning' : 'bg-secondary';
-                const typeLabel = app.appendixType === 'AddEquipment' ? 'Thêm thiết bị' : 'Khác';
                 
-                console.log('Appendix #' + app.appendixId + ':', {
-                    type: app.appendixType,
-                    canEdit: app.canEdit,
-                    canDelete: app.canDelete,
-                    equipmentCount: app.equipmentCount
-                });
-                
-                html += '<div class="appendix-item">' +
-                    '<div class="d-flex justify-content-between align-items-start">' +
-                    '<div class="flex-grow-1">' +
-                    '<h6 class="mb-1">' +
-                    '<i class="fas fa-file-alt"></i> ' + app.appendixName +
-                    '<span class="badge ' + statusBadge + ' ms-2">' + app.status + '</span>' +
-                    '<span class="badge bg-info ms-1">' + typeLabel + '</span>' +
-                    '</h6>' +
-                    '<p class="mb-1 text-muted small">' + (app.description || 'Không có mô tả') + '</p>' +
-                    '<p class="mb-1">' +
-                    '<i class="fas fa-calendar"></i> Hiệu lực: <strong>' + app.effectiveDate + '</strong> | ' +
-                    '<i class="fas fa-tools"></i> Số thiết bị: <strong>' + (app.equipmentCount || 0) + '</strong>' +
-                    '</p>' +
-                    '</div>' +
-                    '<div class="btn-group">';
-                
-                // NÚT XEM FILE
-                if (app.fileAttachment) {
-                    html += '<a href="' + app.fileAttachment + '" target="_blank" ' +
-                           'class="btn btn-sm btn-outline-success" title="Xem file đính kèm">' +
-                           '<i class="fas fa-file-download"></i>' +
-                           '</a>';
-                }
-                
-                // NÚT XEM THIẾT BỊ (chỉ hiện nếu có thiết bị)
-                if (app.equipmentCount > 0) {
-                    html += '<button type="button" class="btn btn-sm btn-outline-info" ' +
-                           'onclick="viewAppendixEquipment(' + app.appendixId + ')" ' +
-                           'title="Xem thiết bị">' +
-                           '<i class="fas fa-list"></i>' +
-                           '</button>';
-                }
-                
-                // Trong hàm viewContractDetailsWithAppendix(), phần render appendix list
-                if (app.canEdit) {
-                    // Có thể sửa → Hiển thị nút EDIT
+                // ✅ XỬ LÝ RIÊNG CHO REPAIR PART APPENDIX
+                if (app.appendixType === 'RepairPart') {
+                    // ✅ NHÂN 26000 CHO TỔNG TIỀN
+                    const totalAmountUSD = app.totalAmount || 0;
+                    const totalAmountVND = totalAmountUSD * 26000;
+                    
+                    html += '<div class="appendix-item" style="border-left-color: #ffc107;">' +
+                        '<div class="d-flex justify-content-between align-items-start">' +
+                        '<div class="flex-grow-1">' +
+                        '<h6 class="mb-1">' +
+                        '<i class="fas fa-wrench text-warning"></i> ' + app.appendixName +
+                        '<span class="badge ' + statusBadge + ' ms-2">' + app.status + '</span>' +
+                        '<span class="badge bg-warning ms-1">Phụ lục linh kiện</span>' +
+                        '</h6>' +
+                        '<p class="mb-1 text-muted small">' + (app.description || 'Phụ lục linh kiện từ báo giá sửa chữa') + '</p>' +
+                        '<p class="mb-1">' +
+                        '<i class="fas fa-calendar"></i> Hiệu lực: <strong>' + app.effectiveDate + '</strong> | ' +
+                        '<i class="fas fa-boxes"></i> Số linh kiện: <strong>' + (app.partCount || 0) + '</strong> | ' +
+                        '<i class="fas fa-money-bill-wave"></i> Tổng tiền: <strong class="text-success">' + 
+                        totalAmountVND.toLocaleString('vi-VN') + ' VNĐ</strong>' +  // ✅ ĐÃ NHÂN 26000
+                        '</p>' +
+                        '</div>' +
+                        '<div class="btn-group">';
+                    
+                    // NÚT XEM CHI TIẾT
                     html += '<button type="button" class="btn btn-sm btn-outline-warning" ' +
-                           'onclick="openEditAppendixModal(' + app.appendixId + ')" ' +
-                           'title="Chỉnh sửa">' +
-                           '<i class="fas fa-edit"></i>' +
+                           'onclick="viewRepairPartAppendixDetails(' + app.appendixId + ')" ' +
+                           'title="Xem chi tiết linh kiện">' +
+                           '<i class="fas fa-eye"></i> Chi tiết' +
                            '</button>';
+                    
+                    // NÚT XEM FILE (nếu có)
+                    if (app.fileAttachment) {
+                        html += '<a href="' + app.fileAttachment + '" target="_blank" ' +
+                               'class="btn btn-sm btn-outline-success" title="Xem file đính kèm">' +
+                               '<i class="fas fa-file-download"></i>' +
+                               '</a>';
+                    }
+                    
+                    html += '</div></div></div>';
+                    
                 } else {
-                    // Không thể sửa → Hiển thị nút VIEW (Read-only)
-                    html += '<button type="button" class="btn btn-sm btn-outline-info" ' +
-                           'onclick="openViewAppendixModal(' + app.appendixId + ')" ' +
-                           'title="Xem chi tiết (chỉ đọc)">' +
-                           '<i class="fas fa-eye"></i>' +
-                           '</button>';
+                    // ✅ XỬ LÝ CHO APPENDIX THÔNG THƯỜNG (AddEquipment, Other)
+                    const typeLabel = app.appendixType === 'AddEquipment' ? 'Thêm thiết bị' : 'Khác';
+                    
+                    html += '<div class="appendix-item">' +
+                        '<div class="d-flex justify-content-between align-items-start">' +
+                        '<div class="flex-grow-1">' +
+                        '<h6 class="mb-1">' +
+                        '<i class="fas fa-file-alt"></i> ' + app.appendixName +
+                        '<span class="badge ' + statusBadge + ' ms-2">' + app.status + '</span>' +
+                        '<span class="badge bg-info ms-1">' + typeLabel + '</span>' +
+                        '</h6>' +
+                        '<p class="mb-1 text-muted small">' + (app.description || 'Không có mô tả') + '</p>' +
+                        '<p class="mb-1">' +
+                        '<i class="fas fa-calendar"></i> Hiệu lực: <strong>' + app.effectiveDate + '</strong> | ' +
+                        '<i class="fas fa-tools"></i> Số thiết bị: <strong>' + (app.equipmentCount || 0) + '</strong>' +
+                        '</p>' +
+                        '</div>' +
+                        '<div class="btn-group">';
+                    
+                    if (app.fileAttachment) {
+                        html += '<a href="' + app.fileAttachment + '" target="_blank" ' +
+                               'class="btn btn-sm btn-outline-success" title="Xem file đính kèm">' +
+                               '<i class="fas fa-file-download"></i>' +
+                               '</a>';
+                    }
+                    
+                    if (app.equipmentCount > 0) {
+                        html += '<button type="button" class="btn btn-sm btn-outline-info" ' +
+                               'onclick="viewAppendixEquipment(' + app.appendixId + ')" ' +
+                               'title="Xem thiết bị">' +
+                               '<i class="fas fa-list"></i>' +
+                               '</button>';
+                    }
+                    
+                    if (app.canEdit) {
+                        html += '<button type="button" class="btn btn-sm btn-outline-warning" ' +
+                               'onclick="openEditAppendixModal(' + app.appendixId + ')" ' +
+                               'title="Chỉnh sửa">' +
+                               '<i class="fas fa-edit"></i>' +
+                               '</button>';
+                    } else {
+                        html += '<button type="button" class="btn btn-sm btn-outline-info" ' +
+                               'onclick="openViewAppendixModal(' + app.appendixId + ')" ' +
+                               'title="Xem chi tiết (chỉ đọc)">' +
+                               '<i class="fas fa-eye"></i>' +
+                               '</button>';
+                    }
+                    
+                    if (app.canDelete) {
+                        html += '<button type="button" class="btn btn-sm btn-outline-danger" ' +
+                               'onclick="deleteAppendix(' + app.appendixId + ', \'' + app.appendixType + '\')" ' +
+                               'title="Xóa">' +
+                               '<i class="fas fa-trash"></i>' +
+                               '</button>';
+                    } else {
+                        html += '<button type="button" class="btn btn-sm btn-outline-secondary" disabled ' +
+                               'title="Không thể xóa">' +
+                               '<i class="fas fa-lock"></i>' +
+                               '</button>';
+                    }
+                    
+                    html += '</div></div></div>';
                 }
-                
-                // NÚT XÓA
-                if (app.canDelete) {
-                    html += '<button type="button" class="btn btn-sm btn-outline-danger" ' +
-                           'onclick="deleteAppendix(' + app.appendixId + ', \'' + app.appendixType + '\')" ' +
-                           'title="Xóa">' +
-                           '<i class="fas fa-trash"></i>' +
-                           '</button>';
-                } else {
-                    html += '<button type="button" class="btn btn-sm btn-outline-secondary" disabled ' +
-                           'title="Không thể xóa (đã quá 15 ngày hoặc có yêu cầu đang xử lý)">' +
-                           '<i class="fas fa-lock"></i>' +
-                           '</button>';
-                }
-                
-                html += '</div>' +
-                    '</div>' +
-                    '</div>';
             });
             
             container.innerHTML = html;
@@ -1822,61 +1985,6 @@ async function viewContractDetailsWithAppendix(contractId) {
         console.error("Error:", error);
         document.getElementById('appendixListContainer').innerHTML = 
             '<div class="alert alert-warning">Không thể tải danh sách phụ lục</div>';
-    }
-}
-
-async function viewEquipmentList(contractId) {
-    const modal = new bootstrap.Modal(document.getElementById("equipmentListModal"));
-    modal.show();
-
-    const content = document.getElementById("equipmentListContent");
-    
-    try {
-        const ctx = window.location.pathname.split("/")[1];
-        const response = await fetch("/" + ctx + "/getContractEquipment?contractId=" + contractId);
-        
-        if (!response.ok) throw new Error("Không thể tải danh sách thiết bị");
-        
-        const data = await response.json();
-        
-        if (data.equipment && data.equipment.length > 0) {
-            let html = '<div class="table-responsive">' +
-                      '<table class="table table-hover">' +
-                      '<thead class="table-light">' +
-                      '<tr>' +
-                      '<th>#</th>' +
-                      '<th>Model</th>' +
-                      '<th>Serial Number</th>' +
-                      '<th>Mô tả</th>' +
-                      '<th>Nguồn</th>' +
-                      '</tr>' +
-                      '</thead><tbody>';
-            
-            data.equipment.forEach((eq, index) => {
-                // Xác định nguồn: nếu có startDate thì là Contract, không thì là Appendix
-                const source = eq.startDate ? 'Hợp đồng' : 'Phụ lục';
-                const sourceBadge = eq.startDate ? 'bg-primary' : 'bg-warning';
-                
-                html += '<tr>' +
-                       '<td>' + (index + 1) + '</td>' +
-                       '<td><strong>' + eq.model + '</strong></td>' +
-                       '<td><code>' + eq.serialNumber + '</code></td>' +
-                       '<td>' + (eq.description || '-') + '</td>' +
-                       '<td><span class="badge ' + sourceBadge + '">' + source + '</span></td>' +
-                       '</tr>';
-            });
-            
-            html += '</tbody></table></div>';
-            content.innerHTML = html;
-        } else {
-            content.innerHTML = '<div class="text-center py-4">' +
-                              '<i class="fas fa-box-open fa-3x text-muted mb-3"></i>' +
-                              '<h5 class="text-muted">Không có thiết bị nào</h5>' +
-                              '</div>';
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        content.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách thiết bị</div>';
     }
 }
 
@@ -1941,12 +2049,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 1. Kiểm tra hidden input
         const hiddenInput = document.getElementById('appendix-contractId');
-        console.log('Hidden input element:', hiddenInput);
-        console.log('Hidden input value:', hiddenInput ? hiddenInput.value : 'NOT FOUND');
-        
         const contractId = hiddenInput ? hiddenInput.value : null;
         
-        // 2. Validate contractId
         if (!contractId || contractId.trim() === '') {
             console.error('ERROR: contractId is empty!');
             Swal.fire({
@@ -1960,7 +2064,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('✓ contractId validated:', contractId);
         
-        // 3. Validate loại phụ lục
+        // 2. Validate loại phụ lục
         const appendixTypeSelect = document.querySelector('select[name="appendixType"]');
         const appendixType = appendixTypeSelect ? appendixTypeSelect.value : '';
         
@@ -1978,9 +2082,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('✓ appendixType:', appendixType);
         
-        // 4. Validate equipment selection - CHỈ BẮT BUỘC với AddEquipment
-        if (appendixType === 'AddEquipment') {
-            if (!selectedEquipment || selectedEquipment.length === 0) {
+        // ✅ 3. LOGIC ĐIỀU CHỈNH TỰ ĐỘNG
+        const equipmentCount = selectedEquipment.length;
+        let finalType = appendixType;
+        
+        if (appendixType === 'Other' && equipmentCount > 0) {
+            // Tự động đổi sang AddEquipment
+            finalType = 'AddEquipment';
+            appendixTypeSelect.value = 'AddEquipment';
+            console.log('✓ Auto-adjusted: Other → AddEquipment (because equipment selected)');
+        }
+        
+        // ✅ 4. VALIDATE theo loại cuối cùng
+        if (finalType === 'AddEquipment') {
+            if (equipmentCount === 0) {
                 console.warn('ERROR: No equipment selected for AddEquipment type');
                 Swal.fire({
                     icon: 'warning',
@@ -1990,10 +2105,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 return;
             }
-            console.log('✓ Equipment count:', selectedEquipment.length);
+            console.log('✓ Equipment count:', equipmentCount);
         } else {
-            console.log('ℹ Appendix type is "Other", equipment not required');
-            console.log('Selected equipment count:', selectedEquipment.length);
+            console.log('ℹ Appendix type is "Other", equipment count:', equipmentCount);
         }
         
         // 5. Validate ngày hiệu lực
@@ -2018,7 +2132,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('✓ effectiveDate validated');
         
-        // 6. Validate file đính kèm - BẮT BUỘC
+        // 6. Validate file đính kèm
         const fileInput = document.getElementById('fileAttachment');
         if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
             console.error('ERROR: No file selected!');
@@ -2073,10 +2187,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // 7. Tạo FormData
         const formData = new FormData(form);
         
-        // 8. ĐẢM BẢO contractId được set
+        // 8. Đảm bảo contractId và finalType
         formData.set('contractId', contractId.trim());
+        formData.set('appendixType', finalType);  // ✅ Dùng finalType đã điều chỉnh
         
-        // 9. Thêm equipment IDs (có thể là mảng rỗng nếu type = Other)
+        // 9. Thêm equipment IDs
         const equipmentIds = selectedEquipment.map(e => parseInt(e.equipmentId));
         formData.append('equipmentIds', JSON.stringify(equipmentIds));
         
@@ -2117,14 +2232,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmButtonColor: '#000'
                 });
                 
-                // Close modal
                 const modalElement = document.getElementById('addAppendixModal');
                 const modalInstance = bootstrap.Modal.getInstance(modalElement);
                 if (modalInstance) {
                     modalInstance.hide();
                 }
                 
-                // Reload page
                 window.location.reload();
             } else {
                 Swal.fire({
@@ -2151,17 +2264,18 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Thêm event listener cho appendixType select
+// ===== LOGIC TỰ ĐỘNG ĐỔI LOẠI PHỤ LỤC =====
 document.addEventListener('DOMContentLoaded', function() {
     const appendixTypeSelect = document.querySelector('#addAppendixModal select[name="appendixType"]');
     
     if (appendixTypeSelect) {
+        // Event khi thay đổi appendixType
         appendixTypeSelect.addEventListener('change', function(e) {
             const selectedType = e.target.value;
-            const equipmentHeader = document.getElementById('appendix-equipment-header'); // ✅ ĐỔI ID
             
             // Update UI indicators
-            const requiredIndicators = document.querySelectorAll('.appendix-equipment-required'); // ✅ ĐỔI CLASS
-            const optionalIndicators = document.querySelectorAll('.appendix-equipment-optional'); // ✅ ĐỔI CLASS
+            const requiredIndicators = document.querySelectorAll('.appendix-equipment-required');
+            const optionalIndicators = document.querySelectorAll('.appendix-equipment-optional');
             
             if (selectedType === 'AddEquipment') {
                 requiredIndicators.forEach(el => el.style.display = 'inline');
@@ -2181,14 +2295,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 Swal.fire({
                     icon: 'info',
                     title: 'Phụ lục thông tin',
-                    text: 'Không cần chọn thiết bị cho loại phụ lục này',
+                    text: 'Không bắt buộc chọn thiết bị cho loại phụ lục này',
                     timer: 2000,
                     showConfirmButton: false
                 });
             }
         });
     }
+    
+    // ✅ LOGIC MỚI: Theo dõi khi chọn/bỏ chọn thiết bị
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('appendix-equipment-checkbox')) {
+            autoAdjustAppendixType();
+        }
+    });
 });
+
+// ✅ FUNCTION TỰ ĐỘNG ĐIỀU CHỈNH LOẠI PHỤ LỤC
+function autoAdjustAppendixType() {
+    const appendixTypeSelect = document.querySelector('#addAppendixModal select[name="appendixType"]');
+    if (!appendixTypeSelect) return;
+    
+    const currentType = appendixTypeSelect.value;
+    const equipmentCount = selectedEquipment.length;
+    
+    console.log('Current type:', currentType, '| Equipment count:', equipmentCount);
+    
+    // ✅ NẾU chọn "Khác" NHƯNG có chọn thiết bị → tự động đổi sang "Thêm thiết bị"
+    if (currentType === 'Other' && equipmentCount > 0) {
+        appendixTypeSelect.value = 'AddEquipment';
+        
+        // Update UI
+        const requiredIndicators = document.querySelectorAll('.appendix-equipment-required');
+        const optionalIndicators = document.querySelectorAll('.appendix-equipment-optional');
+        requiredIndicators.forEach(el => el.style.display = 'inline');
+        optionalIndicators.forEach(el => el.style.display = 'none');
+        
+        // Thông báo nhẹ
+        const toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        
+        toast.fire({
+            icon: 'info',
+            title: 'Đã tự động đổi sang "Thêm thiết bị"',
+            text: 'Vì bạn đã chọn thiết bị'
+        });
+        
+        console.log('✓ Auto-switched to AddEquipment');
+    }
+}
 
 // Thêm vào DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -3490,7 +3650,180 @@ async function openViewAppendixModal(appendixId) {
             confirmButtonColor: '#000'
         });
     }
+}    
+
+
+// ===== XEM CHI TIẾT PHỤ LỤC LINH KIỆN =====
+// ===== XEM CHI TIẾT PHỤ LỤC LINH KIỆN =====
+function viewRepairPartAppendixDetails(appendixId) {
+    console.log('=== VIEW REPAIR PART APPENDIX ===');
+    console.log('Appendix ID:', appendixId);
+    
+    const modalElement = document.getElementById('repairPartAppendixModal');
+    if (!modalElement) {
+        console.error('Modal not found!');
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Không tìm thấy modal hiển thị',
+            confirmButtonColor: '#000'
+        });
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+    
+    const container = document.getElementById('rp-partsContainer');
+    container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">Đang tải...</p></div>';
+    
+    const ctx = window.location.pathname.split("/")[1];
+    const url = "/" + ctx + "/getRepairPartAppendixDetails?appendixId=" + appendixId;
+    console.log('Fetching:', url);
+    
+    fetch(url)
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error('HTTP error ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Data received:', data);
+            
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to load data');
+            }
+            
+            const appendix = data.appendix;
+            const parts = data.parts || [];
+            
+            // ✅ NHÂN 26000 CHO TỔNG TIỀN APPENDIX
+            const totalAmountUSD = appendix.totalAmount || 0;
+            const totalAmountVND = totalAmountUSD * 26000;
+            
+            document.getElementById('rp-appendixName').innerText = appendix.appendixName || 'N/A';
+            document.getElementById('rp-effectiveDate').innerText = appendix.effectiveDate || 'N/A';
+            document.getElementById('rp-totalAmount').innerText = totalAmountVND.toLocaleString('vi-VN') + ' VNĐ';
+            document.getElementById('rp-description').innerHTML = '<small class="text-muted">' + (appendix.description || 'Không có mô tả') + '</small>';
+            document.getElementById('rp-partCount').innerText = parts.length;
+            
+            if (parts.length === 0) {
+                container.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Không có linh kiện nào</div>';
+                return;
+            }
+            
+            // Group by equipment
+            const partsByEquipment = {};
+            parts.forEach(part => {
+                const eqId = part.equipmentId;
+                if (!partsByEquipment[eqId]) {
+                    partsByEquipment[eqId] = {
+                        equipmentModel: part.equipmentModel,
+                        equipmentSerial: part.equipmentSerial,
+                        parts: []
+                    };
+                }
+                partsByEquipment[eqId].parts.push(part);
+            });
+            
+            let html = '';
+            let grandTotal = 0;
+            
+            Object.keys(partsByEquipment).forEach((eqId, eqIndex) => {
+                const eq = partsByEquipment[eqId];
+                
+                html += '<div class="card mb-3 shadow-sm">' +
+                    '<div class="card-header bg-primary text-white">' +
+                    '<h6 class="mb-0">' +
+                    '<i class="fas fa-cog"></i> <strong>Thiết bị:</strong> ' + eq.equipmentModel + 
+                    ' - <code class="text-white">' + eq.equipmentSerial + '</code>' +
+                    '</h6>' +
+                    '</div>' +
+                    '<div class="card-body p-0">' +
+                    '<table class="table table-hover table-sm mb-0">' +
+                    '<thead class="table-light">' +
+                    '<tr>' +
+                    '<th width="5%" class="text-center">#</th>' +
+                    '<th width="45%">Tên linh kiện</th>' +
+                    '<th width="10%" class="text-center">SL</th>' +
+                    '<th width="20%" class="text-end">Đơn giá (VNĐ)</th>' +
+                    '<th width="20%" class="text-end">Thành tiền (VNĐ)</th>' +
+                    '</tr>' +
+                    '</thead>' +
+                    '<tbody>';
+                
+                let subtotal = 0;
+                eq.parts.forEach((part, idx) => {
+                    // ✅ NHÂN 26000 CHO ĐƠN GIÁ VÀ THÀNH TIỀN
+                    const unitPriceUSD = part.unitPrice || 0;
+                    const totalPriceUSD = part.totalPrice || 0;
+                    
+                    const unitPriceVND = unitPriceUSD * 26000;
+                    const totalPriceVND = totalPriceUSD * 26000;
+                    
+                    subtotal += totalPriceVND;
+                    
+                    html += '<tr>' +
+                        '<td class="text-center">' + (idx + 1) + '</td>' +
+                        '<td>' +
+                        '<strong class="text-primary">' + (part.partName || 'N/A') + '</strong>';
+                    
+                    if (part.partDescription) {
+                        html += '<br><small class="text-muted">' + part.partDescription + '</small>';
+                    }
+                    
+                    if (part.note && part.note.trim() !== '' && part.note !== '-') {
+                        html += '<br><small class="text-info"><i class="fas fa-sticky-note"></i> ' + part.note + '</small>';
+                    }
+                    
+                    html += '</td>' +
+                        '<td class="text-center"><span class="badge bg-info">' + part.quantity + '</span></td>' +
+                        '<td class="text-end text-nowrap">' + unitPriceVND.toLocaleString('vi-VN') + ' VNĐ</td>' +
+                        '<td class="text-end text-nowrap"><strong class="text-success">' + totalPriceVND.toLocaleString('vi-VN') + ' VNĐ</strong></td>' +
+                        '</tr>';
+                });
+                
+                grandTotal += subtotal;
+                
+                html += '</tbody>' +
+                    '<tfoot class="table-light">' +
+                    '<tr>' +
+                    '<td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>' +
+                    '<td colspan="2" class="text-end text-nowrap"><strong class="text-success">' + 
+                    subtotal.toLocaleString('vi-VN') + ' VNĐ' +
+                    '</strong></td>' +
+                    '</tr>' +
+                    '</tfoot>' +
+                    '</table>' +
+                    '</div>' +
+                    '</div>';
+            });
+            
+            if (Object.keys(partsByEquipment).length > 1) {
+                html += '<div class="alert alert-success mb-0">' +
+                    '<div class="d-flex justify-content-between align-items-center">' +
+                    '<strong><i class="fas fa-money-bill-wave"></i> TỔNG CỘNG:</strong>' +
+                    '<span class="fs-5"><strong>' + grandTotal.toLocaleString('vi-VN') + ' VNĐ</strong></span>' +
+                    '</div></div>';
+            }
+            
+            container.innerHTML = html;
+            console.log('✓ Done');
+        })
+        .catch(error => {
+            console.error('ERROR:', error);
+            container.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Lỗi: ' + error.message + '</div>';
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: error.message,
+                confirmButtonColor: '#000'
+            });
+        });
 }
+
 </script>
 </body>
 </html>

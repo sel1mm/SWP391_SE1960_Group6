@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  */
 @MultipartConfig
 @WebServlet(name = "ViewCustomerRequest", urlPatterns = {
-    "/viewCustomerRequest", "/createServiceRequest", "/loadContractsAndEquipment"
+    "/viewCustomerRequest", "/createServiceRequest", "/loadContractsAndEquipment", "/cancelPendingRequest"
 })
 public class ViewCustomerRequest extends HttpServlet {
 
@@ -86,6 +86,9 @@ public class ViewCustomerRequest extends HttpServlet {
                     break;
                 case "/loadContractsAndEquipment":
                     handleLoadContractsAndEquipment(request, response);
+                    break;
+                case "/cancelPendingRequest":
+                    handleCancelPendingRequest(request, response);
                     break;
                 default:
                     handleListOrSearch(request, response);
@@ -277,6 +280,11 @@ public class ViewCustomerRequest extends HttpServlet {
                 return;
             }
 
+            if ("/cancelPendingRequest".equals(servletPath)) {
+                handleCancelPendingRequest(request, response);
+                return;
+            }
+
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().print("{\"success\":false,\"message\":\"Invalid POST path.\"}");
 
@@ -371,7 +379,7 @@ public class ViewCustomerRequest extends HttpServlet {
             String[] equipmentIds = equipmentIdsParam.split(",");
             Account creator = (Account) session.getAttribute("session_login");
 
-            // ✅ CSS tạo => trạng thái chờ duyệt
+            // CSS tạo => trạng thái chờ duyệt
             String status = (creator != null && accountRoleService.isCustomerSupportStaff(creator.getAccountId()))
                     ? "Awaiting Approval"
                     : "Pending";
@@ -384,7 +392,7 @@ public class ViewCustomerRequest extends HttpServlet {
                 try {
                     int eqId = Integer.parseInt(eqStr.trim());
 
-                    // ✅ KIỂM TRA TRẠNG THÁI THIẾT BỊ TRƯỚC KHI TẠO REQUEST
+                    // ✅ Kiểm tra trạng thái thiết bị
                     String equipmentStatus = equipmentDAO.getEquipmentStatus(eqId);
 
                     if (!"Active".equals(equipmentStatus)) {
@@ -394,21 +402,26 @@ public class ViewCustomerRequest extends HttpServlet {
                         continue;
                     }
 
-                    // --- Lấy hợp đồng tương ứng thiết bị ---
-                    Integer contractId = contractDAO.getContractIdByEquipmentAndCustomer(eqId, customerId);
-                    String contractType = null;
-                    String contractStatus = null;
+                    // ✅ Lấy contractId (kiểm tra cả hợp đồng chính và phụ lục)
+                    Integer contractId = contractDAO.getContractIdForEquipment(eqId, customerId);
 
-                    if (contractId != null) {
-                        contractType = contractDAO.getContractType(contractId);
-                        contractStatus = contractDAO.getContractStatus(contractId);
+                    if (contractId == null || contractId == 0) {
+                        System.out.println("⚠️ Equipment " + eqId + " không thuộc hợp đồng nào của khách hàng " + customerId);
+                        skippedEquipment.add("Thiết bị #" + eqId + " (không tìm thấy hợp đồng)");
+                        failCount++;
+                        continue;
                     }
+
+                    String contractType = contractDAO.getContractType(contractId);
+                    String contractStatus = contractDAO.getContractStatus(contractId);
+
+                    System.out.println("📝 Creating request for equipment " + eqId + " with contract " + contractId);
 
                     // --- Tạo request object ---
                     ServiceRequest req = new ServiceRequest();
                     req.setCreatedBy(customerId);
                     req.setEquipmentId(eqId);
-                    req.setContractId(contractId);
+                    req.setContractId(contractId); // ✅ Đảm bảo có contractId hợp lệ
                     req.setRequestType(requestType);
                     req.setPriorityLevel(priorityLevel);
                     req.setDescription(description);
@@ -421,17 +434,23 @@ public class ViewCustomerRequest extends HttpServlet {
 
                     if (newId > 0) {
                         successCount++;
+                        System.out.println("✅ Created request #" + newId + " for equipment " + eqId + " with contract " + contractId);
                     } else {
                         failCount++;
+                        System.out.println("❌ Failed to create request for equipment " + eqId);
                     }
 
+                } catch (NumberFormatException e) {
+                    System.err.println("❌ Invalid equipment ID: " + eqStr);
+                    failCount++;
                 } catch (Exception e) {
                     e.printStackTrace();
+                    System.err.println("❌ Error processing equipment " + eqStr + ": " + e.getMessage());
                     failCount++;
                 }
             }
 
-            // ✅ TẠO MESSAGE PHÙ HỢP
+            // ✅ Tạo message phù hợp
             StringBuilder message = new StringBuilder();
 
             if (successCount > 0) {
@@ -608,18 +627,38 @@ public class ViewCustomerRequest extends HttpServlet {
             Response<Account> updateRes = accountService.updateCustomerAccount(account, profile);
 
             if (updateRes.isSuccess()) {
-                // ✅ Nếu có requestId thì cập nhật trạng thái request sang Completed
+                // Kiểm tra xem có requestId không
                 if (requestIdParam != null && !requestIdParam.trim().isEmpty()) {
                     try {
                         int requestId = Integer.parseInt(requestIdParam);
+
+                        // LẤY LOẠI REQUEST
                         ServiceRequestDAO rdao = new ServiceRequestDAO();
-                        rdao.updateStatus(requestId, "Completed");
+                        ServiceRequest req = rdao.getRequestById(requestId);
+
+                        if (req != null) {
+                            String requestType = req.getRequestType();
+
+                            // CHỈ UPDATE COMPLETED CHO InformationUpdate
+                            if ("InformationUpdate".equals(requestType)) {
+                                rdao.updateStatus(requestId, "Completed");
+                                System.out.println("✅ InformationUpdate request #" + requestId
+                                        + " completed by CSS after account update.");
+                            } else {
+                                // Service/Warranty → không làm gì, để WorkTask tự động xử lý
+                                System.out.println("ℹ️ Request #" + requestId
+                                        + " is " + requestType
+                                        + ". Status will be updated when all WorkTasks are completed.");
+                            }
+                        }
+
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                        System.err.println("⚠️ Failed to update request status: " + ex.getMessage());
                     }
                 }
 
-                out.print("{\"success\":true, \"message\":\"Cập nhật người dùng và trạng thái yêu cầu thành công!\"}");
+                out.print("{\"success\":true, \"message\":\"Cập nhật người dùng thành công!\"}");
             } else {
                 out.print("{\"success\":false, \"message\":\"" + updateRes.getMessage() + "\"}");
             }
@@ -628,6 +667,61 @@ public class ViewCustomerRequest extends HttpServlet {
             e.printStackTrace();
             String safeMsg = e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Lỗi không xác định";
             out.print("{\"success\":false, \"message\":\"Lỗi hệ thống khi cập nhật người dùng: " + safeMsg + "\"}");
+        } finally {
+            out.flush();
+        }
+    }
+
+    /**
+     * Handle cancelling pending request
+     */
+    private void handleCancelPendingRequest(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+
+        try {
+            String requestIdParam = request.getParameter("requestId");
+
+            if (requestIdParam == null || requestIdParam.trim().isEmpty()) {
+                out.print("{\"success\":false, \"message\":\"Request ID không được để trống!\"}");
+                return;
+            }
+
+            int requestId = Integer.parseInt(requestIdParam.trim());
+
+            //  Lấy thông tin request
+            ServiceRequest serviceRequest = serviceRequestDAO.getRequestById(requestId);
+
+            if (serviceRequest == null) {
+                out.print("{\"success\":false, \"message\":\"Không tìm thấy yêu cầu #" + requestId + "!\"}");
+                return;
+            }
+
+            //  Kiểm tra status có phải Pending không
+            if (!"Pending".equals(serviceRequest.getStatus())) {
+                out.print("{\"success\":false, \"message\":\"Chỉ có thể hủy yêu cầu đang ở trạng thái Pending. Trạng thái hiện tại: "
+                        + serviceRequest.getStatus() + "\"}");
+                return;
+            }
+
+            //  Cập nhật status sang Cancelled (updateStatus là void)
+            try {
+                serviceRequestDAO.updateStatus(requestId, "Cancelled");
+                logger.info("✅ Request #" + requestId + " đã được hủy bởi CSS");
+                out.print("{\"success\":true, \"message\":\"Yêu cầu #" + requestId + " đã được hủy thành công.\"}");
+            } catch (SQLException e) {
+                logger.severe("❌ Lỗi khi cập nhật status request #" + requestId + ": " + e.getMessage());
+                out.print("{\"success\":false, \"message\":\"Không thể cập nhật trạng thái yêu cầu.\"}");
+            }
+
+        } catch (NumberFormatException e) {
+            out.print("{\"success\":false, \"message\":\"Request ID không hợp lệ!\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            String safeMsg = e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Lỗi không xác định";
+            out.print("{\"success\":false, \"message\":\"Lỗi hệ thống: " + safeMsg + "\"}");
         } finally {
             out.flush();
         }
