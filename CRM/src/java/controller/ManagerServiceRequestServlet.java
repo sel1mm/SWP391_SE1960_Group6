@@ -136,11 +136,11 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
-        
+
         System.out.println("========== doPost called ==========");
         System.out.println("Action: " + action);
         System.out.println("CustomerId: " + customerId);
-        
+
         // ✅ TEST: Trả về response ngay lập tức để test
         if ("testReject".equals(action)) {
             response.setContentType("application/json");
@@ -168,6 +168,8 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             handlePayForPart(request, response, customerId);
         } else if ("cancelPart".equals(action)) {
             handleCancelPart(request, response, customerId);
+        } else if ("approveWarrantyPart".equals(action)) {  // ✅ THÊM ACTION MỚI
+            handleApproveWarrantyPart(request, response, customerId);
         }
     }
 
@@ -224,6 +226,103 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             return page < 1 ? 1 : page;
         } catch (NumberFormatException e) {
             return 1;
+        }
+    }
+
+    /**
+     * ✅ XỬ LÝ ĐỒNG Ý LINH KIỆN BẢO HÀNH (KHÔNG CẦN THANH TOÁN) Tương tự
+     * cancelPart nhưng đánh dấu là "Completed" thay vì "Cancelled"
+     */
+    private void handleApproveWarrantyPart(HttpServletRequest request, HttpServletResponse response, int customerId)
+            throws ServletException, IOException {
+
+        System.out.println("========== HANDLE APPROVE WARRANTY PART ==========");
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+
+        String requestIdStr = request.getParameter("requestId");
+        String reportIdStr = request.getParameter("reportId");
+        String partDetailIdStr = request.getParameter("partDetailId");
+
+        System.out.println("requestId: " + requestIdStr);
+        System.out.println("reportId: " + reportIdStr);
+        System.out.println("partDetailId: " + partDetailIdStr);
+
+        if (requestIdStr == null || reportIdStr == null || partDetailIdStr == null) {
+            System.out.println("❌ Missing required parameters");
+            out.write("{\"success\": false, \"message\": \"Thiếu thông tin bắt buộc!\"}");
+            out.flush();
+            return;
+        }
+
+        try {
+            int requestId = Integer.parseInt(requestIdStr.trim());
+            int reportId = Integer.parseInt(reportIdStr.trim());
+            int partDetailId = Integer.parseInt(partDetailIdStr.trim());
+
+            // Kiểm tra request có thuộc về customer không
+            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+
+            if (sr == null || sr.getCreatedBy() != customerId) {
+                out.write("{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}");
+                return;
+            }
+
+            // Kiểm tra requestType phải là "Warranty"
+            if (!"Warranty".equals(sr.getRequestType())) {
+                out.write("{\"success\": false, \"message\": \"Chỉ có thể đồng ý linh kiện cho yêu cầu bảo hành!\"}");
+                return;
+            }
+
+            // Kiểm tra trạng thái request phải là "Đang Xử Lý"
+            if (!"Đang Xử Lý".equals(sr.getDisplayStatus())) {
+                out.write("{\"success\": false, \"message\": \"Chỉ có thể đồng ý linh kiện khi yêu cầu đang xử lý!\"}");
+                return;
+            }
+
+            // Đánh dấu linh kiện là "Completed" (đã đồng ý, không cần thanh toán)
+            RepairReportDAO reportDAO = new RepairReportDAO();
+            boolean success = reportDAO.updatePartPaymentStatus(partDetailId, "Completed");
+
+            if (success) {
+                System.out.println("✅ Customer " + customerId + " approved warranty part " + partDetailId + " in request " + requestId);
+
+                // Kiểm tra xem tất cả linh kiện đã được duyệt chưa
+                boolean allPartsPaid = reportDAO.checkAllPartsPaid(requestId);
+
+                if (allPartsPaid) {
+                    // Nếu tất cả linh kiện đã được duyệt → cập nhật paymentStatus của request
+                    serviceRequestDAO.updatePaymentStatus(requestId, "Completed");
+                    System.out.println("✅ All warranty parts approved → Request " + requestId + " completed");
+
+                    String jsonResponse = "{\"success\": true, \"message\": \"Đã đồng ý thay thế linh kiện! Tất cả linh kiện đã được duyệt.\", \"requestCompleted\": true}";
+                    System.out.println("Sending response: " + jsonResponse);
+                    out.write(jsonResponse);
+                } else {
+                    String jsonResponse = "{\"success\": true, \"message\": \"Đã đồng ý thay thế linh kiện!\", \"requestCompleted\": false}";
+                    System.out.println("Sending response: " + jsonResponse);
+                    out.write(jsonResponse);
+                }
+                out.flush();
+            } else {
+                System.out.println("❌ Failed to approve warranty part");
+                String jsonResponse = "{\"success\": false, \"message\": \"Không thể cập nhật trạng thái!\"}";
+                System.out.println("Sending response: " + jsonResponse);
+                out.write(jsonResponse);
+                out.flush();
+            }
+
+        } catch (NumberFormatException e) {
+            System.err.println("❌ NumberFormatException: " + e.getMessage());
+            out.write("{\"success\": false, \"message\": \"Thông tin không hợp lệ!\"}");
+            out.flush();
+        } catch (Exception e) {
+            System.err.println("❌ Error in handleApproveWarrantyPart: " + e.getMessage());
+            e.printStackTrace();
+            out.write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+            out.flush();
         }
     }
 
@@ -304,18 +403,18 @@ public class ManagerServiceRequestServlet extends HttpServlet {
 
         // Lấy tất cả yêu cầu của customer
         List<ServiceRequest> allRequests = serviceRequestDAO.getRequestsByCustomerId(customerId);
-        
+
         // Áp dụng các bộ lọc
         List<ServiceRequest> filteredRequests = new ArrayList<>();
-        
+
         for (ServiceRequest req : allRequests) {
             boolean match = true;
-            
+
             // Lọc theo keyword (tìm trong description, equipment name, contract ID)
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String kw = keyword.trim().toLowerCase();
                 boolean keywordMatch = false;
-                
+
                 if (req.getDescription() != null && req.getDescription().toLowerCase().contains(kw)) {
                     keywordMatch = true;
                 }
@@ -328,33 +427,33 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                 if (String.valueOf(req.getRequestId()).contains(kw)) {
                     keywordMatch = true;
                 }
-                
+
                 if (!keywordMatch) {
                     match = false;
                 }
             }
-            
+
             // Lọc theo status (sử dụng DB status)
             if (match && status != null && !status.trim().isEmpty()) {
                 if (!status.equals(req.getStatus())) {
                     match = false;
                 }
             }
-            
+
             // Lọc theo requestType
             if (match && requestType != null && !requestType.trim().isEmpty()) {
                 if (!requestType.equals(req.getRequestType())) {
                     match = false;
                 }
             }
-            
+
             // Lọc theo priorityLevel
             if (match && priorityLevel != null && !priorityLevel.trim().isEmpty()) {
                 if (!priorityLevel.equals(req.getPriorityLevel())) {
                     match = false;
                 }
             }
-            
+
             // Lọc theo ngày tạo
             if (match && fromDate != null && !fromDate.trim().isEmpty()) {
                 try {
@@ -366,7 +465,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                     // Ignore invalid date
                 }
             }
-            
+
             if (match && toDate != null && !toDate.trim().isEmpty()) {
                 try {
                     java.sql.Date to = java.sql.Date.valueOf(toDate);
@@ -381,12 +480,12 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                     // Ignore invalid date
                 }
             }
-            
+
             if (match) {
                 filteredRequests.add(req);
             }
         }
-        
+
         // Sắp xếp
         if (sortBy != null && !sortBy.trim().isEmpty()) {
             switch (sortBy) {
@@ -466,14 +565,20 @@ public class ManagerServiceRequestServlet extends HttpServlet {
 
         request.getRequestDispatcher("/managerServiceRequest.jsp").forward(request, response);
     }
-    
+
     private int getPriorityValue(String priority) {
-        if (priority == null) return 0;
+        if (priority == null) {
+            return 0;
+        }
         switch (priority) {
-            case "Urgent": return 3;
-            case "High": return 2;
-            case "Normal": return 1;
-            default: return 0;
+            case "Urgent":
+                return 3;
+            case "High":
+                return 2;
+            case "Normal":
+                return 1;
+            default:
+                return 0;
         }
     }
 
@@ -562,6 +667,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         String supportType = request.getParameter("supportType");
         String description = request.getParameter("description");
         String priorityLevel = request.getParameter("priorityLevel");
+        String requestType = request.getParameter("requestType");
 
         // ✅ VALIDATE CHUNG
         if (description == null || description.trim().isEmpty()) {
@@ -588,6 +694,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
 
         System.out.println("========== CREATE SERVICE REQUEST ==========");
         System.out.println("Support Type: " + supportType);
+        System.out.println("Request Type: " + requestType);
         System.out.println("Customer ID: " + customerId);
 
         // ========== XỬ LÝ HỖ TRỢ THIẾT BỊ ==========
@@ -603,17 +710,17 @@ public class ManagerServiceRequestServlet extends HttpServlet {
 
                 try {
                     int equipmentId = Integer.parseInt(singleEquipmentId.trim());
-                    
+
                     // ✅ KIỂM TRA TRẠNG THÁI THIẾT BỊ TRƯỚC KHI TẠO YÊU CẦU
                     EquipmentDAO equipmentDAO = new EquipmentDAO();
                     String equipmentStatus = equipmentDAO.getEquipmentStatus(equipmentId);
-                    
+
                     if (!"Active".equals(equipmentStatus)) {
-                        session.setAttribute("error", "❌ Không thể tạo yêu cầu cho thiết bị đang " + 
-                            (equipmentStatus.equals("Repair") ? "sửa chữa" : 
-                             equipmentStatus.equals("Maintenance") ? "bảo trì" : "không hoạt động") + "!");
+                        session.setAttribute("error", "❌ Không thể tạo yêu cầu cho thiết bị đang "
+                                + (equipmentStatus.equals("Repair") ? "sửa chữa"
+                                : equipmentStatus.equals("Maintenance") ? "bảo trì" : "không hoạt động") + "!");
                         System.out.println("❌ Equipment " + equipmentId + " is not Active (Status: " + equipmentStatus + ")");
-                        
+
                         // Quay lại trang trước
                         String referer = request.getHeader("Referer");
                         if (referer != null && !referer.isEmpty()) {
@@ -623,11 +730,11 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                         }
                         return;
                     }
-                    
+
                     String contractIdStr = request.getParameter("contractId");
 
                     ServiceRequest newRequest = new ServiceRequest();
-                    
+
                     // Kiểm tra xem có contractId từ form không
                     if (contractIdStr != null && !contractIdStr.trim().isEmpty() && !"N/A".equals(contractIdStr.trim())) {
                         try {
@@ -644,13 +751,14 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                         newRequest.setContractId(null);
                         System.out.println("⚠️ No contract ID provided, creating request without contract");
                     }
-                    
+
                     newRequest.setEquipmentId(equipmentId);
                     newRequest.setCreatedBy(customerId);
                     newRequest.setDescription(description.trim());
                     newRequest.setPriorityLevel(priorityLevel);
                     newRequest.setRequestDate(new Date());
                     newRequest.setStatus("Pending");
+                    newRequest.setRequestType(requestType);
                     newRequest.setRequestType("Service");
 
                     int result = serviceRequestDAO.createServiceRequest(newRequest);
@@ -695,7 +803,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                         // ✅ KIỂM TRA TRẠNG THÁI THIẾT BỊ TRƯỚC KHI TẠO YÊU CẦU
                         EquipmentDAO equipmentDAO = new EquipmentDAO();
                         String equipmentStatus = equipmentDAO.getEquipmentStatus(equipmentId);
-                        
+
                         if (!"Active".equals(equipmentStatus)) {
                             failCount++;
                             System.out.println("❌ Equipment " + equipmentId + " is not Active (Status: " + equipmentStatus + ") - Skipping");
@@ -706,7 +814,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                         EquipmentDAO.EquipmentContractInfo contractInfo = equipmentDAO.getEquipmentContractInfo(equipmentId, customerId);
 
                         ServiceRequest newRequest = new ServiceRequest();
-                        
+
                         // Nếu có hợp đồng thì set contractId, nếu không thì để null
                         if (contractInfo.hasContract()) {
                             newRequest.setContractId(contractInfo.getContractId());
@@ -715,7 +823,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                             newRequest.setContractId(null);
                             System.out.println("⚠️ Equipment " + equipmentId + " has no contract - creating request without contract");
                         }
-                        
+
                         newRequest.setEquipmentId(equipmentId);
                         newRequest.setCreatedBy(customerId);
                         newRequest.setDescription(description.trim());
@@ -723,6 +831,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                         newRequest.setRequestDate(new Date());
                         newRequest.setStatus("Pending");
                         newRequest.setRequestType("Service");
+                        newRequest.setRequestType(requestType);
 
                         int result = serviceRequestDAO.createServiceRequest(newRequest);
 
@@ -1070,9 +1179,9 @@ public class ManagerServiceRequestServlet extends HttpServlet {
     }
 
     /**
-     * ✅ XỬ LÝ KIỂM TRA TRẠNG THÁI BÁO GIÁ
-     * Dùng để kiểm tra xem có hiển thị nút thanh toán không
-     * ✅ CẬP NHẬT: Kiểm tra thêm điều kiện có linh kiện thay thế hay không
+     * ✅ XỬ LÝ KIỂM TRA TRẠNG THÁI BÁO GIÁ Dùng để kiểm tra xem có hiển thị nút
+     * thanh toán không ✅ CẬP NHẬT: Kiểm tra thêm điều kiện có linh kiện thay
+     * thế hay không
      */
     private void handleCheckQuotation(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
@@ -1152,72 +1261,94 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");
     }
-    
-       /*
-*
-     * ✅ XỬ LÝ ĐỒNG Ý BÁO GIÁ
-     * Customer đồng ý với báo giá của technician
+
+    /**
+     * ✅ XỬ LÝ ĐỒNG Ý BÁO GIÁ CỦA KỸ THUẬT VIÊN CỤ THỂ Customer đồng ý với báo
+     * giá của 1 kỹ thuật viên
      */
     private void handleApproveQuotation(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
 
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-
-        String requestIdStr = request.getParameter("requestId");
-
-        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
-            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu không hợp lệ!\"}");
-            return;
-        }
+        System.out.println("========== HANDLE APPROVE QUOTATION ==========");
 
         try {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            PrintWriter out = response.getWriter();
+
+            String requestIdStr = request.getParameter("requestId");
+            String reportIdStr = request.getParameter("reportId");
+
+            System.out.println("requestId: " + requestIdStr);
+            System.out.println("reportId: " + reportIdStr);
+
+            if (requestIdStr == null || reportIdStr == null) {
+                System.out.println("❌ Missing required parameters");
+                String jsonResponse = "{\"success\": false, \"message\": \"Thiếu thông tin bắt buộc!\"}";
+                out.write(jsonResponse);
+                out.flush();
+                out.close();
+                return;
+            }
+
             int requestId = Integer.parseInt(requestIdStr.trim());
+            int reportId = Integer.parseInt(reportIdStr.trim());
 
-            // Kiểm tra request có thuộc về customer không
-            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+            System.out.println("🔍 Parsed requestId: " + requestId + ", reportId: " + reportId);
 
-            if (sr == null || sr.getCreatedBy() != customerId) {
-                response.getWriter().write("{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}");
+            // ✅ Kiểm tra quyền
+            boolean hasPermission = serviceRequestDAO.checkCustomerOwnsRequest(requestId, customerId);
+
+            if (!hasPermission) {
+                System.out.println("❌ Customer " + customerId + " does not own request " + requestId);
+                String jsonResponse = "{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}";
+                out.write(jsonResponse);
+                out.flush();
+                out.close();
                 return;
             }
 
-            // Kiểm tra có báo giá không
-            RepairReport report = serviceRequestDAO.getRepairReportByRequestId(requestId);
+            System.out.println("✅ Permission check passed, updating quotation status...");
 
-            if (report == null) {
-                response.getWriter().write("{\"success\": false, \"message\": \"Không tìm thấy báo giá!\"}");
-                return;
-            }
+            // ✅ Cập nhật quotationStatus = 'Approved' cho báo giá cụ thể
+            boolean success = serviceRequestDAO.updateQuotationStatus(reportId, "Approved");
 
-            // Cập nhật quotationStatus = 'Approved'
-            boolean success = serviceRequestDAO.updateQuotationStatus(report.getReportId(), "Approved");
-
+            String jsonResponse;
             if (success) {
-                System.out.println("✅ Customer approved quotation for request " + requestId);
-                response.getWriter().write("{\"success\": true, \"message\": \"Đã đồng ý báo giá thành công!\"}");
+                System.out.println("✅ Customer " + customerId + " approved quotation " + reportId + " for request " + requestId);
+                jsonResponse = "{\"success\": true, \"message\": \"Đã đồng ý báo giá thành công!\"}";
             } else {
-                response.getWriter().write("{\"success\": false, \"message\": \"Không thể cập nhật trạng thái báo giá!\"}");
+                System.out.println("❌ Failed to approve quotation");
+                jsonResponse = "{\"success\": false, \"message\": \"Không thể cập nhật trạng thái báo giá!\"}";
             }
 
-        } catch (NumberFormatException e) {
-            response.getWriter().write("{\"success\": false, \"message\": \"Mã yêu cầu phải là số nguyên!\"}");
+            System.out.println("📤 Sending response: " + jsonResponse);
+            out.write(jsonResponse);
+            out.flush();
+            out.close();
+
         } catch (Exception e) {
-            System.err.println("❌ Error approving quotation: " + e.getMessage());
+            System.err.println("❌ Error in handleApproveQuotation: " + e.getMessage());
             e.printStackTrace();
-            response.getWriter().write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            PrintWriter out = response.getWriter();
+            out.write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+            out.flush();
+            out.close();
         }
     }
 
     /**
-     * ✅ XỬ LÝ TỪ CHỐI BÁO GIÁ CỦA KỸ THUẬT VIÊN CỤ THỂ
-     * Customer từ chối báo giá của 1 kỹ thuật viên (không ảnh hưởng người khác)
+     * ✅ XỬ LÝ TỪ CHỐI BÁO GIÁ CỦA KỸ THUẬT VIÊN CỤ THỂ Customer từ chối báo giá
+     * của 1 kỹ thuật viên (không ảnh hưởng người khác)
      */
     private void handleRejectQuotation(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
 
         System.out.println("========== HANDLE REJECT QUOTATION ==========");
-        
+
         try {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
@@ -1245,7 +1376,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
 
             // ✅ Kiểm tra quyền trực tiếp bằng SQL (tránh gọi getRequestById gây lỗi)
             boolean hasPermission = serviceRequestDAO.checkCustomerOwnsRequest(requestId, customerId);
-            
+
             if (!hasPermission) {
                 System.out.println("❌ Customer " + customerId + " does not own request " + requestId);
                 String jsonResponse = "{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}";
@@ -1268,7 +1399,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                 System.out.println("❌ Failed to reject quotation");
                 jsonResponse = "{\"success\": false, \"message\": \"Không thể cập nhật trạng thái báo giá!\"}";
             }
-            
+
             System.out.println("📤 Sending response: " + jsonResponse);
             out.write(jsonResponse);
             out.flush();
@@ -1277,7 +1408,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
         } catch (Exception e) {
             System.err.println("❌ Error in handleRejectQuotation: " + e.getMessage());
             e.printStackTrace();
-            
+
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             PrintWriter out = response.getWriter();
@@ -1288,8 +1419,8 @@ public class ManagerServiceRequestServlet extends HttpServlet {
     }
 
     /**
-     *  XỬ LÝ XEM DANH SÁCH CÔNG VIỆC (Modal A)
-     * Hiển thị danh sách các công việc sửa chữa cho yêu cầu "Đang Xử Lý"
+     * XỬ LÝ XEM DANH SÁCH CÔNG VIỆC (Modal A) Hiển thị danh sách các công việc
+     * sửa chữa cho yêu cầu "Đang Xử Lý"
      */
     private void handleViewJobsList(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
@@ -1321,10 +1452,10 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             JsonObject jsonResponse = new JsonObject();
             jsonResponse.addProperty("success", true);
             jsonResponse.addProperty("requestId", sr.getRequestId());
-            jsonResponse.addProperty("requestDate", sr.getRequestDate() != null ? 
-                new java.text.SimpleDateFormat("dd/MM/yyyy").format(sr.getRequestDate()) : "N/A");
-            jsonResponse.addProperty("contractId", sr.getContractId() != null ? 
-                "HD" + String.format("%03d", sr.getContractId()) : "N/A");
+            jsonResponse.addProperty("requestDate", sr.getRequestDate() != null
+                    ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(sr.getRequestDate()) : "N/A");
+            jsonResponse.addProperty("contractId", sr.getContractId() != null
+                    ? "HD" + String.format("%03d", sr.getContractId()) : "N/A");
             jsonResponse.addProperty("equipmentName", sr.getEquipmentName() != null ? sr.getEquipmentName() : "N/A");
             jsonResponse.addProperty("description", sr.getDescription() != null ? sr.getDescription() : "");
 
@@ -1333,18 +1464,18 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             List<RepairReport> reports = reportDAO.getRepairReportsByRequestId(requestId);
 
             JsonArray jobsArray = new JsonArray();
-            
+
             if (reports != null && !reports.isEmpty()) {
                 for (RepairReport report : reports) {
                     JsonObject jobObj = new JsonObject();
                     jobObj.addProperty("workId", report.getReportId());
-                    jobObj.addProperty("technicianName", report.getTechnicianName() != null ? 
-                        report.getTechnicianName() : "Chưa xác định");
-                    jobObj.addProperty("technicianEmail", report.getTechnicianEmail() != null ? 
-                        report.getTechnicianEmail() : "");
-                    jobObj.addProperty("status", report.getQuotationStatus() != null ? 
-                        report.getQuotationStatus() : "Pending");
-                    
+                    jobObj.addProperty("technicianName", report.getTechnicianName() != null
+                            ? report.getTechnicianName() : "Chưa xác định");
+                    jobObj.addProperty("technicianEmail", report.getTechnicianEmail() != null
+                            ? report.getTechnicianEmail() : "");
+                    jobObj.addProperty("status", report.getQuotationStatus() != null
+                            ? report.getQuotationStatus() : "Pending");
+
                     // Map status to display text
                     String statusDisplay = "Chờ Duyệt";
                     if ("Approved".equals(report.getQuotationStatus())) {
@@ -1353,25 +1484,25 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                         statusDisplay = "Hoàn Thành";
                     }
                     jobObj.addProperty("statusDisplay", statusDisplay);
-                    
-                    jobObj.addProperty("repairDate", report.getRepairDate() != null ? 
-                        new java.text.SimpleDateFormat("dd/MM/yyyy").format(report.getRepairDate()) : null);
-                    
+
+                    jobObj.addProperty("repairDate", report.getRepairDate() != null
+                            ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(report.getRepairDate()) : null);
+
                     // Lấy tổng chi phí
-                    BigDecimal totalCost = report.getEstimatedCost() != null ? 
-                        report.getEstimatedCost() : BigDecimal.ZERO;
+                    BigDecimal totalCost = report.getEstimatedCost() != null
+                            ? report.getEstimatedCost() : BigDecimal.ZERO;
                     jobObj.addProperty("totalCost", totalCost.doubleValue());
-                    
+
                     // Lấy trạng thái thanh toán từ InvoiceDetail
                     String paymentStatus = reportDAO.getPaymentStatusByReportId(report.getReportId());
                     jobObj.addProperty("paymentStatus", paymentStatus != null ? paymentStatus : "Pending");
-                    
+
                     jobsArray.add(jobObj);
                 }
             }
 
             jsonResponse.add("jobs", jobsArray);
-            
+
             out.write(gson.toJson(jsonResponse));
             System.out.println("✅ Loaded " + jobsArray.size() + " jobs for request " + requestId);
 
@@ -1385,8 +1516,8 @@ public class ManagerServiceRequestServlet extends HttpServlet {
     }
 
     /**
-     * ✅ XỬ LÝ XEM CHI TIẾT CÔNG VIỆC (Modal B)
-     * Hiển thị chi tiết công việc cụ thể bao gồm linh kiện thay thế
+     * ✅ XỬ LÝ XEM CHI TIẾT CÔNG VIỆC (Modal B) Hiển thị chi tiết công việc cụ
+     * thể bao gồm linh kiện thay thế
      */
     private void handleViewJobDetail(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
@@ -1429,18 +1560,18 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             JsonObject jobObj = new JsonObject();
             jobObj.addProperty("workId", report.getReportId());
             jobObj.addProperty("requestId", report.getRequestId());
-            jobObj.addProperty("technicianName", report.getTechnicianName() != null ? 
-                report.getTechnicianName() : "Chưa xác định");
-            jobObj.addProperty("repairDate", report.getRepairDate() != null ? 
-                new java.text.SimpleDateFormat("dd/MM/yyyy").format(report.getRepairDate()) : "Chưa xác định");
-            jobObj.addProperty("status", report.getQuotationStatus() != null ? 
-                report.getQuotationStatus() : "Pending");
+            jobObj.addProperty("technicianName", report.getTechnicianName() != null
+                    ? report.getTechnicianName() : "Chưa xác định");
+            jobObj.addProperty("repairDate", report.getRepairDate() != null
+                    ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(report.getRepairDate()) : "Chưa xác định");
+            jobObj.addProperty("status", report.getQuotationStatus() != null
+                    ? report.getQuotationStatus() : "Pending");
             jobObj.addProperty("notes", report.getDetails() != null ? report.getDetails() : "");
-            
+
             // Lấy trạng thái thanh toán
             String paymentStatus = reportDAO.getPaymentStatusByReportId(report.getReportId());
             jobObj.addProperty("paymentStatus", paymentStatus != null ? paymentStatus : "Pending");
-            
+
             // Lấy ngày thanh toán nếu có
             String paymentDate = reportDAO.getPaymentDateByReportId(report.getReportId());
             jobObj.addProperty("paymentDate", paymentDate != null ? paymentDate : null);
@@ -1448,31 +1579,31 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             // Lấy danh sách linh kiện thay thế
             List<RepairReportDetail> parts = reportDAO.getRepairReportDetails(workId);
             JsonArray partsArray = new JsonArray();
-            
+
             if (parts != null && !parts.isEmpty()) {
                 for (RepairReportDetail part : parts) {
                     JsonObject partObj = new JsonObject();
                     partObj.addProperty("partName", part.getPartName() != null ? part.getPartName() : "N/A");
-                    partObj.addProperty("serialNumber", part.getSerialNumber() != null ? 
-                        part.getSerialNumber() : "N/A");
-                    partObj.addProperty("description", part.getDescription() != null ? 
-                        part.getDescription() : "");
+                    partObj.addProperty("serialNumber", part.getSerialNumber() != null
+                            ? part.getSerialNumber() : "N/A");
+                    partObj.addProperty("description", part.getDescription() != null
+                            ? part.getDescription() : "");
                     partObj.addProperty("quantity", part.getQuantity());
-                    
-                    BigDecimal unitPrice = part.getUnitPrice() != null ? 
-                        part.getUnitPrice() : BigDecimal.ZERO;
+
+                    BigDecimal unitPrice = part.getUnitPrice() != null
+                            ? part.getUnitPrice() : BigDecimal.ZERO;
                     partObj.addProperty("unitPrice", unitPrice.doubleValue());
-                    
+
                     BigDecimal totalPrice = unitPrice.multiply(new BigDecimal(part.getQuantity()));
                     partObj.addProperty("totalPrice", totalPrice.doubleValue());
-                    
+
                     partsArray.add(partObj);
                 }
             }
 
             jobObj.add("parts", partsArray);
             jsonResponse.add("job", jobObj);
-            
+
             out.write(gson.toJson(jsonResponse));
             System.out.println("✅ Loaded job detail for work " + workId + " with " + partsArray.size() + " parts");
 
@@ -1486,8 +1617,8 @@ public class ManagerServiceRequestServlet extends HttpServlet {
     }
 
     /**
-     * ✅ XỬ LÝ LẤY CHI TIẾT BÁO GIÁ (AJAX)
-     * Lấy danh sách các báo giá (repair reports) và linh kiện cho request "Đang Xử Lý"
+     * ✅ XỬ LÝ LẤY CHI TIẾT BÁO GIÁ (AJAX) Lấy danh sách các báo giá (repair
+     * reports) và linh kiện cho request "Đang Xử Lý"
      */
     private void handleGetQuotationDetails(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
@@ -1521,6 +1652,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             Gson gson = new Gson();
             JsonObject jsonResponse = new JsonObject();
             jsonResponse.addProperty("success", true);
+            jsonResponse.addProperty("requestType", sr.getRequestType());
 
             JsonArray quotationsArray = new JsonArray();
 
@@ -1528,18 +1660,19 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                 for (RepairReport report : reports) {
                     JsonObject quotationObj = new JsonObject();
                     quotationObj.addProperty("reportId", report.getReportId());
-                    quotationObj.addProperty("technicianName", report.getTechnicianName() != null ? 
-                        report.getTechnicianName() : "N/A");
-                    quotationObj.addProperty("workDescription", report.getDetails() != null ? 
-                        report.getDetails() : "N/A");
-                    
-                    BigDecimal estimatedCost = report.getEstimatedCost() != null ? 
-                        report.getEstimatedCost() : BigDecimal.ZERO;
+                    quotationObj.addProperty("technicianName", report.getTechnicianName() != null
+                            ? report.getTechnicianName() : "N/A");
+                    quotationObj.addProperty("workDescription", report.getDetails() != null
+                            ? report.getDetails() : "N/A");
+
+                    BigDecimal estimatedCost = report.getEstimatedCost() != null
+                            ? report.getEstimatedCost() : BigDecimal.ZERO;
                     quotationObj.addProperty("estimatedCost", estimatedCost.doubleValue());
-                    
-                    quotationObj.addProperty("status", report.getQuotationStatus() != null ? 
-                        report.getQuotationStatus() : "Pending");
-                    
+
+                    quotationObj.addProperty("status", report.getQuotationStatus() != null
+                            ? report.getQuotationStatus() : "Pending");
+                    quotationObj.addProperty("quotationStatus", report.getQuotationStatus());
+
                     // Fix: repairDate là LocalDate
                     String repairDateStr = "N/A";
                     if (report.getRepairDate() != null) {
@@ -1555,21 +1688,21 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                         for (RepairReportDetail part : parts) {
                             JsonObject partObj = new JsonObject();
                             partObj.addProperty("partDetailId", part.getDetailId());
-                            partObj.addProperty("partName", part.getPartName() != null ? 
-                                part.getPartName() : "N/A");
-                            partObj.addProperty("serialNumber", part.getSerialNumber() != null ? 
-                                part.getSerialNumber() : "N/A");
+                            partObj.addProperty("partName", part.getPartName() != null
+                                    ? part.getPartName() : "N/A");
+                            partObj.addProperty("serialNumber", part.getSerialNumber() != null
+                                    ? part.getSerialNumber() : "N/A");
                             partObj.addProperty("quantity", part.getQuantity());
-                            
-                            BigDecimal unitPrice = part.getUnitPrice() != null ? 
-                                part.getUnitPrice() : BigDecimal.ZERO;
+
+                            BigDecimal unitPrice = part.getUnitPrice() != null
+                                    ? part.getUnitPrice() : BigDecimal.ZERO;
                             partObj.addProperty("unitPrice", unitPrice.doubleValue());
-                            
+
                             // Lấy trạng thái thanh toán của linh kiện
                             String paymentStatus = reportDAO.getPartPaymentStatus(part.getDetailId());
-                            partObj.addProperty("paymentStatus", paymentStatus != null ? 
-                                paymentStatus : "Pending");
-                            
+                            partObj.addProperty("paymentStatus", paymentStatus != null
+                                    ? paymentStatus : "Pending");
+
                             partsArray.add(partObj);
                         }
                     }
@@ -1581,7 +1714,7 @@ public class ManagerServiceRequestServlet extends HttpServlet {
 
             jsonResponse.add("quotations", quotationsArray);
             out.write(gson.toJson(jsonResponse));
-            
+
             System.out.println("✅ Loaded " + quotationsArray.size() + " quotations for request " + requestId);
 
         } catch (NumberFormatException e) {
@@ -1594,8 +1727,8 @@ public class ManagerServiceRequestServlet extends HttpServlet {
     }
 
     /**
-     * ✅ XỬ LÝ THANH TOÁN CHO 1 LINH KIỆN CỤ THỂ
-     * Customer thanh toán cho 1 linh kiện trong báo giá
+     * ✅ XỬ LÝ THANH TOÁN CHO 1 LINH KIỆN CỤ THỂ Customer thanh toán cho 1 linh
+     * kiện trong báo giá
      */
     private void handlePayForPart(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
@@ -1638,15 +1771,15 @@ public class ManagerServiceRequestServlet extends HttpServlet {
 
             if (success) {
                 System.out.println("✅ Customer " + customerId + " paid for part " + partDetailId);
-                
+
                 // Kiểm tra xem tất cả linh kiện đã thanh toán chưa
                 boolean allPartsPaid = reportDAO.checkAllPartsPaid(requestId);
-                
+
                 if (allPartsPaid) {
                     // Nếu tất cả linh kiện đã thanh toán → cập nhật paymentStatus của request
                     serviceRequestDAO.updatePaymentStatus(requestId, "Completed");
                     System.out.println("✅ All parts paid → Request " + requestId + " payment completed");
-                    
+
                     out.write("{\"success\": true, \"message\": \"Thanh toán thành công! Tất cả linh kiện đã được thanh toán.\", \"requestCompleted\": true}");
                 } else {
                     out.write("{\"success\": true, \"message\": \"Thanh toán linh kiện thành công!\", \"requestCompleted\": false}");
@@ -1665,14 +1798,14 @@ public class ManagerServiceRequestServlet extends HttpServlet {
     }
 
     /**
-     * ✅ XỬ LÝ HỦY 1 LINH KIỆN CỤ THỂ (CHỈ HỦY LINH KIỆN ĐÓ)
-     * Đánh dấu linh kiện là "Cancelled" trong RepairReportDetail
+     * ✅ XỬ LÝ HỦY 1 LINH KIỆN CỤ THỂ (CHỈ HỦY LINH KIỆN ĐÓ) Đánh dấu linh kiện
+     * là "Cancelled" trong RepairReportDetail
      */
     private void handleCancelPart(HttpServletRequest request, HttpServletResponse response, int customerId)
             throws ServletException, IOException {
 
         System.out.println("========== HANDLE CANCEL PART ==========");
-        
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         PrintWriter out = response.getWriter();
@@ -1742,4 +1875,3 @@ public class ManagerServiceRequestServlet extends HttpServlet {
     }
 
 }
- 
