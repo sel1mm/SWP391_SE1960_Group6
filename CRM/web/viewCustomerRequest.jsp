@@ -299,6 +299,13 @@
                                                                 <i class="fas fa-share"></i>
                                                             </button>
                                                         </c:if>
+                                                        
+                                                        <c:if test="${req.status eq 'Pending'}">
+                                                            <button class="btn btn-sm btn-outline-danger" title="Hủy yêu cầu"
+                                                                    onclick="cancelRequest('${req.requestId}')">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        </c:if>
                                                     </c:if>
 
                                                     <!-- Nếu loại yêu cầu là InformationUpdate -->
@@ -798,20 +805,23 @@ function forwardRequest(id) {
     });
 }
 
-function cancelRequest(id) {
+function cancelRequest(requestId) {
     Swal.fire({
         title: 'Hủy yêu cầu?',
-        text: `Bạn có chắc chắn muốn hủy yêu cầu #${id}?`,
+        html: `Bạn có chắc chắn muốn hủy yêu cầu <strong>#${requestId}</strong>?<br>` +
+              `<small class="text-muted">Hành động này không thể hoàn tác.</small>`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Hủy yêu cầu',
-        cancelButtonText: 'Quay lại',
-        confirmButtonColor: '#d33'
+        confirmButtonText: '<i class="fas fa-times-circle me-1"></i> Hủy yêu cầu',
+        cancelButtonText: '<i class="fas fa-arrow-left me-1"></i> Quay lại',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        reverseButtons: true
     }).then(async (result) => {
         if (result.isConfirmed) {
             try {
                 const res = await fetch(
-                    'updateRequestStatus?requestId=' + id + '&status=' + encodeURIComponent('Rejected'),
+                    'updateRequestStatus?requestId=' + requestId + '&status=' + encodeURIComponent('Cancelled'),
                     { method: 'GET' }
                 );
 
@@ -819,17 +829,19 @@ function cancelRequest(id) {
 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Thành công!',
-                    text: 'Yêu cầu đã bị hủy.',
-                    confirmButtonColor: '#000'
+                    title: 'Đã hủy!',
+                    text: 'Yêu cầu đã được hủy thành công.',
+                    confirmButtonColor: '#000',
+                    timer: 2000,
+                    timerProgressBar: true
                 }).then(() => window.location.reload());
 
             } catch (err) {
-                console.error('❌ Lỗi khi cập nhật trạng thái:', err);
+                console.error('❌ Lỗi khi hủy yêu cầu:', err);
                 Swal.fire({
                     icon: 'error',
-                    title: 'Thất bại!',
-                    text: 'Không thể cập nhật trạng thái yêu cầu.',
+                    title: 'Lỗi!',
+                    text: 'Không thể kết nối đến server. Vui lòng thử lại.',
                     confirmButtonColor: '#000'
                 });
             }

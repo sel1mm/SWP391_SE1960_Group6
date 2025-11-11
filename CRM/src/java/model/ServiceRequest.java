@@ -26,6 +26,9 @@ public class ServiceRequest {
 
     // New field for technician assignment
     private Integer assignedTechnicianId;
+    
+    // ✅ NEW FIELD: WorkTask completion status
+    private boolean allWorkTasksCompleted;  // true nếu tất cả WorkTask đã completed
 
     // Additional display fields (not stored in DB, populated from joins)
     private String customerName;
@@ -294,6 +297,14 @@ public class ServiceRequest {
         this.daysPending = daysPending;
     }
 
+    public boolean isAllWorkTasksCompleted() {
+        return allWorkTasksCompleted;
+    }
+
+    public void setAllWorkTasksCompleted(boolean allWorkTasksCompleted) {
+        this.allWorkTasksCompleted = allWorkTasksCompleted;
+    }
+
     // ==================== BUSINESS LOGIC METHODS ====================
 
     /**
@@ -301,15 +312,20 @@ public class ServiceRequest {
      * 
      * LOGIC:
      * - Phân biệt đơn Equipment (Service/Warranty) vs Account (InformationUpdate)
-     * - Equipment Completed cần check paymentStatus
+     * - Equipment Completed CHỈ cần check WorkTask status (không check paymentStatus)
      * - Account Completed = Hoàn Thành luôn
+     * 
+     * Lý do không check paymentStatus:
+     * - WorkTask chỉ được tạo KHI người dùng đã thanh toán
+     * - Nếu từ chối hết thanh toán → Không có WorkTask → allWorkTasksCompleted = true → Hoàn Thành
+     * - Nếu có thanh toán → Có WorkTask → Chờ WorkTask completed → Hoàn Thành
      * 
      * Mapping:
      * - Pending → "Chờ Xác Nhận"
      * - Awaiting Approval → "Chờ Xử Lý"
      * - Approved → "Đang Xử Lý"
-     * - Completed + Equipment + Chưa trả → "Đang Xử Lý"
-     * - Completed + Equipment + Đã trả → "Hoàn Thành"
+     * - Completed + Equipment + WorkTask chưa hết Completed → "Đang Xử Lý"
+     * - Completed + Equipment + WorkTask đã hết Completed → "Hoàn Thành"
      * - Completed + Account → "Hoàn Thành"
      * - Cancelled → "Đã Hủy"
      * - Rejected → "Bị Từ Chối"
@@ -344,22 +360,23 @@ public class ServiceRequest {
                 return "Hoàn Thành";
             }
             
-            // ✅ Nếu là đơn Equipment (Service/Warranty) → Check payment
+            // ✅ Nếu là đơn Equipment (Service/Warranty) → CHỈ check WorkTask
             if ("Service".equals(this.requestType) || "Warranty".equals(this.requestType)) {
-                if ("Completed".equals(this.paymentStatus)) {
-                    return "Hoàn Thành";  // Đã thanh toán
-                } else {
-                    return "Đang Xử Lý";  // Chưa thanh toán
+                // ✅ KIỂM TRA WORKTASK: Nếu chưa hết completed → vẫn "Đang Xử Lý"
+                if (!this.allWorkTasksCompleted) {
+                    return "Đang Xử Lý";  // Còn WorkTask chưa hoàn thành
                 }
+                
+                // ✅ Tất cả WorkTask đã completed (hoặc không có WorkTask) → Hoàn Thành
+                return "Hoàn Thành";
             }
             
             // Fallback: nếu không xác định được requestType
-            // Mặc định check payment như Equipment
-            if ("Completed".equals(this.paymentStatus)) {
-                return "Hoàn Thành";
-            } else {
+            // Mặc định check WorkTask như Equipment
+            if (!this.allWorkTasksCompleted) {
                 return "Đang Xử Lý";
             }
+            return "Hoàn Thành";
         }
 
         // 5. Fallback cho các trường hợp khác

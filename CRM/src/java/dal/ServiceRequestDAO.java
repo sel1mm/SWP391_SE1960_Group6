@@ -277,7 +277,10 @@ public class ServiceRequestDAO extends MyDAO {
             ps.setInt(1, customerId);
             rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapResultSetToServiceRequest(rs));
+                ServiceRequest sr = mapResultSetToServiceRequest(rs);
+                // ✅ Set WorkTask status sau khi map xong
+                sr.setAllWorkTasksCompleted(areAllWorkTasksCompleted(sr.getRequestId()));
+                list.add(sr);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -451,6 +454,10 @@ public class ServiceRequestDAO extends MyDAO {
         sr.setStatus(rs.getString("status"));
         sr.setRequestType(rs.getString("requestType"));
 
+        // ✅ Kiểm tra WorkTask status
+        // NOTE: Tạm thời comment out để tránh nested query conflict
+        // Sẽ được set riêng trong method getRequestsByCustomerId()
+        // sr.setAllWorkTasksCompleted(areAllWorkTasksCompleted(sr.getRequestId()));
         // Handle assigned_technician_id (can be null)
         try {
             int technicianId = rs.getInt("assigned_technician_id");
@@ -1888,41 +1895,42 @@ public class ServiceRequestDAO extends MyDAO {
      * Lấy tên người xử lý (Assigned Technician) từ RequestApproval Dùng cho
      * modal "Chờ Xử Lý"
      */
-   public RepairReport getRepairReportById(int reportId) {
-    String sql = "SELECT rr.*, a.fullName as technicianName "
-            + "FROM RepairReport rr "
-            + "LEFT JOIN Account a ON rr.technicianId = a.accountId "
-            + "WHERE rr.reportId = ?";
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setInt(1, reportId);
-        rs = ps.executeQuery();
-        if (rs.next()) {
-            RepairReport report = new RepairReport();
-            report.setReportId(rs.getInt("reportId"));
-            report.setRequestId(rs.getInt("requestId"));
-            int techId = rs.getInt("technicianId");
-            if (!rs.wasNull()) {
-                report.setTechnicianId(techId);
+    public RepairReport getRepairReportById(int reportId) {
+        String sql = "SELECT rr.*, a.fullName as technicianName "
+                + "FROM RepairReport rr "
+                + "LEFT JOIN Account a ON rr.technicianId = a.accountId "
+                + "WHERE rr.reportId = ?";
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, reportId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                RepairReport report = new RepairReport();
+                report.setReportId(rs.getInt("reportId"));
+                report.setRequestId(rs.getInt("requestId"));
+                int techId = rs.getInt("technicianId");
+                if (!rs.wasNull()) {
+                    report.setTechnicianId(techId);
+                }
+                report.setDetails(rs.getString("details"));
+                report.setDiagnosis(rs.getString("diagnosis"));
+                report.setEstimatedCost(rs.getBigDecimal("estimatedCost"));
+                report.setQuotationStatus(rs.getString("quotationStatus"));
+                java.sql.Date sqlDate = rs.getDate("repairDate");
+                if (sqlDate != null) {
+                    report.setRepairDate(sqlDate.toLocalDate());
+                }
+                report.setTechnicianName(rs.getString("technicianName"));
+                return report;
             }
-            report.setDetails(rs.getString("details"));
-            report.setDiagnosis(rs.getString("diagnosis"));
-            report.setEstimatedCost(rs.getBigDecimal("estimatedCost"));
-            report.setQuotationStatus(rs.getString("quotationStatus"));
-            java.sql.Date sqlDate = rs.getDate("repairDate");
-            if (sqlDate != null) {
-                report.setRepairDate(sqlDate.toLocalDate());
-            }
-            report.setTechnicianName(rs.getString("technicianName"));
-            return report;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
-    } finally {
-        closeResources();
+        return null;
     }
-    return null;
-} 
+
     public String getAssignedTechnicianName(int requestId) {
         String sql = "SELECT a.fullName "
                 + "FROM RequestApproval ra "
@@ -1962,12 +1970,15 @@ public class ServiceRequestDAO extends MyDAO {
                 + "rr.reportId, rr.technicianId as repairTechnicianId, "
                 + "rr.details as repairDetails, rr.diagnosis, "
                 + "rr.estimatedCost, rr.quotationStatus, rr.repairDate, "
+                + "rr.invoiceDetailId, "
+                + "id.paymentStatus, "
                 + "repairTech.fullName as repairTechnicianName "
                 + "FROM ServiceRequest sr "
                 + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
                 + "LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId "
                 + "LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId "
                 + "LEFT JOIN RepairReport rr ON sr.requestId = rr.requestId "
+                + "LEFT JOIN InvoiceDetail id ON rr.invoiceDetailId = id.invoiceDetailId "
                 + "LEFT JOIN Account repairTech ON rr.technicianId = repairTech.accountId "
                 + "WHERE sr.requestId = ? AND sr.createdBy = ?";
 
@@ -2040,6 +2051,45 @@ public class ServiceRequestDAO extends MyDAO {
         return null;
     }
 
+    /**
+     * ✅ CẬP NHẬT TRẠNG THÁI BÁO GIÁ (QUOTATION STATUS)
+     * Dùng để customer approve/reject báo giá của technician
+     * 
+     * Logic:
+     * - Khi customer bấm "Thanh toán tất cả" → quotationStatus = 'Approved' (xử lý ở payment flow)
+     * - Khi customer bấm "Từ chối báo giá" → quotationStatus = 'Rejected'
+     * 
+     * @param reportId ID của RepairReport
+     * @param newStatus "Approved" hoặc "Rejected"
+     * @return true nếu cập nhật thành công
+     */
+    public boolean updateQuotationStatus(int reportId, String newStatus) {
+        // ✅ Cập nhật trực tiếp RepairReport.quotationStatus
+        String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
+        
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setString(1, newStatus);
+            ps.setInt(2, reportId);
+            
+            int affectedRows = ps.executeUpdate();
+            
+            if (affectedRows > 0) {
+                System.out.println("✅ Updated quotation status for reportId " + reportId + " to: " + newStatus);
+                return true;
+            } else {
+                System.out.println("❌ No rows affected when updating reportId: " + reportId);
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error updating quotation status: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+
     // ============ INNER CLASS FOR COMBINED DATA ============
     /**
      * Class kết hợp ServiceRequest + RepairReport + Technician info Dùng để trả
@@ -2091,9 +2141,9 @@ public class ServiceRequestDAO extends MyDAO {
      * bị trong hợp đồng chính (qua ContractEquipment) - Yêu cầu của thiết bị
      * trong phụ lục (qua ContractAppendixEquipment)
      */
- public List<ServiceRequest> getRequestsByContractIdWithEquipment(int contractId) throws SQLException {
-    List<ServiceRequest> list = new ArrayList<>();
-    String sql = """
+    public List<ServiceRequest> getRequestsByContractIdWithEquipment(int contractId) throws SQLException {
+        List<ServiceRequest> list = new ArrayList<>();
+        String sql = """
         SELECT DISTINCT sr.*, 
                a.fullName AS customerName, a.email AS customerEmail, a.phone AS customerPhone,
                COALESCE(c.contractType, c2.contractType) AS contractType, 
@@ -2134,51 +2184,52 @@ public class ServiceRequestDAO extends MyDAO {
         )
         ORDER BY sr.requestDate DESC
     """;
-    
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        ps.setInt(1, contractId);
-        ps.setInt(2, contractId);
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                ServiceRequest sr = new ServiceRequest();
-                sr.setRequestId(rs.getInt("requestId"));
-                
-                int cId = rs.getInt("contractId");
-                if (!rs.wasNull()) {
-                    sr.setContractId(cId);
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+            ps.setInt(2, contractId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ServiceRequest sr = new ServiceRequest();
+                    sr.setRequestId(rs.getInt("requestId"));
+
+                    int cId = rs.getInt("contractId");
+                    if (!rs.wasNull()) {
+                        sr.setContractId(cId);
+                    }
+
+                    sr.setEquipmentId(rs.getInt("equipmentId"));
+                    sr.setCreatedBy(rs.getInt("createdBy"));
+                    sr.setDescription(rs.getString("description"));
+                    sr.setPriorityLevel(rs.getString("priorityLevel"));
+                    sr.setRequestDate(rs.getTimestamp("requestDate"));
+                    sr.setStatus(rs.getString("status"));
+                    sr.setRequestType(rs.getString("requestType"));
+
+                    sr.setCustomerName(rs.getString("customerName"));
+                    sr.setCustomerEmail(rs.getString("customerEmail"));
+                    sr.setCustomerPhone(rs.getString("customerPhone"));
+
+                    sr.setContractType(rs.getString("contractType"));
+                    sr.setContractStatus(rs.getString("contractStatus"));
+                    sr.setEquipmentModel(rs.getString("equipmentModel"));
+                    sr.setEquipmentDescription(rs.getString("equipmentDescription"));
+                    sr.setSerialNumber(rs.getString("serialNumber"));
+                    sr.setTechnicianName(rs.getString("technicianName"));
+
+                    // ✅ LẤY paymentStatus từ Payment table
+                    String paymentStatus = rs.getString("paymentStatus");
+                    if (paymentStatus != null) {
+                        sr.setPaymentStatus(paymentStatus);
+                    }
+
+                    list.add(sr);
                 }
-                
-                sr.setEquipmentId(rs.getInt("equipmentId"));
-                sr.setCreatedBy(rs.getInt("createdBy"));
-                sr.setDescription(rs.getString("description"));
-                sr.setPriorityLevel(rs.getString("priorityLevel"));
-                sr.setRequestDate(rs.getTimestamp("requestDate"));
-                sr.setStatus(rs.getString("status"));
-                sr.setRequestType(rs.getString("requestType"));
-                
-                sr.setCustomerName(rs.getString("customerName"));
-                sr.setCustomerEmail(rs.getString("customerEmail"));
-                sr.setCustomerPhone(rs.getString("customerPhone"));
-                
-                sr.setContractType(rs.getString("contractType"));
-                sr.setContractStatus(rs.getString("contractStatus"));
-                sr.setEquipmentModel(rs.getString("equipmentModel"));
-                sr.setEquipmentDescription(rs.getString("equipmentDescription"));
-                sr.setSerialNumber(rs.getString("serialNumber"));
-                sr.setTechnicianName(rs.getString("technicianName"));
-                
-                // ✅ LẤY paymentStatus từ Payment table
-                String paymentStatus = rs.getString("paymentStatus");
-                if (paymentStatus != null) {
-                    sr.setPaymentStatus(paymentStatus);
-                }
-                
-                list.add(sr);
             }
         }
+        return list;
     }
-    return list;
-}
+
     public List<ServiceRequest> getRequestsByContractIdPaged(int contractId, int offset, int limit) {
         List<ServiceRequest> list = new ArrayList<>();
         String sql = """
@@ -2538,19 +2589,16 @@ public class ServiceRequestDAO extends MyDAO {
             closeResources();
         }
     }
-    
-    
+
     /**
-     * Cập nhật trạng thái báo giá (quotationStatus)
-     * Customer đồng ý hoặc từ chối báo giá
-     * 
-     * @param reportId ID của repair report
-     * @param quotationStatus Trạng thái mới: 'Approved' hoặc 'Rejected'
-     * @return true nếu thành công, false nếu thất bại
+     * Cập nhật quotationStatus của RepairReport
+     *
+     * @param reportId ID của báo cáo sửa chữa
+     * @param quotationStatus Trạng thái mới ("Pending", "Approved", "Rejected")
+     * @return true nếu cập nhật thành công
      */
-    public boolean updateQuotationStatus(int reportId, String quotationStatus) {
+    public boolean updateRepairReportQuotationStatus(int reportId, String quotationStatus) {
         String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
-        
         try {
             // Get old status before update
             String oldStatus = null;
@@ -2563,13 +2611,12 @@ public class ServiceRequestDAO extends MyDAO {
                     }
                 }
             }
-            
+
             ps = con.prepareStatement(sql);
             ps.setString(1, quotationStatus);
             ps.setInt(2, reportId);
-            
+
             int rowsAffected = ps.executeUpdate();
-            
             if (rowsAffected > 0) {
                 // If status changed to 'Rejected', return reserved parts to Available
                 if ("Rejected".equals(quotationStatus) && "Pending".equals(oldStatus)) {
@@ -2581,210 +2628,239 @@ public class ServiceRequestDAO extends MyDAO {
                         e.printStackTrace();
                     }
                 }
-                
+
                 return true;
+            } else {
+                return false;
             }
-            
-            return false;
-        } catch (Exception e) {
-            System.err.println("Error updating quotationStatus: " + e.getMessage());
+        } catch (SQLException e) {
+            System.err.println("Error updating quotation status: " + e.getMessage());
             e.printStackTrace();
             return false;
         } finally {
             closeResources();
         }
     }
-    
-    
+
     /**
-     * ✅ CẬP NHẬT TRẠNG THÁI THANH TOÁN CỦA SERVICE REQUEST
-     * Cập nhật paymentStatus khi tất cả linh kiện đã được thanh toán
-     * 
+     * Cập nhật status của ServiceRequest
+     *
      * @param requestId ID của service request
-     * @param paymentStatus Trạng thái thanh toán mới: 'Completed'
-     * @return true nếu thành công, false nếu thất bại
+     * @param status Trạng thái mới
+     * @return true nếu thành công
      */
+    public boolean updateStatusBoolean(int requestId, String status) {
+        String sql = "UPDATE ServiceRequest SET status = ? WHERE requestId = ?";
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setString(1, status);
+            ps.setInt(2, requestId);
 
-   
-/**
- * Cập nhật quotationStatus của RepairReport
- * @param reportId ID của báo cáo sửa chữa
- * @param quotationStatus Trạng thái mới ("Pending", "Approved", "Rejected")
- * @return true nếu cập nhật thành công
- */
-public boolean updateRepairReportQuotationStatus(int reportId, String quotationStatus) {
-    String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
-    try {
-        // Get old status before update
-        String oldStatus = null;
-        String getOldStatusSql = "SELECT quotationStatus FROM RepairReport WHERE reportId = ?";
-        try (PreparedStatement getStatusPs = con.prepareStatement(getOldStatusSql)) {
-            getStatusPs.setInt(1, reportId);
-            try (ResultSet rs = getStatusPs.executeQuery()) {
-                if (rs.next()) {
-                    oldStatus = rs.getString("quotationStatus");
-                }
-            }
-        }
-        
-        ps = con.prepareStatement(sql);
-        ps.setString(1, quotationStatus);
-        ps.setInt(2, reportId);
-        
-        int rowsAffected = ps.executeUpdate();
-        if (rowsAffected > 0) {
-            // If status changed to 'Rejected', return reserved parts to Available
-            if ("Rejected".equals(quotationStatus) && "Pending".equals(oldStatus)) {
-                try {
-                    dal.RepairReportDAO reportDAO = new dal.RepairReportDAO();
-                    reportDAO.returnReservedPartsToAvailable(reportId);
-                } catch (Exception e) {
-                    System.err.println("Error returning reserved parts: " + e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-            
-            return true;
-        } else {
+            int rowsAffected = ps.executeUpdate();
+
+            System.out.println("=== UPDATE STATUS DEBUG ===");
+            System.out.println("✅ SQL: " + sql);
+            System.out.println("✅ RequestId: " + requestId);
+            System.out.println("✅ New Status: " + status);
+            System.out.println("✅ Rows Affected: " + rowsAffected);
+            System.out.println("===========================");
+
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.err.println("❌ Error updating status: " + e.getMessage());
+            e.printStackTrace();
             return false;
+        } finally {
+            closeResources();
         }
-    } catch (SQLException e) {
-        System.err.println("Error updating quotation status: " + e.getMessage());
-        e.printStackTrace();
-        return false;
-    } finally {
-        closeResources();
     }
-}
-
-/**
- * Cập nhật status của ServiceRequest
- * @param requestId ID của service request
- * @param status Trạng thái mới
- * @return true nếu thành công
- */
-public boolean updateStatusBoolean(int requestId, String status) {
-    String sql = "UPDATE ServiceRequest SET status = ? WHERE requestId = ?";
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setString(1, status);
-        ps.setInt(2, requestId);
-        
-        int rowsAffected = ps.executeUpdate();
-        
-        System.out.println("=== UPDATE STATUS DEBUG ===");
-        System.out.println("✅ SQL: " + sql);
-        System.out.println("✅ RequestId: " + requestId);
-        System.out.println("✅ New Status: " + status);
-        System.out.println("✅ Rows Affected: " + rowsAffected);
-        System.out.println("===========================");
-        
-        return rowsAffected > 0;
-    } catch (SQLException e) {
-        System.err.println("❌ Error updating status: " + e.getMessage());
-        e.printStackTrace();
-        return false;
-    } finally {
-        closeResources();
-    }
-}
 // ============ THÊM VÀO ServiceRequestDAO ============
 
-/**
- * ✅ Cập nhật paymentStatus của ServiceRequest
- * @param requestId ID của service request
- * @param paymentStatus Trạng thái thanh toán mới ("Pending", "Completed")
- * @return true nếu thành công
- */
-public boolean updatePaymentStatus(int requestId, String paymentStatus) {
-    String sql = "UPDATE ServiceRequest SET paymentStatus = ? WHERE requestId = ?";
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setString(1, paymentStatus);
-        ps.setInt(2, requestId);
-        
-        int rowsAffected = ps.executeUpdate();
-        if (rowsAffected > 0) {
-            System.out.println("✅ Updated ServiceRequest paymentStatus: requestId=" + requestId + 
-                             ", paymentStatus=" + paymentStatus);
-            return true;
-        } else {
-            System.err.println("⚠️ No rows updated for requestId=" + requestId);
+    /**
+     * ✅ Cập nhật paymentStatus của ServiceRequest
+     *
+     * @param requestId ID của service request
+     * @param paymentStatus Trạng thái thanh toán mới ("Pending", "Completed")
+     * @return true nếu thành công
+     */
+    public boolean updatePaymentStatus(int requestId, String paymentStatus) {
+        String sql = "UPDATE ServiceRequest SET paymentStatus = ? WHERE requestId = ?";
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setString(1, paymentStatus);
+            ps.setInt(2, requestId);
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("✅ Updated ServiceRequest paymentStatus: requestId=" + requestId
+                        + ", paymentStatus=" + paymentStatus);
+                return true;
+            } else {
+                System.err.println("⚠️ No rows updated for requestId=" + requestId);
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error updating payment status: " + e.getMessage());
+            e.printStackTrace();
             return false;
+        } finally {
+            closeResources();
         }
-    } catch (SQLException e) {
-        System.err.println("❌ Error updating payment status: " + e.getMessage());
-        e.printStackTrace();
-        return false;
-    } finally {
-        closeResources();
     }
-}
 
-/**
- * ✅ Lấy paymentStatus của ServiceRequest
- * @param requestId ID của service request
- * @return paymentStatus hoặc null nếu không tìm thấy
- */
-public String getPaymentStatus(int requestId) {
-    String sql = "SELECT paymentStatus FROM ServiceRequest WHERE requestId = ?";
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setInt(1, requestId);
-        rs = ps.executeQuery();
-        
-        if (rs.next()) {
-            return rs.getString("paymentStatus");
+    /**
+     * ✅ Lấy paymentStatus của ServiceRequest
+     *
+     * @param requestId ID của service request
+     * @return paymentStatus hoặc null nếu không tìm thấy
+     */
+    public String getPaymentStatus(int requestId) {
+        String sql = "SELECT paymentStatus FROM ServiceRequest WHERE requestId = ?";
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, requestId);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("paymentStatus");
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error getting payment status: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            closeResources();
         }
-    } catch (SQLException e) {
-        System.err.println("❌ Error getting payment status: " + e.getMessage());
-        e.printStackTrace();
-    } finally {
-        closeResources();
+        return null;
     }
-    return null;
-}
 
-/**
- * ✅ Kiểm tra xem Service Request đã thanh toán chưa
- * @param requestId ID của service request
- * @return true nếu đã thanh toán (paymentStatus = 'Completed')
- */
-public boolean isPaymentCompleted(int requestId) {
-    String status = getPaymentStatus(requestId);
-    return "Completed".equals(status);
-}
+    /**
+     * ✅ Kiểm tra xem Service Request đã thanh toán chưa
+     *
+     * @param requestId ID của service request
+     * @return true nếu đã thanh toán (paymentStatus = 'Completed')
+     */
+    public boolean isPaymentCompleted(int requestId) {
+        String status = getPaymentStatus(requestId);
+        return "Completed".equals(status);
+    }
 
-/**
- * ✅ Cập nhật cả status VÀ paymentStatus cùng lúc
- * Dùng khi thanh toán thành công
- */
-public boolean updateStatusAndPayment(int requestId, String status, String paymentStatus) {
-    String sql = "UPDATE ServiceRequest SET status = ?, paymentStatus = ? WHERE requestId = ?";
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setString(1, status);
-        ps.setString(2, paymentStatus);
-        ps.setInt(3, requestId);
-        
-        int rowsAffected = ps.executeUpdate();
-        if (rowsAffected > 0) {
-            System.out.println("✅ Updated ServiceRequest:");
-            System.out.println("   - requestId: " + requestId);
-            System.out.println("   - status: " + status);
-            System.out.println("   - paymentStatus: " + paymentStatus);
-            return true;
+    /**
+     * ✅ Cập nhật cả status VÀ paymentStatus cùng lúc Dùng khi thanh toán thành
+     * công
+     */
+    public boolean updateStatusAndPayment(int requestId, String status, String paymentStatus) {
+        String sql = "UPDATE ServiceRequest SET status = ?, paymentStatus = ? WHERE requestId = ?";
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setString(1, status);
+            ps.setString(2, paymentStatus);
+            ps.setInt(3, requestId);
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("✅ Updated ServiceRequest:");
+                System.out.println("   - requestId: " + requestId);
+                System.out.println("   - status: " + status);
+                System.out.println("   - paymentStatus: " + paymentStatus);
+                return true;
+            }
+            return false;
+        } catch (SQLException e) {
+            System.err.println("❌ Error updating status and payment: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
         }
-        return false;
-    } catch (SQLException e) {
-        System.err.println("❌ Error updating status and payment: " + e.getMessage());
-        e.printStackTrace();
-        return false;
-    } finally {
-        closeResources();
     }
-}
+
+    /**
+     * ✅ Kiểm tra xem tất cả WorkTask liên quan đến ServiceRequest đã completed
+     * chưa
+     *
+     * @param requestId ID của service request
+     * @return true nếu tất cả WorkTask đã completed hoặc không có WorkTask nào
+     */
+    public boolean areAllWorkTasksCompleted(int requestId) {
+        String sql = "SELECT COUNT(*) as total, "
+                + "SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed "
+                + "FROM WorkTask WHERE requestId = ?";
+
+        // ✅ TẠO CONNECTION MỚI để tránh conflict với ResultSet đang mở
+        Connection tempCon = null;
+        PreparedStatement tempPs = null;
+        ResultSet tempRs = null;
+
+        try {
+            tempCon = connection; // Sử dụng connection từ MyDAO
+            tempPs = tempCon.prepareStatement(sql);
+            tempPs.setInt(1, requestId);
+            tempRs = tempPs.executeQuery();
+
+            if (tempRs.next()) {
+                int total = tempRs.getInt("total");
+                int completed = tempRs.getInt("completed");
+
+                // Nếu không có WorkTask nào, coi như đã completed
+                if (total == 0) {
+                    return true;
+                }
+
+                // Nếu tất cả WorkTask đã completed
+                return total == completed;
+            }
+            return true; // Mặc định true nếu không có dữ liệu
+        } catch (SQLException e) {
+            System.err.println("❌ Error checking WorkTask status for requestId " + requestId + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            // ✅ Đóng resources riêng, KHÔNG đóng connection chung
+            try {
+                if (tempRs != null) {
+                    tempRs.close();
+                }
+                if (tempPs != null) {
+                    tempPs.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public boolean checkCustomerOwnsRequest(int requestId, int customerId) {
+        String sql = "SELECT COUNT(*) FROM ServiceRequest WHERE requestId = ? AND createdBy = ?";
+        PreparedStatement tempPs = null;
+        ResultSet tempRs = null;
+
+        try {
+            tempPs = connection.prepareStatement(sql);
+            tempPs.setInt(1, requestId);
+            tempPs.setInt(2, customerId);
+            tempRs = tempPs.executeQuery();
+
+            if (tempRs.next()) {
+                return tempRs.getInt(1) > 0;
+            }
+            return false;
+        } catch (SQLException e) {
+            System.err.println("❌ Error checking customer ownership: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (tempRs != null) {
+                    tempRs.close();
+                }
+                if (tempPs != null) {
+                    tempPs.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
 
 }
-
-    

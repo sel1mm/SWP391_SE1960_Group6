@@ -92,8 +92,8 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                             doGetReportList(req, resp, technicianId);
                             return;
                         }
-                        // Check if task is completed
-                        if (workTaskDAO.isTaskCompleted(requestId)) {
+                        // Check if this technician's task is completed
+                        if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
                             req.setAttribute("error", "Cannot create report for completed task");
                             doGetReportList(req, resp, technicianId);
                             return;
@@ -390,7 +390,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     return;
                 }
                 
-                if (workTaskDAO.isTaskCompleted(requestId)) {
+                if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
                     req.setAttribute("error", "Cannot create report for completed task");
                     doGet(req, resp);
                     return;

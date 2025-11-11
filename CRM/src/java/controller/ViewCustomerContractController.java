@@ -31,6 +31,7 @@ import java.util.Map;
 import model.ContractAppendix;
 import jakarta.servlet.http.Part;
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.format.DateTimeParseException;
 import model.Account;
 
@@ -52,7 +53,8 @@ import model.Account;
     "/createContract",
     "/deleteContract",
     "/getContractDeletionInfo",
-    "/viewAppendixDetails"
+    "/viewAppendixDetails",
+    "/getRepairPartAppendixDetails"
 })
 public class ViewCustomerContractController extends HttpServlet {
 
@@ -100,6 +102,9 @@ public class ViewCustomerContractController extends HttpServlet {
                 case "/viewAppendixDetails":
                     handleViewAppendixDetails(request, response);
                     break;
+                case "/getRepairPartAppendixDetails":
+                    handleGetRepairPartAppendixDetails(request, response);
+                    break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
@@ -109,21 +114,21 @@ public class ViewCustomerContractController extends HttpServlet {
             response.getWriter().write("{\"success\":false,\"message\":\"Lỗi hệ thống: " + e.getMessage() + "\"}");
         }
     }
-    
+
     private void handleViewAppendixDetails(HttpServletRequest request, HttpServletResponse response)
-        throws IOException, SQLException {
+            throws IOException, SQLException {
 
-    int appendixId = Integer.parseInt(request.getParameter("appendixId"));
+        int appendixId = Integer.parseInt(request.getParameter("appendixId"));
 
-    ContractAppendix appendix = appendixDAO.getAppendixById(appendixId);
-    List<Map<String, Object>> equipment = appendixDAO.getEquipmentByAppendixId(appendixId);
+        ContractAppendix appendix = appendixDAO.getAppendixById(appendixId);
+        List<Map<String, Object>> equipment = appendixDAO.getEquipmentByAppendixId(appendixId);
 
-    Map<String, Object> result = new HashMap<>();
-    result.put("success", true);
-    result.put("appendix", appendix);
-    result.put("equipment", equipment);
-    sendJson(response, result);
-}
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("appendix", appendix);
+        result.put("equipment", equipment);
+        sendJson(response, result);
+    }
 
     // Lấy danh sách hợp đồng (full hoặc theo filter)
     private void handleListOrSearch(HttpServletRequest request, HttpServletResponse response)
@@ -202,6 +207,8 @@ public class ViewCustomerContractController extends HttpServlet {
     // API lấy danh sách thiết bị theo hợp đồng
     private void handleGetContractEquipment(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+        testGsonSerialization();
+
         int contractId = Integer.parseInt(request.getParameter("contractId"));
         List<EquipmentWithStatus> equipmentList = equipmentDAO.getEquipmentAndAppendixByContractId(contractId);
         Map<String, Object> result = new HashMap<>();
@@ -223,6 +230,7 @@ public class ViewCustomerContractController extends HttpServlet {
 
     private void sendJson(HttpServletResponse response, Object data) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
+
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, (JsonSerializer<LocalDate>) (src, typeOfSrc, context)
                         -> src == null ? null : new JsonPrimitive(src.toString()))
@@ -231,8 +239,16 @@ public class ViewCustomerContractController extends HttpServlet {
                 .serializeNulls()
                 .setPrettyPrinting()
                 .create();
+
+        String json = gson.toJson(data);
+
+        // ✅ DEBUG: Print ACTUAL JSON response
+        System.out.println("\n=== ACTUAL JSON RESPONSE TO CLIENT ===");
+        System.out.println(json);
+        System.out.println("======================================\n");
+
         PrintWriter out = response.getWriter();
-        out.print(gson.toJson(data));
+        out.print(json);
         out.flush();
     }
 
@@ -1002,6 +1018,50 @@ public class ViewCustomerContractController extends HttpServlet {
             result.put("message", "Lỗi hệ thống: " + e.getMessage());
             sendJson(response, result);
         }
+    }
+
+    private void handleGetRepairPartAppendixDetails(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, SQLException {
+
+        int appendixId = Integer.parseInt(request.getParameter("appendixId"));
+
+        ContractAppendix appendix = appendixDAO.getAppendixById(appendixId);
+        List<Map<String, Object>> parts = appendixDAO.getRepairPartsByAppendixId(appendixId);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("appendix", appendix);
+        result.put("parts", parts);
+        sendJson(response, result);
+    }
+
+    private void testGsonSerialization() {
+        System.out.println("\n=== GSON SERIALIZATION TEST ===");
+
+        // Tạo test object
+        EquipmentWithStatus testEq = new EquipmentWithStatus();
+        testEq.setEquipmentId(999);
+        testEq.setModel("Test Model");
+        testEq.setSerialNumber("TEST-001");
+        testEq.setDescription("Test Description");
+        testEq.setStartDate(LocalDate.of(2024, 1, 1));
+        testEq.setEndDate(LocalDate.of(2027, 1, 1));
+        testEq.setStatus("Active");
+        testEq.setSource("Contract");
+        testEq.setPrice(new BigDecimal("50000000"));
+
+        // Test Gson
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDate.class, (JsonSerializer<LocalDate>) (src, typeOfSrc, context)
+                        -> src == null ? null : new JsonPrimitive(src.toString()))
+                .serializeNulls()
+                .setPrettyPrinting()
+                .create();
+
+        String json = gson.toJson(testEq);
+        System.out.println("Test JSON:");
+        System.out.println(json);
+        System.out.println("================================\n");
     }
 
 }

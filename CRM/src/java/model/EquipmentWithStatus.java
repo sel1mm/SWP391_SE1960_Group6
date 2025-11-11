@@ -12,6 +12,15 @@ public class EquipmentWithStatus extends Equipment {
     private String status;
     private String location;
     private double unitPrice;
+    private String source; 
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
     
     // Contract information (ContractEquipment)
     private LocalDate startDate;    // ngày bắt đầu trong hợp đồng

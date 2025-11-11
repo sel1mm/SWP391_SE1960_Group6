@@ -5,16 +5,17 @@ public class InvoiceDetail {
     private int invoiceId;
     private String description;
     private double amount;
-    private String paymentStatus; // ✅ Added: "Pending", "Completed", "Failed"
-
+    private String paymentStatus; // Pending / Paid / Completed / Failed / Cancelled
+    
     public InvoiceDetail() {
     }
-
+    
     public InvoiceDetail(int invoiceDetailId, int invoiceId, String description, double amount) {
         this.invoiceDetailId = invoiceDetailId;
         this.invoiceId = invoiceId;
         this.description = description;
         this.amount = amount;
+        this.paymentStatus = "Pending"; // Default status
     }
     
     public InvoiceDetail(int invoiceDetailId, int invoiceId, String description, double amount, String paymentStatus) {
@@ -24,35 +25,36 @@ public class InvoiceDetail {
         this.amount = amount;
         this.paymentStatus = paymentStatus;
     }
-
+    
+    // Getters and Setters
     public int getInvoiceDetailId() {
         return invoiceDetailId;
     }
-
+    
     public void setInvoiceDetailId(int invoiceDetailId) {
         this.invoiceDetailId = invoiceDetailId;
     }
-
+    
     public int getInvoiceId() {
         return invoiceId;
     }
-
+    
     public void setInvoiceId(int invoiceId) {
         this.invoiceId = invoiceId;
     }
-
+    
     public String getDescription() {
         return description;
     }
-
+    
     public void setDescription(String description) {
         this.description = description;
     }
-
+    
     public double getAmount() {
         return amount;
     }
-
+    
     public void setAmount(double amount) {
         this.amount = amount;
     }

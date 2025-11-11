@@ -2293,7 +2293,7 @@
 
         <!-- MODAL CHI TIẾT: HOÀN THÀNH -->
         <div class="modal fade" id="viewModalCompleted" tabindex="-1">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header bg-success text-white">
                         <h5 class="modal-title">
@@ -2301,33 +2301,79 @@
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong><i class="fas fa-hashtag"></i> Mã Yêu Cầu:</strong>
-                                <p class="fw-normal" id="completedRequestId"></p>
+                    <div class="modal-body" style="background: #f8f9fa;">
+                        <!-- SECTION 1: Thông Tin Yêu Cầu -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header bg-white border-bottom">
+                                <h6 class="mb-0 text-success">
+                                    <i class="fas fa-info-circle"></i> Thông Tin Yêu Cầu
+                                </h6>
                             </div>
-                            <div class="col-md-6">
-                                <strong><i class="fas fa-calendar"></i> Ngày Tạo:</strong>
-                                <p class="fw-normal" id="completedRequestDate"></p>
+                            <div class="card-body">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-3">
+                                        <div class="detail-item">
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="fas fa-hashtag"></i> Mã Yêu Cầu
+                                            </small>
+                                            <strong class="text-success" id="completedRequestId">-</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="detail-item">
+                                            <small class="text-muted d-block mb-1"></small>
+                                                <i class="fas fa-calendar"></i> Ngày Tạo
+                                            </small>
+                                            <strong id="completedRequestDate">-</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="detail-item">
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="fas fa-file-contract"></i> Mã Hợp Đồng
+                                            </small>
+                                            <strong id="completedContractId">-</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="detail-item">
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="fas fa-tools"></i> Thiết Bị
+                                            </small>
+                                            <strong id="completedEquipmentName">-</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <small class="text-muted d-block mb-2">
+                                            <i class="fas fa-comment-dots"></i> Mô Tả Vấn Đề
+                                        </small>
+                                        <div class="border rounded p-3 bg-light description-display" id="completedDescription">-</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong><i class="fas fa-file-contract"></i> Mã Hợp Đồng:</strong>
-                                <p class="fw-normal" id="completedContractId"></p>
+
+                        <!-- SECTION 2: Thông Tin Kỹ Thuật Viên & Báo Giá -->
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white border-bottom">
+                                <h6 class="mb-0 text-success">
+                                    <i class="fas fa-users-cog"></i> Kỹ Thuật Viên & Báo Giá Sửa Chữa
+                                </h6>
                             </div>
-                            <div class="col-md-6">
-                                <strong><i class="fas fa-tools"></i> Thiết Bị:</strong>
-                                <p class="fw-normal" id="completedEquipmentName"></p>
+                            <div class="card-body p-0">
+                                <!-- Container for completed technicians list -->
+                                <div id="completedTechniciansList">
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                                        <p class="text-muted mt-2">Đang tải thông tin...</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <strong><i class="fas fa-comment-dots"></i> Mô Tả Vấn Đề:</strong>
-                            <div class="border rounded p-3 bg-light description-display" id="completedDescription"></div>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="fas fa-times"></i> Đóng
                         </button>
@@ -2384,6 +2430,24 @@
                                                                                        const partsCount = quotation.parts ? quotation.parts.length : 0;
                                                                                        totalParts += partsCount;
 
+                                                                                       // ✅ KIỂM TRA TRẠNG THÁI THANH TOÁN TRƯỚC
+                                                                                       let allPartsPaid = true;
+                                                                                       let hasUnpaidParts = false;
+
+                                                                                       console.log('🔍 Checking payment status for technician:', quotation.technicianName);
+
+                                                                                       if (quotation.parts && quotation.parts.length > 0) {
+                                                                                           quotation.parts.forEach(part => {
+                                                                                               console.log('  Part:', part.partName, '| Payment Status:', part.paymentStatus);
+                                                                                               if (part.paymentStatus !== 'Completed' && part.paymentStatus !== 'Cancelled') {
+                                                                                                   allPartsPaid = false;
+                                                                                                   hasUnpaidParts = true;
+                                                                                               }
+                                                                                           });
+                                                                                       }
+
+                                                                                       console.log('  ✅ All parts paid?', allPartsPaid);
+
                                                                                        html += '<div class="technician-row">';
                                                                                        html += '<div class="technician-header" onclick="toggleTechnician(\'tech-' + requestId + '-' + index + '\')">';
                                                                                        html += '<div class="technician-name">';
@@ -2394,11 +2458,30 @@
                                                                                        html += '</div>';
                                                                                        html += '<div class="technician-work">' + (quotation.workDescription || 'N/A') + '</div>';
                                                                                        html += '<div class="technician-cost">' + cost.toLocaleString('vi-VN') + ' đ</div>';
-                                                                                       html += '<div><span class="badge badge-' + getStatusClass(quotation.status) + '">' + getStatusText(quotation.status) + '</span></div>';
+
+                                                                                       // ✅ HIỂN THỊ STATUS: Check quotationStatus từ RepairReport
+                                                                                       html += '<div>';
+                                                                                       const qStatus = quotation.quotationStatus || quotation.status;
+                                                                                       
+                                                                                       if (qStatus === 'Rejected' || quotation.invoiceStatus === 'Cancelled') {
+                                                                                           // Báo giá bị từ chối
+                                                                                           html += '<span class="badge badge-cancelled"><i class="fas fa-times-circle"></i> Từ chối</span>';
+                                                                                       } else if (qStatus === 'Approved' || quotation.invoiceStatus === 'Completed' || (allPartsPaid && quotation.parts && quotation.parts.length > 0)) {
+                                                                                           // Đã thanh toán hoặc approved
+                                                                                           html += '<span class="badge badge-completed"><i class="fas fa-check-circle"></i> Đã thanh toán</span>';
+                                                                                       } else if (qStatus === 'Pending') {
+                                                                                           // Chờ xác nhận
+                                                                                           html += '<span class="badge badge-pending"><i class="fas fa-clock"></i> Chờ xác nhận</span>';
+                                                                                       } else {
+                                                                                           // Trạng thái khác
+                                                                                           html += '<span class="badge badge-' + getStatusClass(qStatus) + '">' + getStatusText(qStatus) + '</span>';
+                                                                                       }
+                                                                                       html += '</div>';
+
                                                                                        html += '<div style="text-align: center; font-weight: 600;">' + partsCount + ' linh kiện</div>';
                                                                                        html += '</div>';
 
-                                                                                       // ✅ Parts details - CHỈ HIỂN THỊ THÔNG TIN (KHÔNG CÓ NÚT RIÊNG LẺ)
+                                                                                       // ✅ Parts details
                                                                                        if (quotation.parts && quotation.parts.length > 0) {
                                                                                            html += '<div class="parts-section" id="parts-tech-' + requestId + '-' + index + '">';
                                                                                            html += '<div class="parts-date"><strong>Ngày tạo:</strong> ' + (quotation.repairDate || 'N/A') + '</div>';
@@ -2412,18 +2495,10 @@
                                                                                            html += '</div>';
 
                                                                                            let partsTotalCost = 0;
-                                                                                           let allPartsPaid = true;
-                                                                                           let hasUnpaidParts = false;
 
                                                                                            quotation.parts.forEach(part => {
                                                                                                const partTotal = (parseFloat(part.unitPrice) || 0) * (parseInt(part.quantity) || 0);
                                                                                                partsTotalCost += partTotal;
-
-                                                                                               // Kiểm tra trạng thái thanh toán
-                                                                                               if (part.paymentStatus !== 'Completed' && part.paymentStatus !== 'Cancelled') {
-                                                                                                   allPartsPaid = false;
-                                                                                                   hasUnpaidParts = true;
-                                                                                               }
 
                                                                                                html += '<div class="parts-table-row">';
                                                                                                html += '<div>' + (part.partName || 'N/A') + '</div>';
@@ -2440,23 +2515,22 @@
                                                                                            html += '</div>';
                                                                                            html += '</div>';
 
-                                                                                           // ✅ NÚT THANH TOÁN TỔNG CHO KỸ THUẬT VIÊN
-                                                                                           html += '<div class="technician-payment-section">';
-                                                                                           html += '<div class="payment-summary">';
-                                                                                           html += '<div class="payment-summary-text">Tổng chi phí linh kiện của kỹ thuật viên</div>';
-                                                                                           html += '<div class="payment-total-amount">' + partsTotalCost.toLocaleString('vi-VN') + ' đ</div>';
-                                                                                           html += '</div>';
+                                                                                           // ✅ Kiểm tra trạng thái báo giá
+                                                                                           const qStatus = quotation.quotationStatus || quotation.status;
+                                                                                           const isRejected = qStatus === 'Rejected' || quotation.invoiceStatus === 'Cancelled';
+                                                                                           const isCompleted = quotation.invoiceStatus === 'Completed' || allPartsPaid;
 
-                                                                                           // ✅ NÚT ACTION
-                                                                                           html += '<div class="payment-actions">';
-
-                                                                                           if (allPartsPaid) {
-                                                                                               // Tất cả đã thanh toán
-                                                                                               html += '<div class="all-paid-badge">';
-                                                                                               html += '<i class="fas fa-check-circle"></i> Đã thanh toán toàn bộ';
+                                                                                           // ✅ CHỈ HIỂN THỊ NÚT NẾU: Chưa thanh toán HẾT VÀ chưa bị từ chối
+                                                                                           if (!allPartsPaid && !isRejected && !isCompleted) {
+                                                                                               // ✅ NÚT THANH TOÁN TỔNG CHO KỸ THUẬT VIÊN
+                                                                                               html += '<div class="technician-payment-section">';
+                                                                                               html += '<div class="payment-summary">';
+                                                                                               html += '<div class="payment-summary-text">Tổng chi phí linh kiện của kỹ thuật viên</div>';
+                                                                                               html += '<div class="payment-total-amount">' + partsTotalCost.toLocaleString('vi-VN') + ' đ</div>';
                                                                                                html += '</div>';
-                                                                                           } else if (hasUnpaidParts) {
-                                                                                               // Có linh kiện chưa thanh toán - hiển thị nút thanh toán và từ chối
+
+                                                                                               // ✅ NÚT ACTION - CHỈ HIỂN THỊ KHI CHƯA THANH TOÁN VÀ CHƯA TỪ CHỐI
+                                                                                               html += '<div class="payment-actions">';
                                                                                                html += '<button class="btn-pay-all" onclick="event.stopPropagation(); payForTechnician(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
                                                                                                html += '<i class="fas fa-credit-card"></i> Thanh toán tất cả';
                                                                                                html += '</button>';
@@ -2464,10 +2538,10 @@
                                                                                                html += '<button class="btn-reject-quotation" onclick="event.stopPropagation(); rejectQuotation(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
                                                                                                html += '<i class="fas fa-times-circle"></i> Từ chối báo giá';
                                                                                                html += '</button>';
+                                                                                               html += '</div>';
+                                                                                               html += '</div>';
                                                                                            }
 
-                                                                                           html += '</div>';
-                                                                                           html += '</div>';
                                                                                            html += '</div>';
                                                                                        }
 
@@ -2514,7 +2588,8 @@
                                                                        'AwaitingApproval': 'awaiting',
                                                                        'Approved': 'inprogress',
                                                                        'Completed': 'completed',
-                                                                       'Cancelled': 'cancelled'
+                                                                       'Cancelled': 'cancelled',
+                                                                       'Rejected': 'cancelled'
                                                                    };
                                                                    return statusMap[status] || 'secondary';
                                                                }
@@ -2525,7 +2600,8 @@
                                                                        'AwaitingApproval': 'Chờ xử lý',
                                                                        'Approved': 'Đang xử lý',
                                                                        'Completed': 'Hoàn thành',
-                                                                       'Cancelled': 'Đã hủy'
+                                                                       'Cancelled': 'Đã hủy',
+                                                                       'Rejected': 'Từ chối'
                                                                    };
                                                                    return textMap[status] || status;
                                                                }
@@ -2671,139 +2747,7 @@
                                                                    });
                                                                }
 
-                                                               /**
-                                                                * ✅ TỪ CHỐI BÁO GIÁ CỦA KỸ THUẬT VIÊN
-                                                                * Từ chối báo giá của 1 kỹ thuật viên cụ thể (không ảnh hưởng người khác)
-                                                                * @param requestId - ID của service request
-                                                                * @param reportId - ID của repair report (technician's quotation)
-                                                                * @param technicianName - Tên kỹ thuật viên
-                                                                */
-                                                               function rejectQuotation(requestId, reportId, technicianName) {
-                                                                   Swal.fire({
-                                                                       title: 'Xác nhận từ chối báo giá',
-                                                                       html: '<p>Bạn có chắc chắn muốn <strong>từ chối báo giá</strong> của kỹ thuật viên:<br><strong>' + technicianName + '</strong>?</p>' +
-                                                                               '<p class="text-muted" style="font-size: 0.9rem; margin-top: 10px;">Lưu ý: Chỉ báo giá của kỹ thuật viên này bị từ chối, không ảnh hưởng đến báo giá của người khác.</p>',
-                                                                       icon: 'warning',
-                                                                       showCancelButton: true,
-                                                                       confirmButtonText: '<i class="fas fa-times-circle"></i> Xác nhận từ chối',
-                                                                       cancelButtonText: '<i class="fas fa-arrow-left"></i> Quay lại',
-                                                                       confirmButtonColor: '#e74c3c',
-                                                                       cancelButtonColor: '#95a5a6',
-                                                                       reverseButtons: true
-                                                                   }).then((result) => {
-                                                                       if (result.isConfirmed) {
-                                                                           // Hiển thị loading
-                                                                           Swal.fire({
-                                                                               title: 'Đang xử lý...',
-                                                                               text: 'Vui lòng đợi',
-                                                                               allowOutsideClick: false,
-                                                                               didOpen: () => {
-                                                                                   Swal.showLoading();
-                                                                               }
-                                                                           });
 
-                                                                           console.log('🔴 Rejecting quotation:', {requestId, reportId, technicianName});
-
-                                                                           const formData = new FormData();
-                                                                           formData.append('action', 'rejectQuotation');
-                                                                           formData.append('requestId', requestId);
-                                                                           formData.append('reportId', reportId);
-
-                                                                           console.log('📤 Sending POST to: ${pageContext.request.contextPath}/managerServiceRequest');
-
-                                                                           fetch('${pageContext.request.contextPath}/managerServiceRequest', {
-                                                                               method: 'POST',
-                                                                               body: formData
-                                                                           })
-                                                                                   .then(response => {
-                                                                                       console.log('📡 Response received:');
-                                                                                       console.log('   Status:', response.status);
-                                                                                       console.log('   Status Text:', response.statusText);
-                                                                                       console.log('   OK:', response.ok);
-                                                                                       console.log('   Content-Type:', response.headers.get('content-type'));
-
-                                                                                       // ✅ KIỂM TRA STATUS CODE
-                                                                                       if (!response.ok) {
-                                                                                           throw new Error('HTTP error! Status: ' + response.status + ' ' + response.statusText);
-                                                                                       }
-
-                                                                                       return response.text();
-                                                                                   })
-                                                                                   .then(text => {
-                                                                                       console.log('📄 Raw response text:');
-                                                                                       console.log('   Length:', text.length);
-                                                                                       console.log('   Content:', text);
-                                                                                       console.log('   First 100 chars:', text.substring(0, 100));
-
-                                                                                       // ✅ KIỂM TRA RESPONSE RỖNG
-                                                                                       if (!text || text.trim().length === 0) {
-                                                                                           console.error('❌ Response is EMPTY!');
-                                                                                           throw new Error('Server trả về response rỗng. Vui lòng kiểm tra server log.');
-                                                                                       }
-
-                                                                                       // ✅ KIỂM TRA CÓ PHẢI JSON KHÔNG
-                                                                                       const trimmedText = text.trim();
-                                                                                       if (!trimmedText.startsWith('{') && !trimmedText.startsWith('[')) {
-                                                                                           console.error('❌ Response is NOT JSON!');
-                                                                                           console.error('Response starts with:', trimmedText.substring(0, 50));
-                                                                                           throw new Error('Server không trả về JSON. Response: ' + trimmedText.substring(0, 200));
-                                                                                       }
-
-                                                                                       // ✅ PARSE JSON
-                                                                                       try {
-                                                                                           const data = JSON.parse(trimmedText);
-                                                                                           console.log('✅ JSON parsed successfully:', data);
-                                                                                           return data;
-                                                                                       } catch (e) {
-                                                                                           console.error('❌ JSON parse error:', e);
-                                                                                           console.error('❌ Failed to parse text:', trimmedText);
-                                                                                           throw new Error('Invalid JSON: ' + e.message + '. Text: ' + trimmedText.substring(0, 100));
-                                                                                       }
-                                                                                   })
-                                                                                   .then(data => {
-                                                                                       Swal.close();
-
-                                                                                       console.log('✅ Processing response data:', data);
-
-                                                                                       if (data.success) {
-                                                                                           Swal.fire({
-                                                                                               icon: 'success',
-                                                                                               title: 'Đã từ chối báo giá!',
-                                                                                               text: data.message || 'Báo giá đã được từ chối thành công',
-                                                                                               timer: 2000,
-                                                                                               showConfirmButton: false
-                                                                                           }).then(() => {
-                                                                                               console.log('🔄 Reloading quotation details...');
-                                                                                               loadQuotationDetails(requestId);
-                                                                                           });
-                                                                                       } else {
-                                                                                           console.warn('⚠️ Server returned success=false:', data.message);
-                                                                                           Swal.fire({
-                                                                                               icon: 'error',
-                                                                                               title: 'Lỗi!',
-                                                                                               text: data.message || 'Không thể từ chối báo giá'
-                                                                                           });
-                                                                                       }
-                                                                                   })
-                                                                                   .catch(error => {
-                                                                                       Swal.close();
-                                                                                       console.error('❌❌❌ CATCH BLOCK ERROR ❌❌❌');
-                                                                                       console.error('Error type:', error.constructor.name);
-                                                                                       console.error('Error message:', error.message);
-                                                                                       console.error('Error stack:', error.stack);
-
-                                                                                       Swal.fire({
-                                                                                           icon: 'error',
-                                                                                           title: 'Lỗi!',
-                                                                                           html: '<p>Có lỗi xảy ra khi từ chối báo giá:</p>' +
-                                                                                                   '<p style="font-size: 0.9rem; color: #666;">' + error.message + '</p>' +
-                                                                                                   '<p style="font-size: 0.8rem; margin-top: 10px;">Vui lòng kiểm tra console log và server log để biết thêm chi tiết.</p>',
-                                                                                           width: 600
-                                                                                       });
-                                                                                   });
-                                                                       }
-                                                                   });
-                                                               }
 
                                                                // ========== OLD PAYMENT FUNCTIONS (Keep for backward compatibility) ==========
                                                                function makePayment(requestId, reportId) {
@@ -3177,14 +3121,161 @@
 
                                                                // ========== MODAL 4: HOÀN THÀNH ==========
                                                                function showCompletedModal(data) {
+                                                                   console.log('✅ Showing Completed Modal with full details');
+                                                                   console.log('📦 Data:', data);
+
+                                                                   // Thông tin yêu cầu cơ bản
                                                                    document.getElementById('completedRequestId').textContent = '#' + data.requestId;
                                                                    document.getElementById('completedRequestDate').textContent = data.requestDate;
                                                                    document.getElementById('completedContractId').textContent = data.contractId || 'N/A';
                                                                    document.getElementById('completedEquipmentName').textContent = data.equipmentName || 'N/A';
                                                                    document.getElementById('completedDescription').textContent = data.description;
 
+                                                                   // Load danh sách technicians và parts cho yêu cầu hoàn thành
+                                                                   loadCompletedTechnicians(data.requestId);
+
                                                                    // Mở modal
                                                                    new bootstrap.Modal(document.getElementById('viewModalCompleted')).show();
+                                                               }
+
+                                                               // ✅ Load danh sách technicians với parts cho modal hoàn thành
+                                                               function loadCompletedTechnicians(requestId) {
+                                                                   const container = document.getElementById('completedTechniciansList');
+
+                                                                   console.log('🔍 Loading completed technicians for request:', requestId);
+
+                                                                   fetch('${pageContext.request.contextPath}/managerServiceRequest?action=getQuotationDetails&requestId=' + requestId)
+                                                                           .then(response => {
+                                                                               console.log('📡 Response status:', response.status);
+                                                                               return response.json();
+                                                                           })
+                                                                           .then(data => {
+                                                                               console.log('📦 Received data:', data);
+
+                                                                               if (data.success && data.quotations && data.quotations.length > 0) {
+                                                                                   console.log('✅ Found', data.quotations.length, 'quotations');
+                                                                                   let html = '<div style="padding: 20px;">';
+                                                                                   let totalCost = 0;
+
+                                                                                   data.quotations.forEach((quotation, index) => {
+                                                                                       const techInitial = quotation.technicianName ? quotation.technicianName.charAt(0).toUpperCase() : 'T';
+                                                                                       const cost = parseFloat(quotation.estimatedCost) || 0;
+                                                                                       totalCost += cost;
+                                                                                       const partsCount = quotation.parts ? quotation.parts.length : 0;
+
+                                                                                       html += '<div class="technician-card">';
+
+                                                                                       // Header với avatar và info
+                                                                                       html += '<div class="technician-header-row">';
+                                                                                       html += '<div class="technician-avatar">' + techInitial + '</div>';
+                                                                                       html += '<div class="technician-info">';
+                                                                                       html += '<div class="technician-name">' + (quotation.technicianName || 'N/A') + '</div>';
+                                                                                       html += '<div class="technician-work-desc">' + (quotation.workDescription || 'Không có mô tả') + '</div>';
+                                                                                       html += '<div class="technician-meta">';
+                                                                                       html += '<div class="meta-item">';
+                                                                                       html += '<i class="fas fa-calendar-check"></i>';
+                                                                                       html += '<span>Ngày sửa: ' + (quotation.repairDate || 'Chưa xác định') + '</span>';
+                                                                                       html += '</div>';
+                                                                                       html += '<div class="meta-item">';
+                                                                                       html += '<i class="fas fa-cogs"></i>';
+                                                                                       html += '<span>' + partsCount + ' linh kiện</span>';
+                                                                                       html += '</div>';
+                                                                                       html += '</div>';
+                                                                                       html += '</div>';
+                                                                                       html += '<div class="technician-cost-badge">';
+                                                                                       html += cost.toLocaleString('vi-VN') + ' đ';
+                                                                                       html += '</div>';
+                                                                                       html += '</div>';
+
+                                                                                       // Danh sách linh kiện
+                                                                                       if (quotation.parts && quotation.parts.length > 0) {
+                                                                                           html += '<div class="parts-list-header">';
+                                                                                           html += '<i class="fas fa-tools"></i>';
+                                                                                           html += '<span>Danh Sách Linh Kiện Đã Thay Thế</span>';
+                                                                                           html += '</div>';
+
+                                                                                           let partsTotalCost = 0;
+
+                                                                                           quotation.parts.forEach(part => {
+                                                                                               const unitPrice = parseFloat(part.unitPrice) || 0;
+                                                                                               const quantity = parseInt(part.quantity) || 0;
+                                                                                               const totalPrice = unitPrice * quantity;
+                                                                                               partsTotalCost += totalPrice;
+
+                                                                                               html += '<div class="part-item">';
+                                                                                               html += '<div>';
+                                                                                               html += '<div class="part-name">' + (part.partName || 'N/A') + '</div>';
+                                                                                               html += '<div class="part-serial">' + (part.serialNumber || 'N/A') + '</div>';
+                                                                                               html += '</div>';
+                                                                                               html += '<div class="part-quantity">x' + quantity + '</div>';
+                                                                                               html += '<div class="text-muted" style="text-align: right; font-size: 0.85rem;">' + unitPrice.toLocaleString('vi-VN') + ' đ</div>';
+                                                                                               html += '<div class="part-price">' + totalPrice.toLocaleString('vi-VN') + ' đ</div>';
+
+                                                                                               // Hiển thị trạng thái thanh toán
+                                                                                               html += '<div class="part-actions">';
+                                                                                               if (part.paymentStatus === 'Completed') {
+                                                                                                   html += '<span class="badge badge-completed" style="font-size: 0.7rem;">';
+                                                                                                   html += '<i class="fas fa-check-circle"></i> Đã thanh toán';
+                                                                                                   html += '</span>';
+                                                                                               } else if (part.paymentStatus === 'Cancelled') {
+                                                                                                   html += '<span class="badge badge-cancelled" style="font-size: 0.7rem;">';
+                                                                                                   html += '<i class="fas fa-times-circle"></i> Đã hủy';
+                                                                                                   html += '</span>';
+                                                                                               } else {
+                                                                                                   html += '<span class="badge bg-secondary" style="font-size: 0.7rem;">';
+                                                                                                   html += (part.paymentStatus || 'N/A');
+                                                                                                   html += '</span>';
+                                                                                               }
+                                                                                               html += '</div>';
+                                                                                               html += '</div>';
+                                                                                           });
+
+                                                                                           // Tổng chi phí linh kiện của kỹ thuật viên
+                                                                                           html += '<div class="mt-3 p-3 bg-light border rounded">';
+                                                                                           html += '<div class="d-flex justify-content-between align-items-center">';
+                                                                                           html += '<strong class="text-success"><i class="fas fa-calculator"></i> Tổng chi phí linh kiện:</strong>';
+                                                                                           html += '<strong class="text-success" style="font-size: 1.2rem;">' + partsTotalCost.toLocaleString('vi-VN') + ' đ</strong>';
+                                                                                           html += '</div>';
+                                                                                           html += '</div>';
+                                                                                       } else {
+                                                                                           html += '<div class="no-parts-message">';
+                                                                                           html += '<i class="fas fa-box-open"></i>';
+                                                                                           html += '<p>Không có linh kiện nào được thay thế</p>';
+                                                                                           html += '</div>';
+                                                                                       }
+
+                                                                                       html += '</div>'; // Close technician-card
+                                                                                   });
+
+                                                                                   // Tổng kết toàn bộ
+                                                                                   html += '<div class="card mt-3 border-success">';
+                                                                                   html += '<div class="card-body bg-light">';
+                                                                                   html += '<div class="row">';
+                                                                                   html += '<div class="col-md-6">';
+                                                                                   html += '<h6 class="text-success mb-2"><i class="fas fa-users-cog"></i> Tổng Kết</h6>';
+                                                                                   html += '<p class="mb-1"><strong>Số kỹ thuật viên:</strong> ' + data.quotations.length + '</p>';
+                                                                                   html += '<p class="mb-0"><strong>Trạng thái:</strong> <span class="badge badge-completed">Hoàn thành</span></p>';
+                                                                                   html += '</div>';
+                                                                                   html += '<div class="col-md-6 text-end">';
+                                                                                   html += '<h6 class="text-success mb-2"><i class="fas fa-money-bill-wave"></i> Tổng Chi Phí</h6>';
+                                                                                   html += '<h3 class="text-success mb-0">' + totalCost.toLocaleString('vi-VN') + ' đ</h3>';
+                                                                                   html += '</div>';
+                                                                                   html += '</div>';
+                                                                                   html += '</div>';
+                                                                                   html += '</div>';
+
+                                                                                   html += '</div>';
+                                                                                   container.innerHTML = html;
+                                                                               } else {
+                                                                                   console.warn('⚠️ No quotations found or data.success = false');
+                                                                                   console.log('Data:', data);
+                                                                                   container.innerHTML = '<div class="text-center py-4"><i class="fas fa-info-circle fa-2x text-muted mb-2"></i><p class="text-muted">Chưa có thông tin kỹ thuật viên</p></div>';
+                                                                               }
+                                                                           })
+                                                                           .catch(error => {
+                                                                               console.error('❌ Error loading technicians:', error);
+                                                                               container.innerHTML = '<div class="text-center py-4 text-danger"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><p>Không thể tải thông tin</p><small>' + error.message + '</small></div>';
+                                                                           });
                                                                }
 
                                                                // Scroll to top button
@@ -3418,6 +3509,97 @@
                                                                        }
                                                                    });
                                                                });
+
+                                                               // ========== FUNCTION TỪ CHỐI BÁO GIÁ ==========
+                                                               function rejectQuotation(requestId, reportId, technicianName) {
+                                                                   console.log('🔴 rejectQuotation called:', {requestId, reportId, technicianName});
+
+                                                                   Swal.fire({
+                                                                       title: 'Xác nhận từ chối?',
+                                                                       html: `Bạn có chắc muốn từ chối báo giá của <strong>${technicianName}</strong>?<br><br>` +
+                                                                               `<small class="text-muted">Báo giá sẽ được đánh dấu là "Từ chối" và không thể hoàn tác.</small>`,
+                                                                       icon: 'warning',
+                                                                       showCancelButton: true,
+                                                                       confirmButtonColor: '#d33',
+                                                                       cancelButtonColor: '#6c757d',
+                                                                       confirmButtonText: '<i class="fas fa-times-circle"></i> Từ chối',
+                                                                       cancelButtonText: '<i class="fas fa-arrow-left"></i> Hủy'
+                                                                   }).then((result) => {
+                                                                       if (result.isConfirmed) {
+                                                                           // Hiển thị loading
+                                                                           Swal.fire({
+                                                                               title: 'Đang xử lý...',
+                                                                               html: 'Vui lòng đợi trong giây lát',
+                                                                               allowOutsideClick: false,
+                                                                               didOpen: () => {
+                                                                                   Swal.showLoading();
+                                                                               }
+                                                                           });
+
+                                                                           // Gọi AJAX
+                                                                           const formData = new URLSearchParams();
+                                                                           formData.append('action', 'rejectQuotation');
+                                                                           formData.append('requestId', requestId);
+                                                                           formData.append('reportId', reportId);
+
+                                                                           console.log('📤 Sending request:', formData.toString());
+
+                                                                           fetch('${pageContext.request.contextPath}/managerServiceRequest', {
+                                                                               method: 'POST',
+                                                                               headers: {
+                                                                                   'Content-Type': 'application/x-www-form-urlencoded'
+                                                                               },
+                                                                               body: formData.toString()
+                                                                           })
+                                                                                   .then(response => {
+                                                                                       console.log('📥 Response status:', response.status);
+                                                                                       if (!response.ok) {
+                                                                                           throw new Error('Server trả về lỗi: ' + response.status);
+                                                                                       }
+                                                                                       return response.text();
+                                                                                   })
+                                                                                   .then(text => {
+                                                                                       console.log('📥 Response text:', text);
+                                                                                       if (!text || text.trim() === '') {
+                                                                                           throw new Error('Server trả về response rỗng. Vui lòng kiểm tra server log.');
+                                                                                       }
+                                                                                       return JSON.parse(text);
+                                                                                   })
+                                                                                   .then(data => {
+                                                                                       console.log('✅ Parsed data:', data);
+                                                                                       Swal.close();
+
+                                                                                       if (data.success) {
+                                                                                           Swal.fire({
+                                                                                               icon: 'success',
+                                                                                               title: 'Thành công!',
+                                                                                               text: data.message || 'Đã từ chối báo giá thành công!',
+                                                                                               confirmButtonText: 'OK'
+                                                                                           }).then(() => {
+                                                                                               location.reload();
+                                                                                           });
+                                                                                       } else {
+                                                                                           Swal.fire({
+                                                                                               icon: 'error',
+                                                                                               title: 'Lỗi!',
+                                                                                               text: data.message || 'Không thể từ chối báo giá!'
+                                                                                           });
+                                                                                       }
+                                                                                   })
+                                                                                   .catch(error => {
+                                                                                       console.error('❌ Error:', error);
+                                                                                       Swal.close();
+                                                                                       Swal.fire({
+                                                                                           icon: 'error',
+                                                                                           title: 'Lỗi!',
+                                                                                           html: `Có lỗi xảy ra khi từ chối báo giá:<br><br>` +
+                                                                                                   `<small class="text-danger">${error.message}</small><br><br>` +
+                                                                                                   `<small class="text-muted">Vui lòng kiểm tra console log và server log để biết thêm chi tiết.</small>`
+                                                                                       });
+                                                                                   });
+                                                                       }
+                                                                   });
+                                                               }
         </script>
     </body>
 </html>

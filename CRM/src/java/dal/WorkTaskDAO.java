@@ -7,11 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO for WorkTask operations.
- * Handles database operations for technician work tasks.
+ * DAO for WorkTask operations. Handles database operations for technician work
+ * tasks.
  */
 public class WorkTaskDAO extends MyDAO {
-    
+
     /**
      * Find all tasks assigned to a specific technician
      */
@@ -21,10 +21,10 @@ public class WorkTaskDAO extends MyDAO {
         sql.append("SELECT wt.taskId, wt.requestId, wt.scheduleId, wt.technicianId, ");
         sql.append("wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status ");
         sql.append("FROM WorkTask wt WHERE wt.technicianId = ?");
-        
+
         List<Object> params = new ArrayList<>();
         params.add(technicianId);
-        
+
         // Add search filter
         if (searchQuery != null && !searchQuery.trim().isEmpty()) {
             sql.append(" AND (wt.taskType LIKE ? OR wt.taskDetails LIKE ? OR CAST(wt.taskId AS CHAR) LIKE ?)");
@@ -33,33 +33,34 @@ public class WorkTaskDAO extends MyDAO {
             params.add(searchPattern);
             params.add(searchPattern);
         }
-        
+
         // Add status filter
         if (statusFilter != null && !statusFilter.trim().isEmpty()) {
             sql.append(" AND wt.status = ?");
             params.add(statusFilter.trim());
         }
-        
+
         // Work History: order by taskId DESC
         sql.append(" ORDER BY wt.taskId ASC LIMIT ? OFFSET ?");
         params.add(pageSize);
         params.add((page - 1) * pageSize);
-        
+
         ps = con.prepareStatement(sql.toString());
         for (int i = 0; i < params.size(); i++) {
             ps.setObject(i + 1, params.get(i));
         }
-        
+
         rs = ps.executeQuery();
         while (rs.next()) {
             tasks.add(mapResultSetToWorkTask(rs));
         }
-        
+
         return tasks;
     }
 
     /**
-     * Find all tasks assigned to a specific technician with customer information
+     * Find all tasks assigned to a specific technician with customer
+     * information
      */
     public List<WorkTaskWithCustomer> findByTechnicianIdWithCustomer(int technicianId, String searchQuery, String statusFilter, int page, int pageSize) throws SQLException {
         List<WorkTaskWithCustomer> tasks = new ArrayList<>();
@@ -83,10 +84,10 @@ public class WorkTaskDAO extends MyDAO {
         sql.append(") wa ON wa.taskId = wt.taskId ");
         // Remove other fallbacks; only WorkAssignment defines planning for this view
         sql.append("WHERE wt.technicianId = ?");
-        
+
         List<Object> params = new ArrayList<>();
         params.add(technicianId);
-        
+
         // Add search filter
         if (searchQuery != null && !searchQuery.trim().isEmpty()) {
             sql.append(" AND (wt.taskType LIKE ? OR wt.taskDetails LIKE ? OR CAST(wt.taskId AS CHAR) LIKE ? OR a.fullName LIKE ?)");
@@ -96,23 +97,23 @@ public class WorkTaskDAO extends MyDAO {
             params.add(searchPattern);
             params.add(searchPattern);
         }
-        
+
         // Add status filter
         if (statusFilter != null && !statusFilter.trim().isEmpty()) {
             sql.append(" AND wt.status = ?");
             params.add(statusFilter.trim());
         }
-        
+
         // Technician Tasks list: closest date first using endDate, then startDate (DESC)
         sql.append(" ORDER BY COALESCE(wt.endDate, wt.startDate) DESC LIMIT ? OFFSET ?");
         params.add(pageSize);
         params.add((page - 1) * pageSize);
-        
+
         ps = con.prepareStatement(sql.toString());
         for (int i = 0; i < params.size(); i++) {
             ps.setObject(i + 1, params.get(i));
         }
-        
+
         rs = ps.executeQuery();
         while (rs.next()) {
             WorkTaskWithCustomer taskWithCustomer = new WorkTaskWithCustomer();
@@ -124,7 +125,7 @@ public class WorkTaskDAO extends MyDAO {
             taskWithCustomer.planDone = rs.getTimestamp("planDone");
             tasks.add(taskWithCustomer);
         }
-        
+
         return tasks;
     }
 
@@ -132,21 +133,39 @@ public class WorkTaskDAO extends MyDAO {
      * Inner class for WorkTask with customer information
      */
     public static class WorkTaskWithCustomer {
+
         public WorkTask task;
         public Integer customerId;
         public String customerName;
         public String customerEmail;
         public java.sql.Timestamp planStart;
         public java.sql.Timestamp planDone;
-        
-        public WorkTask getTask() { return task; }
-        public Integer getCustomerId() { return customerId; }
-        public String getCustomerName() { return customerName; }
-        public String getCustomerEmail() { return customerEmail; }
-        public java.sql.Timestamp getPlanStart() { return planStart; }
-        public java.sql.Timestamp getPlanDone() { return planDone; }
+
+        public WorkTask getTask() {
+            return task;
+        }
+
+        public Integer getCustomerId() {
+            return customerId;
+        }
+
+        public String getCustomerName() {
+            return customerName;
+        }
+
+        public String getCustomerEmail() {
+            return customerEmail;
+        }
+
+        public java.sql.Timestamp getPlanStart() {
+            return planStart;
+        }
+
+        public java.sql.Timestamp getPlanDone() {
+            return planDone;
+        }
     }
-    
+
     /**
      * Find a specific task by ID
      */
@@ -155,32 +174,80 @@ public class WorkTaskDAO extends MyDAO {
         ps = con.prepareStatement(xSql);
         ps.setInt(1, taskId);
         rs = ps.executeQuery();
-        
+
         if (rs.next()) {
             return mapResultSetToWorkTask(rs);
         }
         return null;
     }
-    
+
     /**
-     * Update task status
+     * Update task status and auto-update request status if all tasks completed
      */
     public boolean updateTaskStatus(int taskId, String newStatus) throws SQLException {
-        xSql = "UPDATE WorkTask SET status = ?, endDate = CASE WHEN ? = 'Completed' THEN CURRENT_DATE ELSE NULL END WHERE taskId = ?";
-        ps = con.prepareStatement(xSql);
+        // Lấy requestId trước khi update
+        Integer requestId = null;
+        String getRequestSql = "SELECT requestId FROM WorkTask WHERE taskId = ?";
+
+        ps = con.prepareStatement(getRequestSql);
+        ps.setInt(1, taskId);
+        rs = ps.executeQuery();
+
+        if (rs.next()) {
+            requestId = rs.getObject("requestId", Integer.class);
+        }
+
+        // Đóng ResultSet và PreparedStatement
+        if (rs != null) {
+            rs.close();
+        }
+        if (ps != null) {
+            ps.close();
+        }
+
+        // Update task status
+        String updateTaskSql = "UPDATE WorkTask SET status = ?, "
+                + "endDate = CASE WHEN ? = 'Completed' THEN CURRENT_DATE ELSE endDate END "
+                + "WHERE taskId = ?";
+
+        ps = con.prepareStatement(updateTaskSql);
         ps.setString(1, newStatus);
         ps.setString(2, newStatus);
         ps.setInt(3, taskId);
         int affected = ps.executeUpdate();
+
+        // Nếu update thành công và task vừa được set là Completed
+        if (affected > 0 && "Completed".equals(newStatus) && requestId != null) {
+            System.out.println("🔍 Task #" + taskId + " marked as Completed. Checking request #" + requestId + "...");
+
+            // Kiểm tra xem tất cả task của request này đã completed chưa
+            if (areAllTasksCompletedForRequest(requestId)) {
+                // Cập nhật request status thành Completed
+                ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO();
+                try {
+                    serviceRequestDAO.updateStatus(requestId, "Completed");
+                    System.out.println("✅ All tasks completed for Request #" + requestId
+                            + ". Request status updated to Completed.");
+                } catch (SQLException e) {
+                    System.err.println("⚠️ Failed to update request status: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                List<String> statuses = getTaskStatusesForRequest(requestId);
+                System.out.println("ℹ️ Request #" + requestId + " still has incomplete tasks. "
+                        + "Task statuses: " + statuses);
+            }
+        }
+
         return affected > 0;
     }
-    
+
     /**
      * Check if technician has overlapping tasks
      */
     public boolean hasOverlappingTasks(int technicianId, LocalDate startDate, LocalDate endDate, int excludeTaskId) throws SQLException {
-        xSql = "SELECT COUNT(*) FROM WorkTask WHERE technicianId = ? AND status IN ('In Progress', 'Pending') " +
-               "AND taskId != ? AND ((startDate <= ? AND endDate >= ?) OR (startDate <= ? AND endDate >= ?))";
+        xSql = "SELECT COUNT(*) FROM WorkTask WHERE technicianId = ? AND status IN ('In Progress', 'Pending') "
+                + "AND taskId != ? AND ((startDate <= ? AND endDate >= ?) OR (startDate <= ? AND endDate >= ?))";
         ps = con.prepareStatement(xSql);
         ps.setInt(1, technicianId);
         ps.setInt(2, excludeTaskId);
@@ -188,34 +255,34 @@ public class WorkTaskDAO extends MyDAO {
         ps.setDate(4, Date.valueOf(startDate));
         ps.setDate(5, Date.valueOf(startDate));
         ps.setDate(6, Date.valueOf(endDate));
-        
+
         rs = ps.executeQuery();
         if (rs.next()) {
             return rs.getInt(1) > 0;
         }
         return false;
     }
-    
+
     /**
      * Get task count for technician
      */
     public int getTaskCountForTechnician(int technicianId, String statusFilter) throws SQLException {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT COUNT(*) FROM WorkTask WHERE technicianId = ?");
-        
+
         List<Object> params = new ArrayList<>();
         params.add(technicianId);
-        
+
         if (statusFilter != null && !statusFilter.trim().isEmpty()) {
             sql.append(" AND status = ?");
             params.add(statusFilter.trim());
         }
-        
+
         ps = con.prepareStatement(sql.toString());
         for (int i = 0; i < params.size(); i++) {
             ps.setObject(i + 1, params.get(i));
         }
-        
+
         rs = ps.executeQuery();
         if (rs.next()) {
             return rs.getInt(1);
@@ -232,135 +299,135 @@ public class WorkTaskDAO extends MyDAO {
         sql.append("LEFT JOIN ServiceRequest sr ON wt.requestId = sr.requestId ");
         sql.append("LEFT JOIN Account a ON sr.createdBy = a.accountId ");
         sql.append("WHERE wt.technicianId = ?");
-        
+
         List<Object> params = new ArrayList<>();
         params.add(technicianId);
-        
+
         if (statusFilter != null && !statusFilter.trim().isEmpty()) {
             sql.append(" AND wt.status = ?");
             params.add(statusFilter.trim());
         }
-        
+
         ps = con.prepareStatement(sql.toString());
         for (int i = 0; i < params.size(); i++) {
             ps.setObject(i + 1, params.get(i));
         }
-        
+
         rs = ps.executeQuery();
         if (rs.next()) {
             return rs.getInt(1);
         }
         return 0;
     }
-    
+
     /**
      * Map ResultSet to WorkTask object
      */
     private WorkTask mapResultSetToWorkTask(ResultSet rs) throws SQLException {
         WorkTask task = new WorkTask();
         task.setTaskId(rs.getInt("taskId"));
-        
+
         Integer requestId = rs.getObject("requestId", Integer.class);
         task.setRequestId(requestId);
-        
+
         Integer scheduleId = rs.getObject("scheduleId", Integer.class);
         task.setScheduleId(scheduleId);
-        
+
         task.setTechnicianId(rs.getInt("technicianId"));
         task.setTaskType(rs.getString("taskType"));
         task.setTaskDetails(rs.getString("taskDetails"));
-        
+
         Date startDate = rs.getDate("startDate");
         if (startDate != null) {
             task.setStartDate(startDate.toLocalDate());
         }
-        
+
         Date endDate = rs.getDate("endDate");
         if (endDate != null) {
             task.setEndDate(endDate.toLocalDate());
         }
-        
+
         task.setStatus(rs.getString("status"));
-        
+
         return task;
     }
-    
+
     public List<WorkTask> findCompletedTasksByTechnician(int technicianId, String searchQuery, int page, int pageSize) throws SQLException {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT * FROM WorkTask ");
         sql.append("WHERE technicianId = ? AND status = 'Completed' ");
-        
+
         List<Object> params = new ArrayList<>();
         params.add(technicianId);
-        
+
         if (searchQuery != null && !searchQuery.trim().isEmpty()) {
             sql.append("AND (taskType LIKE ? OR taskDetails LIKE ?) ");
             String searchPattern = "%" + searchQuery.trim() + "%";
             params.add(searchPattern);
             params.add(searchPattern);
         }
-        
+
         sql.append("ORDER BY endDate DESC ");
         sql.append("LIMIT ? OFFSET ?");
-        
+
         int offset = (page - 1) * pageSize;
         params.add(pageSize);
         params.add(offset);
-        
+
         List<WorkTask> tasks = new ArrayList<>();
         xSql = sql.toString();
-        
+
         try {
             ps = con.prepareStatement(xSql);
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
             rs = ps.executeQuery();
-            
+
             while (rs.next()) {
                 tasks.add(mapResultSetToWorkTask(rs));
             }
         } finally {
             closeResources();
         }
-        
+
         return tasks;
     }
-    
+
     public int getCompletedTaskCountForTechnician(int technicianId, String searchQuery) throws SQLException {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT COUNT(*) FROM WorkTask ");
         sql.append("WHERE technicianId = ? AND status = 'Completed' ");
-        
+
         List<Object> params = new ArrayList<>();
         params.add(technicianId);
-        
+
         if (searchQuery != null && !searchQuery.trim().isEmpty()) {
             sql.append("AND (taskType LIKE ? OR taskDetails LIKE ?) ");
             String searchPattern = "%" + searchQuery.trim() + "%";
             params.add(searchPattern);
             params.add(searchPattern);
         }
-        
+
         xSql = sql.toString();
-        
+
         try {
             ps = con.prepareStatement(xSql);
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
             rs = ps.executeQuery();
-            
+
             if (rs.next()) {
                 return rs.getInt(1);
             }
         } finally {
             closeResources();
         }
-        
+
         return 0;
     }
-    
+
     /**
      * Create a new work task
      */
@@ -393,7 +460,6 @@ public class WorkTaskDAO extends MyDAO {
 //            closeResources();
 //        }
 //    }
-    
     /**
      * Get task ID by request ID
      */
@@ -408,7 +474,6 @@ public class WorkTaskDAO extends MyDAO {
 //        }
 //        return -1;
 //    }
-    
     /**
      * Delete a task by ID
      */
@@ -427,42 +492,54 @@ public class WorkTaskDAO extends MyDAO {
 //            closeResources();
 //        }
 //    }
-    
     /**
      * Inner class for WorkTask with customer and request information
      */
     public static class WorkTaskForReport {
+
         public WorkTask task;
         public Integer customerId;
         public String customerName;
         public String requestType;
-        
-        public WorkTask getTask() { return task; }
-        public Integer getCustomerId() { return customerId; }
-        public String getCustomerName() { return customerName; }
-        public String getRequestType() { return requestType; }
+
+        public WorkTask getTask() {
+            return task;
+        }
+
+        public Integer getCustomerId() {
+            return customerId;
+        }
+
+        public String getCustomerName() {
+            return customerName;
+        }
+
+        public String getRequestType() {
+            return requestType;
+        }
     }
-    
+
     /**
-     * Get assigned tasks for technician that are not completed or cancelled (for report creation)
-     * Includes customer info and requestType from ServiceRequest
+     * Get assigned tasks for technician that are not completed or cancelled
+     * (for report creation) Includes customer info and requestType from
+     * ServiceRequest
      */
     public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throws SQLException {
         List<WorkTaskForReport> tasks = new ArrayList<>();
-        xSql = "SELECT wt.taskId, wt.requestId, wt.scheduleId, wt.technicianId, " +
-               "wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status, " +
-               "sr.createdBy as customerId, a.fullName as customerName, sr.requestType " +
-               "FROM WorkTask wt " +
-               "LEFT JOIN ServiceRequest sr ON wt.requestId = sr.requestId " +
-               "LEFT JOIN Account a ON sr.createdBy = a.accountId " +
-               "WHERE wt.technicianId = ? AND wt.status NOT IN ('Completed', 'Cancelled') " +
-               "AND wt.requestId IS NOT NULL " +
-               "ORDER BY wt.startDate ASC";
-        
+        xSql = "SELECT wt.taskId, wt.requestId, wt.scheduleId, wt.technicianId, "
+                + "wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status, "
+                + "sr.createdBy as customerId, a.fullName as customerName, sr.requestType "
+                + "FROM WorkTask wt "
+                + "LEFT JOIN ServiceRequest sr ON wt.requestId = sr.requestId "
+                + "LEFT JOIN Account a ON sr.createdBy = a.accountId "
+                + "WHERE wt.technicianId = ? AND wt.status NOT IN ('Completed', 'Cancelled') "
+                + "AND wt.requestId IS NOT NULL "
+                + "ORDER BY wt.startDate ASC";
+
         ps = con.prepareStatement(xSql);
         ps.setInt(1, technicianId);
         rs = ps.executeQuery();
-        
+
         while (rs.next()) {
             WorkTaskForReport taskForReport = new WorkTaskForReport();
             taskForReport.task = mapResultSetToWorkTask(rs);
@@ -471,10 +548,10 @@ public class WorkTaskDAO extends MyDAO {
             taskForReport.requestType = rs.getString("requestType");
             tasks.add(taskForReport);
         }
-        
+
         return tasks;
     }
-    
+
     /**
      * Check if technician is assigned to a specific request ID
      */
@@ -484,44 +561,52 @@ public class WorkTaskDAO extends MyDAO {
         ps.setInt(1, technicianId);
         ps.setInt(2, requestId);
         rs = ps.executeQuery();
-        
+
         if (rs.next()) {
             return rs.getInt(1) > 0;
         }
         return false;
     }
-    
+
     /**
-     * Check if a work task is completed
+     * Check if a specific technician's work task is completed for a request
+     * This ensures each technician can work independently on the same ServiceRequest
      */
-    public boolean isTaskCompleted(int requestId) throws SQLException {
-        xSql = "SELECT status FROM WorkTask WHERE requestId = ?";
+    public boolean isTechnicianTaskCompleted(int technicianId, int requestId) throws SQLException {
+        xSql = "SELECT status FROM WorkTask WHERE technicianId = ? AND requestId = ?";
         ps = con.prepareStatement(xSql);
-        ps.setInt(1, requestId);
+        ps.setInt(1, technicianId);
+        ps.setInt(2, requestId);
         rs = ps.executeQuery();
-        
+
         if (rs.next()) {
             return "Completed".equals(rs.getString("status"));
         }
-        return false;
+        return false; // No task found for this technician and request
     }
+
     public List<WorkTask> findByScheduleId(int scheduleId) throws SQLException {
-    List<WorkTask> tasks = new ArrayList<>();
-    String sql = "SELECT * FROM WorkTask WHERE scheduleId = ?";
-    try (PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setInt(1, scheduleId);
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                tasks.add(mapResultSetToWorkTask(rs));
+        List<WorkTask> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM WorkTask WHERE scheduleId = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, scheduleId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    tasks.add(mapResultSetToWorkTask(rs));
+                }
             }
         }
+        return tasks;
     }
-    return tasks;
-}
+
     private void closeResources() {
         try {
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
+            if (rs != null) {
+                rs.close();
+            }
+            if (ps != null) {
+                ps.close();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -530,8 +615,7 @@ public class WorkTaskDAO extends MyDAO {
     public int getTaskIdByRequestId(int requestId) throws SQLException {
         String sql = "SELECT taskId FROM WorkTask WHERE requestId = ?";
         try (
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, requestId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -541,130 +625,136 @@ public class WorkTaskDAO extends MyDAO {
         }
         return -1; // không tìm thấy task tương ứng
     }
+
     public int createWorkTask(WorkTask task) throws SQLException {
-    String sql = "INSERT INTO WorkTask (requestId, scheduleId, technicianId, taskType, taskDetails, startDate, endDate, status) "
-               + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-        if (task.getRequestId() != null) {
-            ps.setInt(1, task.getRequestId());
-        } else {
-            ps.setNull(1, Types.INTEGER);
-        }
+        String sql = "INSERT INTO WorkTask (requestId, scheduleId, technicianId, taskType, taskDetails, startDate, endDate, status) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            if (task.getRequestId() != null) {
+                ps.setInt(1, task.getRequestId());
+            } else {
+                ps.setNull(1, Types.INTEGER);
+            }
 
-        if (task.getScheduleId() != null) {
-            ps.setInt(2, task.getScheduleId());
-        } else {
-            ps.setNull(2, Types.INTEGER);
-        }
+            if (task.getScheduleId() != null) {
+                ps.setInt(2, task.getScheduleId());
+            } else {
+                ps.setNull(2, Types.INTEGER);
+            }
 
-        ps.setInt(3, task.getTechnicianId());
-        ps.setString(4, task.getTaskType());
-        ps.setString(5, task.getTaskDetails());
-        if (task.getStartDate() != null) {
-            ps.setDate(6, Date.valueOf(task.getStartDate()));
-        } else {
-            ps.setNull(6, Types.DATE);
-        }
-        if (task.getEndDate() != null) {
-            ps.setDate(7, Date.valueOf(task.getEndDate()));
-        } else {
-            ps.setNull(7, Types.DATE);
-        }
-        ps.setString(8, task.getStatus());
+            ps.setInt(3, task.getTechnicianId());
+            ps.setString(4, task.getTaskType());
+            ps.setString(5, task.getTaskDetails());
+            if (task.getStartDate() != null) {
+                ps.setDate(6, Date.valueOf(task.getStartDate()));
+            } else {
+                ps.setNull(6, Types.DATE);
+            }
+            if (task.getEndDate() != null) {
+                ps.setDate(7, Date.valueOf(task.getEndDate()));
+            } else {
+                ps.setNull(7, Types.DATE);
+            }
+            ps.setString(8, task.getStatus());
 
-        int affected = ps.executeUpdate();
-        if (affected > 0) {
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
+            int affected = ps.executeUpdate();
+            if (affected > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
                 }
             }
         }
+        return -1;
     }
-    return -1;
-}
-public boolean deleteTaskById(int taskId) throws SQLException {
-    String sql = "DELETE FROM WorkTask WHERE taskId = ?";
-    try (PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setInt(1, taskId);
-        int affected = ps.executeUpdate();
-        return affected > 0;
-    }
-}
 
-public List<WorkTask> findByRequestId(int requestId) {
-    List<WorkTask> tasks = new ArrayList<>();
-    String sql = "SELECT * FROM WorkTask WHERE requestId = ? ORDER BY taskId DESC";
-    
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setInt(1, requestId);
-        rs = ps.executeQuery();
-        
-        while (rs.next()) {
-            WorkTask task = new WorkTask();
-            task.setTaskId(rs.getInt("taskId"));
-            task.setRequestId(rs.getInt("requestId"));
-            
-            // Handle nullable scheduleId
-            int scheduleId = rs.getInt("scheduleId");
-            if (!rs.wasNull()) {
-                task.setScheduleId(scheduleId);
-            }
-            
-            task.setTechnicianId(rs.getInt("technicianId"));
-            task.setTaskType(rs.getString("taskType"));
-            task.setTaskDetails(rs.getString("taskDetails"));
-            
-            // Handle nullable dates
-            Date startDate = rs.getDate("startDate");
-            if (startDate != null) {
-                task.setStartDate(startDate.toLocalDate());
-            }
-            
-            Date endDate = rs.getDate("endDate");
-            if (endDate != null) {
-                task.setEndDate(endDate.toLocalDate());
-            }
-            
-            task.setStatus(rs.getString("status"));
-            
-            tasks.add(task);
+    public boolean deleteTaskById(int taskId) throws SQLException {
+        String sql = "DELETE FROM WorkTask WHERE taskId = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, taskId);
+            int affected = ps.executeUpdate();
+            return affected > 0;
         }
-    } catch (Exception e) {
-        e.printStackTrace();
-    } finally {
-        closeResources();
     }
-    
-    return tasks;
-}
 
-public boolean hasRepairReport(int requestId, int technicianId) throws SQLException {
-    String sql = "SELECT COUNT(*) FROM RepairReport WHERE requestId = ? AND technicianId = ?";
-    
-    PreparedStatement ps = null;
-    ResultSet rs = null;
-    
-    try {
-        ps = con.prepareStatement(sql);
-        ps.setInt(1, requestId);
-        ps.setInt(2, technicianId);
-        rs = ps.executeQuery();
-        
-        if (rs.next()) {
-            int count = rs.getInt(1);
-            System.out.println("DEBUG hasRepairReport - requestId: " + requestId + 
-                             ", technicianId: " + technicianId + ", count: " + count);
-            return count > 0;
+    public List<WorkTask> findByRequestId(int requestId) {
+        List<WorkTask> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM WorkTask WHERE requestId = ? ORDER BY taskId DESC";
+
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, requestId);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                WorkTask task = new WorkTask();
+                task.setTaskId(rs.getInt("taskId"));
+                task.setRequestId(rs.getInt("requestId"));
+
+                // Handle nullable scheduleId
+                int scheduleId = rs.getInt("scheduleId");
+                if (!rs.wasNull()) {
+                    task.setScheduleId(scheduleId);
+                }
+
+                task.setTechnicianId(rs.getInt("technicianId"));
+                task.setTaskType(rs.getString("taskType"));
+                task.setTaskDetails(rs.getString("taskDetails"));
+
+                // Handle nullable dates
+                Date startDate = rs.getDate("startDate");
+                if (startDate != null) {
+                    task.setStartDate(startDate.toLocalDate());
+                }
+
+                Date endDate = rs.getDate("endDate");
+                if (endDate != null) {
+                    task.setEndDate(endDate.toLocalDate());
+                }
+
+                task.setStatus(rs.getString("status"));
+
+                tasks.add(task);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources();
         }
-    } finally {
-        if (rs != null) rs.close();
-        if (ps != null) ps.close();
+
+        return tasks;
     }
-    
-    return false;
-}
+
+    public boolean hasRepairReport(int requestId, int technicianId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM RepairReport WHERE requestId = ? AND technicianId = ?";
+
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, requestId);
+            ps.setInt(2, technicianId);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                System.out.println("DEBUG hasRepairReport - requestId: " + requestId
+                        + ", technicianId: " + technicianId + ", count: " + count);
+                return count > 0;
+            }
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (ps != null) {
+                ps.close();
+            }
+        }
+
+        return false;
+    }
 //public List<WorkTask> findByScheduleId(int scheduleId) throws SQLException {
 //    List<WorkTask> tasks = new ArrayList<>();
 //    String sql = "SELECT * FROM WorkTask WHERE scheduleId = ?";
@@ -679,5 +769,58 @@ public boolean hasRepairReport(int requestId, int technicianId) throws SQLExcept
 //    return tasks;
 //}
 
+    /**
+     * Check if all work tasks for a request are completed
+     */
+    public boolean areAllTasksCompletedForRequest(int requestId) throws SQLException {
+        String sql = "SELECT COUNT(*) as total, "
+                + "SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed "
+                + "FROM WorkTask WHERE requestId = ?";
+
+        // ✅ KHÔNG DÙNG try-with-resources
+        ps = con.prepareStatement(sql);
+        ps.setInt(1, requestId);
+        rs = ps.executeQuery();
+
+        if (rs.next()) {
+            int total = rs.getInt("total");
+            int completed = rs.getInt("completed");
+
+            System.out.println("📊 Request #" + requestId + ": " + completed + "/" + total + " tasks completed");
+
+            // Nếu không có task nào thì return false
+            if (total == 0) {
+                System.out.println("⚠️ No tasks found for request #" + requestId);
+                return false;
+            }
+
+            // Tất cả task phải completed
+            boolean allCompleted = (total == completed);
+            System.out.println(allCompleted ? "✅ All tasks completed!" : "❌ Not all tasks completed yet");
+            return allCompleted;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get all task statuses for a request (for debugging)
+     */
+    public List<String> getTaskStatusesForRequest(int requestId) throws SQLException {
+        List<String> statuses = new ArrayList<>();
+        String sql = "SELECT taskId, status FROM WorkTask WHERE requestId = ?";
+
+        ps = con.prepareStatement(sql);
+        ps.setInt(1, requestId);
+        rs = ps.executeQuery();
+
+        while (rs.next()) {
+            int taskId = rs.getInt("taskId");
+            String status = rs.getString("status");
+            statuses.add("Task#" + taskId + ":" + status);
+        }
+
+        return statuses;
+    }
 
 }

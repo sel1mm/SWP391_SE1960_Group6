@@ -1161,7 +1161,7 @@
                                 <h5>Thông tin công ty</h5>
                                 <ul class="footer-links">
                                     <li><a href="#">→ Về chúng tôi</a></li>
-                                    <li><a href="#">→ Điều khoản sử dụng</a></li>
+                                    <li><a href="tos.jsp">→ Điều khoản sử dụng</a></li>
                                     <li><a href="#">→ Chính sách bảo mật</a></li>
                                     <li><a href="#">→ Bảo mật dữ liệu</a></li>
                                     <li><a href="#">→ Liên hệ</a></li>

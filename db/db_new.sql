@@ -3026,6 +3026,8 @@ BEGIN
     DECLARE v_equipmentId INT;
     DECLARE v_appendixId INT;
     DECLARE v_total DECIMAL(18,2);
+    DECLARE v_equipmentModel VARCHAR(255);
+    DECLARE v_equipmentSerial VARCHAR(255);
 
     -- Chỉ thực hiện khi báo giá đã được duyệt và thanh toán (Approved)
     IF NEW.quotationStatus = 'Approved' AND OLD.quotationStatus <> 'Approved' THEN
@@ -3036,13 +3038,19 @@ BEGIN
         FROM ServiceRequest
         WHERE requestId = NEW.requestId;
 
+        -- Lấy thông tin thiết bị (model và serial)
+        SELECT model, serialNumber
+        INTO v_equipmentModel, v_equipmentSerial
+        FROM Equipment
+        WHERE equipmentId = v_equipmentId;
+
         -- Tính tổng giá trị part trong báo giá
         SELECT SUM(quantity * unitPrice)
         INTO v_total
         FROM RepairReportDetail
         WHERE reportId = NEW.reportId;
 
-        -- Tạo phụ lục hợp đồng (loại RepairPart)
+        -- ✅ Tạo phụ lục hợp đồng (loại RepairPart) cho đúng thiết bị
         INSERT INTO ContractAppendix (
             contractId,
             appendixType,
@@ -3055,7 +3063,7 @@ BEGIN
         VALUES (
             v_contractId,
             'RepairPart',
-            CONCAT('Phụ lục thay thế linh kiện từ báo giá #', NEW.reportId),
+            CONCAT('Phụ lục thay thế linh kiện cho thiết bị [', v_equipmentModel, ' - ', v_equipmentSerial, ']'),
             'Tự động tạo khi khách hàng đồng ý và thanh toán báo giá sửa chữa',
             CURDATE(),
             IFNULL(v_total, 0),
@@ -3112,3 +3120,119 @@ ALTER TABLE InvoiceDetail
 ADD CONSTRAINT FK_InvoiceDetail_RepairReportDetail
 FOREIGN KEY (repairReportDetailId) REFERENCES RepairReportDetail(detailId);
 DESCRIBE InvoiceDetail;
+
+
+
+-------------------------------------
+
+ALTER TABLE Invoice 
+ADD COLUMN paymentMethod VARCHAR(50) NULL 
+COMMENT 'Payment method: VNPay, Cash, Bank Transfer';
+
+-- Verify Invoice table
+DESC Invoice;
+
+-- ============================================
+-- 2. Thêm cột reportId vào bảng Payment (nếu chưa có)
+-- ============================================
+
+-- Kiểm tra xem cột reportId đã tồn tại chưa
+SELECT COUNT(*) as column_exists
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = DATABASE()
+AND TABLE_NAME = 'Payment' 
+AND COLUMN_NAME = 'reportId';
+
+-- Nếu kết quả = 0, chạy lệnh sau:
+ALTER TABLE Payment 
+ADD COLUMN reportId INT NULL 
+COMMENT 'Link to RepairReport';
+
+-- Thêm Foreign Key constraint
+ALTER TABLE Payment
+ADD CONSTRAINT FK_Payment_RepairReport 
+FOREIGN KEY (reportId) REFERENCES RepairReport(reportId)
+ON DELETE SET NULL;
+
+-- Thêm index
+CREATE INDEX IX_Payment_ReportId ON Payment(reportId);
+
+-- Verify Payment table
+DESC Payment;
+
+-- ============================================
+-- 3. Kiểm tra kết quả
+-- ============================================
+
+-- Xem structure của Invoice
+SHOW COLUMNS FROM Invoice LIKE 'paymentMethod';
+
+-- Xem structure của Payment
+SHOW COLUMNS FROM Payment LIKE 'reportId';
+
+-- Xem Foreign Keys
+SELECT 
+    CONSTRAINT_NAME,
+    TABLE_NAME,
+    COLUMN_NAME,
+    REFERENCED_TABLE_NAME,
+    REFERENCED_COLUMN_NAME
+FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE TABLE_SCHEMA = DATABASE()
+AND TABLE_NAME = 'Payment'
+AND CONSTRAINT_NAME LIKE 'FK_%';
+
+-- ============================================
+-- 4. Test Insert (Optional)
+-- ============================================
+
+-- Test insert vào Invoice với paymentMethod
+INSERT INTO Invoice (contractId, issueDate, dueDate, totalAmount, status, paymentMethod)
+VALUES (1, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), 1000000, 'Pending', 'VNPay');
+
+-- Xem kết quả
+SELECT * FROM Invoice ORDER BY invoiceId DESC LIMIT 1;
+
+-- Xóa test data (nếu cần)
+-- DELETE FROM Invoice WHERE invoiceId = LAST_INSERT_ID();
+
+-- ============================================
+-- 5. Rollback (nếu có lỗi)
+-- ============================================
+/*
+-- Xóa cột paymentMethod
+ALTER TABLE Invoice DROP COLUMN paymentMethod;
+
+-- Xóa Foreign Key và cột reportId
+ALTER TABLE Payment DROP FOREIGN KEY FK_Payment_RepairReport;
+DROP INDEX IX_Payment_ReportId ON Payment;
+ALTER TABLE Payment DROP COLUMN reportId;
+*/
+
+ALTER TABLE MaintenanceSchedule 
+ADD COLUMN customerId INT NULL,
+ADD FOREIGN KEY (customerId) REFERENCES Account(accountId);
+
+ALTER TABLE ContractAppendixEquipment
+ADD COLUMN startDate DATE,
+ADD COLUMN endDate DATE;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_ContractAppendixEquipment_before_insert
+BEFORE INSERT ON ContractAppendixEquipment
+FOR EACH ROW
+BEGIN
+    DECLARE v_start DATE;
+
+    -- Lấy effectiveDate từ bảng ContractAppendix
+    SELECT effectiveDate INTO v_start
+    FROM ContractAppendix
+    WHERE appendixId = NEW.appendixId;
+
+    -- Gán giá trị startDate và endDate
+    SET NEW.startDate = v_start;
+    SET NEW.endDate = DATE_ADD(v_start, INTERVAL 3 YEAR);
+END$$
+
+DELIMITER ;
