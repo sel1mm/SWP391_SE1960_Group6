@@ -5,6 +5,7 @@ public class InvoiceDetail {
     private int invoiceId;
     private String description;
     private double amount;
+    private String paymentStatus; // ✅ Added: "Pending", "Completed", "Failed"
 
     public InvoiceDetail() {
     }
@@ -14,6 +15,14 @@ public class InvoiceDetail {
         this.invoiceId = invoiceId;
         this.description = description;
         this.amount = amount;
+    }
+    
+    public InvoiceDetail(int invoiceDetailId, int invoiceId, String description, double amount, String paymentStatus) {
+        this.invoiceDetailId = invoiceDetailId;
+        this.invoiceId = invoiceId;
+        this.description = description;
+        this.amount = amount;
+        this.paymentStatus = paymentStatus;
     }
 
     public int getInvoiceDetailId() {
@@ -48,5 +57,11 @@ public class InvoiceDetail {
         this.amount = amount;
     }
     
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
     
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
 }

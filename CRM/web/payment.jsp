@@ -58,6 +58,13 @@
             margin: 0;
         }
         .contract-dates { display: flex; gap: 30px; }
+        .crm-system-text h2 {
+            color: #667eea;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin: 0;
+        }
         .date-item { display: flex; align-items: center; gap: 10px; }
         .date-icon {
             width: 36px; height: 36px;
@@ -115,83 +122,6 @@
         .info-item:last-child { border-bottom: none; }
         .info-label { color: #6c757d; font-weight: 500; font-size: 0.95rem; }
         .info-value { color: #212529; font-weight: 600; font-size: 0.95rem; }
-        .equipment-list { display: flex; flex-direction: column; gap: 20px; }
-        .equipment-item {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.3s;
-        }
-        .equipment-item:hover {
-            border-color: #667eea;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
-        }
-        .equipment-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .equipment-name { font-size: 1.15rem; font-weight: 700; color: #212529; }
-        .equipment-price { font-size: 1.2rem; font-weight: 700; color: #667eea; }
-        .equipment-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .equipment-detail-item { display: flex; flex-direction: column; gap: 5px; }
-        .equipment-detail-label { font-size: 0.85rem; color: #6c757d; font-weight: 500; }
-        .equipment-detail-value { font-size: 0.95rem; color: #212529; font-weight: 600; }
-        .payment-methods { display: flex; flex-direction: column; gap: 15px; }
-        .payment-method-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 18px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: white;
-        }
-        .payment-method-item:hover { border-color: #667eea; background: #f8f9ff; }
-        .payment-method-item.selected { border-color: #667eea; background: #f0f4ff; }
-        .payment-method-icon {
-            width: 50px; height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f5f5f5;
-            border-radius: 10px;
-            font-size: 1.5rem;
-            color: #495057;
-            flex-shrink: 0;
-        }
-        .payment-method-item.selected .payment-method-icon { background: #667eea; color: white; }
-        .payment-method-info { flex: 1; }
-        .payment-method-name { font-weight: 600; color: #212529; margin-bottom: 5px; font-size: 1rem; }
-        .payment-method-desc { color: #6c757d; font-size: 0.9rem; }
-        .payment-method-check {
-            width: 24px; height: 24px;
-            border-radius: 50%;
-            border: 2px solid #667eea;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            background: #667eea;
-            flex-shrink: 0;
-        }
-        .payment-method-item:not(.selected) .payment-method-check { display: none; }
-        .summary-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border: 1px solid #e9ecef;
-        }
         .total-payment-box {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 12px;
@@ -286,38 +216,16 @@
         <div class="payment-header">
             <div class="contract-id-section">
                 <div class="contract-id-icon">
-                    <i class="fas fa-file-contract"></i>
+                    <i class="fas fa-receipt"></i>
                 </div>
                 <div class="contract-id-info">
-                    <h6>Mã hợp đồng</h6>
-                    <h3>HD-CRM-2025-<fmt:formatNumber value="${contract.contractId}" pattern="000000" /></h3>
+                    <h6>Thanh toán</h6>
+                    <h3>Xác nhận thanh toán</h3>
                 </div>
             </div>
             <div class="contract-dates">
-                <div class="date-item">
-                    <div class="date-icon"><i class="fas fa-calendar-alt"></i></div>
-                    <div class="date-info">
-                        <div class="date-label">Ngày bắt đầu</div>
-                        <div class="date-value">
-                            <c:if test="${contract.contractDate != null}">${contract.contractDate}</c:if>
-                        </div>
-                    </div>
-                </div>
-                <div class="date-item">
-                    <div class="date-icon"><i class="fas fa-calendar-check"></i></div>
-                    <div class="date-info">
-                        <div class="date-label">Ngày kết thúc</div>
-                        <div class="date-value">
-                            <c:choose>
-                                <c:when test="${not empty contractEquipmentList and not empty contractEquipmentList[0].endDate}">
-                                    ${contractEquipmentList[0].endDate}
-                                </c:when>
-                                <c:otherwise>
-                                    <c:if test="${contract.contractDate != null}">${contract.contractDate}</c:if>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                    </div>
+                <div class="crm-system-text">
+                    <h2>CRM SYSTEM</h2>
                 </div>
             </div>
         </div>
@@ -369,67 +277,10 @@
                         </div>
                     </div>
                 </c:if>
-
-                <!-- Payment Methods -->
-                <div class="info-card">
-                    <div class="info-card-title">
-                        <div class="info-card-icon"><i class="fas fa-credit-card"></i></div>
-                        <span>Phương thức thanh toán</span>
-                    </div>
-                    <div class="payment-methods">
-                        <div class="payment-method-item selected" onclick="selectPaymentMethod('VNPay', this)">
-                            <div class="payment-method-icon"><i class="fas fa-wallet"></i></div>
-                            <div class="payment-method-info">
-                                <div class="payment-method-name">VNPay</div>
-                                <div class="payment-method-desc">Thanh toán qua ví điện tử VNPay</div>
-                            </div>
-                            <div class="payment-method-check"><i class="fas fa-check"></i></div>
-                        </div>
-                        <div class="payment-method-item" onclick="selectPaymentMethod('Cash', this)">
-                            <div class="payment-method-icon"><i class="fas fa-money-bill-wave"></i></div>
-                            <div class="payment-method-info">
-                                <div class="payment-method-name">Tiền mặt</div>
-                                <div class="payment-method-desc">Thanh toán trực tiếp bằng tiền mặt</div>
-                            </div>
-                            <div class="payment-method-check"><i class="fas fa-check"></i></div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Right Column -->
             <div class="payment-right">
-                <!-- Contract Summary -->
-                <div class="summary-card">
-                    <div class="info-card-title">
-                        <div class="info-card-icon"><i class="fas fa-file-contract"></i></div>
-                        <span>Tổng quan hợp đồng</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Mã HĐ:</span>
-                        <span class="info-value">HD-CRM-2025-<fmt:formatNumber value="${contract.contractId}" pattern="000000" /></span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Từ:</span>
-                        <span class="info-value">
-                            <c:if test="${contract.contractDate != null}">${contract.contractDate}</c:if>
-                        </span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Đến:</span>
-                        <span class="info-value">
-                            <c:choose>
-                                <c:when test="${not empty contractEquipmentList and not empty contractEquipmentList[0].endDate}">
-                                    ${contractEquipmentList[0].endDate}
-                                </c:when>
-                                <c:otherwise>
-                                    <c:if test="${contract.contractDate != null}">${contract.contractDate}</c:if>
-                                </c:otherwise>
-                            </c:choose>
-                        </span>
-                    </div>
-                </div>
-
                 <!-- Total Payment -->
                 <div class="total-payment-box">
                     <div class="total-payment-label">Tổng thanh toán:</div>
@@ -459,12 +310,6 @@
                     <i class="fas fa-money-bill-wave"></i>
                     <span>Xác nhận thanh toán tiền mặt</span>
                 </button>
-                
-                <button type="button" class="btn-confirm-payment btn-vnpay-payment" onclick="confirmVNPayPayment()">
-                    <i class="fas fa-credit-card"></i>
-                    <span>Thanh toán qua VNPay</span>
-                </button>
-
                 <div class="security-message">
                     <i class="fas fa-shield-alt"></i>
                     Giao dịch được bảo mật và mã hóa an toàn
@@ -505,24 +350,6 @@
             
             console.log('✅ Payment initialized:', { paymentAmount, requestId, contextPath });
         })();
-
-        function selectPaymentMethod(method, element) {
-            selectedPaymentMethod = method;
-            document.querySelectorAll('.payment-method-item').forEach(item => {
-                item.classList.remove('selected');
-                const checkIcon = item.querySelector('.payment-method-check i');
-                if (checkIcon) checkIcon.remove();
-            });
-            if (element) {
-                element.classList.add('selected');
-                const checkDiv = element.querySelector('.payment-method-check');
-                if (checkDiv) {
-                    const icon = document.createElement('i');
-                    icon.className = 'fas fa-check';
-                    checkDiv.appendChild(icon);
-                }
-            }
-        }
 
         function confirmCashPayment() {
             const finalRequestId = requestId;
@@ -574,46 +401,7 @@
             });
         }
         
-        function confirmVNPayPayment() {
-            const finalRequestId = requestId;
-            if (!finalRequestId || finalRequestId <= 0) {
-                Swal.fire({ icon: 'error', title: 'Lỗi!', text: 'Không thể xác định mã yêu cầu!' });
-                return;
-            }
-            
-            Swal.fire({
-                title: 'Xác nhận thanh toán?',
-                text: 'Số tiền: ' + paymentAmount.toLocaleString('vi-VN') + ' VNĐ',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#2196f3',
-                confirmButtonText: '✅ Xác nhận',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const params = new URLSearchParams();
-                    params.append('requestId', finalRequestId);
-                    params.append('paymentMethod', 'VNPay');
-
-                    fetch(contextPath + '/payment', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params.toString()
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && data.redirectUrl) {
-                            window.location.href = data.redirectUrl;
-                        } else {
-                            Swal.fire({ icon: 'error', title: 'Lỗi!', text: data.error || 'Có lỗi xảy ra!' });
-                        }
-                    })
-                    .catch(error => {
-                        Swal.fire({ icon: 'error', title: 'Lỗi!', text: error.message });
-                    });
-                }
-            });
-        }
+      
     </script>
 </body>
 </html>
