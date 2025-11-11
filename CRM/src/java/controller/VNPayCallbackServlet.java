@@ -5,6 +5,7 @@ import dal.PaymentDAO;
 import dal.ServiceRequestDAO;
 import service.VNPayService;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,6 +16,9 @@ import java.util.Map;
 /**
  * Servlet xử lý callback từ VNPay sau khi thanh toán
  */
+
+
+@WebServlet(name = "VNPayCallbackServlet", urlPatterns = {"/vnpayCallback"})
 public class VNPayCallbackServlet extends HttpServlet {
     private VNPayService vnPayService;
     private InvoiceDAO invoiceDAO;
@@ -120,9 +124,17 @@ public class VNPayCallbackServlet extends HttpServlet {
                     } else {
                         System.err.println("⚠️ Failed to update invoice: invoiceId=" + pendingInvoiceId);
                     }
-                    
+                    if (!invoiceDAO.hasInvoiceDetail(pendingInvoiceId)) {
+    invoiceDAO.createInvoiceDetail(
+        pendingInvoiceId,
+        "Thanh toán VNPay cho yêu cầu #" + (pendingRequestId != null ? pendingRequestId : "N/A"),
+        Double.parseDouble(amount) / 100,
+        "Pending"
+    );
+    System.out.println("✅ Auto-created missing InvoiceDetail for invoiceId=" + pendingInvoiceId);
+}
                     // ✅ Update InvoiceDetail paymentStatus to Completed
-                    boolean detailUpdated = invoiceDAO.updateInvoiceDetailPaymentStatus(pendingInvoiceId, "Completed");
+                   boolean detailUpdated = invoiceDAO.updateAllInvoiceDetailsPaymentStatus(pendingInvoiceId, "Completed");
                     if (detailUpdated) {
                         System.out.println("✅ InvoiceDetail paymentStatus updated to Completed");
                     } else {
