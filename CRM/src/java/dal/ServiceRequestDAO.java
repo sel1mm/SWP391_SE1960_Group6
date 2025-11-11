@@ -277,7 +277,10 @@ public class ServiceRequestDAO extends MyDAO {
             ps.setInt(1, customerId);
             rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapResultSetToServiceRequest(rs));
+                ServiceRequest sr = mapResultSetToServiceRequest(rs);
+                // ✅ Set WorkTask status sau khi map xong
+                sr.setAllWorkTasksCompleted(areAllWorkTasksCompleted(sr.getRequestId()));
+                list.add(sr);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -451,6 +454,10 @@ public class ServiceRequestDAO extends MyDAO {
         sr.setStatus(rs.getString("status"));
         sr.setRequestType(rs.getString("requestType"));
 
+        // ✅ Kiểm tra WorkTask status
+        // NOTE: Tạm thời comment out để tránh nested query conflict
+        // Sẽ được set riêng trong method getRequestsByCustomerId()
+        // sr.setAllWorkTasksCompleted(areAllWorkTasksCompleted(sr.getRequestId()));
         // Handle assigned_technician_id (can be null)
         try {
             int technicianId = rs.getInt("assigned_technician_id");
@@ -1772,14 +1779,11 @@ public class ServiceRequestDAO extends MyDAO {
 
     public void updateStatus(int requestId, String status) throws SQLException {
         String sql = "UPDATE ServiceRequest SET status = ? WHERE requestId = ?";
-
-        // ✅ SỬA: Dùng con (connection của MyDAO) thay vì connection
-        ps = con.prepareStatement(sql);
-        ps.setString(1, status);
-        ps.setInt(2, requestId);
-        int affected = ps.executeUpdate();
-
-        System.out.println("📝 Updated Request #" + requestId + " to status: " + status + " (affected: " + affected + ")");
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, requestId);
+            ps.executeUpdate();
+        }
     }
 
     /**
@@ -1966,12 +1970,15 @@ public class ServiceRequestDAO extends MyDAO {
                 + "rr.reportId, rr.technicianId as repairTechnicianId, "
                 + "rr.details as repairDetails, rr.diagnosis, "
                 + "rr.estimatedCost, rr.quotationStatus, rr.repairDate, "
+                + "rr.invoiceDetailId, "
+                + "id.paymentStatus, "
                 + "repairTech.fullName as repairTechnicianName "
                 + "FROM ServiceRequest sr "
                 + "LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId "
                 + "LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId "
                 + "LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId "
                 + "LEFT JOIN RepairReport rr ON sr.requestId = rr.requestId "
+                + "LEFT JOIN InvoiceDetail id ON rr.invoiceDetailId = id.invoiceDetailId "
                 + "LEFT JOIN Account repairTech ON rr.technicianId = repairTech.accountId "
                 + "WHERE sr.requestId = ? AND sr.createdBy = ?";
 
@@ -2044,6 +2051,45 @@ public class ServiceRequestDAO extends MyDAO {
         return null;
     }
 
+    /**
+     * ✅ CẬP NHẬT TRẠNG THÁI BÁO GIÁ (QUOTATION STATUS)
+     * Dùng để customer approve/reject báo giá của technician
+     * 
+     * Logic:
+     * - Khi customer bấm "Thanh toán tất cả" → quotationStatus = 'Approved' (xử lý ở payment flow)
+     * - Khi customer bấm "Từ chối báo giá" → quotationStatus = 'Rejected'
+     * 
+     * @param reportId ID của RepairReport
+     * @param newStatus "Approved" hoặc "Rejected"
+     * @return true nếu cập nhật thành công
+     */
+    public boolean updateQuotationStatus(int reportId, String newStatus) {
+        // ✅ Cập nhật trực tiếp RepairReport.quotationStatus
+        String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
+        
+        try {
+            ps = con.prepareStatement(sql);
+            ps.setString(1, newStatus);
+            ps.setInt(2, reportId);
+            
+            int affectedRows = ps.executeUpdate();
+            
+            if (affectedRows > 0) {
+                System.out.println("✅ Updated quotation status for reportId " + reportId + " to: " + newStatus);
+                return true;
+            } else {
+                System.out.println("❌ No rows affected when updating reportId: " + reportId);
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error updating quotation status: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+
     // ============ INNER CLASS FOR COMBINED DATA ============
     /**
      * Class kết hợp ServiceRequest + RepairReport + Technician info Dùng để trả
@@ -2098,30 +2144,21 @@ public class ServiceRequestDAO extends MyDAO {
     public List<ServiceRequest> getRequestsByContractIdWithEquipment(int contractId) throws SQLException {
         List<ServiceRequest> list = new ArrayList<>();
         String sql = """
-        SELECT sr.requestId, sr.contractId, sr.equipmentId, sr.createdBy, 
-               sr.description, sr.priorityLevel, sr.requestDate, sr.status, sr.requestType,
-               
-               MAX(a.fullName) AS customerName, 
-               MAX(a.email) AS customerEmail, 
-               MAX(a.phone) AS customerPhone,
-               
-               MAX(COALESCE(c.contractType, c2.contractType)) AS contractType, 
-               MAX(COALESCE(c.status, c2.status)) AS contractStatus,
-               
-               MAX(e.model) AS equipmentModel, 
-               MAX(e.serialNumber) AS serialNumber, 
-               MAX(e.description) AS equipmentDescription,
-               
-               MAX(tech.fullName) AS technicianName,
-               
-               MAX(p.status) AS paymentStatus
-               
+        SELECT DISTINCT sr.*, 
+               a.fullName AS customerName, a.email AS customerEmail, a.phone AS customerPhone,
+               COALESCE(c.contractType, c2.contractType) AS contractType, 
+               COALESCE(c.status, c2.status) AS contractStatus,
+               e.model AS equipmentModel, e.serialNumber, e.description AS equipmentDescription,
+               tech.fullName AS technicianName,
+               p.status AS paymentStatus  -- ✅ LẤY TỪ Payment, KHÔNG PHẢI InvoiceDetail
         FROM ServiceRequest sr
         LEFT JOIN Account a ON sr.createdBy = a.accountId
         LEFT JOIN Equipment e ON sr.equipmentId = e.equipmentId
         
+        -- Join với hợp đồng chính
         LEFT JOIN Contract c ON sr.contractId = c.contractId
         
+        -- Join với hợp đồng từ phụ lục
         LEFT JOIN ContractAppendixEquipment cae ON e.equipmentId = cae.equipmentId
         LEFT JOIN ContractAppendix ca ON cae.appendixId = ca.appendixId
         LEFT JOIN Contract c2 ON ca.contractId = c2.contractId
@@ -2129,6 +2166,7 @@ public class ServiceRequestDAO extends MyDAO {
         LEFT JOIN RequestApproval ra ON sr.requestId = ra.requestId
         LEFT JOIN Account tech ON ra.assignedTechnicianId = tech.accountId
         
+        -- ✅ THÊM JOIN ĐẾN Payment để lấy paymentStatus
         LEFT JOIN RepairReport rr ON sr.requestId = rr.requestId
         LEFT JOIN Invoice inv ON inv.contractId = COALESCE(c.contractId, c2.contractId)
         LEFT JOIN Payment p ON p.invoiceId = inv.invoiceId AND p.reportId = rr.reportId
@@ -2144,10 +2182,6 @@ public class ServiceRequestDAO extends MyDAO {
                 AND ca2.contractId = ?
             )
         )
-        
-        GROUP BY sr.requestId, sr.contractId, sr.equipmentId, sr.createdBy,
-                 sr.description, sr.priorityLevel, sr.requestDate, sr.status, sr.requestType
-        
         ORDER BY sr.requestDate DESC
     """;
 
@@ -2557,69 +2591,6 @@ public class ServiceRequestDAO extends MyDAO {
     }
 
     /**
-     * Cập nhật trạng thái báo giá (quotationStatus) Customer đồng ý hoặc từ
-     * chối báo giá
-     *
-     * @param reportId ID của repair report
-     * @param quotationStatus Trạng thái mới: 'Approved' hoặc 'Rejected'
-     * @return true nếu thành công, false nếu thất bại
-     */
-    public boolean updateQuotationStatus(int reportId, String quotationStatus) {
-        String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
-
-        try {
-            // Get old status before update
-            String oldStatus = null;
-            String getOldStatusSql = "SELECT quotationStatus FROM RepairReport WHERE reportId = ?";
-            try (PreparedStatement getStatusPs = con.prepareStatement(getOldStatusSql)) {
-                getStatusPs.setInt(1, reportId);
-                try (ResultSet rs = getStatusPs.executeQuery()) {
-                    if (rs.next()) {
-                        oldStatus = rs.getString("quotationStatus");
-                    }
-                }
-            }
-
-            ps = con.prepareStatement(sql);
-            ps.setString(1, quotationStatus);
-            ps.setInt(2, reportId);
-
-            int rowsAffected = ps.executeUpdate();
-
-            if (rowsAffected > 0) {
-                // If status changed to 'Rejected', return reserved parts to Available
-                if ("Rejected".equals(quotationStatus) && "Pending".equals(oldStatus)) {
-                    try {
-                        dal.RepairReportDAO reportDAO = new dal.RepairReportDAO();
-                        reportDAO.returnReservedPartsToAvailable(reportId);
-                    } catch (Exception e) {
-                        System.err.println("Error returning reserved parts: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
-        } catch (Exception e) {
-            System.err.println("Error updating quotationStatus: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        } finally {
-            closeResources();
-        }
-    }
-
-    /**
-     * ✅ CẬP NHẬT TRẠNG THÁI THANH TOÁN CỦA SERVICE REQUEST Cập nhật
-     * paymentStatus khi tất cả linh kiện đã được thanh toán
-     *
-     * @param requestId ID của service request
-     * @param paymentStatus Trạng thái thanh toán mới: 'Completed'
-     * @return true nếu thành công, false nếu thất bại
-     */
-    /**
      * Cập nhật quotationStatus của RepairReport
      *
      * @param reportId ID của báo cáo sửa chữa
@@ -2801,6 +2772,95 @@ public class ServiceRequestDAO extends MyDAO {
         } finally {
             closeResources();
         }
+    }
+
+    /**
+     * ✅ Kiểm tra xem tất cả WorkTask liên quan đến ServiceRequest đã completed
+     * chưa
+     *
+     * @param requestId ID của service request
+     * @return true nếu tất cả WorkTask đã completed hoặc không có WorkTask nào
+     */
+    public boolean areAllWorkTasksCompleted(int requestId) {
+        String sql = "SELECT COUNT(*) as total, "
+                + "SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed "
+                + "FROM WorkTask WHERE requestId = ?";
+
+        // ✅ TẠO CONNECTION MỚI để tránh conflict với ResultSet đang mở
+        Connection tempCon = null;
+        PreparedStatement tempPs = null;
+        ResultSet tempRs = null;
+
+        try {
+            tempCon = connection; // Sử dụng connection từ MyDAO
+            tempPs = tempCon.prepareStatement(sql);
+            tempPs.setInt(1, requestId);
+            tempRs = tempPs.executeQuery();
+
+            if (tempRs.next()) {
+                int total = tempRs.getInt("total");
+                int completed = tempRs.getInt("completed");
+
+                // Nếu không có WorkTask nào, coi như đã completed
+                if (total == 0) {
+                    return true;
+                }
+
+                // Nếu tất cả WorkTask đã completed
+                return total == completed;
+            }
+            return true; // Mặc định true nếu không có dữ liệu
+        } catch (SQLException e) {
+            System.err.println("❌ Error checking WorkTask status for requestId " + requestId + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            // ✅ Đóng resources riêng, KHÔNG đóng connection chung
+            try {
+                if (tempRs != null) {
+                    tempRs.close();
+                }
+                if (tempPs != null) {
+                    tempPs.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public boolean checkCustomerOwnsRequest(int requestId, int customerId) {
+        String sql = "SELECT COUNT(*) FROM ServiceRequest WHERE requestId = ? AND createdBy = ?";
+        PreparedStatement tempPs = null;
+        ResultSet tempRs = null;
+
+        try {
+            tempPs = connection.prepareStatement(sql);
+            tempPs.setInt(1, requestId);
+            tempPs.setInt(2, customerId);
+            tempRs = tempPs.executeQuery();
+
+            if (tempRs.next()) {
+                return tempRs.getInt(1) > 0;
+            }
+            return false;
+        } catch (SQLException e) {
+            System.err.println("❌ Error checking customer ownership: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (tempRs != null) {
+                    tempRs.close();
+                }
+                if (tempPs != null) {
+                    tempPs.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
 }

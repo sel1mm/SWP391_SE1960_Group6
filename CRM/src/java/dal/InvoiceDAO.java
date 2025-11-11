@@ -41,7 +41,6 @@ public class InvoiceDAO extends DBContext {
                 invoice.setTotalAmount(rs.getDouble("TotalAmount"));
                 invoice.setStatus(rs.getString("Status"));
 
-                // ✅ Lấy paymentMethod từ Invoice table
                 String paymentMethod = rs.getString("paymentMethod");
                 if (paymentMethod != null) {
                     invoice.setPaymentMethod(paymentMethod);
@@ -238,7 +237,6 @@ public class InvoiceDAO extends DBContext {
                 invoice.setTotalAmount(rs.getDouble("TotalAmount"));
                 invoice.setStatus(rs.getString("Status"));
 
-                // ✅ Lấy paymentMethod từ Invoice table
                 String paymentMethod = rs.getString("paymentMethod");
                 if (paymentMethod != null) {
                     invoice.setPaymentMethod(paymentMethod);
@@ -267,6 +265,13 @@ public class InvoiceDAO extends DBContext {
                 detail.setInvoiceId(rs.getInt("InvoiceId"));
                 detail.setDescription(rs.getString("Description"));
                 detail.setAmount(rs.getDouble("Amount"));
+                
+                // Lấy paymentStatus nếu có
+                String paymentStatus = rs.getString("paymentStatus");
+                if (paymentStatus != null) {
+                    detail.setPaymentStatus(paymentStatus);
+                }
+                
                 details.add(detail);
             }
         } catch (SQLException e) {
@@ -373,7 +378,6 @@ public class InvoiceDAO extends DBContext {
                 invoice.setTotalAmount(rs.getDouble("TotalAmount"));
                 invoice.setStatus(rs.getString("Status"));
 
-                // ✅ Lấy paymentMethod từ Invoice table
                 String paymentMethod = rs.getString("paymentMethod");
                 if (paymentMethod != null) {
                     invoice.setPaymentMethod(paymentMethod);
@@ -567,6 +571,13 @@ public class InvoiceDAO extends DBContext {
     }
 
     /**
+     * Tạo Invoice mới (backward compatibility - không có paymentMethod)
+     */
+    public int createInvoice(int contractId, double totalAmount, String status, LocalDate dueDate) throws SQLException {
+        return createInvoice(contractId, totalAmount, status, dueDate, null);
+    }
+
+    /**
      * Tạo InvoiceDetail với paymentStatus
      */
     public int createInvoiceDetail(int invoiceId, String description, double amount, String paymentStatus) throws SQLException {
@@ -597,21 +608,42 @@ public class InvoiceDAO extends DBContext {
     public int createInvoiceDetail(int invoiceId, String description, double amount) throws SQLException {
         return createInvoiceDetail(invoiceId, description, amount, "Pending");
     }
-    
+
     /**
-     * Cập nhật paymentStatus của InvoiceDetail theo invoiceId
+     * ✅ Tạo InvoiceDetail với link đến RepairReportDetail
+     * @param invoiceId ID của Invoice
+     * @param description Mô tả
+     * @param amount Số tiền
+     * @param repairReportDetailId ID của RepairReportDetail (linh kiện)
+     * @param paymentStatus Trạng thái thanh toán (Pending, Completed)
+     * @return ID của InvoiceDetail vừa tạo
      */
-    public boolean updateInvoiceDetailPaymentStatus(int invoiceId, String paymentStatus) throws SQLException {
-        String sql = "UPDATE InvoiceDetail SET paymentStatus = ? WHERE invoiceId = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, paymentStatus);
-            ps.setInt(2, invoiceId);
+    public int createInvoiceDetailWithRepairPart(int invoiceId, String description, double amount, 
+                                                  int repairReportDetailId, String paymentStatus) throws SQLException {
+        String sql = "INSERT INTO InvoiceDetail (invoiceId, description, amount, repairReportDetailId, paymentStatus) " +
+                     "VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, invoiceId);
+            ps.setString(2, description);
+            ps.setDouble(3, amount);
+            ps.setInt(4, repairReportDetailId);
+            ps.setString(5, paymentStatus);
+            
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
-                System.out.println("✅ Updated InvoiceDetail paymentStatus: invoiceId=" + invoiceId + ", paymentStatus=" + paymentStatus);
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int invoiceDetailId = rs.getInt(1);
+                        System.out.println("✅ Created InvoiceDetail: ID=" + invoiceDetailId + 
+                                         ", RepairPartId=" + repairReportDetailId + 
+                                         ", Amount=" + amount + 
+                                         ", PaymentStatus=" + paymentStatus);
+                        return invoiceDetailId;
+                    }
+                }
             }
-            return rowsAffected > 0;
         }
+        return -1;
     }
     
     /**
@@ -639,40 +671,77 @@ public class InvoiceDAO extends DBContext {
             return ps.executeUpdate() > 0;
         }
     }
-public boolean hasInvoiceDetail(int invoiceId) {
-    String sql = "SELECT COUNT(*) FROM InvoiceDetail WHERE invoiceId = ?";
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        ps.setInt(1, invoiceId);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            int count = rs.getInt(1);
-            System.out.println("✅ InvoiceDetail count for invoiceId=" + invoiceId + ": " + count);
-            return count > 0;
-        }
-    } catch (SQLException e) {
-        System.err.println("❌ Error checking InvoiceDetail: " + e.getMessage());
-        e.printStackTrace();
-    }
-    return false;
-}
 
-/**
- * ✅ Xóa tất cả InvoiceDetail pending cho invoiceId (cleanup)
- */
-public boolean deletePendingInvoiceDetails(int invoiceId) {
-    String sql = "DELETE FROM InvoiceDetail WHERE invoiceId = ? AND paymentStatus = 'Pending'";
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        ps.setInt(1, invoiceId);
-        int rowsAffected = ps.executeUpdate();
-        if (rowsAffected > 0) {
-            System.out.println("✅ Deleted " + rowsAffected + " pending InvoiceDetail(s) for invoiceId=" + invoiceId);
+    /**
+     * ✅ Cập nhật paymentStatus của một InvoiceDetail cụ thể (theo invoiceDetailId)
+     * @param invoiceDetailId ID của InvoiceDetail
+     * @param paymentStatus Trạng thái thanh toán (Pending, Completed, Cancelled)
+     * @return true nếu cập nhật thành công
+     */
+    public boolean updateInvoiceDetailPaymentStatus(int invoiceDetailId, String paymentStatus) throws SQLException {
+        String sql = "UPDATE InvoiceDetail SET paymentStatus = ? WHERE invoiceDetailId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, paymentStatus);
+            ps.setInt(2, invoiceDetailId);
+            int rowsAffected = ps.executeUpdate();
+            System.out.println("✅ Updated InvoiceDetail " + invoiceDetailId + " paymentStatus to: " + paymentStatus + " (rows affected: " + rowsAffected + ")");
+            return rowsAffected > 0;
         }
-        return rowsAffected > 0;
-    } catch (SQLException e) {
-        System.err.println("❌ Error deleting pending InvoiceDetails: " + e.getMessage());
-        e.printStackTrace();
     }
-    return false;
-}
 
+    /**
+     * ✅ Cập nhật paymentStatus của tất cả InvoiceDetail thuộc một Invoice (theo invoiceId)
+     * @param invoiceId ID của Invoice
+     * @param paymentStatus Trạng thái thanh toán (Pending, Completed, Cancelled)
+     * @return true nếu cập nhật thành công
+     */
+    public boolean updateAllInvoiceDetailsPaymentStatus(int invoiceId, String paymentStatus) throws SQLException {
+        String sql = "UPDATE InvoiceDetail SET paymentStatus = ? WHERE invoiceId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, paymentStatus);
+            ps.setInt(2, invoiceId);
+            int rowsAffected = ps.executeUpdate();
+            System.out.println("✅ Updated all InvoiceDetails of Invoice " + invoiceId + " paymentStatus to: " + paymentStatus + " (rows affected: " + rowsAffected + ")");
+            return rowsAffected > 0;
+        }
+    }
+
+    /**
+     * ✅ Kiểm tra xem Invoice có InvoiceDetail hay không
+     */
+    public boolean hasInvoiceDetail(int invoiceId) {
+        String sql = "SELECT COUNT(*) FROM InvoiceDetail WHERE invoiceId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, invoiceId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                System.out.println("✅ InvoiceDetail count for invoiceId=" + invoiceId + ": " + count);
+                return count > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error checking InvoiceDetail: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * ✅ Xóa tất cả InvoiceDetail pending cho invoiceId (cleanup)
+     */
+    public boolean deletePendingInvoiceDetails(int invoiceId) {
+        String sql = "DELETE FROM InvoiceDetail WHERE invoiceId = ? AND paymentStatus = 'Pending'";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, invoiceId);
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("✅ Deleted " + rowsAffected + " pending InvoiceDetail(s) for invoiceId=" + invoiceId);
+            }
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.err.println("❌ Error deleting pending InvoiceDetails: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

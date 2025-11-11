@@ -1241,10 +1241,13 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             int requestId = Integer.parseInt(requestIdStr.trim());
             int reportId = Integer.parseInt(reportIdStr.trim());
 
-            // Kiểm tra request có thuộc về customer không
-            ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+            System.out.println("🔍 Parsed requestId: " + requestId + ", reportId: " + reportId);
 
-            if (sr == null || sr.getCreatedBy() != customerId) {
+            // ✅ Kiểm tra quyền trực tiếp bằng SQL (tránh gọi getRequestById gây lỗi)
+            boolean hasPermission = serviceRequestDAO.checkCustomerOwnsRequest(requestId, customerId);
+            
+            if (!hasPermission) {
+                System.out.println("❌ Customer " + customerId + " does not own request " + requestId);
                 String jsonResponse = "{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}";
                 out.write(jsonResponse);
                 out.flush();
@@ -1252,7 +1255,9 @@ public class ManagerServiceRequestServlet extends HttpServlet {
                 return;
             }
 
-            // Cập nhật quotationStatus = 'Rejected' cho báo giá cụ thể
+            System.out.println("✅ Permission check passed, updating quotation status...");
+
+            // ✅ Cập nhật quotationStatus = 'Rejected' cho báo giá cụ thể
             boolean success = serviceRequestDAO.updateQuotationStatus(reportId, "Rejected");
 
             String jsonResponse;
