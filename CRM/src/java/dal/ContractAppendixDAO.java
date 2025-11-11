@@ -20,8 +20,8 @@ public class ContractAppendixDAO extends DBContext {
             String status, String fileAttachment, int createdBy) throws SQLException {
 
         String sql = "INSERT INTO ContractAppendix (contractId, appendixType, appendixName, description, "
-                + "effectiveDate, totalAmount, status, fileAttachment, createdBy, createdAt) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                + "effectiveDate, totalAmount, status, fileAttachment, warrantyCovered, warrantyReportId, createdBy, createdAt) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
         try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, contractId);
@@ -39,7 +39,9 @@ public class ContractAppendixDAO extends DBContext {
             ps.setDouble(6, 0.0); // totalAmount luôn = 0
             ps.setString(7, status);
             ps.setString(8, fileAttachment);
-            ps.setInt(9, createdBy);
+            ps.setBoolean(9, false);
+            ps.setNull(10, java.sql.Types.INTEGER);
+            ps.setInt(11, createdBy);
 
             ps.executeUpdate();
 
@@ -113,6 +115,11 @@ public class ContractAppendixDAO extends DBContext {
                     appendix.setFileAttachment(rs.getString("fileAttachment"));
                     appendix.setEquipmentCount(rs.getInt("equipmentCount"));
                     appendix.setPartCount(rs.getInt("partCount"));
+                    appendix.setWarrantyCovered(rs.getBoolean("warrantyCovered"));
+                    int warrantyReport = rs.getInt("warrantyReportId");
+                    if (!rs.wasNull()) {
+                        appendix.setWarrantyReportId(warrantyReport);
+                    }
 
                     // ✅ Kiểm tra xem có thể edit không (trong vòng 15 ngày)
                     int daysPassed = rs.getInt("daysPassed");
@@ -333,6 +340,11 @@ public class ContractAppendixDAO extends DBContext {
                     appendix.setStatus(rs.getString("status"));
                     appendix.setFileAttachment(rs.getString("fileAttachment"));
                     appendix.setCreatedBy(rs.getInt("createdBy"));
+                    appendix.setWarrantyCovered(rs.getBoolean("warrantyCovered"));
+                    int warrantyReport = rs.getInt("warrantyReportId");
+                    if (!rs.wasNull()) {
+                        appendix.setWarrantyReportId(warrantyReport);
+                    }
 
                     Timestamp createdAt = rs.getTimestamp("createdAt");
                     if (createdAt != null) {
@@ -391,7 +403,7 @@ public class ContractAppendixDAO extends DBContext {
             }
 
             // Get ServiceRequest info to find contract and equipment
-            String sql = "SELECT sr.contractId, sr.equipmentId, sr.createdBy "
+            String sql = "SELECT sr.contractId, sr.equipmentId, sr.createdBy, sr.requestType "
                     + "FROM ServiceRequest sr "
                     + "JOIN RepairReport rr ON sr.requestId = rr.requestId "
                     + "WHERE rr.reportId = ?";
@@ -399,6 +411,8 @@ public class ContractAppendixDAO extends DBContext {
             Integer finalContractId = contractId;
             Integer equipmentId = null;
             Integer customerId = null;
+            String requestType = null;
+            boolean isWarranty = false;
 
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setInt(1, reportId);
@@ -410,6 +424,10 @@ public class ContractAppendixDAO extends DBContext {
                         }
                         equipmentId = rs.getObject("equipmentId", Integer.class);
                         customerId = rs.getInt("createdBy");
+                        requestType = rs.getString("requestType");
+                        if (requestType != null && requestType.equalsIgnoreCase("Warranty")) {
+                            isWarranty = true;
+                        }
                     } else {
                         connection.rollback();
                         throw new SQLException("Repair report " + reportId + " not found or not linked to ServiceRequest");
@@ -502,22 +520,29 @@ public class ContractAppendixDAO extends DBContext {
             double totalAmount = details.stream()
                     .mapToDouble(d -> d.getUnitPrice().multiply(java.math.BigDecimal.valueOf(d.getQuantity())).doubleValue())
                     .sum();
+            double appendixAmount = isWarranty ? 0 : totalAmount;
 
             // Create ContractAppendix
             sql = "INSERT INTO ContractAppendix (contractId, appendixType, appendixName, description, "
-                    + "effectiveDate, totalAmount, status, createdBy, createdAt) "
-                    + "VALUES (?, 'RepairPart', ?, ?, CURDATE(), ?, 'Approved', ?, NOW())";
+                    + "effectiveDate, totalAmount, status, warrantyCovered, warrantyReportId, createdBy, createdAt) "
+                    + "VALUES (?, 'RepairPart', ?, ?, CURDATE(), ?, 'Approved', ?, ?, ?, NOW())";
 
-            String appendixName = "Repair Parts from Report #" + reportId;
-            String description = "Parts automatically added when repair report #" + reportId + " was approved";
+            String appendixName = isWarranty
+                    ? "Warranty Parts from Report #" + reportId
+                    : "Repair Parts from Report #" + reportId;
+            String description = isWarranty
+                    ? "Warranty-covered parts automatically added when repair report #" + reportId + " was approved"
+                    : "Parts automatically added when repair report #" + reportId + " was approved";
 
             int appendixId;
             try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setInt(1, finalContractId);
                 ps.setString(2, appendixName);
                 ps.setString(3, description);
-                ps.setBigDecimal(4, java.math.BigDecimal.valueOf(totalAmount));
-                ps.setInt(5, customerId != null ? customerId : 1); // Use customerId or default
+                ps.setBigDecimal(4, java.math.BigDecimal.valueOf(appendixAmount));
+                ps.setBoolean(5, isWarranty);
+                ps.setInt(6, reportId);
+                ps.setInt(7, customerId != null ? customerId : 1); // Use customerId or default
 
                 ps.executeUpdate();
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -543,7 +568,9 @@ public class ContractAppendixDAO extends DBContext {
                     ps.setInt(4, detail.getQuantity());
                     ps.setBigDecimal(5, detail.getUnitPrice());
                     ps.setInt(6, reportId);
-                    ps.setString(7, "Auto-added from approved repair report #" + reportId);
+                    ps.setString(7, isWarranty
+                            ? "Warranty-covered part (no customer charge) auto-added from report #" + reportId
+                            : "Auto-added from approved repair report #" + reportId);
                     ps.addBatch();
                 }
                 ps.executeBatch();

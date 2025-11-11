@@ -48,6 +48,8 @@ window.TechnicianValidation = {
      */
     validateRepairReport: function(formData) {
         const errors = {};
+        const requestType = formData.requestType ? formData.requestType.trim() : '';
+        const isWarranty = requestType.toLowerCase() === 'warranty';
         
         // Validate details
         if (!formData.details || !formData.details.trim()) {
@@ -68,14 +70,16 @@ window.TechnicianValidation = {
         }
         
         // Validate estimated cost (input is in VND)
-        if (!formData.estimatedCost || !formData.estimatedCost.trim()) {
-            errors.estimatedCost = 'Estimated cost is required';
-        } else {
-            const cost = parseFloat(formData.estimatedCost);
-            if (isNaN(cost) || cost <= 0) {
-                errors.estimatedCost = 'Estimated cost must be greater than 0';
-            } else if (cost > 99999999999) {
-                errors.estimatedCost = 'Estimated cost cannot exceed 99,999,999,999 VND';
+        if (!isWarranty) {
+            if (!formData.estimatedCost || !formData.estimatedCost.trim()) {
+                errors.estimatedCost = 'Estimated cost is required';
+            } else {
+                const cost = parseFloat(formData.estimatedCost);
+                if (isNaN(cost) || cost <= 0) {
+                    errors.estimatedCost = 'Estimated cost must be greater than 0';
+                } else if (cost > 99999999999) {
+                    errors.estimatedCost = 'Estimated cost cannot exceed 99,999,999,999 VND';
+                }
             }
         }
         

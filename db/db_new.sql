@@ -2967,7 +2967,10 @@ CREATE TABLE ContractAppendix (
     fileAttachment VARCHAR(255),
     createdBy INT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (contractId) REFERENCES Contract(contractId)
+    warrantyCovered TINYINT(1) DEFAULT 0,
+    warrantyReportId INT NULL,
+    FOREIGN KEY (contractId) REFERENCES Contract(contractId),
+    FOREIGN KEY (warrantyReportId) REFERENCES RepairReport(reportId)
 );
 
 
@@ -3028,15 +3031,21 @@ BEGIN
     DECLARE v_total DECIMAL(18,2);
     DECLARE v_equipmentModel VARCHAR(255);
     DECLARE v_equipmentSerial VARCHAR(255);
+    DECLARE v_requestType VARCHAR(20);
+    DECLARE v_isWarranty TINYINT(1) DEFAULT 0;
 
     -- Chỉ thực hiện khi báo giá đã được duyệt và thanh toán (Approved)
     IF NEW.quotationStatus = 'Approved' AND OLD.quotationStatus <> 'Approved' THEN
 
-        -- Lấy thông tin hợp đồng và thiết bị từ ServiceRequest
-        SELECT contractId, equipmentId
-        INTO v_contractId, v_equipmentId
+        -- Lấy thông tin hợp đồng, thiết bị và loại yêu cầu từ ServiceRequest
+        SELECT contractId, equipmentId, requestType
+        INTO v_contractId, v_equipmentId, v_requestType
         FROM ServiceRequest
         WHERE requestId = NEW.requestId;
+
+        IF v_requestType = 'Warranty' THEN
+            SET v_isWarranty = 1;
+        END IF;
 
         -- Lấy thông tin thiết bị (model và serial)
         SELECT model, serialNumber
@@ -3058,16 +3067,24 @@ BEGIN
             description,
             effectiveDate,
             totalAmount,
-            status
+            status,
+            warrantyCovered,
+            warrantyReportId
         )
         VALUES (
             v_contractId,
             'RepairPart',
-            CONCAT('Phụ lục thay thế linh kiện cho thiết bị [', v_equipmentModel, ' - ', v_equipmentSerial, ']'),
-            'Tự động tạo khi khách hàng đồng ý và thanh toán báo giá sửa chữa',
+            IF(v_isWarranty = 1,
+               CONCAT('Phụ lục linh kiện bảo hành cho thiết bị [', v_equipmentModel, ' - ', v_equipmentSerial, ']'),
+               CONCAT('Phụ lục thay thế linh kiện cho thiết bị [', v_equipmentModel, ' - ', v_equipmentSerial, ']')),
+            IF(v_isWarranty = 1,
+               'Tự động tạo khi khách hàng đồng ý bảo trì bảo hành (miễn phí)',
+               'Tự động tạo khi khách hàng đồng ý và thanh toán báo giá sửa chữa'),
             CURDATE(),
-            IFNULL(v_total, 0),
-            'Approved'
+            IF(v_isWarranty = 1, 0, IFNULL(v_total, 0)),
+            'Approved',
+            v_isWarranty,
+            NEW.reportId
         );
 
         SET v_appendixId = LAST_INSERT_ID();
@@ -3092,10 +3109,12 @@ BEGIN
             d.quantity,
             d.unitPrice,
             NEW.reportId,
-            'Paid',  -- vì đã Approved = đã thanh toán
+            'Paid',  -- Đánh dấu đã chi trả (bởi khách hoặc bảo hành)
             TRUE,
             NOW(),
-            'Tự động ghi nhận từ báo giá đã duyệt & thanh toán'
+            IF(v_isWarranty = 1,
+               CONCAT('Linh kiện bảo hành (miễn phí) - tự động từ báo cáo #', NEW.reportId),
+               'Tự động ghi nhận từ báo giá đã duyệt & thanh toán')
         FROM RepairReportDetail d
         WHERE d.reportId = NEW.reportId;
     END IF;
@@ -3105,6 +3124,95 @@ DELIMITER ;
 
 ALTER TABLE Contract 
 ADD COLUMN createdDate DATETIME DEFAULT NULL AFTER details;
+
+-- ============================================================
+-- Schedule-origin RepairReport support (idempotent)
+-- Adds RepairReport.scheduleId and RepairReport.origin
+-- ============================================================
+DELIMITER //
+DROP PROCEDURE IF EXISTS sp_add_schedule_origin_to_repairreport//
+CREATE PROCEDURE sp_add_schedule_origin_to_repairreport()
+BEGIN
+    -- Add scheduleId if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'RepairReport'
+          AND COLUMN_NAME = 'scheduleId'
+    ) THEN
+        ALTER TABLE RepairReport
+            ADD COLUMN scheduleId INT NULL AFTER requestId;
+    END IF;
+
+    -- Add origin if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'RepairReport'
+          AND COLUMN_NAME = 'origin'
+    ) THEN
+        ALTER TABLE RepairReport
+            ADD COLUMN origin ENUM('ServiceRequest','Schedule') DEFAULT 'ServiceRequest' AFTER diagnosis;
+    END IF;
+
+    -- Add FK for scheduleId if not exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'RepairReport'
+          AND CONSTRAINT_NAME = 'FK_RepairReport_MaintenanceSchedule'
+    ) THEN
+        ALTER TABLE RepairReport
+            ADD CONSTRAINT FK_RepairReport_MaintenanceSchedule
+            FOREIGN KEY (scheduleId) REFERENCES MaintenanceSchedule(scheduleId);
+    END IF;
+END//
+CALL sp_add_schedule_origin_to_repairreport()//
+DROP PROCEDURE IF EXISTS sp_add_schedule_origin_to_repairreport//
+DELIMITER ;
+
+
+-- Ensure warranty tracking columns exist for ContractAppendix (idempotent for single-run deploy)
+DELIMITER //
+DROP PROCEDURE IF EXISTS sp_add_warranty_columns//
+CREATE PROCEDURE sp_add_warranty_columns()
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'ContractAppendix'
+          AND COLUMN_NAME = 'warrantyCovered'
+    ) THEN
+        ALTER TABLE ContractAppendix
+            ADD COLUMN warrantyCovered TINYINT(1) DEFAULT 0;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'ContractAppendix'
+          AND COLUMN_NAME = 'warrantyReportId'
+    ) THEN
+        ALTER TABLE ContractAppendix
+            ADD COLUMN warrantyReportId INT NULL;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'ContractAppendix'
+          AND CONSTRAINT_NAME = 'fk_contractappendix_warrantyreport'
+    ) THEN
+        ALTER TABLE ContractAppendix
+            ADD CONSTRAINT fk_contractappendix_warrantyreport
+            FOREIGN KEY (warrantyReportId) REFERENCES RepairReport(reportId);
+    END IF;
+END//
+CALL sp_add_warranty_columns()//
+DROP PROCEDURE IF EXISTS sp_add_warranty_columns//
+DELIMITER ;
 
 
 ALTER TABLE InvoiceDetail 

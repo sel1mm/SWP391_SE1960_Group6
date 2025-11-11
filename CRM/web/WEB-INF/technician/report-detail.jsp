@@ -59,6 +59,16 @@
                   <a href="#" class="text-decoration-none">#${report.requestId}</a>
                 </p>
               </div>
+              <c:if test="${not empty selectedRequestType}">
+                <div class="mb-3">
+                  <span class="badge ${isWarrantyRequest ? 'bg-warning text-dark' : 'bg-info'}">
+                    <c:choose>
+                      <c:when test="${isWarrantyRequest}">Warranty / Preventive Maintenance</c:when>
+                      <c:otherwise>Service Request</c:otherwise>
+                    </c:choose>
+                  </span>
+                </div>
+              </c:if>
               <div class="mb-3">
                 <label class="form-label fw-bold">Technician ID</label>
                 <p class="form-control-plaintext">#${report.technicianId}</p>
@@ -91,7 +101,18 @@
               <div class="mb-3">
                 <label class="form-label fw-bold">Estimated Cost</label>
                 <p class="form-control-plaintext">
-                  <span class="fw-bold text-success fs-5">₫<fmt:formatNumber value="${report.estimatedCost * 26000}" type="number" maxFractionDigits="0"/></span>
+                  <c:choose>
+                    <c:when test="${isWarrantyRequest}">
+                      <span class="fw-bold text-muted fs-5">₫0</span>
+                      <div class="text-muted small">Warranty covered – no charge to customer.</div>
+                      <c:if test="${not empty subtotal}">
+                        <div class="text-muted small">Parts value: ₫<fmt:formatNumber value="${subtotal * 26000}" type="number" maxFractionDigits="0"/></div>
+                      </c:if>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="fw-bold text-success fs-5">₫<fmt:formatNumber value="${report.estimatedCost * 26000}" type="number" maxFractionDigits="0"/></span>
+                    </c:otherwise>
+                  </c:choose>
                 </p>
               </div>
               <div class="mb-3">
@@ -148,9 +169,21 @@
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colspan="5" class="text-end fw-bold">Total:</td>
-                        <td class="fw-bold text-success fs-5">₫<fmt:formatNumber value="${report.estimatedCost * 26000}" type="number" maxFractionDigits="0"/></td>
+                        <td colspan="5" class="text-end fw-bold">Parts Value:</td>
+                        <td class="fw-bold text-success fs-5">₫<fmt:formatNumber value="${subtotal * 26000}" type="number" maxFractionDigits="0"/></td>
                       </tr>
+                      <c:if test="${isWarrantyRequest}">
+                        <tr>
+                          <td colspan="5" class="text-end fw-bold text-muted">Customer Charged:</td>
+                          <td class="fw-bold text-muted">₫0 (Warranty Covered)</td>
+                        </tr>
+                      </c:if>
+                      <c:if test="${!isWarrantyRequest}">
+                        <tr>
+                          <td colspan="5" class="text-end fw-bold">Customer Charged:</td>
+                          <td class="fw-bold text-success fs-5">₫<fmt:formatNumber value="${report.estimatedCost * 26000}" type="number" maxFractionDigits="0"/></td>
+                        </tr>
+                      </c:if>
                     </tfoot>
                   </table>
                 </div>

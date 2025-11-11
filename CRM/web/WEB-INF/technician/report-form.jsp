@@ -66,13 +66,14 @@
         <div class="card-body">
           <form id="reportForm" method="post" action="${pageContext.request.contextPath}/technician/reports" novalidate>
             <input type="hidden" name="action" value="${not empty report ? 'update' : 'create'}">
+            <input type="hidden" name="requestType" id="requestTypeInput" value="${not empty selectedRequestType ? selectedRequestType : (not empty customerRequestInfo ? customerRequestInfo.requestType : '')}">
             <c:if test="${not empty report}">
               <input type="hidden" name="reportId" value="${report.reportId}">
             </c:if>
             <c:choose>
               <c:when test="${not empty report}">
                 <!-- Edit mode: show existing request ID as readonly -->
-                <input type="hidden" name="requestId" value="${report.requestId}">
+                <input type="hidden" id="requestIdHidden" name="requestId" value="${report.requestId}">
                 <div class="row">
                   <div class="col-md-6">
                     <div class="mb-3">
@@ -83,21 +84,68 @@
                   </div>
               </c:when>
               <c:otherwise>
-                <!-- Create mode: show dropdown for assigned tasks -->
+                <c:choose>
+                  <c:when test="${not empty scheduleId}">
+                    <input type="hidden" id="scheduleIdHidden" name="scheduleId" value="${scheduleId}"/>
+                    <input type="hidden" id="requestIdHidden" name="requestId" value="${requestId != null ? requestId : ''}"/>
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <c:choose>
+                            <c:when test="${not empty requestId}">
+                              <label class="form-label fw-bold">Linked Request</label>
+                              <input type="text" class="form-control" value="#${requestId}" readonly/>
+                              <div class="form-text">This report originates from a scheduled task (Schedule ID #${scheduleId}).</div>
+                            </c:when>
+                            <c:otherwise>
+                              <label class="form-label fw-bold">Schedule Context</label>
+                              <div class="form-control-plaintext">
+                                #${scheduleId}
+                                <c:if test="${not empty scheduleCustomerName}">
+                                  - ${fn:escapeXml(scheduleCustomerName)} (ID: ${scheduleCustomerId})
+                                </c:if>
+                                - Scheduled Maintenance Task
+                                <c:if test="${not empty scheduleTaskStatus}">
+                                  (${scheduleTaskStatus})
+                                </c:if>
+                              </div>
+                              <div class="form-text">This report originates from a scheduled maintenance task.</div>
+                            </c:otherwise>
+                          </c:choose>
+                        </div>
+                      </div>
+                    </div>
+                  </c:when>
+                  <c:otherwise>
                 <div class="row">
                   <div class="col-md-6">
                     <div class="mb-3">
-                      <label for="requestId" class="form-label fw-bold">Select Task <span class="text-danger">*</span></label>
-                      <select class="form-select" id="requestId" name="requestId" required>
+                      <label for="taskSelector" class="form-label fw-bold">Select Task <span class="text-danger">*</span></label>
+                      <select class="form-select" id="taskSelector" name="taskSelector" required>
                         <option value="">-- Select a task to report on --</option>
                         <c:forEach var="taskForReport" items="${assignedTasks}">
-                          <c:set var="task" value="${taskForReport.task}"/>
-                          <option value="${task.requestId}" 
-                                  <c:if test="${requestId != null && requestId == task.requestId}">selected</c:if>>
-                            #${task.requestId} - ${fn:escapeXml(taskForReport.customerName != null ? taskForReport.customerName : 'N/A')} (ID: ${taskForReport.customerId != null ? taskForReport.customerId : 'N/A'}) - ${fn:escapeXml(taskForReport.requestType != null ? taskForReport.requestType : 'N/A')} (${task.status})
+                          <c:choose>
+                            <c:when test="${taskForReport.origin eq 'Schedule'}">
+                              <c:set var="optionValue" value="${'schedule:'}${taskForReport.scheduleId}" />
+                            </c:when>
+                            <c:otherwise>
+                              <c:set var="optionValue" value="${'request:'}${taskForReport.requestId}" />
+                            </c:otherwise>
+                          </c:choose>
+                          <option value="${optionValue}"
+                                  data-origin="${taskForReport.origin}"
+                                  data-request-id="${taskForReport.requestId != null ? taskForReport.requestId : ''}"
+                                  data-schedule-id="${taskForReport.scheduleId != null ? taskForReport.scheduleId : ''}"
+                                  data-request-type="${taskForReport.requestType}"
+                                  data-task-status="${taskForReport.taskStatus}"
+                                  <c:if test="${taskForReport.origin eq 'Schedule' && scheduleId != null && taskForReport.scheduleId != null && scheduleId == taskForReport.scheduleId}">selected</c:if>
+                                  <c:if test="${taskForReport.origin ne 'Schedule' && requestId != null && taskForReport.requestId != null && requestId == taskForReport.requestId}">selected</c:if>>
+                            ${fn:escapeXml(taskForReport.displayLabel)}
                           </option>
                         </c:forEach>
                       </select>
+                      <input type="hidden" id="requestIdHidden" name="requestId" value="${requestId != null ? requestId : ''}">
+                      <input type="hidden" id="scheduleIdHidden" name="scheduleId" value="${scheduleId != null ? scheduleId : ''}">
                       <div class="form-text">Only tasks assigned to you and not completed are shown</div>
                       <div class="invalid-feedback" id="requestIdError"></div>
                     </div>
@@ -105,8 +153,37 @@
                   
                   <!-- Contract Selection removed - Contract is automatically determined from ServiceRequest when report is approved -->
                 </div>
+                  </c:otherwise>
+                </c:choose>
               </c:otherwise>
             </c:choose>
+            
+            <c:set var="initialRequestType" value="${not empty selectedRequestType ? selectedRequestType : (not empty customerRequestInfo ? customerRequestInfo.requestType : '')}" />
+            <c:set var="isScheduleOrigin" value="${not empty scheduleId}"/>
+            <c:if test="${!isScheduleOrigin}">
+            <div id="requestTypeBanner" class="alert ${(initialRequestType == 'Warranty') ? 'alert-warning' : 'alert-info'} d-flex align-items-center">
+              <i class="bi ${initialRequestType == 'Warranty' ? 'bi-shield-check' : 'bi-tools'} me-2 fs-4"></i>
+              <div>
+                <strong id="requestTypeLabel">
+                  <c:choose>
+                    <c:when test="${initialRequestType == 'Warranty'}">Warranty / Preventive Maintenance</c:when>
+                    <c:when test="${initialRequestType == 'Service'}">Service Request</c:when>
+                    <c:otherwise>Repair Request</c:otherwise>
+                  </c:choose>
+                </strong>
+                <div class="small text-muted" id="requestTypeDescription">
+                  <c:choose>
+                    <c:when test="${initialRequestType == 'Warranty'}">
+                      Warranty visits are free for the customer. Parts are optional and costs are recorded as 0.
+                    </c:when>
+                    <c:otherwise>
+                      Standard repair workflow. Parts and estimated cost will be billed to the customer.
+                    </c:otherwise>
+                  </c:choose>
+                </div>
+              </div>
+            </div>
+            </c:if>
             
             <div class="row">
               <div class="col-md-6">
@@ -114,6 +191,11 @@
                   <label for="quotationStatus" class="form-label fw-bold">Quotation Status</label>
                   <input type="text" class="form-control" id="quotationStatus" 
                          value="${not empty report ? report.quotationStatus : 'Pending'}" readonly>
+                  <c:if test="${not empty scheduleId}">
+                    <div class="mt-2">
+                      <span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Covered by contract</span>
+                    </div>
+                  </c:if>
                 </div>
               </div>
             </div>
@@ -131,7 +213,8 @@
             
             <!-- Parts Selection (Simple Search & Select) -->
             <div class="mb-3">
-              <label class="form-label fw-bold">Parts <span class="text-danger">*</span></label>
+              <label class="form-label fw-bold" id="partsLabel">Parts <span class="text-danger" id="partsRequiredIndicator">*</span></label>
+              <div id="partsOptionalNote" class="text-muted small d-none">Parts are optional for warranty maintenance visits.</div>
 
               <!-- Search Box -->
               <div class="mb-3">
@@ -203,7 +286,7 @@
                 </div>
               </div>
 
-              <div class="invalid-feedback" id="partsError"></div>
+              <div class="invalid-feedback" id="partsError" data-default-message="Please add at least one part."></div>
             </div>
             
             <div class="row">
@@ -213,19 +296,31 @@
                   <div class="input-group">
                     <span class="input-group-text">₫</span>
                     <input type="number" class="form-control" id="estimatedCost" name="estimatedCost" 
-                           step="1" min="1" max="99999999999" 
+                           step="1" min="0" max="99999999999" 
                            placeholder="0" required
                            value="${not empty report ? (report.estimatedCost * 26000) : (not empty subtotal ? (subtotal * 26000) : '')}">
                   </div>
-                  <div class="form-text">
-                    <c:choose>
-                      <c:when test="${not empty subtotal && subtotal > 0}">
-                        Auto-calculated from parts: ₫<span id="autoCalculatedVnd"><fmt:formatNumber value="${subtotal * 26000}" type="number" maxFractionDigits="0"/></span>. You can override if needed.
-                      </c:when>
-                      <c:otherwise>
-                        Enter cost in VND (Vietnamese Dong). Will be auto-filled when parts are selected.
-                      </c:otherwise>
-                    </c:choose>
+                  <c:choose>
+                    <c:when test="${isScheduleOrigin}">
+                      <div class="form-text text-muted" id="estimatedCostHint">
+                        Covered by contract; customer billed ₫0. Internal unit prices are recorded in the appendix.
+                      </div>
+                    </c:when>
+                    <c:otherwise>
+                      <div class="form-text" id="estimatedCostHint">
+                        <c:choose>
+                          <c:when test="${not empty subtotal && subtotal > 0}">
+                            Auto-calculated from parts: ₫<span id="autoCalculatedVnd"><fmt:formatNumber value="${subtotal * 26000}" type="number" maxFractionDigits="0"/></span>. You can override if needed.
+                          </c:when>
+                          <c:otherwise>
+                            Enter cost in VND (Vietnamese Dong). Will be auto-filled when parts are selected.
+                          </c:otherwise>
+                        </c:choose>
+                      </div>
+                    </c:otherwise>
+                  </c:choose>
+                  <div class="form-text text-warning d-none" id="warrantyCostNotice">
+                    Warranty jobs are recorded at ₫0 for the customer. Internal costs can still be tracked via parts.
                   </div>
                   <div class="invalid-feedback" id="estimatedCostError"></div>
                 </div>
@@ -322,6 +417,7 @@
   
   // Currency conversion constants
   const USD_TO_VND_RATE = 26000;
+  let isScheduleOrigin = false;
   
   // Conversion functions
   function usdToVnd(usd) {
@@ -335,6 +431,94 @@
   // Format VND for display
   function formatVnd(amount) {
     return new Intl.NumberFormat('vi-VN').format(Math.round(amount));
+  }
+  
+  const requestTypeInputField = document.getElementById('requestTypeInput');
+  const requestTypeBanner = document.getElementById('requestTypeBanner');
+  const requestTypeLabel = document.getElementById('requestTypeLabel');
+  const requestTypeDescription = document.getElementById('requestTypeDescription');
+  const requestTypeBannerIcon = requestTypeBanner ? requestTypeBanner.querySelector('i') : null;
+  const partsRequiredIndicator = document.getElementById('partsRequiredIndicator');
+  const partsError = document.getElementById('partsError');
+  const partsOptionalNote = document.getElementById('partsOptionalNote');
+  const estimatedCostHint = document.getElementById('estimatedCostHint');
+  const warrantyCostNotice = document.getElementById('warrantyCostNotice');
+  let isWarrantyMode = false;
+
+  function applyRequestTypeUI(requestType) {
+    const normalizedType = (requestType || '').toLowerCase();
+    isWarrantyMode = normalizedType === 'warranty';
+
+    if (requestTypeInputField) {
+      requestTypeInputField.value = requestType || '';
+    }
+
+    if (requestTypeBanner) {
+      if (isScheduleOrigin) {
+        requestTypeBanner.classList.add('d-none');
+      } else {
+        requestTypeBanner.classList.remove('d-none');
+      }
+      requestTypeBanner.classList.remove('alert-info', 'alert-warning');
+      requestTypeBanner.classList.add(isWarrantyMode ? 'alert-warning' : 'alert-info');
+    }
+
+    if (requestTypeBannerIcon) {
+      requestTypeBannerIcon.classList.remove('bi-tools', 'bi-shield-check');
+      requestTypeBannerIcon.classList.add(isWarrantyMode ? 'bi-shield-check' : 'bi-tools');
+    }
+
+    if (requestTypeLabel) {
+      requestTypeLabel.textContent = isWarrantyMode
+        ? 'Warranty / Preventive Maintenance'
+        : 'Service Request';
+    }
+
+    if (requestTypeDescription) {
+      requestTypeDescription.textContent = isWarrantyMode
+        ? 'Warranty visits are free for the customer. Parts are optional and costs are recorded as ₫0.'
+        : 'Standard repair workflow. Parts and estimated cost will be billed to the customer.';
+    }
+
+    if (partsRequiredIndicator) {
+      partsRequiredIndicator.classList.toggle('d-none', isWarrantyMode);
+      partsRequiredIndicator.textContent = isWarrantyMode ? '' : '*';
+    }
+
+    if (partsOptionalNote) {
+      partsOptionalNote.classList.toggle('d-none', !isWarrantyMode);
+    }
+
+    if (partsError) {
+      const defaultMessage = partsError.dataset.defaultMessage || 'Please add at least one part.';
+      partsError.textContent = isWarrantyMode ? '' : defaultMessage;
+    }
+
+    if (estimatedCostHint) {
+      estimatedCostHint.classList.toggle('d-none', isWarrantyMode);
+    }
+
+    if (warrantyCostNotice) {
+      warrantyCostNotice.classList.toggle('d-none', !isWarrantyMode);
+    }
+
+    if (estimatedCostInput) {
+      let lastServiceValue = estimatedCostInput.getAttribute('data-last-service-value');
+      if (!lastServiceValue) {
+        lastServiceValue = estimatedCostInput.value || '0';
+        estimatedCostInput.setAttribute('data-last-service-value', lastServiceValue);
+      }
+      if (!isWarrantyMode) {
+        estimatedCostInput.readOnly = false;
+        estimatedCostInput.classList.remove('bg-light');
+        estimatedCostInput.value = lastServiceValue;
+      } else {
+        estimatedCostInput.setAttribute('data-last-service-value', lastServiceValue);
+        estimatedCostInput.value = 0;
+        estimatedCostInput.readOnly = true;
+        estimatedCostInput.classList.add('bg-light');
+      }
+    }
   }
   
   // ============================================
@@ -352,6 +536,7 @@
   // Variables for requestId elements (will be set in DOMContentLoaded)
   let requestIdSelect = null;
   let requestIdInput = null;
+  let scheduleIdInput = null;
   
   // Initialize cart from server-side session
   window.addEventListener('DOMContentLoaded', function() {
@@ -359,20 +544,35 @@
     console.log('Context path:', contextPath);
     
     // Get requestId elements (select for create, input for edit)
-    requestIdSelect = document.querySelector('select[name="requestId"]');
-    requestIdInput = document.querySelector('input[name="requestId"]');
+    requestIdSelect = document.getElementById('taskSelector');
+    requestIdInput = document.getElementById('requestIdHidden');
+    scheduleIdInput = document.getElementById('scheduleIdHidden');
+    isScheduleOrigin = !!(scheduleIdInput && scheduleIdInput.value);
     
     console.log('Request ID select found:', !!requestIdSelect);
     console.log('Request ID input found:', !!requestIdInput);
     console.log('Parts list body found:', !!partsListBody);
     
     // Check if requestId is available (from select for create, or input for edit)
-    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
+    const requestId = requestIdInput?.value || '';
+    const scheduleId = scheduleIdInput?.value || '';
+    let initialRequestType = requestTypeInputField?.value || '';
+    if (!initialRequestType && requestIdSelect) {
+      const selectedOption = requestIdSelect.options[requestIdSelect.selectedIndex];
+      if (selectedOption && selectedOption.dataset) {
+        initialRequestType = selectedOption.dataset.requestType || '';
+      }
+    }
+    const typeToApply = isScheduleOrigin ? 'Maintenance' : initialRequestType;
+    applyRequestTypeUI(typeToApply);
+    if (estimatedCostInput && !estimatedCostInput.getAttribute('data-last-service-value')) {
+      estimatedCostInput.setAttribute('data-last-service-value', estimatedCostInput.value || '0');
+    }
     
-    if (requestId) {
+    if (requestId || scheduleId) {
       console.log('Request ID found:', requestId, '(from', requestIdSelect ? 'select' : 'input', ')');
       // Load parts first, then load cart
-      loadAllAvailableParts(requestId, function() {
+      loadAllAvailableParts(requestId || scheduleId, function() {
         loadCartFromSession();
       });
     } else {
@@ -381,46 +581,87 @@
       loadCartFromSession();
     }
     
+    // If schedule-origin, force estimated cost read-only and 0 (covered)
+    if (scheduleId && estimatedCostInput) {
+      estimatedCostInput.value = 0;
+      estimatedCostInput.readOnly = true;
+      estimatedCostInput.classList.add('bg-light');
+    }
+    
     updatePartsSearchState();
     
     // Clear cart when Request ID changes (only for select, not input)
     if (requestIdSelect) {
-      console.log('Request ID select element found, attaching change listener');
+      console.log('Task select element found, attaching change listener');
       requestIdSelect.addEventListener('change', function() {
-        const newRequestId = this.value;
-        console.log('Request ID changed to:', newRequestId);
-        if (newRequestId) {
-          console.log('Checking for existing report for request:', newRequestId);
-          // First check if a report already exists for this task
-          checkExistingReport(newRequestId, function(exists, reportId) {
-            if (exists && reportId) {
-              // Report exists, redirect to edit page
-              console.log('Report exists (ID: ' + reportId + '), redirecting to edit page');
-              window.location.href = contextPath + '/technician/reports?action=edit&reportId=' + reportId;
-              return;
-            }
-            // No existing report, continue with normal flow
-            console.log('No existing report, loading data for request:', newRequestId);
-            // Reset client-side cart state
-            selectedParts = {};
-            // Load parts for the selected request, then load cart
-            loadAllAvailableParts(newRequestId, function() {
-              // After parts are loaded, load cart from session
-              // Use the newRequestId directly to ensure we get the right cart
-              loadCartFromSessionForRequest(newRequestId);
-            });
-            // Enable search
-            enablePartsSearch();
-          });
-        } else {
-          console.log('No request selected, disabling parts');
-          // No request selected, disable search
+        const selectedOption = requestIdSelect.options[requestIdSelect.selectedIndex];
+        if (!selectedOption || !selectedOption.dataset) {
+          console.log('No option selected, resetting state');
+          if (requestIdInput) requestIdInput.value = '';
+          if (scheduleIdInput) scheduleIdInput.value = '';
+          isScheduleOrigin = false;
           disablePartsSearch();
           clearPartsList();
-          // Clear cart display
+          applyRequestTypeUI('');
           selectedParts = {};
           updateCartDisplay([], 0);
+          return;
         }
+
+        const origin = selectedOption.dataset.origin || 'ServiceRequest';
+        const selectedRequestId = selectedOption.dataset.requestId || '';
+        const selectedScheduleId = selectedOption.dataset.scheduleId || '';
+        const requestType = selectedOption.dataset.requestType || '';
+
+        console.log('Task selection changed. Origin:', origin, 'RequestId:', selectedRequestId, 'ScheduleId:', selectedScheduleId);
+
+        if (origin === 'Schedule') {
+          if (requestIdInput) requestIdInput.value = '';
+          if (scheduleIdInput) scheduleIdInput.value = selectedScheduleId;
+        } else {
+          if (requestIdInput) requestIdInput.value = selectedRequestId;
+          if (scheduleIdInput) scheduleIdInput.value = '';
+        }
+        isScheduleOrigin = origin === 'Schedule';
+
+        // Duplicate check before proceeding
+        checkExistingReportForSelection(origin, selectedRequestId, selectedScheduleId, function(exists, reportId) {
+          if (exists && reportId) {
+            console.log('Existing report found (ID: ' + reportId + '), redirecting to edit');
+            window.location.href = contextPath + '/technician/reports?action=edit&reportId=' + reportId;
+            return;
+          }
+
+          console.log('No existing report, preparing form for new report');
+
+          // Apply UI context
+          if (isScheduleOrigin) {
+            applyRequestTypeUI('Maintenance');
+            if (estimatedCostInput) {
+              estimatedCostInput.value = 0;
+              estimatedCostInput.readOnly = true;
+              estimatedCostInput.classList.add('bg-light');
+            }
+          } else {
+            applyRequestTypeUI(requestType);
+            if (estimatedCostInput) {
+              estimatedCostInput.readOnly = false;
+              estimatedCostInput.classList.remove('bg-light');
+            }
+          }
+
+          // Reset client-side cart state
+          selectedParts = {};
+
+          const identifier = isScheduleOrigin ? selectedScheduleId : selectedRequestId;
+
+          // Load parts for the selected task, then load cart
+          loadAllAvailableParts(identifier, function() {
+            loadCartFromSession();
+          });
+
+          enablePartsSearch();
+        });
       });
     } else {
       console.log('Request ID select not found (this is normal in edit mode)');
@@ -435,9 +676,10 @@
   // Check if parts search should be enabled
   function updatePartsSearchState() {
     // Check both select (create) and input (edit) for requestId
-    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
+    const requestId = requestIdInput?.value || '';
+    const scheduleId = scheduleIdInput?.value || '';
     
-    if (!requestId) {
+    if (!requestId && !scheduleId) {
       disablePartsSearch('Please select a task first before searching for parts.');
       return;
     }
@@ -463,16 +705,30 @@
   }
   
   // Check if a repair report already exists for the selected task
-  function checkExistingReport(requestId, callback) {
-    if (!requestId) {
+  function checkExistingReportForSelection(origin, requestId, scheduleId, callback) {
+    const effectiveOrigin = origin || (scheduleId ? 'Schedule' : 'ServiceRequest');
+    
+    if (effectiveOrigin === 'Schedule' && !scheduleId) {
       if (callback) callback(false, null);
       return;
     }
     
-    console.log('Checking for existing report, requestId:', requestId);
-    const url = contextPath + '/technician/reports?action=checkExistingReport&requestId=' + encodeURIComponent(requestId);
+    if (effectiveOrigin !== 'Schedule' && !requestId) {
+      if (callback) callback(false, null);
+      return;
+    }
     
-    fetch(url)
+    const url = new URL(contextPath + '/technician/reports', window.location.origin);
+    url.searchParams.set('action', 'checkExistingReport');
+    if (effectiveOrigin === 'Schedule') {
+      url.searchParams.set('scheduleId', scheduleId);
+      console.log('Checking for existing schedule-origin report, scheduleId:', scheduleId);
+    } else {
+      url.searchParams.set('requestId', requestId);
+      console.log('Checking for existing service-origin report, requestId:', requestId);
+    }
+    
+    fetch(url.toString())
       .then(response => response.json())
       .then(data => {
         console.log('Check existing report response:', data);
@@ -757,8 +1013,9 @@
   
   function addPartToCart(partId, quantity) {
     // Check both select (create) and input (edit) for requestId
-    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
-    if (!requestId) {
+    const requestId = requestIdInput?.value || '';
+    const scheduleId = scheduleIdInput?.value || '';
+    if (!requestId && !scheduleId) {
       alert('Please select a task before adding parts to cart.');
       return;
     }
@@ -777,7 +1034,13 @@
     console.log('Adding part', partId, 'quantity', quantity, 'to cart');
     
     // AJAX request to add/update part in cart
-    fetch(contextPath + '/technician/reports?action=addPartAjax&partId=' + partId + '&quantity=' + quantity + '&requestId=' + requestId)
+    const addUrl = new URL(contextPath + '/technician/reports', window.location.origin);
+    addUrl.searchParams.set('action','addPartAjax');
+    addUrl.searchParams.set('partId', partId);
+    addUrl.searchParams.set('quantity', quantity);
+    if (requestId) addUrl.searchParams.set('requestId', requestId);
+    if (scheduleId) addUrl.searchParams.set('scheduleId', scheduleId);
+    fetch(addUrl.toString())
       .then(response => {
         if (!response.ok) {
           throw new Error('HTTP error! status: ' + response.status);
@@ -830,9 +1093,10 @@
     }
     
     // Check both select (create) and input (edit) for requestId
-    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
+    const requestId = requestIdInput?.value || '';
+    const scheduleId = scheduleIdInput?.value || '';
     
-    if (!requestId) {
+    if (!requestId && !scheduleId) {
       console.error('Cannot remove part: No requestId selected');
       alert('Please select a task first');
       return;
@@ -841,7 +1105,11 @@
     console.log('Removing part', partId, '(type:', typeof partId, ') from cart for request', requestId, '(type:', typeof requestId, ')');
     
     // AJAX request to remove part
-    const url = contextPath + '/technician/reports?action=removePartAjax&partId=' + encodeURIComponent(partId) + '&requestId=' + encodeURIComponent(requestId);
+    const url = new URL(contextPath + '/technician/reports', window.location.origin);
+    url.searchParams.set('action','removePartAjax');
+    url.searchParams.set('partId', partId);
+    if (requestId) url.searchParams.set('requestId', requestId);
+    if (scheduleId) url.searchParams.set('scheduleId', scheduleId);
     console.log('Remove URL:', url);
     
     fetch(url)
@@ -884,8 +1152,8 @@
           
           // Also update estimated cost immediately (convert USD to VND)
           if (estimatedCostInput) {
-            const vndAmount = usdToVnd(newSubtotal);
-            estimatedCostInput.value = Math.round(vndAmount);
+            const vndAmount = Math.round(usdToVnd(newSubtotal));
+            estimatedCostInput.value = (isScheduleOrigin || isWarrantyMode) ? 0 : vndAmount;
           }
         } else {
           alert('Error: ' + (data.error || 'Failed to remove part'));
@@ -900,8 +1168,13 @@
   function clearCartAjax() {
     // Clear all parts from cart when changing request
     // Check both select (create) and input (edit) for requestId
-    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
-    return fetch(contextPath + '/technician/reports?action=clearCartAjax&requestId=' + requestId)
+    const requestId = requestIdInput?.value || '';
+    const scheduleId = scheduleIdInput?.value || '';
+    const clrUrl = new URL(contextPath + '/technician/reports', window.location.origin);
+    clrUrl.searchParams.set('action','clearCartAjax');
+    if (requestId) clrUrl.searchParams.set('requestId', requestId);
+    if (scheduleId) clrUrl.searchParams.set('scheduleId', scheduleId);
+    return fetch(clrUrl.toString())
       .then(response => response.json())
       .then(data => {
         if (data.success) {
@@ -921,20 +1194,26 @@
   }
   
   function loadCartFromSession() {
-    // Use global variables instead of re-querying DOM
-    const requestId = requestIdSelect?.value || requestIdInput?.value || '';
-    loadCartFromSessionForRequest(requestId);
+    const requestId = requestIdInput?.value || '';
+    const scheduleId = scheduleIdInput?.value || '';
+    loadCartFromSessionForRequest(requestId || scheduleId);
   }
   
-  function loadCartFromSessionForRequest(requestId) {
-    if (!requestId) {
+  function loadCartFromSessionForRequest(id) {
+    if (!id) {
       // If no request ID yet, show empty cart
       updateCartDisplay([], 0);
       return;
     }
     
     // AJAX request to get cart summary
-    fetch(contextPath + '/technician/reports?action=getCartSummary&requestId=' + requestId)
+    const reqId = requestIdInput?.value || '';
+    const scheduleId = scheduleIdInput?.value || '';
+    const url = new URL(contextPath + '/technician/reports', window.location.origin);
+    url.searchParams.set('action','getCartSummary');
+    if (reqId) url.searchParams.set('requestId', reqId);
+    if (scheduleId) url.searchParams.set('scheduleId', scheduleId);
+    fetch(url.toString())
       .then(response => response.json())
       .then(data => {
         if (data.success) {
@@ -962,8 +1241,13 @@
     // Update estimated cost input (sync) - always update, even when 0
     // Convert USD to VND for display
     if (estimatedCostInput) {
-      const vndAmount = usdToVnd(subtotal || 0);
-      estimatedCostInput.value = Math.round(vndAmount);
+      const vndAmount = Math.round(usdToVnd(subtotal || 0));
+      estimatedCostInput.setAttribute('data-last-service-value', vndAmount);
+      if (isWarrantyMode || isScheduleOrigin) {
+        estimatedCostInput.value = 0;
+      } else {
+        estimatedCostInput.value = vndAmount;
+      }
     }
     
     // Contract requirement update removed - contract is automatically determined from ServiceRequest
@@ -1093,10 +1377,13 @@
   if (reportForm) {
     reportForm.addEventListener('submit', function(e) {
       const partsCount = selectedPartsCount ? parseInt(selectedPartsCount.textContent) || 0 : 0;
-      if (partsCount <= 0) {
+      if (!isWarrantyMode && partsCount <= 0) {
         e.preventDefault();
         alert('Please select at least one part for the repair report.');
         return false;
+      }
+      if (isWarrantyMode && estimatedCostInput) {
+        estimatedCostInput.value = 0;
       }
       
       // Server will handle VND to USD conversion
