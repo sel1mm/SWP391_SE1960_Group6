@@ -11,7 +11,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -34,9 +38,14 @@
             justify-content: space-between;
             align-items: center;
         }
-        .contract-id-section { display: flex; align-items: center; gap: 15px; }
+        .contract-id-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
         .contract-id-icon {
-            width: 48px; height: 48px;
+            width: 48px;
+            height: 48px;
             background: #f0f4ff;
             border-radius: 10px;
             display: flex;
@@ -57,7 +66,10 @@
             font-weight: 700;
             margin: 0;
         }
-        .contract-dates { display: flex; gap: 30px; }
+        .contract-dates {
+            display: flex;
+            gap: 30px;
+        }
         .crm-system-text h2 {
             color: #667eea;
             font-size: 1.8rem;
@@ -65,9 +77,14 @@
             letter-spacing: 2px;
             margin: 0;
         }
-        .date-item { display: flex; align-items: center; gap: 10px; }
+        .date-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
         .date-icon {
-            width: 36px; height: 36px;
+            width: 36px;
+            height: 36px;
             background: #f8f9fa;
             border-radius: 8px;
             display: flex;
@@ -76,16 +93,33 @@
             color: #495057;
             font-size: 1rem;
         }
-        .date-info { display: flex; flex-direction: column; }
-        .date-label { color: #6c757d; font-size: 0.85rem; margin-bottom: 3px; }
-        .date-value { color: #212529; font-weight: 600; font-size: 0.95rem; }
+        .date-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .date-label {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-bottom: 3px;
+        }
+        .date-value {
+            color: #212529;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
         .payment-content {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 0;
         }
-        .payment-left { padding: 40px; border-right: 1px solid #e0e0e0; }
-        .payment-right { padding: 40px; background: #f8f9fa; }
+        .payment-left {
+            padding: 40px;
+            border-right: 1px solid #e0e0e0;
+        }
+        .payment-right {
+            padding: 40px;
+            background: #f8f9fa;
+        }
         .info-card {
             background: white;
             border-radius: 12px;
@@ -103,7 +137,8 @@
             margin-bottom: 20px;
         }
         .info-card-icon {
-            width: 36px; height: 36px;
+            width: 36px;
+            height: 36px;
             background: #f0f4ff;
             border-radius: 8px;
             display: flex;
@@ -119,9 +154,19 @@
             padding: 12px 0;
             border-bottom: 1px solid #f0f0f0;
         }
-        .info-item:last-child { border-bottom: none; }
-        .info-label { color: #6c757d; font-weight: 500; font-size: 0.95rem; }
-        .info-value { color: #212529; font-weight: 600; font-size: 0.95rem; }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            color: #6c757d;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .info-value {
+            color: #212529;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
         .total-payment-box {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 12px;
@@ -130,8 +175,16 @@
             color: white;
             text-align: center;
         }
-        .total-payment-label { font-size: 0.95rem; opacity: 0.95; margin-bottom: 10px; }
-        .total-payment-amount { font-size: 2.2rem; font-weight: 700; margin: 10px 0; }
+        .total-payment-label {
+            font-size: 0.95rem;
+            opacity: 0.95;
+            margin-bottom: 10px;
+        }
+        .total-payment-amount {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
         .maintenance-services {
             background: #f8f9fa;
             border-radius: 12px;
@@ -146,7 +199,10 @@
             gap: 10px;
             font-weight: 600;
         }
-        .service-list { list-style: none; padding: 0; }
+        .service-list {
+            list-style: none;
+            padding: 0;
+        }
         .service-list li {
             padding: 8px 0;
             display: flex;
@@ -155,7 +211,10 @@
             color: #495057;
             font-size: 0.9rem;
         }
-        .service-list li i { color: #667eea; font-size: 0.85rem; }
+        .service-list li i {
+            color: #667eea;
+            font-size: 0.85rem;
+        }
         .btn-confirm-payment {
             width: 100%;
             padding: 18px;
@@ -172,13 +231,17 @@
             margin-top: 20px;
             cursor: pointer;
         }
-        .btn-vnpay-payment { background: #2196f3; }
+        .btn-vnpay-payment {
+            background: #2196f3;
+        }
         .btn-vnpay-payment:hover {
             background: #1976d2;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
         }
-        .btn-cash-payment { background: #28a745; }
+        .btn-cash-payment {
+            background: #28a745;
+        }
         .btn-cash-payment:hover {
             background: #218838;
             transform: translateY(-2px);
@@ -194,10 +257,17 @@
             justify-content: center;
             gap: 8px;
         }
-        .security-message i { color: #667eea; }
+        .security-message i {
+            color: #667eea;
+        }
         @media (max-width: 1200px) {
-            .payment-content { grid-template-columns: 1fr; }
-            .payment-left { border-right: none; border-bottom: 1px solid #e0e0e0; }
+            .payment-content {
+                grid-template-columns: 1fr;
+            }
+            .payment-left {
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
         }
     </style>
 </head>
@@ -207,6 +277,7 @@
     <div id="payment-data" 
          data-payment-amount="${repairReport != null && repairReport.estimatedCost != null ? repairReport.estimatedCost : 0}"
          data-request-id="${finalRequestId}"
+         data-report-id="${repairReport != null && repairReport.reportId != null ? repairReport.reportId : 0}"
          data-context-path="${pageContext.request.contextPath}"
          style="display: none;">
     </div>
@@ -229,7 +300,7 @@
                 </div>
             </div>
         </div>
-
+        
         <!-- Content -->
         <div class="payment-content">
             <!-- Left Column -->
@@ -253,8 +324,8 @@
                         <span class="info-value">${serviceRequest.customerEmail}</span>
                     </div>
                 </div>
-
-                <!-- ✅ CHỈ HIỂN THỊ NẾU CÓ REPAIR REPORT -->
+                
+                <!-- Repair Information -->
                 <c:if test="${repairReport != null}">
                     <div class="info-card">
                         <div class="info-card-title">
@@ -278,7 +349,7 @@
                     </div>
                 </c:if>
             </div>
-
+            
             <!-- Right Column -->
             <div class="payment-right">
                 <!-- Total Payment -->
@@ -293,7 +364,7 @@
                         </c:choose>
                     </div>
                 </div>
-
+                
                 <!-- Maintenance Services -->
                 <div class="maintenance-services">
                     <h6><i class="fas fa-cog"></i> Dịch vụ bảo trì bao gồm:</h6>
@@ -304,7 +375,7 @@
                         <li><i class="fas fa-check-circle"></i> Ưu tiên xử lý sự cố</li>
                     </ul>
                 </div>
-
+                
                 <!-- Payment Buttons -->
                 <button type="button" class="btn-confirm-payment btn-cash-payment" onclick="confirmCashPayment()">
                     <i class="fas fa-money-bill-wave"></i>
@@ -315,7 +386,7 @@
                     <i class="fas fa-credit-card"></i>
                     <span>Thanh toán qua VNPay</span>
                 </button>
-
+                
                 <div class="security-message">
                     <i class="fas fa-shield-alt"></i>
                     Giao dịch được bảo mật và mã hóa an toàn
@@ -323,9 +394,10 @@
             </div>
         </div>
     </div>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Error Message Handler -->
     <c:if test="${not empty sessionScope.error}">
         <script>
             Swal.fire({
@@ -338,29 +410,55 @@
         <% session.removeAttribute("error"); %>
     </c:if>
     
+    <!-- Payment Script -->
     <script>
         let selectedPaymentMethod = 'VNPay';
         let paymentAmount = 0;
         let requestId = 0;
+        let reportId = 0;
         let contextPath = '/CRM';
-
+        
+        // ✅ Init function - Chạy ngay khi load trang
         (function init() {
             const paymentDataEl = document.getElementById('payment-data');
             if (!paymentDataEl) {
                 console.error('❌ ERROR: payment-data not found!');
                 return;
             }
+            
             paymentAmount = parseFloat(paymentDataEl.getAttribute('data-payment-amount')) || 0;
-            requestId = parseInt(paymentDataEl.getAttribute('data-request-id'));
+            requestId = parseInt(paymentDataEl.getAttribute('data-request-id')) || 0;
+            reportId = parseInt(paymentDataEl.getAttribute('data-report-id')) || 0;
             contextPath = paymentDataEl.getAttribute('data-context-path') || '/CRM';
             
-            console.log('✅ Payment initialized:', { paymentAmount, requestId, contextPath });
+            console.log('✅ Payment initialized:', { 
+                paymentAmount, 
+                requestId, 
+                reportId, 
+                contextPath 
+            });
         })();
-
+        
+        // ✅ Function thanh toán tiền mặt
         function confirmCashPayment() {
-            const finalRequestId = requestId;
-            if (!finalRequestId || finalRequestId <= 0) {
-                Swal.fire({ icon: 'error', title: 'Lỗi!', text: 'Không thể xác định mã yêu cầu!' });
+            console.log('💵 Cash payment clicked');
+            console.log('Data:', { requestId, reportId, paymentAmount });
+            
+            if (!requestId || requestId <= 0) {
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'Lỗi!', 
+                    text: 'Không thể xác định mã yêu cầu!' 
+                });
+                return;
+            }
+            
+            if (!reportId || reportId <= 0) {
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'Lỗi!', 
+                    text: 'Không thể xác định mã báo giá!' 
+                });
                 return;
             }
             
@@ -374,19 +472,34 @@
                 cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    Swal.fire({ title: 'Đang xử lý...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+                    Swal.fire({ 
+                        title: 'Đang xử lý...', 
+                        allowOutsideClick: false, 
+                        didOpen: () => { Swal.showLoading(); } 
+                    });
                     
                     const params = new URLSearchParams();
-                    params.append('requestId', finalRequestId);
+                    params.append('requestId', requestId);
+                    params.append('reportId', reportId);
                     params.append('paymentMethod', 'Cash');
-
+                    
+                    console.log('📤 Sending payment request:', {
+                        requestId,
+                        reportId,
+                        paymentMethod: 'Cash'
+                    });
+                    
                     fetch(contextPath + '/payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: params.toString()
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        console.log('📥 Response status:', response.status);
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('📥 Response data:', data);
                         if (data.success) {
                             Swal.fire({
                                 icon: 'success',
@@ -397,26 +510,51 @@
                                 window.location.href = data.redirectUrl || (contextPath + '/managerServiceRequest');
                             });
                         } else {
-                            Swal.fire({ icon: 'error', title: 'Lỗi!', text: data.error });
+                            Swal.fire({ 
+                                icon: 'error', 
+                                title: 'Lỗi!', 
+                                text: data.error 
+                            });
                         }
                     })
                     .catch(error => {
-                        Swal.fire({ icon: 'error', title: 'Lỗi!', text: 'Không thể kết nối: ' + error.message });
+                        console.error('❌ Fetch error:', error);
+                        Swal.fire({ 
+                            icon: 'error', 
+                            title: 'Lỗi!', 
+                            text: 'Không thể kết nối: ' + error.message 
+                        });
                     });
                 }
             });
         }
         
+        // ✅ Function thanh toán VNPay
         function confirmVNPayPayment() {
-            const finalRequestId = requestId;
-            if (!finalRequestId || finalRequestId <= 0) {
-                Swal.fire({ icon: 'error', title: 'Lỗi!', text: 'Không thể xác định mã yêu cầu!' });
+            console.log('💳 VNPay payment clicked');
+            console.log('Data:', { requestId, reportId, paymentAmount });
+            
+            if (!requestId || requestId <= 0) {
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'Lỗi!', 
+                    text: 'Không thể xác định mã yêu cầu!' 
+                });
+                return;
+            }
+            
+            if (!reportId || reportId <= 0) {
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'Lỗi!', 
+                    text: 'Không thể xác định mã báo giá!' 
+                });
                 return;
             }
             
             Swal.fire({
-                title: 'Xác nhận thanh toán?',
-                text: 'Số tiền: ' + paymentAmount.toLocaleString('vi-VN') + ' VNĐ',
+                title: 'Xác nhận thanh toán VNPay?',
+                html: '<strong>Số tiền:</strong> ' + paymentAmount.toLocaleString('vi-VN') + ' VNĐ',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#2196f3',
@@ -424,25 +562,52 @@
                 cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    Swal.fire({ 
+                        title: 'Đang chuyển đến VNPay...', 
+                        allowOutsideClick: false, 
+                        didOpen: () => { Swal.showLoading(); } 
+                    });
+                    
                     const params = new URLSearchParams();
-                    params.append('requestId', finalRequestId);
+                    params.append('requestId', requestId);
+                    params.append('reportId', reportId);
                     params.append('paymentMethod', 'VNPay');
-
+                    
+                    console.log('📤 Sending VNPay request:', {
+                        requestId,
+                        reportId,
+                        paymentMethod: 'VNPay'
+                    });
+                    
                     fetch(contextPath + '/payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: params.toString()
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        console.log('📥 Response status:', response.status);
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('📥 Response data:', data);
                         if (data.success && data.redirectUrl) {
+                            console.log('🔀 Redirecting to:', data.redirectUrl);
                             window.location.href = data.redirectUrl;
                         } else {
-                            Swal.fire({ icon: 'error', title: 'Lỗi!', text: data.error || 'Có lỗi xảy ra!' });
+                            Swal.fire({ 
+                                icon: 'error', 
+                                title: 'Lỗi!', 
+                                text: data.error || 'Có lỗi xảy ra!' 
+                            });
                         }
                     })
                     .catch(error => {
-                        Swal.fire({ icon: 'error', title: 'Lỗi!', text: error.message });
+                        console.error('❌ Fetch error:', error);
+                        Swal.fire({ 
+                            icon: 'error', 
+                            title: 'Lỗi!', 
+                            text: 'Không thể kết nối: ' + error.message 
+                        });
                     });
                 }
             });

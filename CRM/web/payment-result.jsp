@@ -109,8 +109,8 @@
                         <div class="info-item"><span><b>Mô tả lỗi:</b></span> <span>${error}</span></div>
                     </div>
 
-                    <a href="${pageContext.request.contextPath}/payment.jsp" class="btn btn-home mt-4">
-                        <i class="fa-solid fa-arrow-left"></i> Thử lại thanh toán
+                    <a href="${pageContext.request.contextPath}/managerServiceRequest" class="btn btn-home mt-4">
+                        <i class="fa-solid fa-arrow-left"></i> Quay về Yêu Cầu Dịch Vụ
                     </a>
                 </c:otherwise>
             </c:choose>
