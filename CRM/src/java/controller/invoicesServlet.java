@@ -60,46 +60,58 @@ public class invoicesServlet extends HttpServlet {
     }
     
     // Hiển thị danh sách hóa đơn
-    private void handleList(HttpServletRequest request, HttpServletResponse response, Account account)
-            throws ServletException, IOException {
-        
-        int customerId = account.getAccountId(); // SỬA LẠI: dùng getAccountId() thay vì getUserId()
-        
-        // Lấy danh sách hóa đơn - tạm thời dùng getAllInvoicesForTest để test
-        List<Invoice> invoices = invoiceDAO.getAllInvoicesForTest();
-        
-        // Tạo danh sách InvoiceItem với formatted contract ID
-        List<InvoiceItem> invoiceList = new ArrayList<>();
-        for (Invoice invoice : invoices) {
-            InvoiceItem item = new InvoiceItem();
-            item.setInvoice(invoice);
-            item.setFormattedContractId("CTR" + String.format("%04d", invoice.getContractId()));
-            invoiceList.add(item);
-        }
-        
-        // Lấy thống kê - tạm thời dùng phương thức test
-        int totalInvoices = invoiceDAO.countTotalInvoicesForTest();
-        int paidCount = invoiceDAO.countPaidInvoicesForTest();
-        int pendingCount = invoiceDAO.countPendingInvoicesForTest();
-        double totalAmount = invoiceDAO.calculateTotalAmountForTest();
-        
-        // Debug info
-        System.out.println("DEBUG: Customer ID = " + customerId);
-        System.out.println("DEBUG: Total invoices found = " + invoices.size());
-        System.out.println("DEBUG: Invoice list size = " + invoiceList.size());
-        
-        // Set attributes
-        request.setAttribute("invoiceList", invoiceList);
-        request.setAttribute("totalInvoices", totalInvoices);
-        request.setAttribute("paidCount", paidCount);
-        request.setAttribute("pendingCount", pendingCount);
-        request.setAttribute("totalAmount", totalAmount);
-        request.setAttribute("searchMode", false);
-        request.setAttribute("viewMode", "list");
-        
-        // Forward to JSP
-        request.getRequestDispatcher("/invoices.jsp").forward(request, response);
+ private void handleList(HttpServletRequest request, HttpServletResponse response, Account account)
+        throws ServletException, IOException {
+
+    int customerId = account.getAccountId();
+
+    // ✅ Lấy hóa đơn theo từng báo giá (1 báo giá = 1 hóa đơn)
+    List<Map<String, Object>> rawInvoices = invoiceDAO.getInvoicesByCustomerWithReport(customerId);
+
+    List<InvoiceItem> invoiceList = new ArrayList<>();
+    for (Map<String, Object> row : rawInvoices) {
+        Invoice inv = new Invoice();
+        inv.setInvoiceId((Integer) row.get("invoiceId"));
+        inv.setContractId((Integer) row.get("contractId"));
+
+        java.sql.Date issueDate = (java.sql.Date) row.get("issueDate");
+        java.sql.Date dueDate = (java.sql.Date) row.get("dueDate");
+        if (issueDate != null) inv.setIssueDate(issueDate.toLocalDate());
+        if (dueDate != null) inv.setDueDate(dueDate.toLocalDate());
+
+        inv.setTotalAmount((Double) row.get("totalAmount"));
+        inv.setStatus((String) row.get("status"));
+        inv.setPaymentMethod((String) row.get("paymentMethod"));
+
+        InvoiceItem item = new InvoiceItem();
+        item.setInvoice(inv);
+        item.setFormattedContractId("CTR" + String.format("%04d", inv.getContractId()));
+        item.setExtraInfo("#RP" + row.get("reportId") + " - " + row.get("reportDescription"));
+        invoiceList.add(item);
     }
+
+    // ✅ Thống kê đơn giản
+    int totalInvoices = invoiceList.size();
+    long paidCount = invoiceList.stream()
+            .filter(i -> "Paid".equalsIgnoreCase(i.getInvoice().getStatus()))
+            .count();
+    long pendingCount = invoiceList.stream()
+            .filter(i -> "Pending".equalsIgnoreCase(i.getInvoice().getStatus()))
+            .count();
+    double totalAmount = invoiceList.stream()
+            .mapToDouble(i -> i.getInvoice().getTotalAmount())
+            .sum();
+
+    request.setAttribute("invoiceList", invoiceList);
+    request.setAttribute("totalInvoices", totalInvoices);
+    request.setAttribute("paidCount", paidCount);
+    request.setAttribute("pendingCount", pendingCount);
+    request.setAttribute("totalAmount", totalAmount);
+    request.setAttribute("searchMode", false);
+    request.setAttribute("viewMode", "list");
+
+    request.getRequestDispatcher("/invoices.jsp").forward(request, response);
+}
     
     // Xử lý tìm kiếm
     private void handleSearch(HttpServletRequest request, HttpServletResponse response, Account account)

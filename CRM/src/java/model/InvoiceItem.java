@@ -3,7 +3,7 @@ package model;
 public class InvoiceItem {
     private Invoice invoice;
     private String formattedContractId;
-    
+    private String extraInfo;
     public InvoiceItem() {
     }
     
@@ -27,4 +27,13 @@ public class InvoiceItem {
     public void setFormattedContractId(String formattedContractId) {
         this.formattedContractId = formattedContractId;
     }
+
+
+public String getExtraInfo() {
+    return extraInfo;
+}
+
+public void setExtraInfo(String extraInfo) {
+    this.extraInfo = extraInfo;
+}
 }
