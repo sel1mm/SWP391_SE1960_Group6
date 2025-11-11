@@ -17,6 +17,8 @@ public class DBContext {
 
 String url = "jdbc:mysql://localhost:3306/lamtb?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
 
+
+
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection(url, username, password);
             System.out.println("✅ Database connection successful!");

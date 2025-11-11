@@ -150,13 +150,17 @@ public class TechnicianTaskServlet extends HttpServlet {
                 WorkTask task = taskDAO.findById(taskId);
                 
                 if (task != null && task.getTechnicianId() == sessionId.intValue()) {
+                    int technicianId = sessionId.intValue();
                     String trimmedStatus = newStatus.trim();
                     
                     // ✅ VALIDATION: Check if trying to complete task with pending repair report
+                    // Only check if status is "Completed" and task has a requestId
                     if ("Completed".equals(trimmedStatus) && task.getRequestId() != null) {
                         try {
                             RepairReportDAO reportDAO = new RepairReportDAO();
-                            RepairReport report = reportDAO.findByRequestId(task.getRequestId());
+                            // ✅ FIX: Use findByRequestIdAndTechnician to ensure we check the report
+                            // that belongs to THIS technician, not just any report for the requestId
+                            RepairReport report = reportDAO.findByRequestIdAndTechnician(task.getRequestId(), technicianId);
                             
                             if (report != null) {
                                 String quotationStatus = report.getQuotationStatus();
@@ -171,10 +175,11 @@ public class TechnicianTaskServlet extends HttpServlet {
                                 // Allow if status is Approved or Rejected (customer has responded)
                                 // If status is null or other value, also allow (edge case)
                             }
-                            // If no repair report exists, allow completion (task might not require repair report)
+                            // If no repair report exists for this technician, allow completion
+                            // (task might not require repair report, or report belongs to different technician)
                             
                         } catch (SQLException e) {
-                            System.err.println("❌ Error checking repair report status: " + e.getMessage());
+                            System.err.println("Error checking repair report status: " + e.getMessage());
                             e.printStackTrace();
                             String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Error validating repair report status: " + e.getMessage());
                             resp.sendRedirect(redirectUrl);
