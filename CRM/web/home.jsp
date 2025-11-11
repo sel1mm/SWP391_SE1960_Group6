@@ -587,7 +587,7 @@
                         <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 25px; color: white;">Thông tin công ty</h4>
                         <ul style="list-style: none; padding: 0;">
                             <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Về chúng tôi</a></li>
-                            <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Điều khoản sử dụng</a></li>
+                            <li style="margin-bottom: 12px;"><a href="tos.jsp" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Điều khoản sử dụng</a></li>
                             <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Chính sách bảo mật</a></li>
                             <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Bảo mật dữ liệu</a></li>
                             <li style="margin-bottom: 12px;"><a href="#" style="color: #cbd5e0; text-decoration: none; font-size: 14px; transition: all 0.3s; display: inline-block;">→ Liên hệ</a></li>
