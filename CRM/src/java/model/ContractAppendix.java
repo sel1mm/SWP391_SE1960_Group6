@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
  * @author MY PC
  */
 public class ContractAppendix {
+
     private int appendixId;
     private int contractId;
     private String appendixType;
@@ -23,6 +24,15 @@ public class ContractAppendix {
     private String status;
     private String fileAttachment;
     private boolean canDelete;
+    private int partCount;
+
+    public int getPartCount() {
+        return partCount;
+    }
+
+    public void setPartCount(int partCount) {
+        this.partCount = partCount;
+    }
 
     public boolean isCanDelete() {
         return canDelete;
@@ -31,8 +41,6 @@ public class ContractAppendix {
     public void setCanDelete(boolean canDelete) {
         this.canDelete = canDelete;
     }
-    
-    
 
     public boolean isCanEdit() {
         return canEdit;
@@ -163,6 +171,5 @@ public class ContractAppendix {
     public String toString() {
         return "ContractAppendix{" + "appendixId=" + appendixId + ", contractId=" + contractId + ", appendixType=" + appendixType + ", appendixName=" + appendixName + ", description=" + description + ", effectiveDate=" + effectiveDate + ", totalAmount=" + totalAmount + ", status=" + status + ", fileAttachment=" + fileAttachment + ", createdBy=" + createdBy + ", createdAt=" + createdAt + '}';
     }
-    
-    
+
 }

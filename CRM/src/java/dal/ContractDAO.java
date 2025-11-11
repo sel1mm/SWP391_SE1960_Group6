@@ -312,28 +312,26 @@ public class ContractDAO extends MyDAO {
         return 0;
     }
 
-   public List<Contract> getEveryContracts() {
-    List<Contract> list = new ArrayList<>();
-    String sql = "SELECT contractId, customerId, details FROM Contract"; // ⚠️ Phải có customerId
+    public List<Contract> getEveryContracts() {
+        List<Contract> list = new ArrayList<>();
+        String sql = "SELECT contractId, customerId, details FROM Contract"; // ⚠️ Phải có customerId
 
-    try (PreparedStatement ps = con.prepareStatement(sql); 
-         ResultSet rs = ps.executeQuery()) {
+        try (PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
-        while (rs.next()) {
-            Contract c = new Contract();
-            c.setContractId(rs.getInt("contractId"));
-            c.setCustomerId(rs.getInt("customerId")); // ⚠️ Dòng này quan trọng!
-            c.setDetails(rs.getString("details"));
-            list.add(c);
+            while (rs.next()) {
+                Contract c = new Contract();
+                c.setContractId(rs.getInt("contractId"));
+                c.setCustomerId(rs.getInt("customerId")); // ⚠️ Dòng này quan trọng!
+                c.setDetails(rs.getString("details"));
+                list.add(c);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-    } catch (Exception e) {
-        e.printStackTrace();
+        return list;
     }
-
-    return list;
-}
-
 
     /**
      * Get available parts from PartDetail table for contract creation
@@ -972,6 +970,7 @@ public class ContractDAO extends MyDAO {
      */
     /**
      * ✅ Get BOTH main contracts AND appendixes for a customer
+     *
      * @param customerId
      */
     public List<Contract> getContractsAndAppendixesByCustomer(int customerId) throws SQLException {
@@ -1567,7 +1566,52 @@ public class ContractDAO extends MyDAO {
         }
     }
 
- 
+    /**
+     * Lấy contractId từ equipment (kiểm tra cả contract chính và appendix)
+     *
+     * @param equipmentId ID của thiết bị
+     * @param customerId ID của khách hàng
+     * @return contractId hoặc null nếu không tìm thấy
+     */
+    public Integer getContractIdForEquipment(int equipmentId, int customerId) throws SQLException {
+        // ✅ Bước 1: Kiểm tra trong ContractEquipment (hợp đồng chính)
+        Integer contractId = getContractIdByEquipmentAndCustomer(equipmentId, customerId);
+
+        if (contractId != null) {
+            System.out.println("✅ Equipment " + equipmentId + " found in main contract: " + contractId);
+            return contractId;
+        }
+
+        // ✅ Bước 2: Kiểm tra trong ContractAppendixEquipment (phụ lục)
+        String sql = """
+        SELECT ca.contractId
+        FROM ContractAppendixEquipment cae
+        JOIN ContractAppendix ca ON cae.appendixId = ca.appendixId
+        JOIN Contract c ON ca.contractId = c.contractId
+        WHERE cae.equipmentId = ?
+          AND c.customerId = ?
+          AND ca.status = 'Approved'
+        LIMIT 1
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, equipmentId);
+            ps.setInt(2, customerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int appendixContractId = rs.getInt("contractId");
+                    System.out.println("✅ Equipment " + equipmentId + " found in appendix of contract: " + appendixContractId);
+                    return appendixContractId;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error checking appendix equipment: " + e.getMessage());
+            throw e;
+        }
+
+        System.out.println("⚠️ Equipment " + equipmentId + " not found in any contract for customer " + customerId);
+        return null;
+    }
+
 }
-
-

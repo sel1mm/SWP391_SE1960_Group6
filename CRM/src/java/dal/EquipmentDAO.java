@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 public class EquipmentDAO extends DBContext {
 
     // ==================== BASIC CRUD OPERATIONS ====================
@@ -267,82 +266,83 @@ public class EquipmentDAO extends DBContext {
     /**
      * Get equipment by category
      */
-public List<Equipment> getEquipmentGroupedByModel() {
-    List<Equipment> list = new ArrayList<>();
-    String sql = "SELECT e.model, " +
-                "e.categoryId, " +
-                "c.categoryName, " +
-                "e.description, " +
-                "COUNT(*) as totalCount " +
-                "FROM Equipment e " +
-                "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
-                "GROUP BY e.model, e.categoryId, c.categoryName, e.description " +
-                "ORDER BY e.model";
-    
-    try (PreparedStatement ps = connection.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        while (rs.next()) {
-            Equipment eq = new Equipment();
-            eq.setModel(rs.getString("model"));
-            
-            // Xử lý categoryId (có thể null)
-            int categoryId = rs.getInt("categoryId");
-            if (rs.wasNull()) {
-                eq.setCategoryId(null);
-            } else {
-                eq.setCategoryId(categoryId);
+    public List<Equipment> getEquipmentGroupedByModel() {
+        List<Equipment> list = new ArrayList<>();
+        String sql = "SELECT e.model, "
+                + "e.categoryId, "
+                + "c.categoryName, "
+                + "e.description, "
+                + "COUNT(*) as totalCount "
+                + "FROM Equipment e "
+                + "LEFT JOIN Category c ON e.categoryId = c.categoryId "
+                + "GROUP BY e.model, e.categoryId, c.categoryName, e.description "
+                + "ORDER BY e.model";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Equipment eq = new Equipment();
+                eq.setModel(rs.getString("model"));
+
+                // Xử lý categoryId (có thể null)
+                int categoryId = rs.getInt("categoryId");
+                if (rs.wasNull()) {
+                    eq.setCategoryId(null);
+                } else {
+                    eq.setCategoryId(categoryId);
+                }
+
+                eq.setCategoryName(rs.getString("categoryName"));
+                eq.setDescription(rs.getString("description"));
+                list.add(eq);
             }
-            
-            eq.setCategoryName(rs.getString("categoryName"));
-            eq.setDescription(rs.getString("description"));
-            list.add(eq);
+
+            System.out.println("✅ Loaded " + list.size() + " grouped equipment models");
+
+        } catch (SQLException e) {
+            System.out.println("❌ Error in getEquipmentGroupedByModel: " + e.getMessage());
+            e.printStackTrace();
         }
-        
-        System.out.println("✅ Loaded " + list.size() + " grouped equipment models");
-        
-    } catch (SQLException e) {
-        System.out.println("❌ Error in getEquipmentGroupedByModel: " + e.getMessage());
-        e.printStackTrace();
+        return list;
     }
-    return list;
-}
-public List<Equipment> getEquipmentByModel(String model) {
-    List<Equipment> list = new ArrayList<>();
-    String sql = "SELECT e.equipmentId, e.serialNumber, e.model, " +
-                "e.description, e.installDate, e.lastUpdatedBy, e.lastUpdatedDate, " +
-                "e.categoryId, c.categoryName, a.username " +
-                "FROM Equipment e " +
-                "LEFT JOIN Category c ON e.categoryId = c.categoryId " +
-                "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId " +
-                "WHERE e.model = ? " +
-                "ORDER BY e.equipmentId";
-    
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        ps.setString(1, model);
-        ResultSet rs = ps.executeQuery();
-        
-        while (rs.next()) {
-            Equipment eq = new Equipment();
-            eq.setEquipmentId(rs.getInt("equipmentId"));
-            eq.setSerialNumber(rs.getString("serialNumber"));
-            eq.setModel(rs.getString("model"));
-            eq.setDescription(rs.getString("description"));
-            eq.setInstallDate(rs.getDate("installDate") != null ? 
-                rs.getDate("installDate").toLocalDate() : null);
-            eq.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
-            eq.setLastUpdatedDate(rs.getDate("lastUpdatedDate") != null ? 
-                rs.getDate("lastUpdatedDate").toLocalDate() : null);
-            eq.setCategoryId(rs.getInt("categoryId"));
-            eq.setCategoryName(rs.getString("categoryName"));
-            eq.setUsername(rs.getString("username"));
-            list.add(eq);
+
+    public List<Equipment> getEquipmentByModel(String model) {
+        List<Equipment> list = new ArrayList<>();
+        String sql = "SELECT e.equipmentId, e.serialNumber, e.model, "
+                + "e.description, e.installDate, e.lastUpdatedBy, e.lastUpdatedDate, "
+                + "e.categoryId, c.categoryName, a.username "
+                + "FROM Equipment e "
+                + "LEFT JOIN Category c ON e.categoryId = c.categoryId "
+                + "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId "
+                + "WHERE e.model = ? "
+                + "ORDER BY e.equipmentId";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, model);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Equipment eq = new Equipment();
+                eq.setEquipmentId(rs.getInt("equipmentId"));
+                eq.setSerialNumber(rs.getString("serialNumber"));
+                eq.setModel(rs.getString("model"));
+                eq.setDescription(rs.getString("description"));
+                eq.setInstallDate(rs.getDate("installDate") != null
+                        ? rs.getDate("installDate").toLocalDate() : null);
+                eq.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
+                eq.setLastUpdatedDate(rs.getDate("lastUpdatedDate") != null
+                        ? rs.getDate("lastUpdatedDate").toLocalDate() : null);
+                eq.setCategoryId(rs.getInt("categoryId"));
+                eq.setCategoryName(rs.getString("categoryName"));
+                eq.setUsername(rs.getString("username"));
+                list.add(eq);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in getEquipmentByModel: " + e.getMessage());
         }
-    } catch (SQLException e) {
-        System.out.println("Error in getEquipmentByModel: " + e.getMessage());
+        return list;
     }
-    return list;
-}
+
     public List<Equipment> getEquipmentByCategory(int categoryId) throws SQLException {
         List<Equipment> list = new ArrayList<>();
         String sql = "SELECT e.equipmentId, e.serialNumber, e.model, e.description, "
@@ -631,6 +631,7 @@ public List<Equipment> getEquipmentByModel(String model) {
 
     /**
      * Lấy thông tin hợp đồng cho thiết bị (bao gồm cả phụ lục)
+     *
      * @param equipmentId ID thiết bị
      * @param customerId ID khách hàng
      * @return EquipmentContractInfo chứa thông tin hợp đồng và nguồn
@@ -685,6 +686,7 @@ public List<Equipment> getEquipmentByModel(String model) {
      * Class chứa thông tin hợp đồng của thiết bị
      */
     public static class EquipmentContractInfo {
+
         private int contractId;
         private String source; // "Contract", "Appendix", "None"
         private String formattedContractId; // "HD001", "N/A"
@@ -713,28 +715,30 @@ public List<Equipment> getEquipmentByModel(String model) {
     }
 
     /**
-     * Get repair information for equipment (includes technician, quotation, repair details)
+     * Get repair information for equipment (includes technician, quotation,
+     * repair details)
+     *
      * @param equipmentId Equipment ID
      * @return Map containing repair info or null if not found
      */
     public Map<String, Object> getEquipmentRepairInfo(int equipmentId) {
-        String sql = "SELECT " +
-                     "    a.fullName AS technician_name, " +
-                     "    sr.requestDate AS repair_date, " +
-                     "    rr.diagnosis, " +
-                     "    rr.details AS repair_details, " +
-                     "    rr.estimatedCost AS estimated_cost, " +
-                     "    rr.quotationStatus AS quotation_status " +
-                     "FROM Equipment e " +
-                     "LEFT JOIN ServiceRequest sr ON e.equipmentId = sr.equipmentId " +
-                     "    AND sr.status IN ('Approved', 'Completed') " +
-                     "    AND sr.requestType IN ('Service', 'Warranty') " +
-                     "LEFT JOIN RepairReport rr ON sr.requestId = rr.requestId " +
-                     "LEFT JOIN Account a ON rr.technicianId = a.accountId " +
-                     "WHERE e.equipmentId = ? " +
-                     "    AND sr.requestId IS NOT NULL " +
-                     "ORDER BY sr.requestDate DESC " +
-                     "LIMIT 1";
+        String sql = "SELECT "
+                + "    a.fullName AS technician_name, "
+                + "    sr.requestDate AS repair_date, "
+                + "    rr.diagnosis, "
+                + "    rr.details AS repair_details, "
+                + "    rr.estimatedCost AS estimated_cost, "
+                + "    rr.quotationStatus AS quotation_status "
+                + "FROM Equipment e "
+                + "LEFT JOIN ServiceRequest sr ON e.equipmentId = sr.equipmentId "
+                + "    AND sr.status IN ('Approved', 'Completed') "
+                + "    AND sr.requestType IN ('Service', 'Warranty') "
+                + "LEFT JOIN RepairReport rr ON sr.requestId = rr.requestId "
+                + "LEFT JOIN Account a ON rr.technicianId = a.accountId "
+                + "WHERE e.equipmentId = ? "
+                + "    AND sr.requestId IS NOT NULL "
+                + "ORDER BY sr.requestDate DESC "
+                + "LIMIT 1";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, equipmentId);
@@ -871,7 +875,6 @@ public List<Equipment> getEquipmentByModel(String model) {
         System.out.println("✅ Status: " + status);
         System.out.println();
 
-
         // Test 3: Get Equipment Repair Info
         System.out.println("--- Test 3: Get Equipment Repair Info (ID 1) ---");
         Map<String, Object> repairInfo = dao.getEquipmentRepairInfo(1);
@@ -990,12 +993,12 @@ public List<Equipment> getEquipmentByModel(String model) {
         try {
             List<Equipment> customerEquipment = dao.getEquipmentByCustomerContracts(1);
             System.out.println("✅ Found " + customerEquipment.size() + " equipment(s) for customer");
-            
+
             for (Equipment eq : customerEquipment) {
                 String cId = dao.getContractIdForEquipment(eq.getEquipmentId(), 1);
-                System.out.println("  - Equipment ID: " + eq.getEquipmentId() + 
-                                 " | Model: " + eq.getModel() + 
-                                 " | Contract: " + cId);
+                System.out.println("  - Equipment ID: " + eq.getEquipmentId()
+                        + " | Model: " + eq.getModel()
+                        + " | Contract: " + cId);
             }
         } catch (SQLException e) {
             System.out.println("❌ Error: " + e.getMessage());
@@ -1021,7 +1024,7 @@ public List<Equipment> getEquipmentByModel(String model) {
         try {
             int totalCount = dao.getEquipmentCount(null);
             int searchCount = dao.getEquipmentCount("HVAC");
-            
+
             System.out.println("✅ Total equipment: " + totalCount);
             System.out.println("✅ Equipment matching 'HVAC': " + searchCount);
         } catch (SQLException e) {
@@ -1087,17 +1090,28 @@ public List<Equipment> getEquipmentByModel(String model) {
         // Query lấy thiết bị từ ContractEquipment
         String sqlContract = "SELECT e.equipmentId, e.serialNumber, e.model, e.description, "
                 + "e.installDate, e.categoryId, ce.startDate, ce.endDate, ce.price, "
-                + "'Contract' as source "
+                + "'Contract' as source, "
+                + "CASE "
+                + "  WHEN ce.startDate > CURDATE() THEN 'Pending' "
+                + "  WHEN ce.endDate < CURDATE() THEN 'Expired' "
+                + "  ELSE 'Active' "
+                + "END as status "
                 + "FROM Equipment e "
                 + "JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId "
                 + "WHERE ce.contractId = ?";
 
-        // Query lấy thiết bị từ ContractAppendix
+        // ✅ Query lấy thiết bị từ ContractAppendix (ĐÃ CÓ startDate, endDate)
         String sqlAppendix = "SELECT e.equipmentId, e.serialNumber, e.model, e.description, "
                 + "e.installDate, e.categoryId, "
-                + "NULL as startDate, NULL as endDate, "
+                + "cae.startDate, " // ✅ LẤY startDate từ ContractAppendixEquipment
+                + "cae.endDate, " // ✅ LẤY endDate từ ContractAppendixEquipment
                 + "cae.unitPrice as price, "
-                + "'Appendix' as source "
+                + "'Appendix' as source, "
+                + "CASE " // ✅ TÍNH TOÁN STATUS
+                + "  WHEN cae.startDate > CURDATE() THEN 'Pending' "
+                + "  WHEN cae.endDate < CURDATE() THEN 'Expired' "
+                + "  ELSE 'Active' "
+                + "END as status "
                 + "FROM Equipment e "
                 + "JOIN ContractAppendixEquipment cae ON e.equipmentId = cae.equipmentId "
                 + "JOIN ContractAppendix ca ON cae.appendixId = ca.appendixId "
@@ -1114,27 +1128,38 @@ public List<Equipment> getEquipmentByModel(String model) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     EquipmentWithStatus eq = new EquipmentWithStatus();
+
                     eq.setEquipmentId(rs.getInt("equipmentId"));
                     eq.setSerialNumber(rs.getString("serialNumber"));
                     eq.setModel(rs.getString("model"));
                     eq.setDescription(rs.getString("description"));
 
+                    // Set installDate
                     Date installDate = rs.getDate("installDate");
                     if (installDate != null) {
                         eq.setInstallDate(installDate.toLocalDate());
                     }
 
+                    // SET startDate (CẢ CONTRACT VÀ APPENDIX ĐỀU CÓ)
                     Date startDate = rs.getDate("startDate");
                     if (startDate != null) {
                         eq.setStartDate(startDate.toLocalDate());
                     }
 
+                    // SET endDate (CẢ CONTRACT VÀ APPENDIX ĐỀU CÓ)
                     Date endDate = rs.getDate("endDate");
                     if (endDate != null) {
                         eq.setEndDate(endDate.toLocalDate());
                     }
 
+                    // SET PRICE
                     eq.setPrice(rs.getBigDecimal("price"));
+
+                    // SET SOURCE
+                    eq.setSource(rs.getString("source"));
+
+                    // SET STATUS (ĐÃ TÍNH TRONG SQL)
+                    eq.setStatus(rs.getString("status"));
 
                     list.add(eq);
                 }
@@ -1180,25 +1205,84 @@ public List<Equipment> getEquipmentByModel(String model) {
      * @param customerId ID của khách hàng
      * @return Danh sách thiết bị
      */
+//    public List<Equipment> getEquipmentByCustomerContractsAndAppendix(int customerId) throws SQLException {
+//        List<Equipment> list = new ArrayList<>();
+//
+//        String sql = "SELECT DISTINCT e.equipmentId, e.serialNumber, e.model, e.description, "
+//                + "e.installDate, e.lastUpdatedBy, e.lastUpdatedDate "
+//                + "FROM Equipment e "
+//                + "WHERE e.equipmentId IN ( "
+//                + "   SELECT DISTINCT ce.equipmentId "
+//                + "   FROM ContractEquipment ce "
+//                + "   INNER JOIN Contract c ON ce.contractId = c.contractId "
+//                + "   WHERE c.customerId = ? "
+//                + "   UNION "
+//                + "   SELECT DISTINCT cae.equipmentId "
+//                + "   FROM ContractAppendixEquipment cae "
+//                + "   INNER JOIN ContractAppendix ca ON cae.appendixId = ca.appendixId "
+//                + "   INNER JOIN Contract c ON ca.contractId = c.contractId "
+//                + "   WHERE c.customerId = ? "
+//                + ") "
+//                + "ORDER BY e.model, e.serialNumber";
+//
+//        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+//            ps.setInt(1, customerId);
+//            ps.setInt(2, customerId);
+//
+//            try (ResultSet rs = ps.executeQuery()) {
+//                while (rs.next()) {
+//                    Equipment equipment = new Equipment();
+//                    equipment.setEquipmentId(rs.getInt("equipmentId"));
+//                    equipment.setSerialNumber(rs.getString("serialNumber"));
+//                    equipment.setModel(rs.getString("model"));
+//                    equipment.setDescription(rs.getString("description"));
+//
+//                    Date installDate = rs.getDate("installDate");
+//                    if (installDate != null) {
+//                        equipment.setInstallDate(installDate.toLocalDate());
+//                    }
+//
+//                    equipment.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
+//
+//                    Date lastUpdatedDate = rs.getDate("lastUpdatedDate");
+//                    if (lastUpdatedDate != null) {
+//                        equipment.setLastUpdatedDate(lastUpdatedDate.toLocalDate());
+//                    }
+//
+//                    list.add(equipment);
+//                }
+//            }
+//        }
+//
+//        return list;
+//    }
+    /**
+     * Lấy tất cả thiết bị từ hợp đồng chính VÀ phụ lục của khách hàng
+     */
     public List<Equipment> getEquipmentByCustomerContractsAndAppendix(int customerId) throws SQLException {
-        List<Equipment> list = new ArrayList<>();
+        List<Equipment> equipmentList = new ArrayList<>();
 
-        String sql = "SELECT DISTINCT e.equipmentId, e.serialNumber, e.model, e.description, "
-                + "e.installDate, e.lastUpdatedBy, e.lastUpdatedDate "
-                + "FROM Equipment e "
-                + "WHERE e.equipmentId IN ( "
-                + "   SELECT DISTINCT ce.equipmentId "
-                + "   FROM ContractEquipment ce "
-                + "   INNER JOIN Contract c ON ce.contractId = c.contractId "
-                + "   WHERE c.customerId = ? "
-                + "   UNION "
-                + "   SELECT DISTINCT cae.equipmentId "
-                + "   FROM ContractAppendixEquipment cae "
-                + "   INNER JOIN ContractAppendix ca ON cae.appendixId = ca.appendixId "
-                + "   INNER JOIN Contract c ON ca.contractId = c.contractId "
-                + "   WHERE c.customerId = ? "
-                + ") "
-                + "ORDER BY e.model, e.serialNumber";
+        String sql = """
+        SELECT DISTINCT e.*
+        FROM Equipment e
+        WHERE e.equipmentId IN (
+            -- Thiết bị từ hợp đồng chính
+            SELECT ce.equipmentId
+            FROM ContractEquipment ce
+            JOIN Contract c ON ce.contractId = c.contractId
+            WHERE c.customerId = ?
+
+            UNION
+
+            -- Thiết bị từ phụ lục
+            SELECT cae.equipmentId
+            FROM ContractAppendixEquipment cae
+            JOIN ContractAppendix ca ON cae.appendixId = ca.appendixId
+            JOIN Contract c ON ca.contractId = c.contractId
+            WHERE c.customerId = ?
+              AND ca.status = 'Approved'
+        )
+    """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, customerId);
@@ -1206,34 +1290,32 @@ public List<Equipment> getEquipmentByModel(String model) {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Equipment equipment = new Equipment();
-                    equipment.setEquipmentId(rs.getInt("equipmentId"));
-                    equipment.setSerialNumber(rs.getString("serialNumber"));
-                    equipment.setModel(rs.getString("model"));
-                    equipment.setDescription(rs.getString("description"));
+                    Equipment eq = new Equipment();
+                    eq.setEquipmentId(rs.getInt("equipmentId"));
+                    eq.setModel(rs.getString("model"));
+                    eq.setSerialNumber(rs.getString("serialNumber"));
+                    eq.setDescription(rs.getString("description"));
+                    eq.setInstallDate(rs.getDate("installDate") != null
+                            ? rs.getDate("installDate").toLocalDate() : null);
+                    eq.setCategoryId(rs.getObject("categoryId") != null
+                            ? rs.getInt("categoryId") : null);
+                    // Có thể set thêm các field khác nếu model Equipment có
 
-                    Date installDate = rs.getDate("installDate");
-                    if (installDate != null) {
-                        equipment.setInstallDate(installDate.toLocalDate());
-                    }
-
-                    equipment.setLastUpdatedBy(rs.getInt("lastUpdatedBy"));
-
-                    Date lastUpdatedDate = rs.getDate("lastUpdatedDate");
-                    if (lastUpdatedDate != null) {
-                        equipment.setLastUpdatedDate(lastUpdatedDate.toLocalDate());
-                    }
-
-                    list.add(equipment);
+                    equipmentList.add(eq);
                 }
             }
+        } catch (SQLException e) {
+            System.err.println("❌ Error fetching equipment for customer " + customerId + ": " + e.getMessage());
+            throw e;
         }
 
-        return list;
+        System.out.println("📋 Found " + equipmentList.size() + " equipment for customer " + customerId);
+        return equipmentList;
     }
 
     /**
      * Lấy tất cả thiết bị của khách hàng với thông tin nguồn (Hợp đồng/Phụ lục)
+     *
      * @param customerId ID của khách hàng
      * @return Danh sách thiết bị với thông tin nguồn
      */
@@ -1301,6 +1383,7 @@ public List<Equipment> getEquipmentByModel(String model) {
      * Inner class để chứa thông tin thiết bị với nguồn
      */
     public static class EquipmentWithSource {
+
         private int equipmentId;
         private String serialNumber;
         private String model;
@@ -1384,86 +1467,92 @@ public List<Equipment> getEquipmentByModel(String model) {
             this.contractId = contractId;
         }
     }
+
     public int getEquipmentCount() {
-    String sql = "SELECT COUNT(*) FROM Equipment";
-    try (PreparedStatement ps = connection.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) return rs.getInt(1);
-    } catch (SQLException ex) {
-        ex.printStackTrace();
+        String sql = "SELECT COUNT(*) FROM Equipment";
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return 0;
     }
-    return 0;
-}
 // Thêm method này vào class EquipmentDAO của bạn
 
-/**
- * Lấy thông tin template của 1 model cụ thể (để dùng khi thêm equipment với model có sẵn)
- * @param model Model name
- * @return Equipment object chứa thông tin template, hoặc null nếu không tìm thấy
- */
-public Equipment getEquipmentGroupedByModelSingle(String model) {
-    String sql = "SELECT e.model, e.description, e.category_id, c.category_name " +
-                 "FROM equipment e " +
-                 "LEFT JOIN category c ON e.category_id = c.category_id " +
-                 "WHERE e.model = ? " +
-                 "LIMIT 1";
-    
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        ps.setString(1, model);
-        ResultSet rs = ps.executeQuery();
-        
-        if (rs.next()) {
-            Equipment equipment = new Equipment();
-            equipment.setModel(rs.getString("model"));
-            equipment.setDescription(rs.getString("description"));
-            
-            int categoryId = rs.getInt("category_id");
-            if (!rs.wasNull()) {
-                equipment.setCategoryId(categoryId);
-                equipment.setCategoryName(rs.getString("category_name"));
-            } else {
-                equipment.setCategoryId(0);
+    /**
+     * Lấy thông tin template của 1 model cụ thể (để dùng khi thêm equipment với
+     * model có sẵn)
+     *
+     * @param model Model name
+     * @return Equipment object chứa thông tin template, hoặc null nếu không tìm
+     * thấy
+     */
+    public Equipment getEquipmentGroupedByModelSingle(String model) {
+        String sql = "SELECT e.model, e.description, e.category_id, c.category_name "
+                + "FROM equipment e "
+                + "LEFT JOIN category c ON e.category_id = c.category_id "
+                + "WHERE e.model = ? "
+                + "LIMIT 1";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, model);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                Equipment equipment = new Equipment();
+                equipment.setModel(rs.getString("model"));
+                equipment.setDescription(rs.getString("description"));
+
+                int categoryId = rs.getInt("category_id");
+                if (!rs.wasNull()) {
+                    equipment.setCategoryId(categoryId);
+                    equipment.setCategoryName(rs.getString("category_name"));
+                } else {
+                    equipment.setCategoryId(0);
+                }
+
+                return equipment;
             }
-            
-            return equipment;
+        } catch (SQLException e) {
+            System.out.println("Error in getEquipmentGroupedByModelSingle: " + e.getMessage());
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        System.out.println("Error in getEquipmentGroupedByModelSingle: " + e.getMessage());
-        e.printStackTrace();
+        return null;
     }
-    return null;
-}
-public List<Equipment> getEquipmentByContract(int contractId) throws SQLException {
-    List<Equipment> list = new ArrayList<>();
-    
-    String sql = "SELECT DISTINCT e.equipmentId, e.serialNumber, e.model, e.description, "
-            + "e.installDate, e.categoryId, c.categoryName, "
-            + "e.lastUpdatedBy, e.lastUpdatedDate, a.username "
-            + "FROM Equipment e "
-            + "INNER JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId "
-            + "LEFT JOIN Category c ON e.categoryId = c.categoryId "
-            + "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId "
-            + "WHERE ce.contractId = ? "
-            + "ORDER BY e.model, e.serialNumber";
-    
-    System.out.println("📊 DAO: Executing query for contractId: " + contractId);
-    
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        ps.setInt(1, contractId);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Equipment equipment = mapResultSetToEquipment(rs);
-                list.add(equipment);
-                System.out.println("  - Found: " + equipment.getModel() + " (ID: " + equipment.getEquipmentId() + ")");
+
+    public List<Equipment> getEquipmentByContract(int contractId) throws SQLException {
+        List<Equipment> list = new ArrayList<>();
+
+        String sql = "SELECT DISTINCT e.equipmentId, e.serialNumber, e.model, e.description, "
+                + "e.installDate, e.categoryId, c.categoryName, "
+                + "e.lastUpdatedBy, e.lastUpdatedDate, a.username "
+                + "FROM Equipment e "
+                + "INNER JOIN ContractEquipment ce ON e.equipmentId = ce.equipmentId "
+                + "LEFT JOIN Category c ON e.categoryId = c.categoryId "
+                + "LEFT JOIN Account a ON e.lastUpdatedBy = a.accountId "
+                + "WHERE ce.contractId = ? "
+                + "ORDER BY e.model, e.serialNumber";
+
+        System.out.println("📊 DAO: Executing query for contractId: " + contractId);
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Equipment equipment = mapResultSetToEquipment(rs);
+                    list.add(equipment);
+                    System.out.println("  - Found: " + equipment.getModel() + " (ID: " + equipment.getEquipmentId() + ")");
+                }
             }
+        } catch (SQLException e) {
+            System.out.println("❌ DAO Error getting equipment by contractId: " + e.getMessage());
+            throw e;
         }
-    } catch (SQLException e) {
-        System.out.println("❌ DAO Error getting equipment by contractId: " + e.getMessage());
-        throw e;
+
+        System.out.println("✅ DAO: Returning " + list.size() + " equipment");
+        return list;
     }
-    
-    System.out.println("✅ DAO: Returning " + list.size() + " equipment");
-    return list;
-}
 }

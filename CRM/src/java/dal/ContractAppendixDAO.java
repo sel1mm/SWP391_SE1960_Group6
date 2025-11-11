@@ -79,17 +79,15 @@ public class ContractAppendixDAO extends DBContext {
     }
 
     // ✅ Lấy danh sách phụ lục theo contractId
-    // ✅ Lấy danh sách phụ lục theo contractId
     public List<ContractAppendix> getAppendixesByContractId(int contractId) throws SQLException {
         List<ContractAppendix> list = new ArrayList<>();
 
         String sql = "SELECT ca.*, "
-                + "COUNT(cae.equipmentId) as equipmentCount, "
-                + "DATEDIFF(NOW(), ca.createdAt) as daysPassed "
+                + "(SELECT COUNT(*) FROM ContractAppendixEquipment WHERE appendixId = ca.appendixId) AS equipmentCount, "
+                + "(SELECT COUNT(*) FROM ContractAppendixPart WHERE appendixId = ca.appendixId) AS partCount, "
+                + "DATEDIFF(NOW(), ca.createdAt) AS daysPassed "
                 + "FROM ContractAppendix ca "
-                + "LEFT JOIN ContractAppendixEquipment cae ON ca.appendixId = cae.appendixId "
                 + "WHERE ca.contractId = ? "
-                + "GROUP BY ca.appendixId "
                 + "ORDER BY ca.createdAt DESC";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -104,7 +102,7 @@ public class ContractAppendixDAO extends DBContext {
                     appendix.setAppendixName(rs.getString("appendixName"));
                     appendix.setDescription(rs.getString("description"));
 
-                    // XỬ LÝ LocalDate
+                    // ✅ Xử lý LocalDate
                     Date effectiveDate = rs.getDate("effectiveDate");
                     if (effectiveDate != null) {
                         appendix.setEffectiveDate(effectiveDate.toLocalDate());
@@ -114,8 +112,9 @@ public class ContractAppendixDAO extends DBContext {
                     appendix.setStatus(rs.getString("status"));
                     appendix.setFileAttachment(rs.getString("fileAttachment"));
                     appendix.setEquipmentCount(rs.getInt("equipmentCount"));
+                    appendix.setPartCount(rs.getInt("partCount"));
 
-                    // Kiểm tra xem có thể edit không (trong vòng 15 ngày)
+                    // ✅ Kiểm tra xem có thể edit không (trong vòng 15 ngày)
                     int daysPassed = rs.getInt("daysPassed");
                     appendix.setCanEdit(daysPassed <= 15);
 
@@ -359,45 +358,48 @@ public class ContractAppendixDAO extends DBContext {
             ps.executeUpdate();
         }
     }
-    
+
     /**
-     * Append repair report parts to contract as an appendix.
-     * This method is called when a repair report is approved.
-     * 
-     * Business rule: If contractId is provided, use it. Otherwise, find the latest Active contract
-     * for the equipment/customer associated with the report's ServiceRequest.
-     * 
+     * Append repair report parts to contract as an appendix. This method is
+     * called when a repair report is approved.
+     *
+     * Business rule: If contractId is provided, use it. Otherwise, find the
+     * latest Active contract for the equipment/customer associated with the
+     * report's ServiceRequest.
+     *
      * @param reportId The repair report ID
-     * @param contractId Optional contract ID (if null, will be discovered from ServiceRequest)
+     * @param contractId Optional contract ID (if null, will be discovered from
+     * ServiceRequest)
      * @return The created appendix ID, or 0 if failed
-     * @throws SQLException If database error occurs or parts are no longer available
+     * @throws SQLException If database error occurs or parts are no longer
+     * available
      */
     public int appendReportPartsToContract(int reportId, Integer contractId) throws SQLException {
         boolean originalAutoCommit = connection.getAutoCommit();
-        
+
         try {
             connection.setAutoCommit(false);
-            
+
             // Get repair report details
             RepairReportDAO reportDAO = new RepairReportDAO();
             List<RepairReportDetail> details = reportDAO.getReportDetails(reportId);
-            
+
             if (details == null || details.isEmpty()) {
                 System.out.println("⚠️ No parts found in repair report " + reportId);
                 connection.rollback();
                 return 0;
             }
-            
+
             // Get ServiceRequest info to find contract and equipment
-            String sql = "SELECT sr.contractId, sr.equipmentId, sr.createdBy " +
-                        "FROM ServiceRequest sr " +
-                        "JOIN RepairReport rr ON sr.requestId = rr.requestId " +
-                        "WHERE rr.reportId = ?";
-            
+            String sql = "SELECT sr.contractId, sr.equipmentId, sr.createdBy "
+                    + "FROM ServiceRequest sr "
+                    + "JOIN RepairReport rr ON sr.requestId = rr.requestId "
+                    + "WHERE rr.reportId = ?";
+
             Integer finalContractId = contractId;
             Integer equipmentId = null;
             Integer customerId = null;
-            
+
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setInt(1, reportId);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -414,16 +416,16 @@ public class ContractAppendixDAO extends DBContext {
                     }
                 }
             }
-            
+
             // If contractId still not found, find latest Active contract for this equipment/customer
             if (finalContractId == null && equipmentId != null && customerId != null) {
-                sql = "SELECT c.contractId " +
-                     "FROM Contract c " +
-                     "JOIN ContractEquipment ce ON c.contractId = ce.contractId " +
-                     "WHERE c.customerId = ? AND ce.equipmentId = ? AND c.status = 'Active' " +
-                     "ORDER BY c.createdDate DESC, c.contractId DESC " +
-                     "LIMIT 1";
-                
+                sql = "SELECT c.contractId "
+                        + "FROM Contract c "
+                        + "JOIN ContractEquipment ce ON c.contractId = ce.contractId "
+                        + "WHERE c.customerId = ? AND ce.equipmentId = ? AND c.status = 'Active' "
+                        + "ORDER BY c.createdDate DESC, c.contractId DESC "
+                        + "LIMIT 1";
+
                 try (PreparedStatement ps = connection.prepareStatement(sql)) {
                     ps.setInt(1, customerId);
                     ps.setInt(2, equipmentId);
@@ -435,13 +437,13 @@ public class ContractAppendixDAO extends DBContext {
                     }
                 }
             }
-            
+
             if (finalContractId == null) {
                 connection.rollback();
-                throw new SQLException("Cannot determine contract for repair report " + reportId + 
-                                     ". Please specify contractId or ensure ServiceRequest has valid contract/equipment.");
+                throw new SQLException("Cannot determine contract for repair report " + reportId
+                        + ". Please specify contractId or ensure ServiceRequest has valid contract/equipment.");
             }
-            
+
             // Verify contract exists and belongs to correct customer
             sql = "SELECT customerId, status FROM Contract WHERE contractId = ?";
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -458,7 +460,7 @@ public class ContractAppendixDAO extends DBContext {
                     }
                 }
             }
-            
+
             // Check if report has already been appended (prevent duplicates)
             sql = "SELECT COUNT(*) FROM ContractAppendixPart WHERE repairReportId = ?";
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -470,21 +472,21 @@ public class ContractAppendixDAO extends DBContext {
                     }
                 }
             }
-            
+
             // Validate all parts are still available and lock them
             PartDetailDAO partDetailDAO = new PartDetailDAO();
             List<Integer> partDetailIdsToUpdate = new ArrayList<>();
-            
+
             for (RepairReportDetail detail : details) {
                 // Validate quantity
                 int availableQty = partDetailDAO.getAvailableQuantityForPart(detail.getPartId());
                 if (detail.getQuantity() > availableQty) {
                     connection.rollback();
-                    throw new SQLException("Part " + detail.getPartId() + " (" + detail.getPartName() + 
-                                        ") has insufficient quantity. Required: " + detail.getQuantity() + 
-                                        ", Available: " + availableQty);
+                    throw new SQLException("Part " + detail.getPartId() + " (" + detail.getPartName()
+                            + ") has insufficient quantity. Required: " + detail.getQuantity()
+                            + ", Available: " + availableQty);
                 }
-                
+
                 // If partDetailId is specified, validate and lock it
                 if (detail.getPartDetailId() != null) {
                     var partDetail = partDetailDAO.lockAndValidatePartDetail(detail.getPartDetailId());
@@ -495,20 +497,20 @@ public class ContractAppendixDAO extends DBContext {
                     partDetailIdsToUpdate.add(detail.getPartDetailId());
                 }
             }
-            
+
             // Calculate total amount
             double totalAmount = details.stream()
-                .mapToDouble(d -> d.getUnitPrice().multiply(java.math.BigDecimal.valueOf(d.getQuantity())).doubleValue())
-                .sum();
-            
+                    .mapToDouble(d -> d.getUnitPrice().multiply(java.math.BigDecimal.valueOf(d.getQuantity())).doubleValue())
+                    .sum();
+
             // Create ContractAppendix
-            sql = "INSERT INTO ContractAppendix (contractId, appendixType, appendixName, description, " +
-                 "effectiveDate, totalAmount, status, createdBy, createdAt) " +
-                 "VALUES (?, 'RepairPart', ?, ?, CURDATE(), ?, 'Approved', ?, NOW())";
-            
+            sql = "INSERT INTO ContractAppendix (contractId, appendixType, appendixName, description, "
+                    + "effectiveDate, totalAmount, status, createdBy, createdAt) "
+                    + "VALUES (?, 'RepairPart', ?, ?, CURDATE(), ?, 'Approved', ?, NOW())";
+
             String appendixName = "Repair Parts from Report #" + reportId;
             String description = "Parts automatically added when repair report #" + reportId + " was approved";
-            
+
             int appendixId;
             try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setInt(1, finalContractId);
@@ -516,7 +518,7 @@ public class ContractAppendixDAO extends DBContext {
                 ps.setString(3, description);
                 ps.setBigDecimal(4, java.math.BigDecimal.valueOf(totalAmount));
                 ps.setInt(5, customerId != null ? customerId : 1); // Use customerId or default
-                
+
                 ps.executeUpdate();
                 try (ResultSet rs = ps.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -527,12 +529,12 @@ public class ContractAppendixDAO extends DBContext {
                     }
                 }
             }
-            
+
             // Insert ContractAppendixPart rows and update PartDetail status
-            sql = "INSERT INTO ContractAppendixPart (appendixId, equipmentId, partId, quantity, unitPrice, " +
-                 "repairReportId, paymentStatus, approvedByCustomer, approvalDate, note) " +
-                 "VALUES (?, ?, ?, ?, ?, ?, 'Paid', TRUE, NOW(), ?)";
-            
+            sql = "INSERT INTO ContractAppendixPart (appendixId, equipmentId, partId, quantity, unitPrice, "
+                    + "repairReportId, paymentStatus, approvedByCustomer, approvalDate, note) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, 'Paid', TRUE, NOW(), ?)";
+
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 for (RepairReportDetail detail : details) {
                     ps.setInt(1, appendixId);
@@ -546,20 +548,20 @@ public class ContractAppendixDAO extends DBContext {
                 }
                 ps.executeBatch();
             }
-            
+
             // Update PartDetail status to 'InUse' for specified partDetailIds
             if (!partDetailIdsToUpdate.isEmpty()) {
                 int updated = partDetailDAO.markPartDetailsAsInUse(partDetailIdsToUpdate, customerId != null ? customerId : 1);
                 if (updated != partDetailIdsToUpdate.size()) {
-                    System.out.println("⚠️ Warning: Only " + updated + " of " + partDetailIdsToUpdate.size() + 
-                                     " PartDetails were marked as InUse");
+                    System.out.println("⚠️ Warning: Only " + updated + " of " + partDetailIdsToUpdate.size()
+                            + " PartDetails were marked as InUse");
                 }
             }
-            
+
             connection.commit();
             System.out.println("✅ Successfully appended repair report " + reportId + " to contract " + finalContractId);
             return appendixId;
-            
+
         } catch (SQLException e) {
             connection.rollback();
             System.err.println("❌ Error appending report parts to contract: " + e.getMessage());
@@ -568,4 +570,63 @@ public class ContractAppendixDAO extends DBContext {
             connection.setAutoCommit(originalAutoCommit);
         }
     }
+
+    public List<Map<String, Object>> getRepairPartsByAppendixId(int appendixId) throws SQLException {
+        List<Map<String, Object>> partsList = new ArrayList<>();
+
+        String sql = "SELECT "
+                + "cap.appendixPartId, "
+                + "cap.quantity, "
+                + "cap.unitPrice, "
+                + "cap.totalPrice, "
+                + "cap.note, "
+                + "cap.paymentStatus, "
+                + "cap.approvalDate, "
+                + "p.partId, "
+                + "p.partName, "
+                + "p.description AS partDescription, "
+                + "e.equipmentId, "
+                + "e.model AS equipmentModel, "
+                + "e.serialNumber AS equipmentSerial, "
+                + "rr.reportId "
+                + "FROM ContractAppendixPart cap "
+                + "JOIN Part p ON cap.partId = p.partId "
+                + "JOIN Equipment e ON cap.equipmentId = e.equipmentId "
+                + "LEFT JOIN RepairReport rr ON cap.repairReportId = rr.reportId "
+                + "WHERE cap.appendixId = ? "
+                + "ORDER BY e.equipmentId, p.partName";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, appendixId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> part = new HashMap<>();
+
+                    part.put("appendixPartId", rs.getInt("appendixPartId"));
+                    part.put("quantity", rs.getInt("quantity"));
+                    part.put("unitPrice", rs.getDouble("unitPrice"));
+                    part.put("totalPrice", rs.getDouble("totalPrice"));
+                    part.put("note", rs.getString("note"));
+                    part.put("paymentStatus", rs.getString("paymentStatus"));
+                    part.put("approvalDate", rs.getTimestamp("approvalDate"));
+
+                    part.put("partId", rs.getInt("partId"));
+                    part.put("partName", rs.getString("partName"));
+                    part.put("partDescription", rs.getString("partDescription"));
+
+                    part.put("equipmentId", rs.getInt("equipmentId"));
+                    part.put("equipmentModel", rs.getString("equipmentModel"));
+                    part.put("equipmentSerial", rs.getString("equipmentSerial"));
+
+                    part.put("reportId", rs.getObject("reportId"));
+
+                    partsList.add(part);
+                }
+            }
+        }
+
+        return partsList;
+    }
+
 }
