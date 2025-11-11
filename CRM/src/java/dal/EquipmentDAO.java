@@ -6,8 +6,10 @@ import model.ContractEquipment;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class EquipmentDAO extends DBContext {
 
@@ -1555,4 +1557,31 @@ public class EquipmentDAO extends DBContext {
         System.out.println("✅ DAO: Returning " + list.size() + " equipment");
         return list;
     }
+    /**
+ * Lấy danh sách equipmentId đã được sử dụng trong ContractEquipment hoặc ContractAppendixEquipment
+ * @return Set<Integer> chứa các equipmentId đã dùng
+ */
+public Set<Integer> getUsedEquipmentIds() {
+    Set<Integer> usedIds = new HashSet<>();
+    
+    String sql = "SELECT DISTINCT equipmentId FROM ContractEquipment WHERE equipmentId IS NOT NULL "
+               + "UNION "
+               + "SELECT DISTINCT equipmentId FROM ContractAppendixEquipment WHERE equipmentId IS NOT NULL";
+    
+    try (PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        
+        while (rs.next()) {
+            usedIds.add(rs.getInt("equipmentId"));
+        }
+        
+        System.out.println("✅ Found " + usedIds.size() + " used equipment IDs");
+        
+    } catch (SQLException e) {
+        System.out.println("❌ Error getting used equipment IDs: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    return usedIds;
+}
 }

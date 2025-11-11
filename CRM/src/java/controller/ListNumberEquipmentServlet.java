@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import model.Account;
 import model.Category;
@@ -33,7 +34,9 @@ public class ListNumberEquipmentServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+        // ===== LOAD USED EQUIPMENT IDS =====
+Set<Integer> usedEquipmentIds = dao.getUsedEquipmentIds();
+request.setAttribute("usedEquipmentIds", usedEquipmentIds);
         // Kiểm tra đăng nhập
         HttpSession session = request.getSession();
         Account acc = (Account) session.getAttribute("session_login");
@@ -165,36 +168,41 @@ public class ListNumberEquipmentServlet extends HttpServlet {
     /**
      * Xử lý AJAX request để lấy chi tiết equipment theo model
      */
-    private void handleGetDetailByModel(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-        String model = request.getParameter("model");
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        
-        EquipmentDAO dao = new EquipmentDAO();
-        List<Equipment> equipmentList = dao.getEquipmentByModel(model);
-        
-        // Convert to JSON
-        PrintWriter out = response.getWriter();
-        out.print("[");
-        for (int i = 0; i < equipmentList.size(); i++) {
-            Equipment eq = equipmentList.get(i);
-            if (i > 0) out.print(",");
-            out.print("{");
-            out.print("\"equipmentId\":" + eq.getEquipmentId() + ",");
-            out.print("\"serialNumber\":\"" + escapeJson(eq.getSerialNumber()) + "\",");
-            out.print("\"model\":\"" + escapeJson(eq.getModel()) + "\",");
-            out.print("\"categoryName\":\"" + escapeJson(eq.getCategoryName()) + "\",");
-            out.print("\"description\":\"" + escapeJson(eq.getDescription()) + "\",");
-            out.print("\"installDate\":\"" + (eq.getInstallDate() != null ? eq.getInstallDate().toString() : "") + "\",");
-            out.print("\"username\":\"" + escapeJson(eq.getUsername()) + "\",");
-            out.print("\"lastUpdatedDate\":\"" + (eq.getLastUpdatedDate() != null ? eq.getLastUpdatedDate().toString() : "") + "\",");
-            out.print("\"categoryId\":" + eq.getCategoryId());
-            out.print("}");
-        }
-        out.print("]");
+  private void handleGetDetailByModel(HttpServletRequest request, HttpServletResponse response)
+        throws IOException {
+    String model = request.getParameter("model");
+    
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+    
+    EquipmentDAO dao = new EquipmentDAO();
+    List<Equipment> equipmentList = dao.getEquipmentByModel(model);
+    
+    // ✅ LẤY DANH SÁCH EQUIPMENT ĐÃ DÙNG
+    Set<Integer> usedEquipmentIds = dao.getUsedEquipmentIds();
+    
+    // Convert to JSON
+    PrintWriter out = response.getWriter();
+    out.print("[");
+    for (int i = 0; i < equipmentList.size(); i++) {
+        Equipment eq = equipmentList.get(i);
+        if (i > 0) out.print(",");
+        out.print("{");
+        out.print("\"equipmentId\":" + eq.getEquipmentId() + ",");
+        out.print("\"serialNumber\":\"" + escapeJson(eq.getSerialNumber()) + "\",");
+        out.print("\"model\":\"" + escapeJson(eq.getModel()) + "\",");
+        out.print("\"categoryName\":\"" + escapeJson(eq.getCategoryName()) + "\",");
+        out.print("\"description\":\"" + escapeJson(eq.getDescription()) + "\",");
+        out.print("\"installDate\":\"" + (eq.getInstallDate() != null ? eq.getInstallDate().toString() : "") + "\",");
+        out.print("\"username\":\"" + escapeJson(eq.getUsername()) + "\",");
+        out.print("\"lastUpdatedDate\":\"" + (eq.getLastUpdatedDate() != null ? eq.getLastUpdatedDate().toString() : "") + "\",");
+        out.print("\"categoryId\":" + eq.getCategoryId() + ",");
+        // ✅ THÊM FLAG isUsed
+        out.print("\"isUsed\":" + usedEquipmentIds.contains(eq.getEquipmentId()));
+        out.print("}");
     }
+    out.print("]");
+}
     
     /**
      * Helper method để escape JSON string

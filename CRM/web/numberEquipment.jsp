@@ -691,6 +691,34 @@
             font-size: 14px;
             font-weight: 500;
         }
+        /* Thêm vào phần <style> */
+.summary-row.disabled {
+    opacity: 0.5;
+    background-color: #f0f0f0 !important;
+    color: #999 !important;
+}
+
+.summary-row.disabled:hover {
+    background-color: #e8e8e8 !important;
+    cursor: not-allowed;
+}
+
+.detail-table tbody tr.disabled {
+    opacity: 0.5;
+    background-color: #f8f9fa !important;
+    color: #999 !important;
+}
+
+.detail-table tbody tr.disabled:hover {
+    background-color: #f0f0f0 !important;
+}
+
+.detail-table tbody tr.disabled .btn-edit,
+.detail-table tbody tr.disabled .btn-delete {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+}
     </style>
 </head>
 
@@ -1040,47 +1068,52 @@
             }
         }
 
-        function loadDetailData(index, model) {
-            const tbody = document.getElementById('tbody-' + index);
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;"><span class="loading-spinner"></span> Loading...</td></tr>';
+     function loadDetailData(index, model) {
+    const tbody = document.getElementById('tbody-' + index);
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;"><span class="loading-spinner"></span> Loading...</td></tr>';
+    
+    fetch('numberEquipment?action=getDetailByModel&model=' + encodeURIComponent(model))
+        .then(response => response.json())
+        .then(data => {
+            tbody.innerHTML = '';
             
-            fetch('numberEquipment?action=getDetailByModel&model=' + encodeURIComponent(model))
-                .then(response => response.json())
-                .then(data => {
-                    tbody.innerHTML = '';
-                    
-                    if (data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có dữ liệu</td></tr>';
-                        return;
-                    }
-                    
-                    data.forEach(item => {
-                        const row = document.createElement('tr');
-                        const sn = String(item.serialNumber).replace(/'/g, "\\'");
-                        const installDate = item.installDate || '';
-                        
-                        row.innerHTML = 
-                            '<td>' + item.equipmentId + '</td>' +
-                            '<td>' + item.serialNumber + '</td>' +
-                            '<td>' + (item.installDate || 'N/A') + '</td>' +
-                            '<td>' + (item.username || 'N/A') + '</td>' +
-                            '<td>' + (item.lastUpdatedDate || 'N/A') + '</td>' +
-                            '<td>' +
-                                '<button class="btn-edit" onclick="openForm(\'edit\', ' + item.equipmentId + ', \'' + sn + '\', \'' + installDate + '\')">' +
-                                    '<i class="fas fa-edit"></i> Edit' +
-                                '</button>' +
-                                '<button class="btn-delete" onclick="showDeleteModal(' + item.equipmentId + ', \'' + sn + '\', \'' + item.model + '\')">' +
-                                    '<i class="fas fa-trash"></i> Delete' +
-                                '</button>' +
-                            '</td>';
-                        tbody.appendChild(row);
-                    });
-                })
-                .catch(error => {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Lỗi: ' + error.message + '</td></tr>';
-                });
-        }
-
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có dữ liệu</td></tr>';
+                return;
+            }
+            
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                const sn = String(item.serialNumber).replace(/'/g, "\\'");
+                const installDate = item.installDate || '';
+                
+                // ✅ CHECK IF EQUIPMENT IS USED
+                const isUsed = item.isUsed || false;
+                if (isUsed) {
+                    row.classList.add('disabled');
+                }
+                
+                row.innerHTML = 
+                    '<td>' + item.equipmentId + '</td>' +
+                    '<td>' + item.serialNumber + '</td>' +
+                    '<td>' + (item.installDate || 'N/A') + '</td>' +
+                    '<td>' + (item.username || 'N/A') + '</td>' +
+                    '<td>' + (item.lastUpdatedDate || 'N/A') + '</td>' +
+                    '<td>' +
+                        '<button class="btn-edit" onclick="openForm(\'edit\', ' + item.equipmentId + ', \'' + sn + '\', \'' + installDate + '\')">' +
+                            '<i class="fas fa-edit"></i> Edit' +
+                        '</button>' +
+                        '<button class="btn-delete" onclick="showDeleteModal(' + item.equipmentId + ', \'' + sn + '\', \'' + item.model + '\')">' +
+                            '<i class="fas fa-trash"></i> Delete' +
+                        '</button>' +
+                    '</td>';
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Lỗi: ' + error.message + '</td></tr>';
+        });
+}
         function selectMode(mode) {
             currentMode = mode;
             document.getElementById('addModeInput').value = mode;
