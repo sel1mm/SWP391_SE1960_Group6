@@ -82,31 +82,28 @@ public class VNPayService {
     /**
      * ✅ Build hash data từ params (sắp xếp theo alphabet)
      */
-    private String buildHashData(Map<String, String> params) {
-        // Sắp xếp params theo key (alphabet)
-        List<String> fieldNames = new ArrayList<>(params.keySet());
-        Collections.sort(fieldNames);
-        
-        StringBuilder hashData = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
-        
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
-            String fieldValue = params.get(fieldName);
-            
-            if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName);
-                hashData.append('=');
-                hashData.append(fieldValue);
-                
-                if (itr.hasNext()) {
-                    hashData.append('&');
-                }
+   private String buildHashData(Map<String, String> params) throws UnsupportedEncodingException {
+    List<String> fieldNames = new ArrayList<>(params.keySet());
+    Collections.sort(fieldNames);
+
+    StringBuilder hashData = new StringBuilder();
+    Iterator<String> itr = fieldNames.iterator();
+
+    while (itr.hasNext()) {
+        String fieldName = itr.next();
+        String fieldValue = params.get(fieldName);
+        if (fieldValue != null && !fieldValue.isEmpty()) {
+            hashData.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
+            hashData.append('=');
+            hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+            if (itr.hasNext()) {
+                hashData.append('&');
             }
         }
-        
-        return hashData.toString();
     }
+    return hashData.toString();
+}
+    
     
     /**
      * ✅ HMAC SHA512 encryption
