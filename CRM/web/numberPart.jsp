@@ -1,6 +1,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -376,15 +376,14 @@
             border-bottom: 2px solid #dee2e6;
         }
 
-        .inventory-table thead tr th:nth-child(1) { width: 6%; }
-        .inventory-table thead tr th:nth-child(2) { width: 11%; }
+         .inventory-table thead tr th:nth-child(1) { width: 5%; }
+        .inventory-table thead tr th:nth-child(2) { width: 12%; }
         .inventory-table thead tr th:nth-child(3) { width: 10%; }
-        .inventory-table thead tr th:nth-child(4) { width: 14%; }
-        .inventory-table thead tr th:nth-child(5) { width: 7%; }
-        .inventory-table thead tr th:nth-child(6) { width: 6%; }
+        .inventory-table thead tr th:nth-child(4) { width: 15%; }
+        .inventory-table thead tr th:nth-child(5) { width: 8%; }
+        .inventory-table thead tr th:nth-child(6) { width: 9%; }
         .inventory-table thead tr th:nth-child(7) { width: 10%; }
-        .inventory-table thead tr th:nth-child(8) { width: 10%; }
-        .inventory-table thead tr th:nth-child(9) { width: 26%; }
+        .inventory-table thead tr th:nth-child(8) { width: 31%; }
 
         .inventory-table tbody td {
             padding: 12px 16px;
@@ -1091,7 +1090,7 @@
                             <td>${ls.partName}</td>
                             <td>${ls.categoryName != null ? ls.categoryName : 'N/A'}</td>
                             <td>${ls.description}</td>
-                            <td>${ls.unitPrice}</td>
+                            <td>${ls.unitPrice} $</td>
                             <td>${ls.userName}</td>
                             <td>${ls.lastUpdatedDate}</td>
                             <td>

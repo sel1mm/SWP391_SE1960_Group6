@@ -13,9 +13,9 @@ public class EmailService {
     // ============= EMAIL CONFIGURATION =============
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587";
-    private static final String EMAIL_USERNAME = "leanhvux712@gmail.com";
-    private static final String EMAIL_PASSWORD = "rpnlhokbbppndwgx";
-    private static final String FROM_EMAIL = "leanhvux712@gmail.com";
+    private static final String EMAIL_USERNAME = "leanhvux123456789@gmail.com";
+    private static final String EMAIL_PASSWORD = "vipeucltkjskttiu";
+    private static final String FROM_EMAIL = "leanhvux123456789@gmail.com";
     private static final String FROM_NAME = "FPT University - OTP System";
 
     /**

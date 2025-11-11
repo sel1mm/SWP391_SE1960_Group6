@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatGPT - AI Assistant</title>
+    <title>Trợ lý AI - Hỗ trợ khách hàng</title>
     <style>
         * {
             margin: 0;
@@ -22,8 +22,8 @@
         }
 
         .chat-container {
-            width: 450px;
-            height: 600px;
+            width: 500px;
+            height: 700px;
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
@@ -35,10 +35,19 @@
         .chat-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
+            padding: 25px;
             text-align: center;
-            font-size: 20px;
+        }
+
+        .chat-header h1 {
+            font-size: 22px;
             font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            font-size: 13px;
+            opacity: 0.9;
         }
 
         .chat-messages {
@@ -66,20 +75,36 @@
             display: inline-block;
             padding: 12px 18px;
             border-radius: 18px;
-            max-width: 80%;
+            max-width: 85%;
             word-wrap: break-word;
-            line-height: 1.4;
+            line-height: 1.5;
         }
 
         .message.user .message-content {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            text-align: left;
         }
 
         .message.ai .message-content {
             background: white;
             color: #333;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+
+        .message.ai .message-content ul,
+        .message.ai .message-content ol {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .message.ai .message-content li {
+            margin-bottom: 5px;
+        }
+
+        .message.ai .message-content strong {
+            color: #667eea;
         }
 
         .message.error .message-content {
@@ -176,19 +201,56 @@
         .chat-messages::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
+
+        .quick-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-question-btn {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-question-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            🤖 ChatGPT Assistant
+            <h1>🤖 Trợ lý AI</h1>
+            <p>Hỗ trợ khách hàng - Hệ thống bảo trì thiết bị</p>
         </div>
         
         <div class="chat-messages" id="chatMessages">
             <div class="message ai">
                 <div class="message-content">
-                    Xin chào! Tôi là trợ lý AI. Tôi có thể giúp gì cho bạn?
+                    <strong>Xin chào!</strong> Tôi là trợ lý AI hỗ trợ khách hàng.<br><br>
+                    Tôi có thể giúp bạn về:
+                    <ul>
+                        <li>Hướng dẫn sử dụng dịch vụ</li>
+                        <li>Quy trình tạo yêu cầu bảo hành</li>
+                        <li>Thông tin về hợp đồng và hóa đơn</li>
+                        <li>Chính sách và quy định</li>
+                    </ul>
                 </div>
+            </div>
+            <div class="quick-questions">
+                <button class="quick-question-btn" onclick="sendQuickQuestion('Làm thế nào để tạo yêu cầu bảo hành?')">📝 Tạo yêu cầu</button>
+                <button class="quick-question-btn" onclick="sendQuickQuestion('Cách xem hóa đơn?')">💰 Xem hóa đơn</button>
+                <button class="quick-question-btn" onclick="sendQuickQuestion('Chính sách bảo hành?')">🛡️ Bảo hành</button>
+                <button class="quick-question-btn" onclick="sendQuickQuestion('Thời gian xử lý yêu cầu?')">⏱️ Thời gian</button>
             </div>
         </div>
 
@@ -203,7 +265,7 @@
                 <input 
                     type="text" 
                     id="messageInput" 
-                    placeholder="Nhập tin nhắn của bạn..."
+                    placeholder="Nhập câu hỏi của bạn..."
                     autocomplete="off"
                 >
                 <button id="sendButton">Gửi</button>
@@ -217,15 +279,18 @@
         const chatMessages = document.getElementById('chatMessages');
         const typingIndicator = document.getElementById('typingIndicator');
 
-        // Gửi tin nhắn khi nhấn Enter
         messageInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !sendButton.disabled) {
                 sendMessage();
             }
         });
 
-        // Gửi tin nhắn khi click nút
         sendButton.addEventListener('click', sendMessage);
+
+        function sendQuickQuestion(question) {
+            messageInput.value = question;
+            sendMessage();
+        }
 
         function sendMessage() {
             const message = messageInput.value.trim();
@@ -234,133 +299,56 @@
                 return;
             }
 
-            // Hiển thị tin nhắn người dùng
             addMessage('user', message);
-            
-            // Clear input
             messageInput.value = '';
-            
-            // Disable input
             sendButton.disabled = true;
             messageInput.disabled = true;
-            
-            // Hiển thị typing indicator
             typingIndicator.classList.add('show');
             scrollToBottom();
 
-            // Gửi request đến servlet
-     // Gửi request đến servlet (phiên bản pipeline 1.3)
-fetch('AskGeminiServlet', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'q=' + encodeURIComponent(message)
-})
-.then(response => {
-    // response là JSON (200) hoặc có error message (200 với error field)
-    return response.json();
-})
-.then(data => {
-    typingIndicator.classList.remove('show');
+            fetch('AskGeminiServlet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'q=' + encodeURIComponent(message)
+            })
+            .then(response => response.json())
+            .then(data => {
+                typingIndicator.classList.remove('show');
 
-    // Nếu server trả lỗi
-    if (data.error) {
-        addMessage('error', data.error);
-        return;
-    }
+                if (data.error) {
+                    addMessage('error', data.error);
+                    return;
+                }
 
-    // 1) Hiển thị câu trả lời dạng natural language (nếu có)
-    if (data.ai_answer) {
-        addMessage('ai', data.ai_answer);
-    } else if (data.generated_sql && (!data.result || !data.result.rows || data.result.rows.length === 0)) {
-        // nếu không có ai_answer nhưng có SQL thì show SQL
-        addMessage('ai', 'SQL được sinh: ' + data.generated_sql);
-    }
-
-    // 2) Hiển thị bảng kết quả (nếu có)
-    if (data.result && Array.isArray(data.result.columns)) {
-        addTableResult(data.result);
-    }
-
-    // 3) (Tùy chọn) show generated_sql bên dưới (để debug)
-    if (data.generated_sql) {
-        addMessage('ai', '🔎 Generated SQL: ' + data.generated_sql);
-    }
-})
-.catch(error => {
-    typingIndicator.classList.remove('show');
-    addMessage('error', 'Không thể kết nối đến server');
-    console.error('Error:', error);
-})
-.finally(() => {
-    sendButton.disabled = false;
-    messageInput.disabled = false;
-    messageInput.focus();
-});
+                if (data.answer) {
+                    addMessageHTML('ai', formatAnswer(data.answer));
+                }
+            })
+            .catch(error => {
+                typingIndicator.classList.remove('show');
+                addMessage('error', 'Không thể kết nối đến server. Vui lòng thử lại.');
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                sendButton.disabled = false;
+                messageInput.disabled = false;
+                messageInput.focus();
+            });
         }
-function addTableResult(result) {
-    // result: { columns: [...], rows: [ {col1:val, col2:val}, ... ] }
-    const cols = result.columns || [];
-    const rows = result.rows || [];
 
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message ai';
-
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-
-    // tạo table
-    const table = document.createElement('table');
-    table.style.borderCollapse = 'collapse';
-    table.style.width = '100%';
-    table.style.maxWidth = '420px';
-    table.style.fontSize = '13px';
-
-    // style th/td
-    const thStyle = "padding:6px 8px;border-bottom:1px solid #eee;text-align:left;font-weight:600;";
-    const tdStyle = "padding:6px 8px;border-bottom:1px solid #f1f1f1;";
-
-    // header
-    const thead = document.createElement('thead');
-    const trh = document.createElement('tr');
-    cols.forEach(col => {
-        const th = document.createElement('th');
-        th.textContent = col;
-        th.setAttribute('style', thStyle);
-        trh.appendChild(th);
-    });
-    thead.appendChild(trh);
-    table.appendChild(thead);
-
-    // body
-    const tbody = document.createElement('tbody');
-    rows.forEach(rowObj => {
-        const tr = document.createElement('tr');
-        cols.forEach(col => {
-            const td = document.createElement('td');
-            const val = rowObj[col];
-            td.textContent = (val === null || typeof val === 'undefined') ? 'NULL' : String(val);
-            td.setAttribute('style', tdStyle);
-            tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-
-    // nếu không có row nào
-    if (rows.length === 0) {
-        const empty = document.createElement('div');
-        empty.textContent = 'Không có dữ liệu.';
-        contentDiv.appendChild(empty);
-    } else {
-        contentDiv.appendChild(table);
-    }
-
-    messageDiv.appendChild(contentDiv);
-    chatMessages.appendChild(messageDiv);
-    scrollToBottom();
-}
+        function formatAnswer(text) {
+            text = text.replace(/\n/g, '<br>');
+            text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/^- (.+)$/gm, '<li>$1</li>');
+            
+            if (text.includes('<li>')) {
+                text = text.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+            }
+            
+            return text;
+        }
 
         function addMessage(type, content) {
             const messageDiv = document.createElement('div');
@@ -376,11 +364,24 @@ function addTableResult(result) {
             scrollToBottom();
         }
 
+        function addMessageHTML(type, htmlContent) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + type;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = htmlContent;
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            scrollToBottom();
+        }
+
         function scrollToBottom() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Focus vào input khi load trang
         window.addEventListener('load', function() {
             messageInput.focus();
         });
