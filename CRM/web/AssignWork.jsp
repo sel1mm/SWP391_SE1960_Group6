@@ -853,6 +853,17 @@ function renderTable() {
             ? assignment.technicianName + ' (ID: ' + assignment.assignedTo + ')' 
             : 'KTV #' + assignment.assignedTo;
         
+        // ✅ NEW: Disable delete button if has repair report OR completed
+        const canDelete = !assignment.hasRepairReport && assignment.status !== 'Completed';
+        const deleteButtonHtml = canDelete
+            ? '<button class="btn btn-sm btn-outline-danger delete-assignment-btn" ' +
+              'data-assignment-id="' + assignment.assignmentId + '">' +
+              '<i class="fas fa-trash"></i>' +
+              '</button>'
+            : '<button class="btn btn-sm btn-secondary" disabled title="Không thể xóa vì đã có báo giá hoặc đã hoàn thành">' +
+              '<i class="fas fa-lock"></i>' +
+              '</button>';
+        
         row.innerHTML = 
             '<td>#' + assignment.assignmentId + '</td>' +
             '<td>#' + assignment.taskId + '</td>' +
@@ -869,13 +880,7 @@ function renderTable() {
                 getStatusText(assignment.status) +
                 '</span>' +
             '</td>' +
-            '<td>' +
-                '<button class="btn btn-sm btn-outline-danger delete-assignment-btn" ' +
-                        'data-assignment-id="' + assignment.assignmentId + '"' +
-                        (assignment.status === 'Completed' ? ' disabled' : '') + '>' +
-                    '<i class="fas fa-trash"></i>' +
-                '</button>' +
-            '</td>';
+            '<td>' + deleteButtonHtml + '</td>';
         tbody.appendChild(row);
     });
 }

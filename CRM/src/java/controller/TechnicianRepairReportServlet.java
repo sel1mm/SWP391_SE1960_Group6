@@ -434,11 +434,15 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 validationErrors.addAll(validateRepairReportInput(req, false, parts));
                 
                 // Calculate estimated cost from parts if not manually overridden
+                // Input is in VND, convert to USD for database storage
                 String estimatedCostStr = req.getParameter("estimatedCost");
                 BigDecimal estimatedCost;
                 if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
                     try {
-                        estimatedCost = new BigDecimal(estimatedCostStr);
+                        // Input is in VND, convert to USD (divide by 26000)
+                        BigDecimal vndValue = new BigDecimal(estimatedCostStr);
+                        BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
+                        estimatedCost = usdValue;
                     } catch (NumberFormatException e) {
                         validationErrors.add("Invalid estimated cost format");
                         estimatedCost = calculateTotalFromParts(parts);
@@ -537,10 +541,18 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     parts = reportDAO.getReportDetails(reportId);
                 }
                 
+                // Input is in VND, convert to USD for database storage
                 String estimatedCostStr = req.getParameter("estimatedCost");
                 BigDecimal estimatedCost;
                 if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
-                    estimatedCost = new BigDecimal(estimatedCostStr);
+                    try {
+                        // Input is in VND, convert to USD (divide by 26000)
+                        BigDecimal vndValue = new BigDecimal(estimatedCostStr);
+                        BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
+                        estimatedCost = usdValue;
+                    } catch (NumberFormatException e) {
+                        estimatedCost = calculateTotalFromParts(parts);
+                    }
                 } else {
                     estimatedCost = calculateTotalFromParts(parts);
                 }

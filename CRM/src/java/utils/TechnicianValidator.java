@@ -97,6 +97,8 @@ public class TechnicianValidator {
     
     /**
      * Validate estimated cost field
+     * Input is in VND (Vietnamese Dong), max value: 99,999,999,999 VND
+     * This converts to ~3,846,153.85 USD, which fits in DECIMAL(12,2) database limit
      */
     public static ValidationResult validateEstimatedCost(String costStr) {
         ValidationResult result = new ValidationResult("estimatedCost");
@@ -117,8 +119,10 @@ public class TechnicianValidator {
             if (cost <= 0) {
                 result.addError("Estimated cost must be greater than 0");
             }
-            if (cost > 999999.99) {
-                result.addError("Estimated cost cannot exceed 999,999.99");
+            // Max VND value: 99,999,999,999 (matches form input max attribute)
+            // This ensures converted USD value fits in DECIMAL(12,2) database limit
+            if (cost > 99999999999.0) {
+                result.addError("Estimated cost cannot exceed 99,999,999,999 VND");
             }
         } catch (NumberFormatException e) {
             result.addError("Invalid number format");

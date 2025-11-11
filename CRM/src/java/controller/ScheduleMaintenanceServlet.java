@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import dal.AccountDAO;
 
 @WebServlet(name = "ScheduleMaintenanceServlet", urlPatterns = {"/scheduleMaintenance"})
 public class ScheduleMaintenanceServlet extends HttpServlet {
@@ -89,7 +90,10 @@ public class ScheduleMaintenanceServlet extends HttpServlet {
             } else if ("getOverdueSchedules".equals(action)) {
                 getOverdueSchedules(request, response);
                 return;
-            }
+            }else if ("getEquipmentByContract".equals(action)) {
+    getEquipmentByContract(request, response);
+    return;
+}
             
             // Load data for the main page
             loadMainPageData(request, response);
@@ -144,14 +148,14 @@ public class ScheduleMaintenanceServlet extends HttpServlet {
         }
     }
     
-    private void loadMainPageData(HttpServletRequest request, HttpServletResponse response)
+   private void loadMainPageData(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
         try {
-            // Get approved service requests that need maintenance scheduling
-           // Get approved service requests - HIỂN THỊ TẤT CẢ
-List<ServiceRequest> approvedRequests = serviceRequestDAO.getRequestsByStatus("Approved");
-request.setAttribute("approvedRequests", approvedRequests);
+            // Get all customers
+            AccountDAO accountDAO = new AccountDAO();
+            List<Account> customerList = accountDAO.getAccountsByRole("Customer");
+            request.setAttribute("customerList", customerList);
             
             // Get available technicians
             List<TechnicianWorkload> availableTechnicians = technicianWorkloadDAO.getAvailableTechnicians();
@@ -169,15 +173,14 @@ request.setAttribute("approvedRequests", approvedRequests);
             List<MaintenanceSchedule> overdueSchedules = maintenanceScheduleDAO.getOverdueSchedules();
             request.setAttribute("overdueSchedules", overdueSchedules);
             
+            // Get all contracts
             List<Contract> contractList = contractDAO.getEveryContracts();
             request.setAttribute("contractList", contractList);
-
-            List<Equipment> equipmentList = equipmentDAO.getAllEquipment();
-            request.setAttribute("equipmentList", equipmentList);
             
             // ===== XỬ LÝ THAM SỐ TỪ URL =====
             String requestIdParam = request.getParameter("requestId");
             String contractIdParam = request.getParameter("contractId");
+            String customerIdParam = request.getParameter("customerId");
             String priorityParam = request.getParameter("priority");
             
             // Truyền các tham số sang JSP để pre-fill form
@@ -187,6 +190,10 @@ request.setAttribute("approvedRequests", approvedRequests);
             
             if (contractIdParam != null && !contractIdParam.trim().isEmpty()) {
                 request.setAttribute("prefilledContractId", contractIdParam);
+            }
+            
+            if (customerIdParam != null && !customerIdParam.trim().isEmpty()) {
+                request.setAttribute("prefilledCustomerId", customerIdParam);
             }
             
             if (priorityParam != null && !priorityParam.trim().isEmpty()) {
@@ -209,6 +216,35 @@ request.setAttribute("approvedRequests", approvedRequests);
                 request.setAttribute("prefilledPriorityId", priorityId);
             }
             
+            // ===== LỌC EQUIPMENT THEO CONTRACT (NẾU CÓ) =====
+            List<Equipment> equipmentList;
+            
+            if (contractIdParam != null && !contractIdParam.trim().isEmpty()) {
+                try {
+                    int selectedContractId = Integer.parseInt(contractIdParam);
+                    
+                    // Lấy equipment của contract này
+                    equipmentList = equipmentDAO.getEquipmentByContract(selectedContractId);
+                    
+                    System.out.println("✅ Filtered equipment by contract " + selectedContractId + 
+                                       ": " + equipmentList.size() + " items");
+                    
+                } catch (NumberFormatException e) {
+                    System.err.println("⚠️ Invalid contractId format: " + contractIdParam);
+                    // Fallback: lấy tất cả equipment
+                    equipmentList = equipmentDAO.getAllEquipment();
+                } catch (Exception e) {
+                    System.err.println("❌ Error filtering equipment by contract: " + e.getMessage());
+                    // Fallback: lấy tất cả equipment
+                    equipmentList = equipmentDAO.getAllEquipment();
+                }
+            } else {
+                // Không có contract được chọn → lấy tất cả equipment
+                equipmentList = equipmentDAO.getAllEquipment();
+            }
+            
+            request.setAttribute("equipmentList", equipmentList);
+            
             request.getRequestDispatcher("ScheduleMaintenance.jsp").forward(request, response);
             
         } catch (Exception e) {
@@ -218,18 +254,17 @@ request.setAttribute("approvedRequests", approvedRequests);
             request.getRequestDispatcher("ScheduleMaintenance.jsp").forward(request, response);
         }
     }
-    
-private void createMaintenanceSchedule(HttpServletRequest request, HttpServletResponse response)
+  private void createMaintenanceSchedule(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
 
     HttpSession session = request.getSession();
 
     try {
         // --- Lấy thông tin từ form ---
-        String requestIdStr = request.getParameter("requestId");
+        String customerIdStr = request.getParameter("customerId");
         String contractIdStr = request.getParameter("contractId");
         String equipmentIdStr = request.getParameter("equipmentId");
-        String[] technicianIds = request.getParameterValues("technicianIds"); // ✅ ĐỔI THÀNH MẢNG
+        String[] technicianIds = request.getParameterValues("technicianIds");
         String scheduledDateStr = request.getParameter("scheduledDate");
         String scheduleType = request.getParameter("scheduleType");
         String recurrenceRule = request.getParameter("recurrenceRule");
@@ -245,7 +280,7 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
         }
 
         // --- Parse thông tin ---
-        Integer requestId = (requestIdStr != null && !requestIdStr.trim().isEmpty()) ? Integer.parseInt(requestIdStr) : null;
+        Integer customerId = (customerIdStr != null && !customerIdStr.trim().isEmpty()) ? Integer.parseInt(customerIdStr) : null;
         Integer contractId = (contractIdStr != null && !contractIdStr.trim().isEmpty()) ? Integer.parseInt(contractIdStr) : null;
         Integer equipmentId = (equipmentIdStr != null && !equipmentIdStr.trim().isEmpty()) ? Integer.parseInt(equipmentIdStr) : null;
         int priorityId = (priorityIdStr != null && !priorityIdStr.trim().isEmpty()) ? Integer.parseInt(priorityIdStr) : 2;
@@ -262,12 +297,6 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
         
         for (String techIdStr : technicianIds) {
             int technicianId = Integer.parseInt(techIdStr);
-            
-            // ✅ CHECK DUPLICATE SCHEDULE
-            if (isDuplicateSchedule(requestId, contractId, technicianId, scheduledDate)) {
-                errors.append("KTV #").append(technicianId).append(" đã có lịch cho yêu cầu này rồi. ");
-                continue;
-            }
             
             // Kiểm tra khả năng KTV
             TechnicianWorkload technicianWorkload = technicianWorkloadDAO.getWorkloadByTechnician(technicianId);
@@ -288,7 +317,12 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
 
             // --- Tạo MaintenanceSchedule ---
             MaintenanceSchedule schedule = new MaintenanceSchedule();
-            if (requestId != null) schedule.setRequestId(requestId);
+            
+            // ✅ THÊM DÒNG NÀY - SET CUSTOMER ID
+            if (customerId != null) {
+                schedule.setCustomerId(customerId);
+            }
+            
             if (contractId != null) schedule.setContractId(contractId);
             if (equipmentId != null) schedule.setEquipmentId(equipmentId);
 
@@ -306,10 +340,9 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
                 WorkTaskDAO workTaskDAO = new WorkTaskDAO();
                 WorkTask task = new WorkTask();
                 task.setScheduleId(scheduleId);
-                task.setRequestId(requestId);
                 task.setTechnicianId(technicianId);
                 task.setTaskType("Scheduled");
-                task.setTaskDetails("Bảo trì " + scheduleType);
+                task.setTaskDetails("Bảo trì " + scheduleType + " cho khách hàng #" + (customerId != null ? customerId : "N/A"));
                 task.setStartDate(scheduledDate);
                 task.setEndDate(scheduledDate);
                 task.setStatus("Assigned");
@@ -348,30 +381,6 @@ private void createMaintenanceSchedule(HttpServletRequest request, HttpServletRe
     }
 
     response.sendRedirect("scheduleMaintenance");
-}
-
-// ✅ NEW METHOD: Check duplicate schedule
-private boolean isDuplicateSchedule(Integer requestId, Integer contractId, int technicianId, LocalDate scheduledDate) {
-    try {
-        List<MaintenanceSchedule> existingSchedules = maintenanceScheduleDAO.getSchedulesByTechnician(technicianId);
-        
-        for (MaintenanceSchedule schedule : existingSchedules) {
-            // Check same request/contract/date
-            boolean sameRequest = (requestId != null && requestId.equals(schedule.getRequestId()));
-            boolean sameContract = (contractId != null && contractId.equals(schedule.getContractId()));
-            boolean sameDate = scheduledDate.equals(schedule.getScheduledDate());
-            boolean notCancelled = !"Cancelled".equals(schedule.getStatus());
-            
-            if ((sameRequest || sameContract) && sameDate && notCancelled) {
-                return true;
-            }
-        }
-        
-        return false;
-    } catch (Exception e) {
-        System.err.println("Error checking duplicate schedule: " + e.getMessage());
-        return false;
-    }
 }
 
 
@@ -605,7 +614,6 @@ private void getScheduleDetails(HttpServletRequest request, HttpServletResponse 
     response.setCharacterEncoding("UTF-8");
     PrintWriter out = response.getWriter();
 
-    // ✅ Gson custom để serialize LocalDate / LocalDateTime
     Gson gson = new GsonBuilder()
         .registerTypeAdapter(LocalDate.class,
             (com.google.gson.JsonSerializer<LocalDate>) (date, type, context) ->
@@ -618,7 +626,6 @@ private void getScheduleDetails(HttpServletRequest request, HttpServletResponse 
     try {
         String scheduleIdStr = request.getParameter("scheduleId");
 
-        // Validate scheduleId parameter
         if (scheduleIdStr == null || scheduleIdStr.trim().isEmpty()) {
             JsonObject errorResponse = new JsonObject();
             errorResponse.addProperty("error", "Thiếu thông tin ID lịch bảo trì!");
@@ -630,13 +637,71 @@ private void getScheduleDetails(HttpServletRequest request, HttpServletResponse 
         int scheduleId = Integer.parseInt(scheduleIdStr.trim());
         MaintenanceSchedule schedule = maintenanceScheduleDAO.getScheduleById(scheduleId);
 
-        if (schedule != null) {
-            out.print(gson.toJson(schedule));
-        } else {
+        if (schedule == null) {
             JsonObject errorResponse = new JsonObject();
             errorResponse.addProperty("error", "Không tìm thấy lịch bảo trì!");
             out.print(gson.toJson(errorResponse));
+            out.flush();
+            return;
         }
+
+        // Tạo response object chứa đầy đủ thông tin
+        JsonObject response_obj = new JsonObject();
+        response_obj.add("schedule", gson.toJsonTree(schedule));
+
+        // Lấy thông tin Contract nếu có
+        try {
+            if (schedule.getContractId() != null) {
+                Contract contract = contractDAO.getContractById(schedule.getContractId());
+                if (contract != null) {
+                    response_obj.add("contract", gson.toJsonTree(contract));
+                }
+            }
+        } catch (Exception contractEx) {
+            System.err.println("Failed to load contract: " + contractEx.getMessage());
+        }
+
+        // Lấy thông tin Customer nếu có
+        try {
+            if (schedule.getCustomerId() != null) {
+                AccountDAO accountDAO = new AccountDAO();
+                Account customer = accountDAO.getAccountById(schedule.getCustomerId());
+                if (customer != null) {
+                    response_obj.addProperty("customerName", customer.getFullName());
+                    response_obj.addProperty("customerEmail", customer.getEmail());
+                }
+            }
+        } catch (Exception customerEx) {
+            System.err.println("Failed to load customer: " + customerEx.getMessage());
+        }
+
+        // Lấy thông tin Technician
+        try {
+            Integer tid = schedule.getAssignedTo();
+            if (tid != null) {
+                AccountDAO accountDAO = new AccountDAO();
+                Account tech = accountDAO.getAccountById(tid);
+                if (tech != null) {
+                    response_obj.addProperty("technicianName", tech.getFullName());
+                }
+            }
+        } catch (Exception techEx) {
+            System.err.println("Failed to load technician: " + techEx.getMessage());
+        }
+
+        // ✅ SỬA: Lấy thông tin Equipment - dùng findById thay vì getEquipmentById
+        try {
+            if (schedule.getEquipmentId() != null) {
+                Equipment equipment = equipmentDAO.findById(schedule.getEquipmentId());
+                if (equipment != null) {
+                    response_obj.add("equipment", gson.toJsonTree(equipment));
+                }
+            }
+        } catch (Exception equipEx) {
+            System.err.println("Failed to load equipment: " + equipEx.getMessage());
+        }
+
+        out.print(gson.toJson(response_obj));
 
     } catch (Exception e) {
         e.printStackTrace();
@@ -719,7 +784,54 @@ private void getScheduleDetails(HttpServletRequest request, HttpServletResponse 
 
     out.flush();
 }
-
+private void getEquipmentByContract(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+    PrintWriter out = response.getWriter();
+    
+    Gson gson = new GsonBuilder()
+        .registerTypeAdapter(LocalDate.class,
+            (com.google.gson.JsonSerializer<LocalDate>) (date, type, context) ->
+                new com.google.gson.JsonPrimitive(date.format(DateTimeFormatter.ISO_LOCAL_DATE)))
+        .create();
+    
+    try {
+        String contractIdStr = request.getParameter("contractId");
+        
+        System.out.println("🔍 AJAX getEquipmentByContract called with contractId: " + contractIdStr);
+        
+        if (contractIdStr == null || contractIdStr.trim().isEmpty()) {
+            System.out.println("⚠️ ContractId is empty, returning empty array");
+            out.print("[]");
+            out.flush();
+            return;
+        }
+        
+        int contractId = Integer.parseInt(contractIdStr);
+        
+        // ✅ GỌI METHOD ĐÚNG: getEquipmentByContract (không phải getEquipmentByContractId)
+        List<Equipment> equipmentList = equipmentDAO.getEquipmentByContract(contractId);
+        
+        System.out.println("✅ Found " + equipmentList.size() + " equipment for contract " + contractId);
+        
+        String jsonResult = gson.toJson(equipmentList);
+        System.out.println("📤 Sending JSON: " + jsonResult);
+        
+        out.print(jsonResult);
+        
+    } catch (NumberFormatException e) {
+        System.err.println("❌ Invalid contractId format: " + e.getMessage());
+        out.print("[]");
+    } catch (Exception e) {
+        System.err.println("❌ Error in getEquipmentByContract: " + e.getMessage());
+        e.printStackTrace();
+        out.print("[]");
+    }
+    
+    out.flush();
+}
     /**
  * Calculate workload points based on priority level
  * Urgent = 3, High = 2, Normal = 1

@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <div class="container-fluid">
   <!-- Success/Error Messages -->
@@ -197,7 +198,7 @@
                 <div class="card-footer bg-light">
                   <div class="d-flex justify-content-between align-items-center">
                     <span class="fw-bold">Total Estimated Cost:</span>
-                    <span id="totalCost" class="fw-bold text-success fs-4">$0.00</span>
+                    <span id="totalCost" class="fw-bold text-success fs-4">₫0</span>
                   </div>
                 </div>
               </div>
@@ -210,19 +211,19 @@
                 <div class="mb-3">
                   <label for="estimatedCost" class="form-label fw-bold">Estimated Cost <span class="text-danger">*</span></label>
                   <div class="input-group">
-                    <span class="input-group-text">$</span>
+                    <span class="input-group-text">₫</span>
                     <input type="number" class="form-control" id="estimatedCost" name="estimatedCost" 
-                           step="0.01" min="0.01" max="999999.99" 
-                           placeholder="0.00" required
-                           value="${not empty report ? report.estimatedCost : (not empty subtotal ? subtotal : '')}">
+                           step="1" min="1" max="99999999999" 
+                           placeholder="0" required
+                           value="${not empty report ? (report.estimatedCost * 26000) : (not empty subtotal ? (subtotal * 26000) : '')}">
                   </div>
                   <div class="form-text">
                     <c:choose>
-                      <c:when test="${not empty subtotal}">
-                        Auto-calculated from parts: $${subtotal}. You can override if needed.
+                      <c:when test="${not empty subtotal && subtotal > 0}">
+                        Auto-calculated from parts: ₫<span id="autoCalculatedVnd"><fmt:formatNumber value="${subtotal * 26000}" type="number" maxFractionDigits="0"/></span>. You can override if needed.
                       </c:when>
                       <c:otherwise>
-                        Enter cost in USD (e.g., 150.50). Will be auto-filled when parts are selected.
+                        Enter cost in VND (Vietnamese Dong). Will be auto-filled when parts are selected.
                       </c:otherwise>
                     </c:choose>
                   </div>
@@ -318,6 +319,23 @@
   
   // Context path
   const contextPath = '${pageContext.request.contextPath}';
+  
+  // Currency conversion constants
+  const USD_TO_VND_RATE = 26000;
+  
+  // Conversion functions
+  function usdToVnd(usd) {
+    return parseFloat(usd || 0) * USD_TO_VND_RATE;
+  }
+  
+  function vndToUsd(vnd) {
+    return parseFloat(vnd || 0) / USD_TO_VND_RATE;
+  }
+  
+  // Format VND for display
+  function formatVnd(amount) {
+    return new Intl.NumberFormat('vi-VN').format(Math.round(amount));
+  }
   
   // ============================================
   // EVENT LISTENERS
@@ -603,7 +621,7 @@
       html += '<tr data-part-id="' + partId + '">';
       html += '<td><strong>' + escapeHtml(part.partName) + '</strong></td>';
       html += '<td class="text-center">' + escapeHtml(part.serialNumber || 'N/A') + '</td>';
-      html += '<td class="text-center"><strong class="text-success">$' + parseFloat(part.unitPrice).toFixed(2) + '</strong></td>';
+      html += '<td class="text-center"><strong class="text-success">₫' + formatVnd(usdToVnd(part.unitPrice)) + '</strong></td>';
       html += '<td class="text-center"><span class="badge bg-success">' + part.availableQuantity + '</span></td>';
       html += '<td class="text-center">';
       html += '<div class="btn-group btn-group-sm" role="group">';
@@ -864,9 +882,10 @@
           // Reload full cart to get updated parts list
           loadCartFromSession();
           
-          // Also update estimated cost immediately
+          // Also update estimated cost immediately (convert USD to VND)
           if (estimatedCostInput) {
-            estimatedCostInput.value = parseFloat(newSubtotal).toFixed(2);
+            const vndAmount = usdToVnd(newSubtotal);
+            estimatedCostInput.value = Math.round(vndAmount);
           }
         } else {
           alert('Error: ' + (data.error || 'Failed to remove part'));
@@ -936,12 +955,15 @@
       selectedPartsCount.textContent = totalQty;
     }
     if (totalCost) {
-      totalCost.textContent = '$' + parseFloat(subtotal || 0).toFixed(2);
+      const vndAmount = usdToVnd(subtotal || 0);
+      totalCost.textContent = '₫' + formatVnd(vndAmount);
     }
     
     // Update estimated cost input (sync) - always update, even when 0
+    // Convert USD to VND for display
     if (estimatedCostInput) {
-      estimatedCostInput.value = parseFloat(subtotal || 0).toFixed(2);
+      const vndAmount = usdToVnd(subtotal || 0);
+      estimatedCostInput.value = Math.round(vndAmount);
     }
     
     // Contract requirement update removed - contract is automatically determined from ServiceRequest
@@ -961,13 +983,15 @@
           return; // Skip this part
         }
         
-        const lineTotal = (part.unitPrice * part.quantity).toFixed(2);
+        const lineTotalUsd = part.unitPrice * part.quantity;
+        const unitPriceVnd = usdToVnd(part.unitPrice);
+        const lineTotalVnd = usdToVnd(lineTotalUsd);
         html += '<div class="list-group-item d-flex justify-content-between align-items-start">';
         html += '<div class="flex-grow-1">';
         html += '<div class="fw-bold">' + escapeHtml(part.partName) + '</div>';
         html += '<div class="text-muted small">S/N: ' + escapeHtml(part.serialNumber || 'N/A') + '</div>';
         html += '<div class="text-muted small">';
-        html += '$' + parseFloat(part.unitPrice).toFixed(2) + ' × ' + part.quantity + ' = <strong>$' + lineTotal + '</strong>';
+        html += '₫' + formatVnd(unitPriceVnd) + ' × ' + part.quantity + ' = <strong>₫' + formatVnd(lineTotalVnd) + '</strong>';
         html += '</div>';
         html += '</div>';
         html += '<button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-part-btn" data-part-id="' + partId + '" title="Remove">';
@@ -1074,6 +1098,9 @@
         alert('Please select at least one part for the repair report.');
         return false;
       }
+      
+      // Server will handle VND to USD conversion
+      // The form submits VND value, server converts it to USD before saving
       // Contract validation removed - contract is automatically determined from ServiceRequest
     });
   }

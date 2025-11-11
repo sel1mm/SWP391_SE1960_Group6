@@ -416,6 +416,12 @@ private void displayAssignWorkPage(HttpServletRequest request, HttpServletRespon
    /**
  * Get assignment history as JSON with technician name
  */
+/**
+ * Get assignment history as JSON with technician name and repair report status
+ */
+/**
+ * Get assignment history as JSON with technician name and repair report status
+ */
 private void handleGetAssignmentHistory(HttpServletRequest request, HttpServletResponse response, int managerId)
         throws ServletException, IOException, SQLException {
 
@@ -428,18 +434,27 @@ private void handleGetAssignmentHistory(HttpServletRequest request, HttpServletR
     json.append("[");
 
     WorkTaskDAO workTaskDAO = new WorkTaskDAO();
-    AccountDAO accountDAO = new AccountDAO(); // ✅ Thêm DAO để lấy tên technician
+    AccountDAO accountDAO = new AccountDAO();
 
     for (int i = 0; i < assignments.size(); i++) {
         WorkAssignment assignment = assignments.get(i);
         if (i > 0) json.append(",");
 
-        // ✅ Get requestId from WorkTask
+        // Get requestId from WorkTask
         WorkTask task = workTaskDAO.findById(assignment.getTaskId());
         int requestId = (task != null && task.getRequestId() != null) ? task.getRequestId() : 0;
         String status = (task != null) ? task.getStatus() : "Unknown";
+        
+        // ✅ Get technicianId from assignment
+        int technicianId = assignment.getAssignedTo();
 
-        // ✅ Get technician name from Account
+        // ✅ THAY ĐỔI: Check repair report cho CẶP (requestId + technicianId)
+        boolean hasRepairReport = false;
+        if (requestId > 0 && technicianId > 0) {
+            hasRepairReport = workTaskDAO.hasRepairReport(requestId, technicianId);
+        }
+
+        // Get technician name from Account
         String technicianName = "Unknown";
         try {
             Account techAccount = accountDAO.getAccountById(assignment.getAssignedTo());
@@ -454,7 +469,7 @@ private void handleGetAssignmentHistory(HttpServletRequest request, HttpServletR
         json.append("\"assignmentId\":").append(assignment.getAssignmentId()).append(",");
         json.append("\"taskId\":").append(requestId).append(","); 
         json.append("\"assignedTo\":").append(assignment.getAssignedTo()).append(",");
-        json.append("\"technicianName\":\"").append(escapeJson(technicianName)).append("\","); // ✅ Thêm tên
+        json.append("\"technicianName\":\"").append(escapeJson(technicianName)).append("\",");
         json.append("\"assignmentDate\":\"").append(assignment.getAssignmentDate()).append("\",");
         json.append("\"estimatedDuration\":").append(assignment.getEstimatedDuration()).append(",");
         json.append("\"requiredSkills\":\"").append(escapeJson(assignment.getRequiredSkills())).append("\",");
@@ -466,6 +481,7 @@ private void handleGetAssignmentHistory(HttpServletRequest request, HttpServletR
         }
 
         json.append(",\"status\":\"").append(escapeJson(status)).append("\"");
+        json.append(",\"hasRepairReport\":").append(hasRepairReport); // ✅ Giờ check theo technicianId
         json.append("}");
     }
 

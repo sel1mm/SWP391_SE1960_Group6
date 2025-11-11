@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <div class="container-fluid">
   <!-- Success/Error Messages -->
@@ -112,7 +113,7 @@
                   </div>
                 </td>
                 <td>
-                  <span class="fw-bold text-success">$${reportWithCustomer.report.estimatedCost}</span>
+                  <span class="fw-bold text-success">₫<fmt:formatNumber value="${reportWithCustomer.report.estimatedCost * 26000}" type="number" maxFractionDigits="0"/></span>
                 </td>
                 <td>
                   <c:set var="status" value="${reportWithCustomer.report.quotationStatus}"/>

@@ -639,6 +639,32 @@ public List<WorkTask> findByRequestId(int requestId) {
     
     return tasks;
 }
+
+public boolean hasRepairReport(int requestId, int technicianId) throws SQLException {
+    String sql = "SELECT COUNT(*) FROM RepairReport WHERE requestId = ? AND technicianId = ?";
+    
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setInt(1, requestId);
+        ps.setInt(2, technicianId);
+        rs = ps.executeQuery();
+        
+        if (rs.next()) {
+            int count = rs.getInt(1);
+            System.out.println("DEBUG hasRepairReport - requestId: " + requestId + 
+                             ", technicianId: " + technicianId + ", count: " + count);
+            return count > 0;
+        }
+    } finally {
+        if (rs != null) rs.close();
+        if (ps != null) ps.close();
+    }
+    
+    return false;
+}
 //public List<WorkTask> findByScheduleId(int scheduleId) throws SQLException {
 //    List<WorkTask> tasks = new ArrayList<>();
 //    String sql = "SELECT * FROM WorkTask WHERE scheduleId = ?";

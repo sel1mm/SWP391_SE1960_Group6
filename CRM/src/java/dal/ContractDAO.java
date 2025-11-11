@@ -312,25 +312,28 @@ public class ContractDAO extends MyDAO {
         return 0;
     }
 
-    public List<Contract> getEveryContracts() {
-        List<Contract> list = new ArrayList<>();
-        String sql = "SELECT contractId, details FROM Contract"; // lấy details thay cho contractName
+   public List<Contract> getEveryContracts() {
+    List<Contract> list = new ArrayList<>();
+    String sql = "SELECT contractId, customerId, details FROM Contract"; // ⚠️ Phải có customerId
 
-        try (PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+    try (PreparedStatement ps = con.prepareStatement(sql); 
+         ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                Contract c = new Contract();
-                c.setContractId(rs.getInt("contractId"));
-                c.setDetails(rs.getString("details")); // dùng details
-                list.add(c);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        while (rs.next()) {
+            Contract c = new Contract();
+            c.setContractId(rs.getInt("contractId"));
+            c.setCustomerId(rs.getInt("customerId")); // ⚠️ Dòng này quan trọng!
+            c.setDetails(rs.getString("details"));
+            list.add(c);
         }
 
-        return list;
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+
+    return list;
+}
+
 
     /**
      * Get available parts from PartDetail table for contract creation

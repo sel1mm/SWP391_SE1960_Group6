@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <div class="container-fluid">
   <!-- Success/Error Messages -->
@@ -90,7 +91,7 @@
               <div class="mb-3">
                 <label class="form-label fw-bold">Estimated Cost</label>
                 <p class="form-control-plaintext">
-                  <span class="fw-bold text-success fs-5">$${report.estimatedCost}</span>
+                  <span class="fw-bold text-success fs-5">₫<fmt:formatNumber value="${report.estimatedCost * 26000}" type="number" maxFractionDigits="0"/></span>
                 </p>
               </div>
               <div class="mb-3">
@@ -139,16 +140,16 @@
                           <td>${fn:escapeXml(detail.partName)}</td>
                           <td>${fn:escapeXml(detail.serialNumber != null ? detail.serialNumber : 'N/A')}</td>
                           <td>${fn:escapeXml(detail.location != null ? detail.location : 'N/A')}</td>
-                          <td>$${detail.unitPrice}</td>
+                          <td>₫<fmt:formatNumber value="${detail.unitPrice * 26000}" type="number" maxFractionDigits="0"/></td>
                           <td>${detail.quantity}</td>
-                          <td class="fw-bold">$${detail.lineTotal}</td>
+                          <td class="fw-bold">₫<fmt:formatNumber value="${detail.lineTotal * 26000}" type="number" maxFractionDigits="0"/></td>
                         </tr>
                       </c:forEach>
                     </tbody>
                     <tfoot>
                       <tr>
                         <td colspan="5" class="text-end fw-bold">Total:</td>
-                        <td class="fw-bold text-success fs-5">$${report.estimatedCost}</td>
+                        <td class="fw-bold text-success fs-5">₫<fmt:formatNumber value="${report.estimatedCost * 26000}" type="number" maxFractionDigits="0"/></td>
                       </tr>
                     </tfoot>
                   </table>

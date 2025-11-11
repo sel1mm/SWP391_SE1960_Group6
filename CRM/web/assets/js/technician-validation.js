@@ -67,15 +67,15 @@ window.TechnicianValidation = {
             errors.diagnosis = 'Diagnosis contain invalid characters';
         }
         
-        // Validate estimated cost
+        // Validate estimated cost (input is in VND)
         if (!formData.estimatedCost || !formData.estimatedCost.trim()) {
             errors.estimatedCost = 'Estimated cost is required';
         } else {
             const cost = parseFloat(formData.estimatedCost);
             if (isNaN(cost) || cost <= 0) {
                 errors.estimatedCost = 'Estimated cost must be greater than 0';
-            } else if (cost > 999999.99) {
-                errors.estimatedCost = 'Estimated cost must not exceed 999,999.99';
+            } else if (cost > 99999999999) {
+                errors.estimatedCost = 'Estimated cost cannot exceed 99,999,999,999 VND';
             }
         }
         
