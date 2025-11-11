@@ -402,7 +402,13 @@ public class PaymentServlet extends HttpServlet {
         String timestampShort = String.valueOf(timestamp).substring(3);
         String orderId = "ORDER" + requestId + "_" + timestampShort + "_" + randomSuffix;
 
-        String vnpayUrl = vnPayService.createPaymentUrl((long) paymentAmount, orderInfo, orderId, requestId);
+        long amountInVND = (long) (paymentAmount * 26000);
+
+        System.out.println("💰 Payment Amount Conversion:");
+        System.out.println("   - Original (USD): " + paymentAmount);
+        System.out.println("   - Converted (VND): " + amountInVND);
+
+        String vnpayUrl = vnPayService.createPaymentUrl(amountInVND, orderInfo, orderId, requestId);
 
         if (vnpayUrl == null || !vnpayUrl.contains("sandbox.vnpayment.vn")) {
             response.getWriter().write("{\"success\":false,\"error\":\"URL thanh toán không hợp lệ!\"}");
