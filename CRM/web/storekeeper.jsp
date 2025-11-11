@@ -589,7 +589,7 @@
                         <h3>Tổng số loại thiết bị trong kho</h3>
                         <p>${totalEquipmentTypes}</p>
                     </div>
-                    <div class="kpi-card">
+                    <div class="kpi-card">                  
                         <h3>Tổng số loại linh kiện trong kho</h3>
                         <p>${totalPartTypes}</p>
                     </div>

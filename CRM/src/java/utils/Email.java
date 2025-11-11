@@ -15,8 +15,8 @@ import javax.activation.DataHandler;
 import javax.activation.DataSource;
 
 public class Email {
-	static final String from = "leanhvux712@gmail.com";
-	static final String password = "rpnlhokbbppndwgx";
+	static final String from = "leanhvux123456789@gmail.com";
+	static final String password = "vipeucltkjskttiu";
 
 	public static boolean sendEmail(String to, String tieuDe, String noiDung) {
 		// Properties : khai báo các thuộc tính, cấu hình cần thiết để kết nối đến Gmail SMTP server
