@@ -492,18 +492,20 @@ public class WorkTaskDAO extends MyDAO {
     }
     
     /**
-     * Check if a work task is completed
+     * Check if a specific technician's work task is completed for a request
+     * This ensures each technician can work independently on the same ServiceRequest
      */
-    public boolean isTaskCompleted(int requestId) throws SQLException {
-        xSql = "SELECT status FROM WorkTask WHERE requestId = ?";
+    public boolean isTechnicianTaskCompleted(int technicianId, int requestId) throws SQLException {
+        xSql = "SELECT status FROM WorkTask WHERE technicianId = ? AND requestId = ?";
         ps = con.prepareStatement(xSql);
-        ps.setInt(1, requestId);
+        ps.setInt(1, technicianId);
+        ps.setInt(2, requestId);
         rs = ps.executeQuery();
         
         if (rs.next()) {
             return "Completed".equals(rs.getString("status"));
         }
-        return false;
+        return false; // No task found for this technician and request
     }
     public List<WorkTask> findByScheduleId(int scheduleId) throws SQLException {
     List<WorkTask> tasks = new ArrayList<>();
