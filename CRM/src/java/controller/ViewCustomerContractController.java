@@ -858,6 +858,12 @@ public class ViewCustomerContractController extends HttpServlet {
             String status = request.getParameter("status");
             String details = request.getParameter("details");
 
+            // ✅ THÊM: Gán mặc định nếu null
+            if (contractType == null || contractType.trim().isEmpty()) {
+                contractType = "Mua bán";
+                System.out.println("ContractType not provided, defaulting to: Purchase");
+            }
+
             // Validation...
             if (customerIdStr == null || customerIdStr.trim().isEmpty()) {
                 Map<String, Object> errorResult = new HashMap<>();
@@ -886,6 +892,54 @@ public class ViewCustomerContractController extends HttpServlet {
                 return;
             }
 
+            // ✅ THÊM: XỬ LÝ UPLOAD FILE (giống appendix)
+            String fileUrl = null;
+            Part filePart = request.getPart("fileAttachment");
+
+            if (filePart != null && filePart.getSize() > 0) {
+                String fileName = getFileName(filePart);
+                System.out.println("Uploading contract file: " + fileName);
+
+                // Validate file type
+                String fileExtension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+                if (!fileExtension.matches("\\.(pdf|doc|docx|xls|xlsx)")) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("success", false);
+                    errorResult.put("message", "Loại file không hợp lệ. Chỉ chấp nhận PDF, DOC, DOCX, XLS, XLSX");
+                    sendJson(response, errorResult);
+                    return;
+                }
+
+                // Validate file size (10MB)
+                if (filePart.getSize() > 10 * 1024 * 1024) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("success", false);
+                    errorResult.put("message", "File quá lớn. Kích thước tối đa 10MB");
+                    sendJson(response, errorResult);
+                    return;
+                }
+
+                String uploadPath = getServletContext().getRealPath("") + File.separator + "uploads" + File.separator + "contracts";
+                File uploadDir = new File(uploadPath);
+                if (!uploadDir.exists()) {
+                    uploadDir.mkdirs();
+                }
+
+                String uniqueFileName = "contract_" + customerId + "_" + System.currentTimeMillis() + fileExtension;
+                String filePath = uploadPath + File.separator + uniqueFileName;
+
+                filePart.write(filePath);
+                fileUrl = "uploads/contracts/" + uniqueFileName;
+                System.out.println("Contract file saved: " + fileUrl);
+            } else {
+                // ✅ THÊM: File bắt buộc
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "Vui lòng chọn file đính kèm hợp đồng");
+                sendJson(response, errorResult);
+                return;
+            }
+
             String equipmentIdsJson = request.getParameter("equipmentIds");
             if (equipmentIdsJson == null || equipmentIdsJson.trim().isEmpty()) {
                 Map<String, Object> errorResult = new HashMap<>();
@@ -906,10 +960,9 @@ public class ViewCustomerContractController extends HttpServlet {
                 return;
             }
 
-            // Tạo hợp đồng với createdDate = NOW()
             int contractId = contractDAO.createContractWithCreatedDate(
-                    customerId, contractDate, contractType, status, details.trim()
-            );
+                    customerId, contractDate, contractType, status, details.trim(), fileUrl
+            );  
 
             System.out.println("Created contract ID: " + contractId);
 
