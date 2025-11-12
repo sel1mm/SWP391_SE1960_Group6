@@ -2052,13 +2052,13 @@ public class ServiceRequestDAO extends MyDAO {
     }
 
     /**
-     * ✅ CẬP NHẬT TRẠNG THÁI BÁO GIÁ (QUOTATION STATUS)
-     * Dùng để customer approve/reject báo giá của technician
-     * 
-     * Logic:
-     * - Khi customer bấm "Thanh toán tất cả" → quotationStatus = 'Approved' (xử lý ở payment flow)
-     * - Khi customer bấm "Từ chối báo giá" → quotationStatus = 'Rejected'
-     * 
+     * ✅ CẬP NHẬT TRẠNG THÁI BÁO GIÁ (QUOTATION STATUS) Dùng để customer
+     * approve/reject báo giá của technician
+     *
+     * Logic: - Khi customer bấm "Thanh toán tất cả" → quotationStatus =
+     * 'Approved' (xử lý ở payment flow) - Khi customer bấm "Từ chối báo giá" →
+     * quotationStatus = 'Rejected'
+     *
      * @param reportId ID của RepairReport
      * @param newStatus "Approved" hoặc "Rejected"
      * @return true nếu cập nhật thành công
@@ -2066,14 +2066,14 @@ public class ServiceRequestDAO extends MyDAO {
     public boolean updateQuotationStatus(int reportId, String newStatus) {
         // ✅ Cập nhật trực tiếp RepairReport.quotationStatus
         String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
-        
+
         try {
             ps = con.prepareStatement(sql);
             ps.setString(1, newStatus);
             ps.setInt(2, reportId);
-            
+
             int affectedRows = ps.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 System.out.println("✅ Updated quotation status for reportId " + reportId + " to: " + newStatus);
                 return true;
@@ -2631,7 +2631,7 @@ public class ServiceRequestDAO extends MyDAO {
                         e.printStackTrace();
                     }
                 }
-                
+
                 // If status changed to 'Approved' from Pending, create ContractAppendix for schedule-origin
                 if ("Approved".equals(quotationStatus) && "Pending".equals(oldStatus)) {
                     try {
@@ -2647,7 +2647,7 @@ public class ServiceRequestDAO extends MyDAO {
                                 }
                             }
                         }
-                        
+
                         if ("Schedule".equalsIgnoreCase(origin)) {
                             // Resolve contractId from MaintenanceSchedule
                             Integer contractId = null;
@@ -2662,13 +2662,13 @@ public class ServiceRequestDAO extends MyDAO {
                                     }
                                 }
                             }
-                            
+
                             if (contractId != null) {
                                 // Create appendix header (covered by contract -> totalAmount = 0, warrantyCovered=1)
                                 int appendixId = 0;
-                                String insAppendix = "INSERT INTO ContractAppendix " +
-                                    "(contractId, appendixType, appendixName, description, effectiveDate, totalAmount, status, warrantyCovered, warrantyReportId, createdBy, createdAt) " +
-                                    "VALUES (?, 'RepairPart', ?, ?, CURDATE(), 0, 'Approved', 1, ?, ?, NOW())";
+                                String insAppendix = "INSERT INTO ContractAppendix "
+                                        + "(contractId, appendixType, appendixName, description, effectiveDate, totalAmount, status, warrantyCovered, warrantyReportId, createdBy, createdAt) "
+                                        + "VALUES (?, 'RepairPart', ?, ?, CURDATE(), 0, 'Approved', 1, ?, ?, NOW())";
                                 try (PreparedStatement apPs = con.prepareStatement(insAppendix, Statement.RETURN_GENERATED_KEYS)) {
                                     apPs.setInt(1, contractId);
                                     apPs.setString(2, "Maintenance parts from schedule #" + scheduleId);
@@ -2678,16 +2678,18 @@ public class ServiceRequestDAO extends MyDAO {
                                     apPs.setInt(5, 1);
                                     apPs.executeUpdate();
                                     try (ResultSet rs = apPs.getGeneratedKeys()) {
-                                        if (rs.next()) appendixId = rs.getInt(1);
+                                        if (rs.next()) {
+                                            appendixId = rs.getInt(1);
+                                        }
                                     }
                                 }
-                                
+
                                 if (appendixId > 0) {
                                     // Insert parts lines as covered (Paid) with audit trail
-                                    String insPart = "INSERT INTO ContractAppendixPart " +
-                                        "(appendixId, equipmentId, partId, quantity, unitPrice, repairReportId, paymentStatus, approvedByCustomer, approvalDate, note) " +
-                                        "SELECT ?, 0, rrd.partId, SUM(rrd.quantity) as qty, rrd.unitPrice, ?, 'Paid', TRUE, NOW(), ? " +
-                                        "FROM RepairReportDetail rrd WHERE rrd.reportId = ? GROUP BY rrd.partId, rrd.unitPrice";
+                                    String insPart = "INSERT INTO ContractAppendixPart "
+                                            + "(appendixId, equipmentId, partId, quantity, unitPrice, repairReportId, paymentStatus, approvedByCustomer, approvalDate, note) "
+                                            + "SELECT ?, 0, rrd.partId, SUM(rrd.quantity) as qty, rrd.unitPrice, ?, 'Paid', TRUE, NOW(), ? "
+                                            + "FROM RepairReportDetail rrd WHERE rrd.reportId = ? GROUP BY rrd.partId, rrd.unitPrice";
                                     try (PreparedStatement partPs = con.prepareStatement(insPart)) {
                                         partPs.setInt(1, appendixId);
                                         partPs.setInt(2, reportId);
@@ -2937,18 +2939,46 @@ public class ServiceRequestDAO extends MyDAO {
         }
 
     }
-public int getRequestIdByReportId(int reportId) {
-    String sql = "SELECT requestId FROM RepairReport WHERE reportId = ?";
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        ps.setInt(1, reportId);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            return rs.getInt("requestId");
+
+    public int getRequestIdByReportId(int reportId) {
+        String sql = "SELECT requestId FROM RepairReport WHERE reportId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, reportId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("requestId");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return -1;
     }
-    return -1;
-}
+
+    /**
+     * Update the status of a specific service request
+     *
+     * @param requestId The ID of the service request
+     * @param status The new status to be set
+     * @return true if the status was successfully updated, false otherwise
+     * @throws SQLException if any database error occurs
+     */
+    public boolean updateRequestStatus(int requestId, String status) throws SQLException {
+        String sql = "UPDATE ServiceRequest SET status = ? WHERE requestId = ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, requestId);
+
+            int affected = ps.executeUpdate();
+
+            if (affected > 0) {
+                System.out.println("✅ Updated ServiceRequest #" + requestId + " to status: " + status);
+            } else {
+                System.out.println("⚠️ No ServiceRequest found with ID #" + requestId);
+            }
+
+            return affected > 0;
+        }
+    }
 
 }
