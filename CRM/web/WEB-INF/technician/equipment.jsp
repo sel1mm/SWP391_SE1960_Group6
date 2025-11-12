@@ -21,19 +21,19 @@
     <div class="col">
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0">
-          <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/technician/contracts">Contracts</a></li>
-          <li class="breadcrumb-item active">Equipment</li>
+          <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/technician/contracts">Hợp đồng</a></li>
+          <li class="breadcrumb-item active">Thiết bị</li>
         </ol>
       </nav>
-      <h1 class="h4 crm-page-title mt-2">Equipment Inventory</h1>
-      <p class="text-muted">View equipment from inventory with real-time status and availability</p>
+      <h1 class="h4 crm-page-title mt-2">Kho thiết bị</h1>
+      <p class="text-muted">Xem thiết bị trong kho với trạng thái và khả dụng theo thời gian thực</p>
     </div>
     <div class="col-auto">
       <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
-        <i class="bi bi-arrow-left me-1"></i>Back to Contracts
+        <i class="bi bi-arrow-left me-1"></i>Quay lại hợp đồng
       </a>
       <a class="btn btn-primary" href="${pageContext.request.contextPath}/technician/tasks">
-        <i class="bi bi-list-task me-1"></i>My Tasks
+        <i class="bi bi-list-task me-1"></i>Công việc của tôi
       </a>
     </div>
   </div>
@@ -43,14 +43,14 @@
       <form id="equipmentSearchForm" class="row g-2 align-items-center" method="get" action="${pageContext.request.contextPath}/technician/contracts">
         <input type="hidden" name="action" value="equipment">
         <div class="col-12 col-md-6">
-          <input type="text" name="q" value="${param.q}" class="form-control" placeholder="Search equipment by model, description, or serial number"/>
+          <input type="text" name="q" value="${param.q}" class="form-control" placeholder="Tìm thiết bị theo mẫu, mô tả hoặc số seri"/>
         </div>
         <div class="col-6 col-md-3 text-end">
-          <button class="btn btn-secondary" type="submit"><i class="bi bi-search me-1"></i>Search</button>
+          <button class="btn btn-secondary" type="submit"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
         </div>
         <div class="col-6 col-md-3 text-end">
           <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/contracts?action=equipment">
-            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+            <i class="bi bi-arrow-clockwise me-1"></i>Đặt lại
           </a>
         </div>
       </form>
@@ -59,23 +59,23 @@
 
   <div class="card mt-3 crm-card-shadow">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Equipment List</h5>
-      <span class="badge bg-primary">${totalEquipment} equipment</span>
+      <h5 class="mb-0">Danh sách thiết bị</h5>
+      <span class="badge bg-primary">${totalEquipment} thiết bị</span>
     </div>
     <div class="table-responsive">
       <table class="table align-middle mb-0">
         <thead class="table-light">
           <tr>
             <th>#</th>
-            <th>Equipment ID</th>
-            <th>Serial Number</th>
-            <th>Model</th>
-            <th class="d-none d-md-table-cell">Description</th>
-            <th>Status</th>
-            <th>Location</th>
-            <th>Install Date</th>
-            <th>Last Updated</th>
-            <th>Actions</th>
+            <th>Mã thiết bị</th>
+            <th>Số seri</th>
+            <th>Mẫu thiết bị</th>
+            <th class="d-none d-md-table-cell">Mô tả</th>
+            <th>Trạng thái</th>
+            <th>Vị trí</th>
+            <th>Ngày lắp đặt</th>
+            <th>Cập nhật lần cuối</th>
+            <th>Thao tác</th>
           </tr>
         </thead>
         <tbody id="equipment-table-body">
@@ -97,23 +97,23 @@
                       </div>
                     </c:when>
                     <c:otherwise>
-                      <span class="text-muted">No description</span>
+                      <span class="text-muted">Không có mô tả</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
                 <td>
                   <c:choose>
                     <c:when test="${equipment.status == 'Available'}">
-                      <span class="badge bg-success">Available</span>
+                      <span class="badge bg-success">Sẵn sàng</span>
                     </c:when>
                     <c:when test="${equipment.status == 'InUse'}">
-                      <span class="badge bg-warning">In Use</span>
+                      <span class="badge bg-warning">Đang sử dụng</span>
                     </c:when>
                     <c:when test="${equipment.status == 'Faulty'}">
-                      <span class="badge bg-danger">Faulty</span>
+                      <span class="badge bg-danger">Hỏng</span>
                     </c:when>
                     <c:when test="${equipment.status == 'Retired'}">
-                      <span class="badge bg-secondary">Retired</span>
+                      <span class="badge bg-secondary">Ngưng sử dụng</span>
                     </c:when>
                     <c:otherwise>
                       <span class="badge bg-light text-dark">${fn:escapeXml(equipment.status)}</span>
@@ -126,7 +126,7 @@
                       <i class="bi bi-geo-alt me-1"></i>${fn:escapeXml(equipment.location)}
                     </c:when>
                     <c:otherwise>
-                      <span class="text-muted">Not specified</span>
+                      <span class="text-muted">Không xác định</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
@@ -136,7 +136,7 @@
                       <i class="bi bi-calendar-event me-1"></i>${equipment.installDate}
                     </c:when>
                     <c:otherwise>
-                      <span class="text-muted">Not set</span>
+                      <span class="text-muted">Chưa đặt</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
@@ -146,14 +146,14 @@
                       <small class="text-muted">${equipment.lastUpdatedDate}</small>
                     </c:when>
                     <c:otherwise>
-                      <span class="text-muted">Unknown</span>
+                      <span class="text-muted">Không xác định</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
                 <td class="text-end">
                   <a class="btn btn-sm btn-outline-secondary" 
                      href="${pageContext.request.contextPath}/technician/contracts?action=equipmentDetail&equipmentId=${equipment.equipmentId}" 
-                     title="View Details">
+                     title="Xem chi tiết">
                     <i class="bi bi-eye"></i>
                   </a>
                 </td>
@@ -165,8 +165,8 @@
               <td colspan="10" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-gear fs-1 d-block mb-2"></i>
-                  <p>No equipment found</p>
-                  <small>Equipment will appear here when available</small>
+                  <p>Không tìm thấy thiết bị</p>
+                  <small>Thiết bị sẽ hiển thị tại đây khi có dữ liệu</small>
                 </div>
               </td>
             </tr>
@@ -179,7 +179,7 @@
     <!-- Pagination -->
     <c:if test="${totalPages > 1}">
       <div class="card-footer">
-        <nav aria-label="Equipment pagination">
+        <nav aria-label="Phân trang thiết bị">
           <ul class="pagination pagination-sm justify-content-center mb-0">
             <c:forEach begin="1" end="${totalPages}" var="pageNum">
               <li class="page-item ${pageNum == currentPage ? 'active' : ''}">
