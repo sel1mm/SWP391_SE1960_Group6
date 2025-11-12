@@ -1090,7 +1090,7 @@
                             <td>${ls.partName}</td>
                             <td>${ls.categoryName != null ? ls.categoryName : 'N/A'}</td>
                             <td>${ls.description}</td>
-                            <td>${ls.unitPrice} $</td>
+                            <td><fmt:formatNumber value="${ls.unitPrice * 26000}" type="number" maxFractionDigits="0" groupingUsed="true"/> ₫</td>
                             <td>${ls.userName}</td>
                             <td>${ls.lastUpdatedDate}</td>
                             <td>

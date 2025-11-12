@@ -35,7 +35,7 @@ public class ListNumberEquipmentServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // ===== LOAD USED EQUIPMENT IDS =====
-Set<Integer> usedEquipmentIds = dao.getUsedEquipmentIds();
+Set<Integer> usedEquipmentIds = (Set<Integer>) dao.getUsedEquipmentIds();
 request.setAttribute("usedEquipmentIds", usedEquipmentIds);
         // Kiểm tra đăng nhập
         HttpSession session = request.getSession();
