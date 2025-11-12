@@ -13,6 +13,18 @@ import java.util.List;
 public class WorkTaskDAO extends MyDAO {
 
     /**
+     * Get a valid database connection with validation
+     * @return Connection if valid, throws SQLException if not available
+     * @throws SQLException if connection is null or closed
+     */
+    private Connection getValidConnection() throws SQLException {
+        if (connection == null || connection.isClosed()) {
+            throw new SQLException("Database connection is not available");
+        }
+        return connection;
+    }
+
+    /**
      * Find all tasks assigned to a specific technician
      */
     public List<WorkTask> findByTechnicianId(int technicianId, String searchQuery, String statusFilter, int page, int pageSize) throws SQLException {
@@ -45,14 +57,16 @@ public class WorkTaskDAO extends MyDAO {
         params.add(pageSize);
         params.add((page - 1) * pageSize);
 
-        ps = con.prepareStatement(sql.toString());
-        for (int i = 0; i < params.size(); i++) {
-            ps.setObject(i + 1, params.get(i));
-        }
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
 
-        rs = ps.executeQuery();
-        while (rs.next()) {
-            tasks.add(mapResultSetToWorkTask(rs));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    tasks.add(mapResultSetToWorkTask(rs));
+                }
+            }
         }
 
         return tasks;
@@ -121,25 +135,27 @@ public class WorkTaskDAO extends MyDAO {
         params.add(pageSize);
         params.add((page - 1) * pageSize);
 
-        ps = con.prepareStatement(sql.toString());
-        for (int i = 0; i < params.size(); i++) {
-            ps.setObject(i + 1, params.get(i));
-        }
-
-        rs = ps.executeQuery();
-        while (rs.next()) {
-            WorkTaskWithCustomer taskWithCustomer = new WorkTaskWithCustomer();
-            taskWithCustomer.task = mapResultSetToWorkTask(rs);
-            Integer effectiveRequestId = rs.getObject("effectiveRequestId", Integer.class);
-            if (effectiveRequestId != null) {
-                taskWithCustomer.task.setRequestId(effectiveRequestId);
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
             }
-            taskWithCustomer.customerId = rs.getObject("customerId", Integer.class);
-            taskWithCustomer.customerName = rs.getString("customerName");
-            taskWithCustomer.customerEmail = rs.getString("customerEmail");
-            taskWithCustomer.planStart = rs.getTimestamp("planStart");
-            taskWithCustomer.planDone = rs.getTimestamp("planDone");
-            tasks.add(taskWithCustomer);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    WorkTaskWithCustomer taskWithCustomer = new WorkTaskWithCustomer();
+                    taskWithCustomer.task = mapResultSetToWorkTask(rs);
+                    Integer effectiveRequestId = rs.getObject("effectiveRequestId", Integer.class);
+                    if (effectiveRequestId != null) {
+                        taskWithCustomer.task.setRequestId(effectiveRequestId);
+                    }
+                    taskWithCustomer.customerId = rs.getObject("customerId", Integer.class);
+                    taskWithCustomer.customerName = rs.getString("customerName");
+                    taskWithCustomer.customerEmail = rs.getString("customerEmail");
+                    taskWithCustomer.planStart = rs.getTimestamp("planStart");
+                    taskWithCustomer.planDone = rs.getTimestamp("planDone");
+                    tasks.add(taskWithCustomer);
+                }
+            }
         }
 
         return tasks;
@@ -186,21 +202,24 @@ public class WorkTaskDAO extends MyDAO {
      * Find a specific task by ID
      */
     public WorkTask findById(int taskId) throws SQLException {
-        xSql = "SELECT wt.*, COALESCE(wt.requestId, ms.requestId) AS effectiveRequestId "
+        String sql = "SELECT wt.*, COALESCE(wt.requestId, ms.requestId) AS effectiveRequestId "
                 + "FROM WorkTask wt "
                 + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
                 + "WHERE wt.taskId = ?";
-        ps = con.prepareStatement(xSql);
-        ps.setInt(1, taskId);
-        rs = ps.executeQuery();
-
-        if (rs.next()) {
-            WorkTask task = mapResultSetToWorkTask(rs);
-            Integer effectiveRequestId = rs.getObject("effectiveRequestId", Integer.class);
-            if (effectiveRequestId != null) {
-                task.setRequestId(effectiveRequestId);
+        
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, taskId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    WorkTask task = mapResultSetToWorkTask(rs);
+                    Integer effectiveRequestId = rs.getObject("effectiveRequestId", Integer.class);
+                    if (effectiveRequestId != null) {
+                        task.setRequestId(effectiveRequestId);
+                    }
+                    return task;
+                }
             }
-            return task;
         }
         return null;
     }
@@ -213,20 +232,13 @@ public class WorkTaskDAO extends MyDAO {
         Integer requestId = null;
         String getRequestSql = "SELECT requestId FROM WorkTask WHERE taskId = ?";
 
-        ps = con.prepareStatement(getRequestSql);
-        ps.setInt(1, taskId);
-        rs = ps.executeQuery();
-
-        if (rs.next()) {
-            requestId = rs.getObject("requestId", Integer.class);
-        }
-
-        // Đóng ResultSet và PreparedStatement
-        if (rs != null) {
-            rs.close();
-        }
-        if (ps != null) {
-            ps.close();
+        try (PreparedStatement ps = getValidConnection().prepareStatement(getRequestSql)) {
+            ps.setInt(1, taskId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    requestId = rs.getObject("requestId", Integer.class);
+                }
+            }
         }
 
         // Update task status
@@ -234,11 +246,13 @@ public class WorkTaskDAO extends MyDAO {
                 + "endDate = CASE WHEN ? = 'Completed' THEN CURRENT_DATE ELSE endDate END "
                 + "WHERE taskId = ?";
 
-        ps = con.prepareStatement(updateTaskSql);
-        ps.setString(1, newStatus);
-        ps.setString(2, newStatus);
-        ps.setInt(3, taskId);
-        int affected = ps.executeUpdate();
+        int affected;
+        try (PreparedStatement ps = getValidConnection().prepareStatement(updateTaskSql)) {
+            ps.setString(1, newStatus);
+            ps.setString(2, newStatus);
+            ps.setInt(3, taskId);
+            affected = ps.executeUpdate();
+        }
 
         // Nếu update thành công và task vừa được set là Completed
         if (affected > 0 && "Completed".equals(newStatus) && requestId != null) {
@@ -270,19 +284,22 @@ public class WorkTaskDAO extends MyDAO {
      * Check if technician has overlapping tasks
      */
     public boolean hasOverlappingTasks(int technicianId, LocalDate startDate, LocalDate endDate, int excludeTaskId) throws SQLException {
-        xSql = "SELECT COUNT(*) FROM WorkTask WHERE technicianId = ? AND status IN ('In Progress', 'Pending') "
+        String sql = "SELECT COUNT(*) FROM WorkTask WHERE technicianId = ? AND status IN ('In Progress', 'Pending') "
                 + "AND taskId != ? AND ((startDate <= ? AND endDate >= ?) OR (startDate <= ? AND endDate >= ?))";
-        ps = con.prepareStatement(xSql);
-        ps.setInt(1, technicianId);
-        ps.setInt(2, excludeTaskId);
-        ps.setDate(3, Date.valueOf(endDate));
-        ps.setDate(4, Date.valueOf(startDate));
-        ps.setDate(5, Date.valueOf(startDate));
-        ps.setDate(6, Date.valueOf(endDate));
+        
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, technicianId);
+            ps.setInt(2, excludeTaskId);
+            ps.setDate(3, Date.valueOf(endDate));
+            ps.setDate(4, Date.valueOf(startDate));
+            ps.setDate(5, Date.valueOf(startDate));
+            ps.setDate(6, Date.valueOf(endDate));
 
-        rs = ps.executeQuery();
-        if (rs.next()) {
-            return rs.getInt(1) > 0;
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
         }
         return false;
     }
@@ -302,14 +319,16 @@ public class WorkTaskDAO extends MyDAO {
             params.add(statusFilter.trim());
         }
 
-        ps = con.prepareStatement(sql.toString());
-        for (int i = 0; i < params.size(); i++) {
-            ps.setObject(i + 1, params.get(i));
-        }
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
 
-        rs = ps.executeQuery();
-        if (rs.next()) {
-            return rs.getInt(1);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
         }
         return 0;
     }
@@ -332,14 +351,16 @@ public class WorkTaskDAO extends MyDAO {
             params.add(statusFilter.trim());
         }
 
-        ps = con.prepareStatement(sql.toString());
-        for (int i = 0; i < params.size(); i++) {
-            ps.setObject(i + 1, params.get(i));
-        }
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
 
-        rs = ps.executeQuery();
-        if (rs.next()) {
-            return rs.getInt(1);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
         }
         return 0;
     }
@@ -399,20 +420,17 @@ public class WorkTaskDAO extends MyDAO {
         params.add(offset);
 
         List<WorkTask> tasks = new ArrayList<>();
-        xSql = sql.toString();
 
-        try {
-            ps = con.prepareStatement(xSql);
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                tasks.add(mapResultSetToWorkTask(rs));
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    tasks.add(mapResultSetToWorkTask(rs));
+                }
             }
-        } finally {
-            closeResources();
         }
 
         return tasks;
@@ -433,20 +451,16 @@ public class WorkTaskDAO extends MyDAO {
             params.add(searchPattern);
         }
 
-        xSql = sql.toString();
-
-        try {
-            ps = con.prepareStatement(xSql);
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return rs.getInt(1);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
-        } finally {
-            closeResources();
         }
 
         return 0;
@@ -575,12 +589,6 @@ public class WorkTaskDAO extends MyDAO {
 public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throws SQLException {
         List<WorkTaskForReport> tasks = new ArrayList<>();
         
-        // Kiểm tra kết nối
-        if (connection == null || connection.isClosed()) {
-            System.err.println("❌ Database connection is not available");
-            return tasks;
-        }
-        
         String sql = """
             SELECT wt.taskId,
                    wt.requestId,
@@ -612,8 +620,7 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
             ORDER BY sortKey ASC, wt.taskId ASC
         """;
 
-        // SỬA Ở ĐÂY: thay 'con' bằng 'connection'
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, technicianId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -655,50 +662,44 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
      * Check if technician is assigned to a specific request ID
      */
   public boolean isTechnicianAssignedToRequest(int technicianId, int requestId) throws SQLException {
-    // Kiểm tra kết nối
-    if (connection == null) {
-        return false;
-    }
-    
     String sql = "SELECT COUNT(*) FROM WorkTask wt "
             + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
             + "WHERE wt.technicianId = ? "
             + "AND COALESCE(wt.requestId, ms.requestId) = ?";
     
-    PreparedStatement ps = connection.prepareStatement(sql);
-    ps.setInt(1, technicianId);
-    ps.setInt(2, requestId);
-    
-    ResultSet rs = ps.executeQuery();
-    
-    boolean result = false;
-    if (rs.next()) {
-        result = rs.getInt(1) > 0;
+    try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+        ps.setInt(1, technicianId);
+        ps.setInt(2, requestId);
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        }
     }
     
-    // Đóng resources
-    rs.close();
-    ps.close();
-    
-    return result;
+    return false;
 }
     /**
      * Check if a specific technician's work task is completed for a request
      * This ensures each technician can work independently on the same ServiceRequest
      */
     public boolean isTechnicianTaskCompleted(int technicianId, int requestId) throws SQLException {
-        xSql = "SELECT wt.status FROM WorkTask wt "
+        String sql = "SELECT wt.status FROM WorkTask wt "
                 + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
                 + "WHERE wt.technicianId = ? "
                 + "AND COALESCE(wt.requestId, ms.requestId) = ? "
                 + "LIMIT 1";
-        ps = con.prepareStatement(xSql);
-        ps.setInt(1, technicianId);
-        ps.setInt(2, requestId);
-        rs = ps.executeQuery();
-
-        if (rs.next()) {
-            return "Completed".equals(rs.getString("status"));
+        
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, technicianId);
+            ps.setInt(2, requestId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return "Completed".equals(rs.getString("status"));
+                }
+            }
         }
         return false; // No task found for this technician and request
     }
@@ -707,14 +708,17 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
      * Check if technician is assigned to a specific schedule ID
      */
     public boolean isTechnicianAssignedToSchedule(int technicianId, int scheduleId) throws SQLException {
-        xSql = "SELECT COUNT(*) FROM WorkTask WHERE technicianId = ? AND scheduleId = ?";
-        ps = con.prepareStatement(xSql);
-        ps.setInt(1, technicianId);
-        ps.setInt(2, scheduleId);
-        rs = ps.executeQuery();
-
-        if (rs.next()) {
-            return rs.getInt(1) > 0;
+        String sql = "SELECT COUNT(*) FROM WorkTask WHERE technicianId = ? AND scheduleId = ?";
+        
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, technicianId);
+            ps.setInt(2, scheduleId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
         }
         return false;
     }
@@ -722,7 +726,7 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
     public List<WorkTask> findByScheduleId(int scheduleId) throws SQLException {
         List<WorkTask> tasks = new ArrayList<>();
         String sql = "SELECT * FROM WorkTask WHERE scheduleId = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, scheduleId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -733,26 +737,13 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
         return tasks;
     }
 
-    private void closeResources() {
-        try {
-            if (rs != null) {
-                rs.close();
-            }
-            if (ps != null) {
-                ps.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     public int getTaskIdByRequestId(int requestId) throws SQLException {
         String sql = "SELECT wt.taskId FROM WorkTask wt "
                 + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
                 + "WHERE COALESCE(wt.requestId, ms.requestId) = ? "
                 + "LIMIT 1";
-        try (
-                PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, requestId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -766,7 +757,7 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
     public int createWorkTask(WorkTask task) throws SQLException {
         String sql = "INSERT INTO WorkTask (requestId, scheduleId, technicianId, taskType, taskDetails, startDate, endDate, status) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             if (task.getRequestId() != null) {
                 ps.setInt(1, task.getRequestId());
             } else {
@@ -808,56 +799,52 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
 
     public boolean deleteTaskById(int taskId) throws SQLException {
         String sql = "DELETE FROM WorkTask WHERE taskId = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, taskId);
             int affected = ps.executeUpdate();
             return affected > 0;
         }
     }
 
-    public List<WorkTask> findByRequestId(int requestId) {
+    public List<WorkTask> findByRequestId(int requestId) throws SQLException {
         List<WorkTask> tasks = new ArrayList<>();
         String sql = "SELECT * FROM WorkTask WHERE requestId = ? ORDER BY taskId DESC";
 
-        try {
-            ps = con.prepareStatement(sql);
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, requestId);
-            rs = ps.executeQuery();
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    WorkTask task = new WorkTask();
+                    task.setTaskId(rs.getInt("taskId"));
+                    task.setRequestId(rs.getInt("requestId"));
 
-            while (rs.next()) {
-                WorkTask task = new WorkTask();
-                task.setTaskId(rs.getInt("taskId"));
-                task.setRequestId(rs.getInt("requestId"));
+                    // Handle nullable scheduleId
+                    int scheduleId = rs.getInt("scheduleId");
+                    if (!rs.wasNull()) {
+                        task.setScheduleId(scheduleId);
+                    }
 
-                // Handle nullable scheduleId
-                int scheduleId = rs.getInt("scheduleId");
-                if (!rs.wasNull()) {
-                    task.setScheduleId(scheduleId);
+                    task.setTechnicianId(rs.getInt("technicianId"));
+                    task.setTaskType(rs.getString("taskType"));
+                    task.setTaskDetails(rs.getString("taskDetails"));
+
+                    // Handle nullable dates
+                    Date startDate = rs.getDate("startDate");
+                    if (startDate != null) {
+                        task.setStartDate(startDate.toLocalDate());
+                    }
+
+                    Date endDate = rs.getDate("endDate");
+                    if (endDate != null) {
+                        task.setEndDate(endDate.toLocalDate());
+                    }
+
+                    task.setStatus(rs.getString("status"));
+
+                    tasks.add(task);
                 }
-
-                task.setTechnicianId(rs.getInt("technicianId"));
-                task.setTaskType(rs.getString("taskType"));
-                task.setTaskDetails(rs.getString("taskDetails"));
-
-                // Handle nullable dates
-                Date startDate = rs.getDate("startDate");
-                if (startDate != null) {
-                    task.setStartDate(startDate.toLocalDate());
-                }
-
-                Date endDate = rs.getDate("endDate");
-                if (endDate != null) {
-                    task.setEndDate(endDate.toLocalDate());
-                }
-
-                task.setStatus(rs.getString("status"));
-
-                tasks.add(task);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeResources();
         }
 
         return tasks;
@@ -866,27 +853,17 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
     public boolean hasRepairReport(int requestId, int technicianId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM RepairReport WHERE requestId = ? AND technicianId = ?";
 
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            ps = con.prepareStatement(sql);
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, requestId);
             ps.setInt(2, technicianId);
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                int count = rs.getInt(1);
-                System.out.println("DEBUG hasRepairReport - requestId: " + requestId
-                        + ", technicianId: " + technicianId + ", count: " + count);
-                return count > 0;
-            }
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
-            if (ps != null) {
-                ps.close();
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1);
+                    System.out.println("DEBUG hasRepairReport - requestId: " + requestId
+                            + ", technicianId: " + technicianId + ", count: " + count);
+                    return count > 0;
+                }
             }
         }
 
@@ -914,27 +891,28 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
                 + "SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed "
                 + "FROM WorkTask WHERE requestId = ?";
 
-        // ✅ KHÔNG DÙNG try-with-resources
-        ps = con.prepareStatement(sql);
-        ps.setInt(1, requestId);
-        rs = ps.executeQuery();
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, requestId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int total = rs.getInt("total");
+                    int completed = rs.getInt("completed");
 
-        if (rs.next()) {
-            int total = rs.getInt("total");
-            int completed = rs.getInt("completed");
+                    System.out.println("📊 Request #" + requestId + ": " + completed + "/" + total + " tasks completed");
 
-            System.out.println("📊 Request #" + requestId + ": " + completed + "/" + total + " tasks completed");
+                    // Nếu không có task nào thì return false
+                    if (total == 0) {
+                        System.out.println("⚠️ No tasks found for request #" + requestId);
+                        return false;
+                    }
 
-            // Nếu không có task nào thì return false
-            if (total == 0) {
-                System.out.println("⚠️ No tasks found for request #" + requestId);
-                return false;
+                    // Tất cả task phải completed
+                    boolean allCompleted = (total == completed);
+                    System.out.println(allCompleted ? "✅ All tasks completed!" : "❌ Not all tasks completed yet");
+                    return allCompleted;
+                }
             }
-
-            // Tất cả task phải completed
-            boolean allCompleted = (total == completed);
-            System.out.println(allCompleted ? "✅ All tasks completed!" : "❌ Not all tasks completed yet");
-            return allCompleted;
         }
 
         return false;
@@ -947,14 +925,16 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
         List<String> statuses = new ArrayList<>();
         String sql = "SELECT taskId, status FROM WorkTask WHERE requestId = ?";
 
-        ps = con.prepareStatement(sql);
-        ps.setInt(1, requestId);
-        rs = ps.executeQuery();
-
-        while (rs.next()) {
-            int taskId = rs.getInt("taskId");
-            String status = rs.getString("status");
-            statuses.add("Task#" + taskId + ":" + status);
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, requestId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int taskId = rs.getInt("taskId");
+                    String status = rs.getString("status");
+                    statuses.add("Task#" + taskId + ":" + status);
+                }
+            }
         }
 
         return statuses;
