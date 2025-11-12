@@ -572,8 +572,15 @@ public class WorkTaskDAO extends MyDAO {
      * (for report creation) Includes customer info and requestType from
      * ServiceRequest
      */
-    public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throws SQLException {
+public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throws SQLException {
         List<WorkTaskForReport> tasks = new ArrayList<>();
+        
+        // Kiểm tra kết nối
+        if (connection == null || connection.isClosed()) {
+            System.err.println("❌ Database connection is not available");
+            return tasks;
+        }
+        
         String sql = """
             SELECT wt.taskId,
                    wt.requestId,
@@ -605,7 +612,8 @@ public class WorkTaskDAO extends MyDAO {
             ORDER BY sortKey ASC, wt.taskId ASC
         """;
 
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        // SỬA Ở ĐÂY: thay 'con' bằng 'connection'
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, technicianId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -627,25 +635,53 @@ public class WorkTaskDAO extends MyDAO {
         return tasks;
     }
 
+    // Hàm kiểm tra kết nối
+    public boolean checkConnection() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                System.out.println("Kết nối DB thành công!");
+                return true;
+            } else {
+                System.out.println("Kết nối DB thất bại!");
+                return false;
+            }
+        } catch (SQLException ex) {
+        
+            return false;
+        }
+    }
+
     /**
      * Check if technician is assigned to a specific request ID
      */
-    public boolean isTechnicianAssignedToRequest(int technicianId, int requestId) throws SQLException {
-        xSql = "SELECT COUNT(*) FROM WorkTask wt "
-                + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
-                + "WHERE wt.technicianId = ? "
-                + "AND COALESCE(wt.requestId, ms.requestId) = ?";
-        ps = con.prepareStatement(xSql);
-        ps.setInt(1, technicianId);
-        ps.setInt(2, requestId);
-        rs = ps.executeQuery();
-
-        if (rs.next()) {
-            return rs.getInt(1) > 0;
-        }
+  public boolean isTechnicianAssignedToRequest(int technicianId, int requestId) throws SQLException {
+    // Kiểm tra kết nối
+    if (connection == null) {
         return false;
     }
-
+    
+    String sql = "SELECT COUNT(*) FROM WorkTask wt "
+            + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
+            + "WHERE wt.technicianId = ? "
+            + "AND COALESCE(wt.requestId, ms.requestId) = ?";
+    
+    PreparedStatement ps = connection.prepareStatement(sql);
+    ps.setInt(1, technicianId);
+    ps.setInt(2, requestId);
+    
+    ResultSet rs = ps.executeQuery();
+    
+    boolean result = false;
+    if (rs.next()) {
+        result = rs.getInt(1) > 0;
+    }
+    
+    // Đóng resources
+    rs.close();
+    ps.close();
+    
+    return result;
+}
     /**
      * Check if a specific technician's work task is completed for a request
      * This ensures each technician can work independently on the same ServiceRequest

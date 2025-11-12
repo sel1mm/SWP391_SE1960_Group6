@@ -49,7 +49,7 @@ public class RepairReportDAO extends MyDAO {
         params.add(pageSize);
         params.add((page - 1) * pageSize);
 
-        ps = con.prepareStatement(sql.toString());
+        ps = connection.prepareStatement(sql.toString());
         for (int i = 0; i < params.size(); i++) {
             ps.setObject(i + 1, params.get(i));
         }
@@ -85,7 +85,7 @@ public class RepairReportDAO extends MyDAO {
             params.add(statusFilter.trim());
         }
 
-        ps = con.prepareStatement(sql.toString());
+        ps = connection.prepareStatement(sql.toString());
         for (int i = 0; i < params.size(); i++) {
             ps.setObject(i + 1, params.get(i));
         }
@@ -152,7 +152,7 @@ public class RepairReportDAO extends MyDAO {
     public int createRepairReport(RepairReport report) throws SQLException {
         xSql = "INSERT INTO RepairReport (requestId, scheduleId, origin, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        ps = con.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
+        ps = connection.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
         // requestId is primitive int in model; treat values <= 0 as NULL for DB
         if (report.getRequestId() > 0) {
             ps.setInt(1, report.getRequestId());
@@ -193,15 +193,15 @@ public class RepairReportDAO extends MyDAO {
      * back)
      */
     public int insertReportWithDetails(RepairReport report, List<RepairReportDetail> details) throws SQLException {
-        boolean originalAutoCommit = con.getAutoCommit();
+        boolean originalAutoCommit = connection.getAutoCommit();
 
         try {
-            con.setAutoCommit(false);
+            connection.setAutoCommit(false);
 
             // Insert RepairReport header (supports both request-origin and schedule-origin)
             xSql = "INSERT INTO RepairReport (requestId, scheduleId, origin, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate) "
                     + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            ps = con.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
+            ps = connection.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
             // requestId is primitive int; interpret <= 0 as NULL for DB
             if (report.getRequestId() > 0) {
                 ps.setInt(1, report.getRequestId());
@@ -220,11 +220,11 @@ public class RepairReportDAO extends MyDAO {
             ps.setBigDecimal(7, report.getEstimatedCost());
             ps.setString(8, report.getQuotationStatus());
             ps.setDate(9, Date.valueOf(report.getRepairDate()));
-            // targetContractId column doesn't exist - contract is automatically determined from ServiceRequest when report is approved
+            // targetContractId column doesn't exist - connectiontract is automatically determined from ServiceRequest when report is approved
 
             int affected = ps.executeUpdate();
             if (affected == 0) {
-                con.rollback();
+                connection.rollback();
                 return 0;
             }
 
@@ -234,7 +234,7 @@ public class RepairReportDAO extends MyDAO {
             if (rs.next()) {
                 reportId = rs.getInt(1);
             } else {
-                con.rollback();
+                connection.rollback();
                 return 0;
             }
 
@@ -242,7 +242,7 @@ public class RepairReportDAO extends MyDAO {
             if (details != null && !details.isEmpty()) {
                 xSql = "INSERT INTO RepairReportDetail (reportId, partId, partDetailId, quantity, unitPrice) "
                         + "VALUES (?, ?, ?, ?, ?)";
-                ps = con.prepareStatement(xSql);
+                ps = connection.prepareStatement(xSql);
 
                 for (RepairReportDetail detail : details) {
                     int partId = detail.getPartId();
@@ -255,7 +255,7 @@ public class RepairReportDAO extends MyDAO {
                                      "ORDER BY partDetailId ASC " +
                                      "LIMIT ? FOR UPDATE";
                     
-                    try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
+                    try (PreparedStatement selectPs = connection.prepareStatement(selectSql)) {
                         selectPs.setInt(1, partId);
                         selectPs.setInt(2, quantity);
                         try (ResultSet selectRs = selectPs.executeQuery()) {
@@ -267,7 +267,7 @@ public class RepairReportDAO extends MyDAO {
                     
                     // Validate we have enough available parts
                     if (reservedPartDetailIds.size() < quantity) {
-                        con.rollback();
+                        connection.rollback();
                         throw new SQLException("Insufficient available parts for partId " + partId + 
                                              ". Required: " + quantity + ", Available: " + reservedPartDetailIds.size());
                     }
@@ -284,7 +284,7 @@ public class RepairReportDAO extends MyDAO {
                         }
                         updateSqlBuilder.append(")");
                         
-                        try (PreparedStatement updatePs = con.prepareStatement(updateSqlBuilder.toString())) {
+                        try (PreparedStatement updatePs = connection.prepareStatement(updateSqlBuilder.toString())) {
                             updatePs.setInt(1, report.getTechnicianId() != null ? report.getTechnicianId() : 1);
                             updatePs.setDate(2, Date.valueOf(java.time.LocalDate.now()));
                             for (int i = 0; i < reservedPartDetailIds.size(); i++) {
@@ -292,7 +292,7 @@ public class RepairReportDAO extends MyDAO {
                             }
                             int updated = updatePs.executeUpdate();
                             if (updated != reservedPartDetailIds.size()) {
-                                con.rollback();
+                                connection.rollback();
                                 throw new SQLException("Failed to reserve all PartDetail records for partId " + partId);
                             }
                         }
@@ -313,20 +313,20 @@ public class RepairReportDAO extends MyDAO {
                 int[] batchResults = ps.executeBatch();
                 for (int result : batchResults) {
                     if (result == PreparedStatement.EXECUTE_FAILED) {
-                        con.rollback();
+                        connection.rollback();
                         throw new SQLException("Failed to insert one or more repair report details");
                     }
                 }
             }
 
-            con.commit();
+            connection.commit();
             return reportId;
 
         } catch (SQLException e) {
-            con.rollback();
+            connection.rollback();
             throw e;
         } finally {
-            con.setAutoCommit(originalAutoCommit);
+            connection.setAutoCommit(originalAutoCommit);
         }
     }
 
@@ -344,7 +344,7 @@ public class RepairReportDAO extends MyDAO {
                 + "WHERE rrd.reportId = ? "
                 + "ORDER BY rrd.detailId";
 
-        ps = con.prepareStatement(xSql);
+        ps = connection.prepareStatement(xSql);
         ps.setInt(1, reportId);
         rs = ps.executeQuery();
 
@@ -372,7 +372,7 @@ public class RepairReportDAO extends MyDAO {
     public boolean updateRepairReport(RepairReport report) throws SQLException {
         xSql = "UPDATE RepairReport SET details = ?, diagnosis = ?, estimatedCost = ?, repairDate = ? "
                 + "WHERE reportId = ? AND technicianId = ?";
-        ps = con.prepareStatement(xSql);
+        ps = connection.prepareStatement(xSql);
         ps.setString(1, report.getDetails());
         ps.setString(2, report.getDiagnosis());
         ps.setBigDecimal(3, report.getEstimatedCost());
@@ -392,24 +392,24 @@ public class RepairReportDAO extends MyDAO {
      * @return true if successful
      */
     public boolean updateReportWithDetails(RepairReport report, List<RepairReportDetail> newDetails) throws SQLException {
-        boolean originalAutoCommit = con.getAutoCommit();
+        boolean originalAutoCommit = connection.getAutoCommit();
         
         try {
-            con.setAutoCommit(false);
+            connection.setAutoCommit(false);
             
             // 1. Return old reserved parts to Available
             returnReservedPartsToAvailable(report.getReportId());
             
             // 2. Delete old RepairReportDetail rows
             xSql = "DELETE FROM RepairReportDetail WHERE reportId = ?";
-            ps = con.prepareStatement(xSql);
+            ps = connection.prepareStatement(xSql);
             ps.setInt(1, report.getReportId());
             ps.executeUpdate();
             
             // 3. Update report header
             boolean headerUpdated = updateRepairReport(report);
             if (!headerUpdated) {
-                con.rollback();
+                connection.rollback();
                 return false;
             }
             
@@ -417,7 +417,7 @@ public class RepairReportDAO extends MyDAO {
             if (newDetails != null && !newDetails.isEmpty()) {
                 xSql = "INSERT INTO RepairReportDetail (reportId, partId, partDetailId, quantity, unitPrice) "
                         + "VALUES (?, ?, ?, ?, ?)";
-                ps = con.prepareStatement(xSql);
+                ps = connection.prepareStatement(xSql);
 
                 for (RepairReportDetail detail : newDetails) {
                     int partId = detail.getPartId();
@@ -430,7 +430,7 @@ public class RepairReportDAO extends MyDAO {
                                      "ORDER BY partDetailId ASC " +
                                      "LIMIT ? FOR UPDATE";
                     
-                    try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
+                    try (PreparedStatement selectPs = connection.prepareStatement(selectSql)) {
                         selectPs.setInt(1, partId);
                         selectPs.setInt(2, quantity);
                         try (ResultSet selectRs = selectPs.executeQuery()) {
@@ -441,7 +441,7 @@ public class RepairReportDAO extends MyDAO {
                     }
                     
                     if (reservedPartDetailIds.size() < quantity) {
-                        con.rollback();
+                        connection.rollback();
                         throw new SQLException("Insufficient available parts for partId " + partId + 
                                              ". Required: " + quantity + ", Available: " + reservedPartDetailIds.size());
                     }
@@ -458,7 +458,7 @@ public class RepairReportDAO extends MyDAO {
                         }
                         updateSqlBuilder.append(")");
                         
-                        try (PreparedStatement updatePs = con.prepareStatement(updateSqlBuilder.toString())) {
+                        try (PreparedStatement updatePs = connection.prepareStatement(updateSqlBuilder.toString())) {
                             updatePs.setInt(1, report.getTechnicianId() != null ? report.getTechnicianId() : 1);
                             updatePs.setDate(2, Date.valueOf(java.time.LocalDate.now()));
                             for (int i = 0; i < reservedPartDetailIds.size(); i++) {
@@ -482,20 +482,20 @@ public class RepairReportDAO extends MyDAO {
                 int[] batchResults = ps.executeBatch();
                 for (int result : batchResults) {
                     if (result == PreparedStatement.EXECUTE_FAILED) {
-                        con.rollback();
+                        connection.rollback();
                         throw new SQLException("Failed to insert one or more repair report details");
                     }
                 }
             }
             
-            con.commit();
+            connection.commit();
             return true;
             
         } catch (SQLException e) {
-            con.rollback();
+            connection.rollback();
             throw e;
         } finally {
-            con.setAutoCommit(originalAutoCommit);
+            connection.setAutoCommit(originalAutoCommit);
         }
     }
 
@@ -531,7 +531,7 @@ public class RepairReportDAO extends MyDAO {
         params.add(pageSize);
         params.add((page - 1) * pageSize);
 
-        ps = con.prepareStatement(sql.toString());
+        ps = connection.prepareStatement(sql.toString());
         for (int i = 0; i < params.size(); i++) {
             ps.setObject(i + 1, params.get(i));
         }
@@ -549,7 +549,7 @@ public class RepairReportDAO extends MyDAO {
      */
     public RepairReport findById(int reportId) throws SQLException {
         xSql = "SELECT * FROM RepairReport WHERE reportId = ?";
-        ps = con.prepareStatement(xSql);
+        ps = connection.prepareStatement(xSql);
         ps.setInt(1, reportId);
         rs = ps.executeQuery();
 
@@ -567,7 +567,7 @@ public class RepairReportDAO extends MyDAO {
      */
     public RepairReport findByRequestIdAndTechnician(int requestId, int technicianId) throws SQLException {
         xSql = "SELECT * FROM RepairReport WHERE requestId = ? AND technicianId = ?";
-        ps = con.prepareStatement(xSql);
+        ps = connection.prepareStatement(xSql);
         ps.setInt(1, requestId);
         ps.setInt(2, technicianId);
         rs = ps.executeQuery();
@@ -580,7 +580,7 @@ public class RepairReportDAO extends MyDAO {
 
     public RepairReport findByRequestId(int requestId) throws SQLException {
         xSql = "SELECT * FROM RepairReport WHERE requestId = ?";
-        ps = con.prepareStatement(xSql);
+        ps = connection.prepareStatement(xSql);
         ps.setInt(1, requestId);
         rs = ps.executeQuery();
 
@@ -595,7 +595,7 @@ public class RepairReportDAO extends MyDAO {
      */
     public boolean canTechnicianEditReport(int reportId, int technicianId) throws SQLException {
         xSql = "SELECT quotationStatus FROM RepairReport WHERE reportId = ? AND technicianId = ?";
-        ps = con.prepareStatement(xSql);
+        ps = connection.prepareStatement(xSql);
         ps.setInt(1, reportId);
         ps.setInt(2, technicianId);
         rs = ps.executeQuery();
@@ -622,7 +622,7 @@ public class RepairReportDAO extends MyDAO {
             params.add(statusFilter.trim());
         }
 
-        ps = con.prepareStatement(sql.toString());
+        ps = connection.prepareStatement(sql.toString());
         for (int i = 0; i < params.size(); i++) {
             ps.setObject(i + 1, params.get(i));
         }
@@ -636,7 +636,7 @@ public class RepairReportDAO extends MyDAO {
 
     public RepairReport findByScheduleIdAndTechnician(int scheduleId, int technicianId) throws SQLException {
         String sql = "SELECT * FROM RepairReport WHERE scheduleId = ? AND technicianId = ? LIMIT 1";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, scheduleId);
             ps.setInt(2, technicianId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -690,7 +690,7 @@ public class RepairReportDAO extends MyDAO {
         xSql = sql.toString();
 
         try {
-            ps = con.prepareStatement(xSql);
+            ps = connection.prepareStatement(xSql);
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
@@ -724,7 +724,7 @@ public class RepairReportDAO extends MyDAO {
         xSql = sql.toString();
 
         try {
-            ps = con.prepareStatement(xSql);
+            ps = connection.prepareStatement(xSql);
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
@@ -775,7 +775,7 @@ public class RepairReportDAO extends MyDAO {
         params.add(pageSize);
         params.add((page - 1) * pageSize);
 
-        ps = con.prepareStatement(sql.toString());
+        ps = connection.prepareStatement(sql.toString());
         for (int i = 0; i < params.size(); i++) {
             ps.setObject(i + 1, params.get(i));
         }
@@ -821,7 +821,7 @@ public class RepairReportDAO extends MyDAO {
             params.add(statusFilter.trim());
         }
 
-        ps = con.prepareStatement(sql.toString());
+        ps = connection.prepareStatement(sql.toString());
         for (int i = 0; i < params.size(); i++) {
             ps.setObject(i + 1, params.get(i));
         }
@@ -848,14 +848,14 @@ public class RepairReportDAO extends MyDAO {
 
     public boolean updatePartPaymentStatus(int partDetailId, String paymentStatus) throws SQLException {
         try {
-            con.setAutoCommit(false);
+            connection.setAutoCommit(false);
 
             // Check if InvoiceDetail exists for this part
             String checkSql = "SELECT id.invoiceDetailId "
                     + "FROM InvoiceDetail id "
                     + "WHERE id.repairReportDetailId = ?";
 
-            ps = con.prepareStatement(checkSql);
+            ps = connection.prepareStatement(checkSql);
             ps.setInt(1, partDetailId);
             rs = ps.executeQuery();
 
@@ -865,12 +865,12 @@ public class RepairReportDAO extends MyDAO {
                 String updateSql = "UPDATE InvoiceDetail SET paymentStatus = ?, paymentDate = CURRENT_DATE "
                         + "WHERE invoiceDetailId = ?";
 
-                ps = con.prepareStatement(updateSql);
+                ps = connection.prepareStatement(updateSql);
                 ps.setString(1, paymentStatus);
                 ps.setInt(2, invoiceDetailId);
                 int affected = ps.executeUpdate();
 
-                con.commit();
+                connection.commit();
                 return affected > 0;
             } else {
                 // Create new InvoiceDetail
@@ -880,7 +880,7 @@ public class RepairReportDAO extends MyDAO {
                         + "JOIN RepairReport rr ON rrd.reportId = rr.reportId "
                         + "WHERE rrd.detailId = ?";
 
-                ps = con.prepareStatement(partInfoSql);
+                ps = connection.prepareStatement(partInfoSql);
                 ps.setInt(1, partDetailId);
                 rs = ps.executeQuery();
 
@@ -893,7 +893,7 @@ public class RepairReportDAO extends MyDAO {
 
                     // Get or create Invoice for this request
                     String invoiceSql = "SELECT invoiceId FROM Invoice WHERE requestId = ?";
-                    ps = con.prepareStatement(invoiceSql);
+                    ps = connection.prepareStatement(invoiceSql);
                     ps.setInt(1, requestId);
                     rs = ps.executeQuery();
 
@@ -904,7 +904,7 @@ public class RepairReportDAO extends MyDAO {
                         // Create new Invoice
                         String createInvoiceSql = "INSERT INTO Invoice (requestId, totalAmount, invoiceDate, paymentStatus) "
                                 + "VALUES (?, ?, CURRENT_DATE, 'Pending')";
-                        ps = con.prepareStatement(createInvoiceSql, Statement.RETURN_GENERATED_KEYS);
+                        ps = connection.prepareStatement(createInvoiceSql, Statement.RETURN_GENERATED_KEYS);
                         ps.setInt(1, requestId);
                         ps.setBigDecimal(2, totalAmount);
                         ps.executeUpdate();
@@ -913,7 +913,7 @@ public class RepairReportDAO extends MyDAO {
                         if (rs.next()) {
                             invoiceId = rs.getInt(1);
                         } else {
-                            con.rollback();
+                            connection.rollback();
                             return false;
                         }
                     }
@@ -921,7 +921,7 @@ public class RepairReportDAO extends MyDAO {
                     // Create InvoiceDetail
                     String createDetailSql = "INSERT INTO InvoiceDetail (invoiceId, repairReportDetailId, quantity, unitPrice, totalPrice, paymentStatus, paymentDate) "
                             + "VALUES (?, ?, ?, ?, ?, ?, CURRENT_DATE)";
-                    ps = con.prepareStatement(createDetailSql);
+                    ps = connection.prepareStatement(createDetailSql);
                     ps.setInt(1, invoiceId);
                     ps.setInt(2, partDetailId);
                     ps.setInt(3, quantity);
@@ -930,18 +930,18 @@ public class RepairReportDAO extends MyDAO {
                     ps.setString(6, paymentStatus);
 
                     int affected = ps.executeUpdate();
-                    con.commit();
+                    connection.commit();
                     return affected > 0;
                 }
 
-                con.rollback();
+                connection.rollback();
                 return false;
             }
         } catch (SQLException e) {
-            con.rollback();
+            connection.rollback();
             throw e;
         } finally {
-            con.setAutoCommit(true);
+            connection.setAutoCommit(true);
             closeResources();
         }
     }
@@ -958,7 +958,7 @@ public class RepairReportDAO extends MyDAO {
                 + "WHERE rr.requestId = ?";
 
         try {
-            ps = con.prepareStatement(sql);
+            ps = connection.prepareStatement(sql);
             ps.setInt(1, requestId);
             rs = ps.executeQuery();
 
@@ -993,7 +993,7 @@ public class RepairReportDAO extends MyDAO {
                 + "ORDER BY rr.repairDate DESC";
 
         try {
-            ps = con.prepareStatement(sql);
+            ps = connection.prepareStatement(sql);
             ps.setInt(1, requestId);
             rs = ps.executeQuery();
 
@@ -1020,7 +1020,7 @@ public class RepairReportDAO extends MyDAO {
                 + "WHERE rr.reportId = ?";
 
         try {
-            ps = con.prepareStatement(sql);
+            ps = connection.prepareStatement(sql);
             ps.setInt(1, reportId);
             rs = ps.executeQuery();
 
@@ -1045,7 +1045,7 @@ public class RepairReportDAO extends MyDAO {
                 + "WHERE rr.reportId = ?";
 
         try {
-            ps = con.prepareStatement(sql);
+            ps = connection.prepareStatement(sql);
             ps.setInt(1, reportId);
             rs = ps.executeQuery();
 
@@ -1072,7 +1072,7 @@ public class RepairReportDAO extends MyDAO {
                 + "WHERE rr.reportId = ?";
 
         try {
-            ps = con.prepareStatement(sql);
+            ps = connection.prepareStatement(sql);
             ps.setInt(1, reportId);
             rs = ps.executeQuery();
 
@@ -1104,7 +1104,7 @@ public class RepairReportDAO extends MyDAO {
                 + "ORDER BY p.partName";
 
         try {
-            ps = con.prepareStatement(sql);
+            ps = connection.prepareStatement(sql);
             ps.setInt(1, reportId);
             rs = ps.executeQuery();
 
@@ -1140,7 +1140,7 @@ public class RepairReportDAO extends MyDAO {
                      "WHERE rrd.detailId = ?";
         
         try {
-            ps = con.prepareStatement(sql);
+            ps = connection.prepareStatement(sql);
             ps.setInt(1, partDetailId);
             rs = ps.executeQuery();
             
@@ -1165,7 +1165,7 @@ public class RepairReportDAO extends MyDAO {
         String selectSql = "SELECT DISTINCT partDetailId FROM RepairReportDetail " +
                          "WHERE reportId = ? AND partDetailId IS NOT NULL";
         
-        try (PreparedStatement selectPs = con.prepareStatement(selectSql)) {
+        try (PreparedStatement selectPs = connection.prepareStatement(selectSql)) {
             selectPs.setInt(1, reportId);
             try (ResultSet rs = selectPs.executeQuery()) {
                 while (rs.next()) {
@@ -1191,7 +1191,7 @@ public class RepairReportDAO extends MyDAO {
         updateSql.append(") AND status = 'InUse'");
         
         int updated = 0;
-        try (PreparedStatement updatePs = con.prepareStatement(updateSql.toString())) {
+        try (PreparedStatement updatePs = connection.prepareStatement(updateSql.toString())) {
             updatePs.setDate(1, Date.valueOf(java.time.LocalDate.now()));
             for (int i = 0; i < partDetailIds.size(); i++) {
                 updatePs.setInt(i + 2, partDetailIds.get(i));
@@ -1211,7 +1211,7 @@ public class RepairReportDAO extends MyDAO {
         xSql = "UPDATE PartDetail SET status = 'Cancelled' WHERE partDetailId = ?";
         
         try {
-            ps = con.prepareStatement(xSql);
+            ps = connection.prepareStatement(xSql);
             ps.setInt(1, partDetailId);
             int rowsAffected = ps.executeUpdate();
             

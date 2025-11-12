@@ -766,6 +766,352 @@
                     align-items: flex-start;
                 }
             }
+            /* ========== CHATBOT STYLES ========== */
+    .chatbot-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 99999;
+    }
+
+    .chatbot-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        position: relative;
+    }
+
+    .chatbot-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+    }
+
+    .chatbot-button i {
+        color: white;
+        font-size: 24px;
+    }
+
+    .chatbot-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 20px;
+        height: 20px;
+        background: #ff4757;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: white;
+        font-weight: bold;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    .chatbot-window {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        width: 420px;
+        height: 650px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .chatbot-window.active {
+        display: flex;
+    }
+
+    .chatbot-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chatbot-header h4 {
+        margin: 0;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .chatbot-close {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        color: white;
+        transition: all 0.3s;
+    }
+
+    .chatbot-close:hover {
+        background: rgba(255,255,255,0.3);
+    }
+
+    /* ========== CHATBOT RECOMMENDATIONS ========== */
+    .chatbot-recommendations {
+        padding: 15px 20px;
+        background: white;
+        border-bottom: 1px solid #eee;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+
+    .recommendations-title {
+        font-size: 0.8rem;
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .recommendation-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .recommendation-chip {
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .recommendation-chip:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+        transform: translateY(-2px);
+    }
+
+    .recommendation-category {
+        width: 100%;
+        font-size: 0.7rem;
+        color: #888;
+        margin-top: 5px;
+        margin-bottom: 3px;
+        font-weight: 500;
+    }
+
+    /* Scrollbar for recommendations */
+    .chatbot-recommendations::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .chatbot-recommendations::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 10px;
+    }
+
+    .chatbot-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: #f8f9fa;
+    }
+
+    .chatbot-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .chatbot-messages::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 10px;
+    }
+
+    .message {
+        margin-bottom: 15px;
+        display: flex;
+        gap: 10px;
+        animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.bot {
+        justify-content: flex-start;
+    }
+
+    .message.user {
+        justify-content: flex-end;
+    }
+
+    .message-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .message.bot .message-avatar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .message.user .message-avatar {
+        background: #ffc107;
+        color: white;
+    }
+
+    .message-content {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 18px;
+        line-height: 1.5;
+        font-size: 0.9rem;
+    }
+
+    .message.bot .message-content {
+        background: white;
+        color: #333;
+        border-bottom-left-radius: 4px;
+        white-space: pre-line;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .message.user .message-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .message.bot .message-content strong {
+        color: #1e3c72;
+        font-weight: 600;
+    }
+
+    .typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 12px 16px;
+        background: white;
+        border-radius: 18px;
+        width: fit-content;
+    }
+
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        background: #667eea;
+        border-radius: 50%;
+        animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-10px); }
+    }
+
+    .chatbot-input {
+        padding: 20px;
+        background: white;
+        border-top: 1px solid #eee;
+        display: flex;
+        gap: 10px;
+    }
+
+    .chatbot-input input {
+        flex: 1;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        padding: 12px 20px;
+        font-size: 0.9rem;
+        outline: none;
+        transition: all 0.3s;
+    }
+
+    .chatbot-input input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .chatbot-send {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .chatbot-send:hover:not(:disabled) {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .chatbot-send:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+        .chatbot-window {
+            width: calc(100vw - 30px);
+            right: 15px;
+        }
+    }
         </style>
     </head>
     <body>
@@ -1439,7 +1785,53 @@
         <div class="scroll-to-top" id="scrollToTop">
             <i class="fas fa-arrow-up"></i>
         </div>
+<div class="chatbot-container">
+    <button class="chatbot-button" onclick="toggleChatbotWidget()">
+        <i class="fas fa-comment-dots"></i>
+        <span class="chatbot-badge">AI</span>
+    </button>
 
+    <div class="chatbot-window" id="chatbotWindowWidget">
+        <div class="chatbot-header">
+            <h4>
+                <i class="fas fa-robot"></i>
+                Trợ lý AI
+            </h4>
+            <button class="chatbot-close" onclick="toggleChatbotWidget()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- PHẦN RECOMMENDATIONS -->
+        <div class="chatbot-recommendations" id="chatbotRecommendationsWidget">
+            <div class="recommendations-title">
+                <i class="fas fa-lightbulb"></i>
+                Câu hỏi thường gặp
+            </div>
+            <div class="recommendation-chips" id="recommendationChipsWidget">
+                <!-- Recommendations sẽ được thêm bằng JavaScript -->
+            </div>
+        </div>
+
+        <div class="chatbot-messages" id="chatMessagesWidget">
+            <div class="message bot">
+                <div class="message-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    Xin chào! Tôi là trợ lý AI của hệ thống. Tôi có thể giúp bạn trả lời các câu hỏi về dịch vụ, hợp đồng, thiết bị và hóa đơn. Bạn cần hỗ trợ gì?
+                </div>
+            </div>
+        </div>
+
+        <div class="chatbot-input">
+            <input type="text" id="chatInputWidget" placeholder="Nhập câu hỏi của bạn..." onkeypress="handleKeyPressWidget(event)">
+            <button class="chatbot-send" id="sendBtnWidget" onclick="sendMessageWidget()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
         <!-- SCRIPTS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
@@ -1576,6 +1968,281 @@
                                 row.style.borderLeft = '4px solid #dc3545';
                             });
                         });
+                        // ========== FAQ DATA ========== 
+const FAQ_DATA_WIDGET = [
+    {
+        "category": "Giới thiệu chung",
+        "questions": [
+            {
+                "question": "Hệ thống của bạn cung cấp dịch vụ gì?",
+                "answer": "Hệ thống của chúng tôi cung cấp dịch vụ bảo hành và bảo trì thiết bị cho khách hàng. Khi quý khách mua thiết bị, chúng tôi sẽ tạo hợp đồng và lưu thông tin vào hệ thống. Khi thiết bị cần sửa chữa, quý khách chỉ cần tạo yêu cầu trực tuyến, chúng tôi sẽ xử lý và thực hiện sửa chữa theo quy trình chuyên nghiệp."
+            },
+            {
+                "question": "Làm thế nào để liên hệ bộ phận hỗ trợ khách hàng?",
+                "answer": "Quý khách có thể liên hệ với bộ phận hỗ trợ khách hàng qua:\n- Hotline: [Số điện thoại]\n- Email: [Địa chỉ email]\n- Chat trực tuyến trên website\n- Hoặc tạo yêu cầu hỗ trợ trực tiếp trên hệ thống"
+            }
+        ]
+    },
+    {
+        "category": "Yêu cầu dịch vụ",
+        "questions": [
+            {
+                "question": "Làm thế nào để tạo yêu cầu bảo hành/bảo trì?",
+                "answer": "Để tạo yêu cầu, quý khách thực hiện theo các bước sau:\n\n1. Truy cập trang \"Yêu cầu dịch vụ\"\n2. Nhấn nút \"Tạo yêu cầu mới\" ở góc trên màn hình\n3. Chọn \"Hỗ trợ thiết bị\"\n4. Chọn thiết bị cần bảo hành từ danh sách\n5. Chọn mức độ ưu tiên cho yêu cầu\n6. Mô tả chi tiết vấn đề của thiết bị\n7. Kiểm tra lại thông tin và nhấn \"Gửi yêu cầu\""
+            },
+            {
+                "question": "Thời gian xử lý yêu cầu mất bao lâu?",
+                "answer": "Thời gian xử lý yêu cầu phụ thuộc vào:\n- Mức độ ưu tiên của yêu cầu\n- Tình trạng thiết bị\n- Khả năng sẵn có của phụ tùng\n\nThông thường:\n- Yêu cầu khẩn cấp: 24-48 giờ\n- Yêu cầu thường: 3-5 ngày làm việc"
+            },
+            {
+                "question": "Các trạng thái của yêu cầu dịch vụ có ý nghĩa gì?",
+                "answer": "Yêu cầu sẽ đi qua các trạng thái:\n\n1. Chờ xác nhận: Yêu cầu vừa được tạo\n2. Chờ xử lý: Đã được xác nhận, chờ phân công\n3. Đang xử lý: Kỹ thuật viên đang xử lý\n4. Hoàn thành: Đã sửa chữa xong\n5. Đã hủy: Yêu cầu bị hủy"
+            }
+        ]
+    },
+    {
+        "category": "Hợp đồng",
+        "questions": [
+            {
+                "question": "Làm thế nào để xem thông tin hợp đồng?",
+                "answer": "Để xem thông tin hợp đồng:\n\n1. Truy cập trang \"Hợp đồng\"\n2. Xem danh sách tất cả các hợp đồng\n3. Nhấn \"Danh sách thiết bị\" để xem chi tiết\n\nThông tin bao gồm:\n- Mã hợp đồng\n- Loại hợp đồng\n- Ngày hiệu lực\n- Trạng thái"
+            },
+            {
+                "question": "Chính sách bảo hành như thế nào?",
+                "answer": "Chính sách bảo hành:\n\n- Thời gian: Theo hợp đồng (12-36 tháng)\n- Phạm vi: Lỗi nhà sản xuất, hỏng hóc bình thường\n- Miễn phí phụ tùng và sửa chữa\n\nKhông bảo hành:\n- Sử dụng sai cách\n- Va đập, rơi vỡ\n- Can thiệp bởi bên thứ ba"
+            }
+        ]
+    },
+    {
+        "category": "Hóa đơn & Thanh toán",
+        "questions": [
+            {
+                "question": "Làm thế nào để xem hóa đơn?",
+                "answer": "Để xem hóa đơn:\n\n1. Truy cập trang \"Hóa đơn\"\n2. Xem danh sách hóa đơn\n\nThông tin gồm:\n- Mã hóa đơn\n- Số tiền\n- Ngày phát hành\n- Hạn thanh toán\n- Trạng thái"
+            },
+            {
+                "question": "Làm thế nào để thanh toán hóa đơn?",
+                "answer": "Các phương thức thanh toán:\n\n1. Thanh toán trực tuyến:\n- Chuyển khoản ngân hàng\n- Ví điện tử (Momo, ZaloPay)\n- Thẻ ATM/Tín dụng\n\n2. Thanh toán trực tiếp:\n- Tại văn phòng\n- Thu tiền tận nơi"
+            }
+        ]
+    },
+    {
+        "category": "Thiết bị",
+        "questions": [
+            {
+                "question": "Làm thế nào để xem thông tin thiết bị?",
+                "answer": "Để xem thiết bị:\n\n1. Truy cập trang \"Thiết bị\"\n2. Xem danh sách thiết bị\n3. Nhấn \"Chi tiết\" để xem thêm\n\nThông tin:\n- Tên thiết bị\n- Mã/Serial number\n- Hợp đồng liên quan\n- Trạng thái\n- Thời hạn bảo hành"
+            }
+        ]
+    }
+];
+
+// Initialize recommendations when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    showNewRecommendationsWidget();
+});
+
+function showNewRecommendationsWidget() {
+    const container = document.getElementById('recommendationChipsWidget');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    // Get all questions
+    const allQuestions = FAQ_DATA_WIDGET.flatMap(category => 
+        category.questions.map(q => ({
+            question: q.question,
+            category: category.category
+        }))
+    );
+
+    // Random 6 questions
+    const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+    const selectedQuestions = shuffled.slice(0, 6);
+
+    // Group by category
+    const questionsByCategory = {};
+    selectedQuestions.forEach(item => {
+        if (!questionsByCategory[item.category]) {
+            questionsByCategory[item.category] = [];
+        }
+        questionsByCategory[item.category].push(item.question);
+    });
+
+    // Render chips
+    Object.entries(questionsByCategory).forEach(([category, questions]) => {
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'recommendation-category';
+        categoryDiv.textContent = category;
+        container.appendChild(categoryDiv);
+
+        questions.forEach(question => {
+            const chip = document.createElement('div');
+            chip.className = 'recommendation-chip';
+            chip.textContent = question;
+            chip.title = question;
+            chip.onclick = () => sendRecommendedQuestionWidget(question);
+            container.appendChild(chip);
+        });
+    });
+}
+
+function sendRecommendedQuestionWidget(question) {
+    const input = document.getElementById('chatInputWidget');
+    input.value = question;
+    sendMessageWidget();
+}
+
+function hideRecommendationsWidget() {
+    const recommendations = document.getElementById('chatbotRecommendationsWidget');
+    if (recommendations) {
+        recommendations.style.display = 'none';
+    }
+}
+
+function showRecommendationsWidget() {
+    const recommendations = document.getElementById('chatbotRecommendationsWidget');
+    if (recommendations) {
+        recommendations.style.display = 'block';
+        showNewRecommendationsWidget();
+    }
+}
+
+function toggleChatbotWidget() {
+    const chatWindow = document.getElementById('chatbotWindowWidget');
+    chatWindow.classList.toggle('active');
+    
+    if (chatWindow.classList.contains('active')) {
+        showRecommendationsWidget();
+        setTimeout(() => {
+            document.getElementById('chatInputWidget').focus();
+        }, 300);
+    }
+}
+
+function handleKeyPressWidget(event) {
+    if (event.key === 'Enter') {
+        sendMessageWidget();
+    }
+}
+
+function addMessageWidget(content, isUser = false) {
+    const messagesDiv = document.getElementById('chatMessagesWidget');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
+    if (isUser) {
+        contentDiv.textContent = content;
+        messageDiv.appendChild(contentDiv);
+        messageDiv.appendChild(avatar);
+    } else {
+        contentDiv.innerHTML = formatMessageWidget(content);
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(contentDiv);
+    }
+    
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function showTypingWidget() {
+    const messagesDiv = document.getElementById('chatMessagesWidget');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message bot';
+    typingDiv.id = 'typingIndicatorWidget';
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.innerHTML = '<i class="fas fa-robot"></i>';
+    
+    const typing = document.createElement('div');
+    typing.className = 'typing-indicator';
+    typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+    
+    typingDiv.appendChild(avatar);
+    typingDiv.appendChild(typing);
+    messagesDiv.appendChild(typingDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function hideTypingWidget() {
+    const typing = document.getElementById('typingIndicatorWidget');
+    if (typing) {
+        typing.remove();
+    }
+}
+
+async function sendMessageWidget() {
+    const input = document.getElementById('chatInputWidget');
+    const sendBtn = document.getElementById('sendBtnWidget');
+    const question = input.value.trim();
+    
+    if (!question) return;
+    
+    hideRecommendationsWidget();
+    addMessageWidget(question, true);
+    input.value = '';
+    
+    input.disabled = true;
+    sendBtn.disabled = true;
+    
+    showTypingWidget();
+    
+    try {
+        const response = await fetch('${pageContext.request.contextPath}/askGemini', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ q: question })
+        });
+        
+        const data = await response.json();
+        hideTypingWidget();
+        
+        if (data.success && data.answer) {
+            addMessageWidget(data.answer, false);
+        } else {
+            addMessageWidget(data.error || 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.', false);
+        }
+        
+        setTimeout(() => {
+            showRecommendationsWidget();
+        }, 500);
+        
+    } catch (error) {
+        hideTypingWidget();
+        addMessageWidget('Xin lỗi, không thể kết nối đến server. Vui lòng thử lại sau.', false);
+        console.error('Error:', error);
+        
+        setTimeout(() => {
+            showRecommendationsWidget();
+        }, 500);
+    } finally {
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+    }
+}
+
+function formatMessageWidget(text) {
+    if (!text) return '';
+    
+    let formatted = text.replace(/\n/g, '<br>');
+    formatted = formatted.replace(/(\d+\.)\s/g, '<br>$1 ');
+    formatted = formatted.replace(/^- /gm, '<br>• ');
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/([A-Z][^.!?]*:\s*)/g, '<strong>$1</strong>');
+    
+    return formatted;
+}
         </script>
     </body>
 </html>

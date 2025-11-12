@@ -2,15 +2,15 @@ package dal;
 
 import model.Equipment;
 import model.EquipmentWithStatus;
-import model.ContractEquipment;
+
 import java.sql.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 public class EquipmentDAO extends DBContext {
 
     // ==================== BASIC CRUD OPERATIONS ====================
