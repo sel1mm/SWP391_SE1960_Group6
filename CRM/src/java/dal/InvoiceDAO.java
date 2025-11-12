@@ -10,14 +10,14 @@ import java.util.List;
 import java.util.Map;
 
 public class InvoiceDAO extends DBContext {
-    
+
     // Lấy tất cả hóa đơn của một khách hàng
     public List<Invoice> getInvoicesByCustomerId(int customerId) {
         List<Invoice> invoices = new ArrayList<>();
-        String sql = "SELECT i.* FROM Invoice i " +
-                     "JOIN Contract c ON i.ContractId = c.ContractId " +
-                     "WHERE c.CustomerId = ? " +
-                     "ORDER BY i.IssueDate DESC";
+        String sql = "SELECT i.* FROM Invoice i "
+                + "JOIN Contract c ON i.ContractId = c.ContractId "
+                + "WHERE c.CustomerId = ? "
+                + "ORDER BY i.IssueDate DESC";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, customerId);
@@ -53,19 +53,19 @@ public class InvoiceDAO extends DBContext {
         }
         return invoices;
     }
-    
+
     // Tìm kiếm hóa đơn theo từ khóa
     public List<Invoice> searchInvoices(int customerId, String keyword) {
         List<Invoice> invoices = new ArrayList<>();
-        String sql = "SELECT i.* FROM Invoice i " +
-                     "JOIN Contract c ON i.ContractId = c.ContractId " +
-                     "WHERE c.CustomerId = ? " +
-                     "AND (CAST(i.InvoiceId AS VARCHAR) LIKE ? " +
-                     "OR CAST(i.TotalAmount AS VARCHAR) LIKE ? " +
-                     "OR i.Status LIKE ? " +
-                     "OR CAST(i.ContractId AS VARCHAR) LIKE ?) " +
-                     "ORDER BY i.IssueDate DESC";
-        
+        String sql = "SELECT i.* FROM Invoice i "
+                + "JOIN Contract c ON i.ContractId = c.ContractId "
+                + "WHERE c.CustomerId = ? "
+                + "AND (CAST(i.InvoiceId AS VARCHAR) LIKE ? "
+                + "OR CAST(i.TotalAmount AS VARCHAR) LIKE ? "
+                + "OR i.Status LIKE ? "
+                + "OR CAST(i.ContractId AS VARCHAR) LIKE ?) "
+                + "ORDER BY i.IssueDate DESC";
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             String searchPattern = "%" + keyword + "%";
@@ -73,23 +73,23 @@ public class InvoiceDAO extends DBContext {
             ps.setString(3, searchPattern);
             ps.setString(4, searchPattern);
             ps.setString(5, searchPattern);
-            
+
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 Invoice invoice = new Invoice();
                 invoice.setInvoiceId(rs.getInt("InvoiceId"));
                 invoice.setContractId(rs.getInt("ContractId"));
-                
+
                 Date issueDate = rs.getDate("IssueDate");
                 if (issueDate != null) {
                     invoice.setIssueDate(issueDate.toLocalDate());
                 }
-                
+
                 Date dueDate = rs.getDate("DueDate");
                 if (dueDate != null) {
                     invoice.setDueDate(dueDate.toLocalDate());
                 }
-                
+
                 invoice.setTotalAmount(rs.getDouble("TotalAmount"));
                 invoice.setStatus(rs.getString("Status"));
                 invoices.add(invoice);
@@ -99,7 +99,7 @@ public class InvoiceDAO extends DBContext {
         }
         return invoices;
     }
-    
+
     // Tìm kiếm hóa đơn nâng cao với nhiều tiêu chí
     public List<Invoice> searchInvoicesAdvanced(int customerId, String keyword, String status,
             String paymentMethod, String sortBy, String fromDate, String toDate,
@@ -109,10 +109,10 @@ public class InvoiceDAO extends DBContext {
         sql.append("SELECT i.* FROM Invoice i ");
         sql.append("JOIN Contract c ON i.ContractId = c.ContractId ");
         sql.append("WHERE c.CustomerId = ? ");
-        
+
         List<Object> params = new ArrayList<>();
         params.add(customerId);
-        
+
         // Tìm kiếm theo từ khóa
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append("AND (CAST(i.InvoiceId AS VARCHAR) LIKE ? ");
@@ -125,19 +125,19 @@ public class InvoiceDAO extends DBContext {
             params.add(searchPattern);
             params.add(searchPattern);
         }
-        
+
         // Lọc theo trạng thái
         if (status != null && !status.trim().isEmpty()) {
             sql.append("AND i.Status = ? ");
             params.add(status);
         }
-        
+
         // Lọc theo phương thức thanh toán
         if (paymentMethod != null && !paymentMethod.trim().isEmpty()) {
             sql.append("AND pt.method = ? ");
             params.add(paymentMethod);
         }
-        
+
         // Lọc theo ngày phát hành
         if (fromDate != null && !fromDate.trim().isEmpty()) {
             sql.append("AND i.IssueDate >= ? ");
@@ -147,7 +147,7 @@ public class InvoiceDAO extends DBContext {
             sql.append("AND i.IssueDate <= ? ");
             params.add(toDate);
         }
-        
+
         // Lọc theo ngày đến hạn
         if (fromDueDate != null && !fromDueDate.trim().isEmpty()) {
             sql.append("AND i.DueDate >= ? ");
@@ -157,7 +157,7 @@ public class InvoiceDAO extends DBContext {
             sql.append("AND i.DueDate <= ? ");
             params.add(toDueDate);
         }
-        
+
         // Sắp xếp
         if (sortBy != null && !sortBy.trim().isEmpty()) {
             switch (sortBy) {
@@ -179,28 +179,28 @@ public class InvoiceDAO extends DBContext {
         } else {
             sql.append("ORDER BY i.IssueDate DESC");
         }
-        
+
         try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
-            
+
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 Invoice invoice = new Invoice();
                 invoice.setInvoiceId(rs.getInt("InvoiceId"));
                 invoice.setContractId(rs.getInt("ContractId"));
-                
+
                 Date issueDate = rs.getDate("IssueDate");
                 if (issueDate != null) {
                     invoice.setIssueDate(issueDate.toLocalDate());
                 }
-                
+
                 Date dueDate = rs.getDate("DueDate");
                 if (dueDate != null) {
                     invoice.setDueDate(dueDate.toLocalDate());
                 }
-                
+
                 invoice.setTotalAmount(rs.getDouble("TotalAmount"));
                 invoice.setStatus(rs.getString("Status"));
                 invoices.add(invoice);
@@ -210,7 +210,7 @@ public class InvoiceDAO extends DBContext {
         }
         return invoices;
     }
-    
+
     // Lấy chi tiết một hóa đơn
     public Invoice getInvoiceById(int invoiceId) {
         String sql = "SELECT * FROM Invoice WHERE InvoiceId = ?";
@@ -249,43 +249,61 @@ public class InvoiceDAO extends DBContext {
         }
         return null;
     }
-    
-    // Lấy chi tiết các dòng trong hóa đơn
+
+    /**
+     * ✅ LẤY CHI TIẾT HÓA ĐƠN (InvoiceDetail) Cập nhật để lấy thêm thông tin
+     * linh kiện nếu có
+     */
     public List<InvoiceDetail> getInvoiceDetails(int invoiceId) {
         List<InvoiceDetail> details = new ArrayList<>();
-        String sql = "SELECT * FROM InvoiceDetail WHERE InvoiceId = ?";
-        
+        String sql = "SELECT "
+                + "    id.InvoiceDetailID, "
+                + "    id.InvoiceID, "
+                + "    id.Description, "
+                + "    id.Amount, "
+                + "    id.PaymentStatus "
+                + "FROM InvoiceDetail id "
+                + "WHERE id.InvoiceID = ? "
+                + "ORDER BY id.InvoiceDetailID";
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, invoiceId);
             ResultSet rs = ps.executeQuery();
-            
+
             while (rs.next()) {
                 InvoiceDetail detail = new InvoiceDetail();
-                detail.setInvoiceDetailId(rs.getInt("InvoiceDetailId"));
-                detail.setInvoiceId(rs.getInt("InvoiceId"));
+                detail.setInvoiceDetailId(rs.getInt("InvoiceDetailID"));
+                detail.setInvoiceId(rs.getInt("InvoiceID"));
                 detail.setDescription(rs.getString("Description"));
                 detail.setAmount(rs.getDouble("Amount"));
-                
-                // Lấy paymentStatus nếu có
-                String paymentStatus = rs.getString("paymentStatus");
+
+                String paymentStatus = rs.getString("PaymentStatus");
                 if (paymentStatus != null) {
                     detail.setPaymentStatus(paymentStatus);
                 }
-                
+
                 details.add(detail);
+
+                System.out.println("📋 Invoice detail: " + rs.getString("Description")
+                        + " - Amount: $" + rs.getDouble("Amount"));
             }
+
+            System.out.println("📋 Invoice details found: " + details.size());
+
         } catch (SQLException e) {
+            System.out.println("❌ Error getting invoice details: " + e.getMessage());
             e.printStackTrace();
         }
+
         return details;
     }
-    
+
     // Đếm tổng số hóa đơn của khách hàng
     public int countTotalInvoices(int customerId) {
-        String sql = "SELECT COUNT(*) FROM Invoice i " +
-                     "JOIN Contract c ON i.ContractId = c.ContractId " +
-                     "WHERE c.CustomerId = ?";
-        
+        String sql = "SELECT COUNT(*) FROM Invoice i "
+                + "JOIN Contract c ON i.ContractId = c.ContractId "
+                + "WHERE c.CustomerId = ?";
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             ResultSet rs = ps.executeQuery();
@@ -297,13 +315,13 @@ public class InvoiceDAO extends DBContext {
         }
         return 0;
     }
-    
+
     // Đếm hóa đơn đã thanh toán
     public int countPaidInvoices(int customerId) {
-        String sql = "SELECT COUNT(*) FROM Invoice i " +
-                     "JOIN Contract c ON i.ContractId = c.ContractId " +
-                     "WHERE c.CustomerId = ? AND i.Status = 'Paid'";
-        
+        String sql = "SELECT COUNT(*) FROM Invoice i "
+                + "JOIN Contract c ON i.ContractId = c.ContractId "
+                + "WHERE c.CustomerId = ? AND i.Status = 'Paid'";
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             ResultSet rs = ps.executeQuery();
@@ -315,13 +333,13 @@ public class InvoiceDAO extends DBContext {
         }
         return 0;
     }
-    
+
     // Đếm hóa đơn chưa thanh toán
     public int countPendingInvoices(int customerId) {
-        String sql = "SELECT COUNT(*) FROM Invoice i " +
-                     "JOIN Contract c ON i.ContractId = c.ContractId " +
-                     "WHERE c.CustomerId = ? AND i.Status = 'Pending'";
-        
+        String sql = "SELECT COUNT(*) FROM Invoice i "
+                + "JOIN Contract c ON i.ContractId = c.ContractId "
+                + "WHERE c.CustomerId = ? AND i.Status = 'Pending'";
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             ResultSet rs = ps.executeQuery();
@@ -333,13 +351,13 @@ public class InvoiceDAO extends DBContext {
         }
         return 0;
     }
-    
+
     // Tính tổng tiền tất cả hóa đơn
     public double calculateTotalAmount(int customerId) {
-        String sql = "SELECT ISNULL(SUM(i.TotalAmount), 0) FROM Invoice i " +
-                     "JOIN Contract c ON i.ContractId = c.ContractId " +
-                     "WHERE c.CustomerId = ?";
-        
+        String sql = "SELECT ISNULL(SUM(i.TotalAmount), 0) FROM Invoice i "
+                + "JOIN Contract c ON i.ContractId = c.ContractId "
+                + "WHERE c.CustomerId = ?";
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             ResultSet rs = ps.executeQuery();
@@ -351,7 +369,7 @@ public class InvoiceDAO extends DBContext {
         }
         return 0.0;
     }
-    
+
     // Phương thức test - lấy tất cả hóa đơn (không phân biệt customer)
     public List<Invoice> getAllInvoicesForTest() {
         List<Invoice> invoices = new ArrayList<>();
@@ -390,7 +408,7 @@ public class InvoiceDAO extends DBContext {
         }
         return invoices;
     }
-    
+
     // Phương thức test - thống kê tất cả hóa đơn
     public int countTotalInvoicesForTest() {
         String sql = "SELECT COUNT(*) FROM Invoice";
@@ -404,7 +422,7 @@ public class InvoiceDAO extends DBContext {
         }
         return 0;
     }
-    
+
     public int countPaidInvoicesForTest() {
         String sql = "SELECT COUNT(*) FROM Invoice WHERE Status = 'Paid'";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -417,7 +435,7 @@ public class InvoiceDAO extends DBContext {
         }
         return 0;
     }
-    
+
     public int countPendingInvoicesForTest() {
         String sql = "SELECT COUNT(*) FROM Invoice WHERE Status = 'Pending'";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -430,7 +448,7 @@ public class InvoiceDAO extends DBContext {
         }
         return 0;
     }
-    
+
     public double calculateTotalAmountForTest() {
         String sql = "SELECT ISNULL(SUM(TotalAmount), 0) FROM Invoice";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -443,104 +461,142 @@ public class InvoiceDAO extends DBContext {
         }
         return 0.0;
     }
-    
-    // Lấy chi tiết linh kiện từ báo cáo sửa chữa
+
+    /**
+     * ✅ LẤY CHI TIẾT LINH KIỆN CỦA HÓA ĐƠN Lấy từ RepairPartDetails thông qua
+     * ServiceRequest và RepairReport
+     */
     public List<Map<String, Object>> getRepairPartDetails(int invoiceId) {
         List<Map<String, Object>> partDetails = new ArrayList<>();
-        String sql = "SELECT " +
-                     "rr.reportId, " +
-                     "rr.description as reportDescription, " +
-                     "rrd.quantity, " +
-                     "p.partName, " +
-                     "p.category, " +
-                     "pd.price, " +
-                     "(rrd.quantity * pd.price) as totalPrice " +
-                     "FROM RepairReport rr " +
-                     "JOIN RepairReportDetail rrd ON rr.reportId = rrd.reportId " +
-                     "JOIN Part p ON rrd.partId = p.partId " +
-                     "JOIN PartDetail pd ON p.partId = pd.partId " +
-                     "JOIN InvoiceDetail id ON rr.invoiceDetailId = id.invoiceDetailId " +
-                     "WHERE id.invoiceId = ? " +
-                     "ORDER BY rr.reportId, p.partName";
-        
+
+        // Query mới phù hợp với cấu trúc database thực tế
+        String sql = "SELECT "
+                + "    rr.ReportID, "
+                + "    rr.Diagnosis as ReportDescription, "
+                + "    p.PartName, "
+                + "    p.Category, "
+                + "    rpd.Quantity, "
+                + "    rpd.UnitPrice, "
+                + "    (rpd.Quantity * rpd.UnitPrice) as TotalPrice, "
+                + "    rpd.PaymentStatus, "
+                + "    rpd.PartDetailID "
+                + "FROM Invoice i "
+                + "INNER JOIN ServiceRequest sr ON i.ContractID = sr.ContractID "
+                + "INNER JOIN RepairReport rr ON sr.RequestID = rr.RequestID "
+                + "INNER JOIN RepairPartDetails rpd ON rr.ReportID = rpd.ReportID "
+                + "INNER JOIN Part p ON rpd.PartID = p.PartID "
+                + "WHERE i.InvoiceID = ? "
+                + "AND rpd.PaymentStatus = 'Completed' "
+                + "ORDER BY rr.ReportID, p.PartName";
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, invoiceId);
             ResultSet rs = ps.executeQuery();
-            
+
             while (rs.next()) {
-                Map<String, Object> detail = new HashMap<>();
-                detail.put("reportId", rs.getInt("reportId"));
-                detail.put("reportDescription", rs.getString("reportDescription"));
-                detail.put("quantity", rs.getInt("quantity"));
-                detail.put("partName", rs.getString("partName"));
-                detail.put("category", rs.getString("category"));
-                detail.put("price", rs.getDouble("price"));
-                detail.put("totalPrice", rs.getDouble("totalPrice"));
-                partDetails.add(detail);
+                Map<String, Object> part = new HashMap<>();
+                part.put("reportId", rs.getInt("ReportID"));
+                part.put("reportDescription", rs.getString("ReportDescription"));
+                part.put("partName", rs.getString("PartName"));
+                part.put("category", rs.getString("Category"));
+                part.put("quantity", rs.getInt("Quantity"));
+                part.put("price", rs.getDouble("UnitPrice"));
+                part.put("totalPrice", rs.getDouble("TotalPrice"));
+                part.put("paymentStatus", rs.getString("PaymentStatus"));
+                partDetails.add(part);
+
+                System.out.println("✅ Found part: " + rs.getString("PartName")
+                        + " - Qty: " + rs.getInt("Quantity")
+                        + " - Price: $" + rs.getDouble("UnitPrice"));
             }
+
+            System.out.println("📦 Total parts found for invoice " + invoiceId + ": " + partDetails.size());
+
         } catch (SQLException e) {
+            System.out.println("❌ Error getting repair part details: " + e.getMessage());
             e.printStackTrace();
         }
+
         return partDetails;
     }
-    
-    // Tính tổng tiền linh kiện cho một hóa đơn
+
+    /**
+     * ✅ TÍNH TỔNG TIỀN LINH KIỆN CỦA HÓA ĐƠN
+     */
     public double calculatePartsTotalForInvoice(int invoiceId) {
-        String sql = "SELECT ISNULL(SUM(rrd.quantity * pd.price), 0) as totalPartsAmount " +
-                     "FROM RepairReport rr " +
-                     "JOIN RepairReportDetail rrd ON rr.reportId = rrd.reportId " +
-                     "JOIN Part p ON rrd.partId = p.partId " +
-                     "JOIN PartDetail pd ON p.partId = pd.partId " +
-                     "JOIN InvoiceDetail id ON rr.invoiceDetailId = id.invoiceDetailId " +
-                     "WHERE id.invoiceId = ?";
-        
+        double total = 0;
+        String sql = "SELECT ISNULL(SUM(rpd.Quantity * rpd.UnitPrice), 0) as Total "
+                + "FROM Invoice i "
+                + "INNER JOIN ServiceRequest sr ON i.ContractID = sr.ContractID "
+                + "INNER JOIN RepairReport rr ON sr.RequestID = rr.RequestID "
+                + "INNER JOIN RepairPartDetails rpd ON rr.ReportID = rpd.ReportID "
+                + "WHERE i.InvoiceID = ? "
+                + "AND rpd.PaymentStatus = 'Completed'";
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, invoiceId);
             ResultSet rs = ps.executeQuery();
+
             if (rs.next()) {
-                return rs.getDouble("totalPartsAmount");
+                total = rs.getDouble("Total");
+                System.out.println("💰 Parts total for invoice " + invoiceId + ": $" + total);
             }
+
         } catch (SQLException e) {
+            System.out.println("❌ Error calculating parts total: " + e.getMessage());
             e.printStackTrace();
         }
-        return 0.0;
+
+        return total;
     }
-    
-    // Lấy thống kê linh kiện theo danh mục cho một hóa đơn
+
+    /**
+     * ✅ THỐNG KÊ LINH KIỆN THEO DANH MỤC
+     */
     public List<Map<String, Object>> getPartsCategoryStats(int invoiceId) {
-        List<Map<String, Object>> categoryStats = new ArrayList<>();
-        String sql = "SELECT " +
-                     "p.category, " +
-                     "COUNT(DISTINCT p.partId) as partCount, " +
-                     "SUM(rrd.quantity) as totalQuantity, " +
-                     "SUM(rrd.quantity * pd.price) as categoryTotal " +
-                     "FROM RepairReport rr " +
-                     "JOIN RepairReportDetail rrd ON rr.reportId = rrd.reportId " +
-                     "JOIN Part p ON rrd.partId = p.partId " +
-                     "JOIN PartDetail pd ON p.partId = pd.partId " +
-                     "JOIN InvoiceDetail id ON rr.invoiceDetailId = id.invoiceDetailId " +
-                     "WHERE id.invoiceId = ? " +
-                     "GROUP BY p.category " +
-                     "ORDER BY categoryTotal DESC";
-        
+        List<Map<String, Object>> stats = new ArrayList<>();
+        String sql = "SELECT "
+                + "    p.Category, "
+                + "    COUNT(DISTINCT p.PartID) as PartCount, "
+                + "    SUM(rpd.Quantity) as TotalQuantity, "
+                + "    SUM(rpd.Quantity * rpd.UnitPrice) as CategoryTotal "
+                + "FROM Invoice i "
+                + "INNER JOIN ServiceRequest sr ON i.ContractID = sr.ContractID "
+                + "INNER JOIN RepairReport rr ON sr.RequestID = rr.RequestID "
+                + "INNER JOIN RepairPartDetails rpd ON rr.ReportID = rpd.ReportID "
+                + "INNER JOIN Part p ON rpd.PartID = p.PartID "
+                + "WHERE i.InvoiceID = ? "
+                + "AND rpd.PaymentStatus = 'Completed' "
+                + "GROUP BY p.Category "
+                + "ORDER BY CategoryTotal DESC";
+
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, invoiceId);
             ResultSet rs = ps.executeQuery();
-            
+
             while (rs.next()) {
                 Map<String, Object> stat = new HashMap<>();
-                stat.put("category", rs.getString("category"));
-                stat.put("partCount", rs.getInt("partCount"));
-                stat.put("totalQuantity", rs.getInt("totalQuantity"));
-                stat.put("categoryTotal", rs.getDouble("categoryTotal"));
-                categoryStats.add(stat);
+                stat.put("category", rs.getString("Category"));
+                stat.put("partCount", rs.getInt("PartCount"));
+                stat.put("totalQuantity", rs.getInt("TotalQuantity"));
+                stat.put("categoryTotal", rs.getDouble("CategoryTotal"));
+                stats.add(stat);
+
+                System.out.println("📊 Category: " + rs.getString("Category")
+                        + " - Parts: " + rs.getInt("PartCount")
+                        + " - Total: $" + rs.getDouble("CategoryTotal"));
             }
+
+            System.out.println("📊 Category stats for invoice " + invoiceId + ": " + stats.size() + " categories");
+
         } catch (SQLException e) {
+            System.out.println("❌ Error getting category stats: " + e.getMessage());
             e.printStackTrace();
         }
-        return categoryStats;
+
+        return stats;
     }
-    
+
     /**
      * Tạo Invoice mới (với paymentMethod)
      */
@@ -587,7 +643,7 @@ public class InvoiceDAO extends DBContext {
             ps.setString(2, description);
             ps.setDouble(3, amount);
             ps.setString(4, paymentStatus);
-            
+
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -601,9 +657,10 @@ public class InvoiceDAO extends DBContext {
         }
         return -1;
     }
-    
+
     /**
-     * Tạo InvoiceDetail (backward compatibility - default paymentStatus = "Pending")
+     * Tạo InvoiceDetail (backward compatibility - default paymentStatus =
+     * "Pending")
      */
     public int createInvoiceDetail(int invoiceId, String description, double amount) throws SQLException {
         return createInvoiceDetail(invoiceId, description, amount, "Pending");
@@ -611,6 +668,7 @@ public class InvoiceDAO extends DBContext {
 
     /**
      * ✅ Tạo InvoiceDetail với link đến RepairReportDetail
+     *
      * @param invoiceId ID của Invoice
      * @param description Mô tả
      * @param amount Số tiền
@@ -618,26 +676,26 @@ public class InvoiceDAO extends DBContext {
      * @param paymentStatus Trạng thái thanh toán (Pending, Completed)
      * @return ID của InvoiceDetail vừa tạo
      */
-    public int createInvoiceDetailWithRepairPart(int invoiceId, String description, double amount, 
-                                                  int repairReportDetailId, String paymentStatus) throws SQLException {
-        String sql = "INSERT INTO InvoiceDetail (invoiceId, description, amount, repairReportDetailId, paymentStatus) " +
-                     "VALUES (?, ?, ?, ?, ?)";
+    public int createInvoiceDetailWithRepairPart(int invoiceId, String description, double amount,
+            int repairReportDetailId, String paymentStatus) throws SQLException {
+        String sql = "INSERT INTO InvoiceDetail (invoiceId, description, amount, repairReportDetailId, paymentStatus) "
+                + "VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, invoiceId);
             ps.setString(2, description);
             ps.setDouble(3, amount);
             ps.setInt(4, repairReportDetailId);
             ps.setString(5, paymentStatus);
-            
+
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
                 try (ResultSet rs = ps.getGeneratedKeys()) {
                     if (rs.next()) {
                         int invoiceDetailId = rs.getInt(1);
-                        System.out.println("✅ Created InvoiceDetail: ID=" + invoiceDetailId + 
-                                         ", RepairPartId=" + repairReportDetailId + 
-                                         ", Amount=" + amount + 
-                                         ", PaymentStatus=" + paymentStatus);
+                        System.out.println("✅ Created InvoiceDetail: ID=" + invoiceDetailId
+                                + ", RepairPartId=" + repairReportDetailId
+                                + ", Amount=" + amount
+                                + ", PaymentStatus=" + paymentStatus);
                         return invoiceDetailId;
                     }
                 }
@@ -645,7 +703,7 @@ public class InvoiceDAO extends DBContext {
         }
         return -1;
     }
-    
+
     /**
      * Cập nhật trạng thái Invoice
      */
@@ -659,7 +717,8 @@ public class InvoiceDAO extends DBContext {
     }
 
     /**
-     * Cập nhật thông tin thanh toán Invoice (status, paymentMethod, totalAmount)
+     * Cập nhật thông tin thanh toán Invoice (status, paymentMethod,
+     * totalAmount)
      */
     public boolean updateInvoicePaymentInfo(int invoiceId, String status, String paymentMethod, double totalAmount) throws SQLException {
         String sql = "UPDATE Invoice SET status = ?, paymentMethod = ?, totalAmount = ? WHERE invoiceId = ?";
@@ -673,9 +732,12 @@ public class InvoiceDAO extends DBContext {
     }
 
     /**
-     * ✅ Cập nhật paymentStatus của một InvoiceDetail cụ thể (theo invoiceDetailId)
+     * ✅ Cập nhật paymentStatus của một InvoiceDetail cụ thể (theo
+     * invoiceDetailId)
+     *
      * @param invoiceDetailId ID của InvoiceDetail
-     * @param paymentStatus Trạng thái thanh toán (Pending, Completed, Cancelled)
+     * @param paymentStatus Trạng thái thanh toán (Pending, Completed,
+     * Cancelled)
      * @return true nếu cập nhật thành công
      */
     public boolean updateInvoiceDetailPaymentStatus(int invoiceDetailId, String paymentStatus) throws SQLException {
@@ -690,9 +752,12 @@ public class InvoiceDAO extends DBContext {
     }
 
     /**
-     * ✅ Cập nhật paymentStatus của tất cả InvoiceDetail thuộc một Invoice (theo invoiceId)
+     * ✅ Cập nhật paymentStatus của tất cả InvoiceDetail thuộc một Invoice (theo
+     * invoiceId)
+     *
      * @param invoiceId ID của Invoice
-     * @param paymentStatus Trạng thái thanh toán (Pending, Completed, Cancelled)
+     * @param paymentStatus Trạng thái thanh toán (Pending, Completed,
+     * Cancelled)
      * @return true nếu cập nhật thành công
      */
     public boolean updateAllInvoiceDetailsPaymentStatus(int invoiceId, String paymentStatus) throws SQLException {
@@ -744,28 +809,29 @@ public class InvoiceDAO extends DBContext {
         }
         return false;
     }
+
     public Invoice getInvoiceByReportId(int reportId) {
-    String sql = "SELECT i.* FROM Invoice i " +
-                 "JOIN InvoiceDetail d ON i.InvoiceId = d.InvoiceId " +
-                 "JOIN RepairReport r ON d.repairReportDetailId = r.reportId " +
-                 "WHERE r.reportId = ?";
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        ps.setInt(1, reportId);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            Invoice inv = new Invoice();
-            inv.setInvoiceId(rs.getInt("InvoiceId"));
-            inv.setContractId(rs.getInt("ContractId"));
-            inv.setIssueDate(rs.getDate("IssueDate").toLocalDate());
-            inv.setDueDate(rs.getDate("DueDate").toLocalDate());
-            inv.setTotalAmount(rs.getDouble("TotalAmount"));
-            inv.setStatus(rs.getString("Status"));
-            inv.setPaymentMethod(rs.getString("paymentMethod"));
-            return inv;
+        String sql = "SELECT i.* FROM Invoice i "
+                + "JOIN InvoiceDetail d ON i.InvoiceId = d.InvoiceId "
+                + "JOIN RepairReport r ON d.repairReportDetailId = r.reportId "
+                + "WHERE r.reportId = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, reportId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Invoice inv = new Invoice();
+                inv.setInvoiceId(rs.getInt("InvoiceId"));
+                inv.setContractId(rs.getInt("ContractId"));
+                inv.setIssueDate(rs.getDate("IssueDate").toLocalDate());
+                inv.setDueDate(rs.getDate("DueDate").toLocalDate());
+                inv.setTotalAmount(rs.getDouble("TotalAmount"));
+                inv.setStatus(rs.getString("Status"));
+                inv.setPaymentMethod(rs.getString("paymentMethod"));
+                return inv;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return null;
     }
-    return null;
-}
 }

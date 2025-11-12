@@ -1095,12 +1095,12 @@
                 </div>
 
 
-               
+
                 <!-- SEARCH BAR -->
                 <div class="search-filter-bar">
                     <form action="${pageContext.request.contextPath}/equipment" method="get">
                         <input type="hidden" name="action" value="search"/>
-                        
+
                         <!-- Hàng 1: Search + Dropdowns -->
                         <div class="row g-3 mb-2">
                             <div class="col-md-3">
@@ -1167,7 +1167,7 @@
                         </div>
                     </form>
                 </div>
-                    
+
 
                 <!-- TABLE -->
                 <div class="table-container">
@@ -1309,7 +1309,7 @@
                             </c:otherwise>
                         </c:choose>
                     </div>
-                    
+
                     <!-- PHÂN TRANG -->
                     <c:if test="${totalPages > 1}">
                         <nav aria-label="Page navigation" class="mt-4">
@@ -1521,13 +1521,28 @@
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post" id="createRequestForm">
+                    <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post" id="createRequestForm" onsubmit="return validateEquipmentRequestForm(event)">
                         <input type="hidden" name="action" value="CreateServiceRequest">
                         <input type="hidden" name="supportType" value="equipment">
                         <input type="hidden" name="equipmentIds" id="requestEquipmentId">
                         <input type="hidden" name="contractId" id="requestContractIdValue">
 
                         <div class="modal-body">
+                            <!-- ✅ THÊM MỚI: Loại Yêu Cầu (Request Type) -->
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-tags"></i> Loại Yêu Cầu 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" name="requestType" id="equipmentRequestType" required>
+                                    <option value="Service">🔧 Service (Dịch vụ sửa chữa)</option>
+                                    <option value="Warranty">🛡️ Warranty (Bảo hành)</option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Service: Dịch vụ sửa chữa thông thường | Warranty: Sửa chữa theo bảo hành hợp đồng
+                                </small>
+                            </div>
+
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">
@@ -1562,7 +1577,7 @@
                                         <i class="fas fa-exclamation-circle"></i> Mức Độ Ưu Tiên 
                                         <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-select" name="priorityLevel" required>
+                                    <select class="form-select" name="priorityLevel" id="equipmentPriorityLevel" required>
                                         <option value="">-- Chọn mức độ --</option>
                                         <option value="Normal">⚪ Bình Thường</option>
                                         <option value="High">🟡 Cao</option>
@@ -1576,14 +1591,15 @@
                                     <i class="fas fa-comment-dots"></i> Mô Tả Vấn Đề 
                                     <span class="text-danger">*</span>
                                 </label>
-                                <textarea class="form-control" name="description" id="requestDescription" rows="5" 
+                                <textarea class="form-control" name="description" id="equipmentRequestDescription" rows="5" 
                                           placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải với thiết bị..."
-                                          minlength="10" maxlength="1000" required></textarea>
+                                          minlength="10" maxlength="1000" required
+                                          oninput="updateEquipmentCharCount()"></textarea>
                                 <div class="d-flex justify-content-between align-items-center mt-1">
                                     <small class="form-text text-muted">
                                         <i class="fas fa-info-circle"></i> Tối thiểu 10 ký tự, tối đa 1000 ký tự
                                     </small>
-                                    <span id="charCount" class="text-muted" style="font-size: 0.875rem;">0/1000</span>
+                                    <span id="equipmentCharCount" class="text-muted" style="font-size: 0.875rem;">0/1000</span>
                                 </div>
                             </div>
                         </div>
@@ -1650,242 +1666,328 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
 
-                // ========== TOAST NOTIFICATION ==========
-                let currentToastTimeout = null;
+                        // ========== TOAST NOTIFICATION ==========
+                        let currentToastTimeout = null;
 
-                function showToast(message, type) {
-                    const container = document.getElementById('toastContainer');
-                    if (currentToastTimeout) {
-                        clearTimeout(currentToastTimeout);
-                    }
+                        function showToast(message, type) {
+                            const container = document.getElementById('toastContainer');
+                            if (currentToastTimeout) {
+                                clearTimeout(currentToastTimeout);
+                            }
 
-                    let iconClass = 'fa-check-circle';
-                    if (type === 'error')
-                        iconClass = 'fa-exclamation-circle';
+                            let iconClass = 'fa-check-circle';
+                            if (type === 'error')
+                                iconClass = 'fa-exclamation-circle';
 
-                    const toastDiv = document.createElement('div');
-                    toastDiv.className = 'toast-notification ' + type;
+                            const toastDiv = document.createElement('div');
+                            toastDiv.className = 'toast-notification ' + type;
 
-                    const iconDiv = document.createElement('div');
-                    iconDiv.className = 'toast-icon ' + type;
-                    iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
+                            const iconDiv = document.createElement('div');
+                            iconDiv.className = 'toast-icon ' + type;
+                            iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
 
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'toast-content';
-                    contentDiv.textContent = message;
+                            const contentDiv = document.createElement('div');
+                            contentDiv.className = 'toast-content';
+                            contentDiv.textContent = message;
 
-                    const closeBtn = document.createElement('button');
-                    closeBtn.className = 'toast-close';
-                    closeBtn.type = 'button';
-                    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                    closeBtn.onclick = hideToast;
+                            const closeBtn = document.createElement('button');
+                            closeBtn.className = 'toast-close';
+                            closeBtn.type = 'button';
+                            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                            closeBtn.onclick = hideToast;
 
-                    toastDiv.appendChild(iconDiv);
-                    toastDiv.appendChild(contentDiv);
-                    toastDiv.appendChild(closeBtn);
+                            toastDiv.appendChild(iconDiv);
+                            toastDiv.appendChild(contentDiv);
+                            toastDiv.appendChild(closeBtn);
 
-                    container.innerHTML = '';
-                    container.appendChild(toastDiv);
-
-                    currentToastTimeout = setTimeout(hideToast, 5000);
-                }
-
-                function hideToast() {
-                    const container = document.getElementById('toastContainer');
-                    const toast = container.querySelector('.toast-notification');
-                    if (toast) {
-                        toast.classList.add('hiding');
-                        setTimeout(() => {
                             container.innerHTML = '';
-                        }, 400);
-                    }
-                    if (currentToastTimeout) {
-                        clearTimeout(currentToastTimeout);
-                        currentToastTimeout = null;
-                    }
-                }
+                            container.appendChild(toastDiv);
 
-                // ========== CHARACTER COUNT ==========
-                function updateCharCount() {
-                    const textarea = document.getElementById('requestDescription');
-                    const charCount = document.getElementById('charCount');
-                    if (!textarea || !charCount)
-                        return;
-
-                    const currentLength = textarea.value.length;
-                    charCount.textContent = currentLength + '/1000';
-
-                    if (currentLength > 900) {
-                        charCount.className = 'text-danger';
-                    } else if (currentLength > 700) {
-                        charCount.className = 'text-warning';
-                    } else {
-                        charCount.className = 'text-muted';
-                    }
-                }
-
-                // ========== ✅ VIEW EQUIPMENT DETAIL - SỬ DỤNG DATA TỪ SERVLET ==========
-                function viewEquipmentDetail(button) {
-                    const equipmentId = button.getAttribute('data-id');
-                    const model = button.getAttribute('data-model');
-                    const serial = button.getAttribute('data-serial');
-                    const contract = button.getAttribute('data-contract');
-                    const description = button.getAttribute('data-description');
-                    const installDate = button.getAttribute('data-install-date');
-                    const lastUpdate = button.getAttribute('data-last-update');
-                    const status = button.getAttribute('data-status');
-                    
-                    // ✅ LẤY THÔNG TIN SỬA CHỮA TỪ DATA ATTRIBUTES
-                    const technicianName = button.getAttribute('data-technician-name');
-                    const repairDate = button.getAttribute('data-repair-date');
-                    const diagnosis = button.getAttribute('data-diagnosis');
-                    const repairDetails = button.getAttribute('data-repair-details');
-                    const estimatedCost = button.getAttribute('data-estimated-cost');
-                    const quotationStatus = button.getAttribute('data-quotation-status');
-
-                    // Điền thông tin cơ bản
-                    document.getElementById('viewEquipmentName').textContent = model || 'N/A';
-                    document.getElementById('viewSerialNumber').textContent = serial || 'N/A';
-                    document.getElementById('viewContractId').textContent = contract || 'N/A';
-                    document.getElementById('viewInstallDate').textContent = installDate || 'N/A';
-                    document.getElementById('viewLastUpdate').textContent = lastUpdate || 'N/A';
-                    document.getElementById('viewDescription').textContent = description || 'Không có mô tả';
-
-                    const statusBadge = document.getElementById('viewStatus');
-                    if (status === 'Active') {
-                        statusBadge.className = 'badge badge-active';
-                        statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Đang hoạt động';
-                    } else if (status === 'Repair') {
-                        statusBadge.className = 'badge badge-repair';
-                        statusBadge.innerHTML = '<i class="fas fa-wrench"></i> Đang sửa chữa';
-                    } else if (status === 'Maintenance') {
-                        statusBadge.className = 'badge badge-maintenance';
-                        statusBadge.innerHTML = '<i class="fas fa-cog"></i> Đang bảo trì';
-                    }
-
-                    // ✅ NẾU THIẾT BỊ ĐANG SỬA CHỮA → HIỂN THỊ THÔNG TIN SỬA CHỮA
-                    const repairSection = document.getElementById('repairInfoSection');
-                    if (status === 'Repair') {
-                        repairSection.style.display = 'block';
-
-                        // Hiển thị thông tin sửa chữa từ data attributes
-                        document.getElementById('viewTechnicianName').innerHTML = 
-                            '<i class="fas fa-user-check"></i> ' + (technicianName && technicianName !== 'null' ? technicianName : 'Chưa phân công');
-                        document.getElementById('viewRepairDate').textContent = 
-                            (repairDate && repairDate !== 'null' ? repairDate : 'N/A');                      
-                    } else {
-                        repairSection.style.display = 'none';
-                    }
-
-                    new bootstrap.Modal(document.getElementById('viewModal')).show();
-                }
-
-                // ========== CREATE REQUEST ==========
-                function createRequest(button) {
-                    const equipmentId = button.getAttribute('data-id');
-                    const contractId = button.getAttribute('data-contract');
-                    const serialNumber = button.getAttribute('data-serial');
-                    const equipmentName = button.getAttribute('data-model');
-
-                    // Xử lý contractId - cho phép cả thiết bị có và không có hợp đồng
-                    let cleanContractId = '';
-                    if (contractId && contractId !== 'N/A') {
-                        cleanContractId = contractId.replace('HD', '').replace('#', '');
-                    }
-
-                    document.getElementById('requestEquipmentId').value = equipmentId;
-                    document.getElementById('requestContractIdValue').value = cleanContractId;
-                    document.getElementById('requestEquipmentName').value = equipmentName;
-                    document.getElementById('requestContractId').value = contractId || 'N/A';
-                    document.getElementById('requestSerialNumber').value = serialNumber;
-
-                    new bootstrap.Modal(document.getElementById('createRequestModal')).show();
-                }
-
-                function toggleSidebar() {
-                    const sidebar = document.getElementById('sidebar');
-                    const toggleIcon = document.getElementById('toggleIcon');
-                    sidebar.classList.toggle('collapsed');
-
-                    if (sidebar.classList.contains('collapsed')) {
-                        toggleIcon.classList.remove('fa-chevron-left');
-                        toggleIcon.classList.add('fa-chevron-right');
-                    } else {
-                        toggleIcon.classList.remove('fa-chevron-right');
-                        toggleIcon.classList.add('fa-chevron-left');
-                    }
-                }
-
-                function refreshPage() {
-                    window.location.href = '${pageContext.request.contextPath}/equipment';
-                }
-
-                function scrollToTop() {
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-                }
-
-                // ========== PAGINATION ==========
-                function goToPage(pageNumber) {
-                    const form = document.querySelector('form[action*="/equipment"]');
-                    if (form) {
-                        // Tạo hidden input cho page number
-                        let pageInput = form.querySelector('input[name="page"]');
-                        if (!pageInput) {
-                            pageInput = document.createElement('input');
-                            pageInput.type = 'hidden';
-                            pageInput.name = 'page';
-                            form.appendChild(pageInput);
+                            currentToastTimeout = setTimeout(hideToast, 5000);
                         }
-                        pageInput.value = pageNumber;
-                        
-                        // Submit form
-                        form.submit();
-                    }
-                }
 
-                // ========== DATE RANGE VALIDATION ==========
-                function validateDateRange() {
-                    const fromDate = document.querySelector('input[name="fromDate"]');
-                    const toDate = document.querySelector('input[name="toDate"]');
-                    
-                    if (fromDate && toDate && fromDate.value && toDate.value) {
-                        if (fromDate.value > toDate.value) {
-                            showToast('Từ ngày không thể lớn hơn đến ngày!', 'error');
-                            return false;
+                        function hideToast() {
+                            const container = document.getElementById('toastContainer');
+                            const toast = container.querySelector('.toast-notification');
+                            if (toast) {
+                                toast.classList.add('hiding');
+                                setTimeout(() => {
+                                    container.innerHTML = '';
+                                }, 400);
+                            }
+                            if (currentToastTimeout) {
+                                clearTimeout(currentToastTimeout);
+                                currentToastTimeout = null;
+                            }
                         }
-                    }
-                    return true;
-                }
 
-                // ========== EVENT LISTENERS ==========
-                document.addEventListener('DOMContentLoaded', function () {
-                    const descriptionTextarea = document.getElementById('requestDescription');
-                    if (descriptionTextarea) {
-                        descriptionTextarea.addEventListener('input', updateCharCount);
-                    }
+                        // ========== CHARACTER COUNT ==========
+                        function updateCharCount() {
+                            const textarea = document.getElementById('requestDescription');
+                            const charCount = document.getElementById('charCount');
+                            if (!textarea || !charCount)
+                                return;
 
-                    // Reset form when modal closes
-                    const createModal = document.getElementById('createRequestModal');
-                    if (createModal) {
-                        createModal.addEventListener('hidden.bs.modal', function () {
-                            document.getElementById('createRequestForm').reset();
-                            updateCharCount();
-                        });
-                    }
+                            const currentLength = textarea.value.length;
+                            charCount.textContent = currentLength + '/1000';
 
-                    // Add date range validation to search form
-                    const searchForm = document.querySelector('form[action*="/equipment"]');
-                    if (searchForm) {
-                        searchForm.addEventListener('submit', function(e) {
-                            if (!validateDateRange()) {
-                                e.preventDefault();        
+                            if (currentLength > 900) {
+                                charCount.className = 'text-danger';
+                            } else if (currentLength > 700) {
+                                charCount.className = 'text-warning';
+                            } else {
+                                charCount.className = 'text-muted';
+                            }
+                        }
+
+                        // ========== ✅ VIEW EQUIPMENT DETAIL - SỬ DỤNG DATA TỪ SERVLET ==========
+                        function viewEquipmentDetail(button) {
+                            const equipmentId = button.getAttribute('data-id');
+                            const model = button.getAttribute('data-model');
+                            const serial = button.getAttribute('data-serial');
+                            const contract = button.getAttribute('data-contract');
+                            const description = button.getAttribute('data-description');
+                            const installDate = button.getAttribute('data-install-date');
+                            const lastUpdate = button.getAttribute('data-last-update');
+                            const status = button.getAttribute('data-status');
+
+                            // ✅ LẤY THÔNG TIN SỬA CHỮA TỪ DATA ATTRIBUTES
+                            const technicianName = button.getAttribute('data-technician-name');
+                            const repairDate = button.getAttribute('data-repair-date');
+                            const diagnosis = button.getAttribute('data-diagnosis');
+                            const repairDetails = button.getAttribute('data-repair-details');
+                            const estimatedCost = button.getAttribute('data-estimated-cost');
+                            const quotationStatus = button.getAttribute('data-quotation-status');
+
+                            // Điền thông tin cơ bản
+                            document.getElementById('viewEquipmentName').textContent = model || 'N/A';
+                            document.getElementById('viewSerialNumber').textContent = serial || 'N/A';
+                            document.getElementById('viewContractId').textContent = contract || 'N/A';
+                            document.getElementById('viewInstallDate').textContent = installDate || 'N/A';
+                            document.getElementById('viewLastUpdate').textContent = lastUpdate || 'N/A';
+                            document.getElementById('viewDescription').textContent = description || 'Không có mô tả';
+
+                            const statusBadge = document.getElementById('viewStatus');
+                            if (status === 'Active') {
+                                statusBadge.className = 'badge badge-active';
+                                statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Đang hoạt động';
+                            } else if (status === 'Repair') {
+                                statusBadge.className = 'badge badge-repair';
+                                statusBadge.innerHTML = '<i class="fas fa-wrench"></i> Đang sửa chữa';
+                            } else if (status === 'Maintenance') {
+                                statusBadge.className = 'badge badge-maintenance';
+                                statusBadge.innerHTML = '<i class="fas fa-cog"></i> Đang bảo trì';
+                            }
+
+                            // ✅ NẾU THIẾT BỊ ĐANG SỬA CHỮA → HIỂN THỊ THÔNG TIN SỬA CHỮA
+                            const repairSection = document.getElementById('repairInfoSection');
+                            if (status === 'Repair') {
+                                repairSection.style.display = 'block';
+
+                                // Hiển thị thông tin sửa chữa từ data attributes
+                                document.getElementById('viewTechnicianName').innerHTML =
+                                        '<i class="fas fa-user-check"></i> ' + (technicianName && technicianName !== 'null' ? technicianName : 'Chưa phân công');
+                                document.getElementById('viewRepairDate').textContent =
+                                        (repairDate && repairDate !== 'null' ? repairDate : 'N/A');
+                            } else {
+                                repairSection.style.display = 'none';
+                            }
+
+                            new bootstrap.Modal(document.getElementById('viewModal')).show();
+                        }
+
+                        // ========== CREATE REQUEST ==========
+                        function createRequest(button) {
+                            const equipmentId = button.getAttribute('data-id');
+                            const contractId = button.getAttribute('data-contract');
+                            const serialNumber = button.getAttribute('data-serial');
+                            const equipmentName = button.getAttribute('data-model');
+
+                            // Xử lý contractId - cho phép cả thiết bị có và không có hợp đồng
+                            let cleanContractId = '';
+                            if (contractId && contractId !== 'N/A') {
+                                cleanContractId = contractId.replace('HD', '').replace('#', '');
+                            }
+
+                            document.getElementById('requestEquipmentId').value = equipmentId;
+                            document.getElementById('requestContractIdValue').value = cleanContractId;
+                            document.getElementById('requestEquipmentName').value = equipmentName;
+                            document.getElementById('requestContractId').value = contractId || 'N/A';
+                            document.getElementById('requestSerialNumber').value = serialNumber;
+
+                            new bootstrap.Modal(document.getElementById('createRequestModal')).show();
+                        }
+
+                        function toggleSidebar() {
+                            const sidebar = document.getElementById('sidebar');
+                            const toggleIcon = document.getElementById('toggleIcon');
+                            sidebar.classList.toggle('collapsed');
+
+                            if (sidebar.classList.contains('collapsed')) {
+                                toggleIcon.classList.remove('fa-chevron-left');
+                                toggleIcon.classList.add('fa-chevron-right');
+                            } else {
+                                toggleIcon.classList.remove('fa-chevron-right');
+                                toggleIcon.classList.add('fa-chevron-left');
+                            }
+                        }
+
+                        function refreshPage() {
+                            window.location.href = '${pageContext.request.contextPath}/equipment';
+                        }
+
+                        function scrollToTop() {
+                            window.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
+                            });
+                        }
+
+                        // ========== PAGINATION ==========
+                        function goToPage(pageNumber) {
+                            const form = document.querySelector('form[action*="/equipment"]');
+                            if (form) {
+                                // Tạo hidden input cho page number
+                                let pageInput = form.querySelector('input[name="page"]');
+                                if (!pageInput) {
+                                    pageInput = document.createElement('input');
+                                    pageInput.type = 'hidden';
+                                    pageInput.name = 'page';
+                                    form.appendChild(pageInput);
+                                }
+                                pageInput.value = pageNumber;
+
+                                // Submit form
+                                form.submit();
+                            }
+                        }
+                        // ========== CHARACTER COUNT FOR EQUIPMENT REQUEST ==========
+                        function updateEquipmentCharCount() {
+                            const textarea = document.getElementById('equipmentRequestDescription');
+                            const charCount = document.getElementById('equipmentCharCount');
+                            if (!textarea || !charCount)
+                                return;
+
+                            const currentLength = textarea.value.length;
+                            charCount.textContent = currentLength + '/1000';
+
+                            if (currentLength > 900) {
+                                charCount.className = 'text-danger';
+                            } else if (currentLength > 700) {
+                                charCount.className = 'text-warning';
+                            } else {
+                                charCount.className = 'text-muted';
+                            }
+                        }
+
+// ========== VALIDATE EQUIPMENT REQUEST FORM ==========
+                        function validateEquipmentRequestForm(event) {
+                            const description = document.getElementById('equipmentRequestDescription').value.trim();
+                            const priorityLevel = document.getElementById('equipmentPriorityLevel').value;
+                            const requestType = document.getElementById('equipmentRequestType').value;
+
+                            if (!requestType) {
+                                event.preventDefault();
+                                showToast('Vui lòng chọn loại yêu cầu!', 'error');
+                                return false;
+                            }
+
+                            if (!priorityLevel) {
+                                event.preventDefault();
+                                showToast('Vui lòng chọn mức độ ưu tiên!', 'error');
+                                return false;
+                            }
+
+                            if (description.length < 10) {
+                                event.preventDefault();
+                                showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
+                                document.getElementById('equipmentRequestDescription').focus();
+                                return false;
+                            }
+
+                            if (description.length > 1000) {
+                                event.preventDefault();
+                                showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
+                                document.getElementById('equipmentRequestDescription').focus();
+                                return false;
+                            }
+
+                            return true;
+                        }
+
+// ========== CẬP NHẬT HÀM createRequest ==========
+                        function createRequest(button) {
+                            const equipmentId = button.getAttribute('data-id');
+                            const contractId = button.getAttribute('data-contract');
+                            const serialNumber = button.getAttribute('data-serial');
+                            const equipmentName = button.getAttribute('data-model');
+
+                            // Xử lý contractId - cho phép cả thiết bị có và không có hợp đồng
+                            let cleanContractId = '';
+                            if (contractId && contractId !== 'N/A') {
+                                cleanContractId = contractId.replace('HD', '').replace('#', '');
+                            }
+
+                            document.getElementById('requestEquipmentId').value = equipmentId;
+                            document.getElementById('requestContractIdValue').value = cleanContractId;
+                            document.getElementById('requestEquipmentName').value = equipmentName;
+                            document.getElementById('requestContractId').value = contractId || 'N/A';
+                            document.getElementById('requestSerialNumber').value = serialNumber;
+
+                            // Reset form về giá trị mặc định
+                            document.getElementById('equipmentRequestType').value = 'Service';
+                            document.getElementById('equipmentPriorityLevel').value = '';
+                            document.getElementById('equipmentRequestDescription').value = '';
+                            updateEquipmentCharCount();
+
+                            new bootstrap.Modal(document.getElementById('createRequestModal')).show();
+                        }
+
+                        // ========== DATE RANGE VALIDATION ==========
+                        function validateDateRange() {
+                            const fromDate = document.querySelector('input[name="fromDate"]');
+                            const toDate = document.querySelector('input[name="toDate"]');
+
+                            if (fromDate && toDate && fromDate.value && toDate.value) {
+                                if (fromDate.value > toDate.value) {
+                                    showToast('Từ ngày không thể lớn hơn đến ngày!', 'error');
+                                    return false;
+                                }
+                            }
+                            return true;
+                        }
+
+                        // ========== EVENT LISTENERS ==========
+                        document.addEventListener('DOMContentLoaded', function () {
+                            // ✅ Event cho textarea trong equipment request modal
+                            const equipmentDescriptionTextarea = document.getElementById('equipmentRequestDescription');
+                            if (equipmentDescriptionTextarea) {
+                                equipmentDescriptionTextarea.addEventListener('input', updateEquipmentCharCount);
+                            }
+
+                            // ✅ Reset form khi đóng modal tạo đơn thiết bị
+                            const createRequestModal = document.getElementById('createRequestModal');
+                            if (createRequestModal) {
+                                createRequestModal.addEventListener('hidden.bs.modal', function () {
+                                    document.getElementById('createRequestForm').reset();
+                                    updateEquipmentCharCount();
+                                });
+
+                                createRequestModal.addEventListener('shown.bs.modal', function () {
+                                    updateEquipmentCharCount();
+                                });
+                            }
+
+                            // ✅ Add date range validation to search form
+                            const searchForm = document.querySelector('form[action*="/equipment"]');
+                            if (searchForm) {
+                                searchForm.addEventListener('submit', function (e) {
+                                    if (!validateDateRange()) {
+                                        e.preventDefault();
+                                    }
+                                });
                             }
                         });
-                    }
-                });
 
                 window.addEventListener('scroll', function () {
                     const scrollBtn = document.getElementById('scrollToTop');
@@ -2169,6 +2271,7 @@ function formatMessageWidget(text) {
     
     return formatted;
 }
+
         </script>
 
     </body>
