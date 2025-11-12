@@ -6,7 +6,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><c:out value="${pageTitle != null ? pageTitle : 'Technician'}"/></title>
+  <title><c:out value="${pageTitle != null ? pageTitle : 'Kỹ thuật viên'}"/></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="${contextPath}/assets/css/theme.css" rel="stylesheet">
@@ -18,14 +18,14 @@
   <div class="row">
     <aside class="col-12 col-md-3 col-lg-2 p-0 crm-sidebar">
       <div class="d-flex flex-column p-4">
-        <h4 class="text-center mb-4 text-white"><i class="bi bi-tools"></i> Technician</h4>
+        <h4 class="text-center mb-4 text-white"><i class="bi bi-tools"></i> Kỹ thuật viên</h4>
         <ul class="nav nav-pills flex-column mb-auto">
-          <li class="nav-item"><a href="${contextPath}/technician/dashboard" class="nav-link ${activePage == 'dashboard' ? 'active' : ''}"><i class="bi bi-grid me-2"></i>Dashboard</a></li>
-          <li><a href="${contextPath}/technician/tasks" class="nav-link ${activePage == 'tasks' ? 'active' : ''}"><i class="bi bi-list-task me-2"></i>My Tasks</a></li>
-          <li><a href="${contextPath}/technician/reports" class="nav-link ${activePage == 'reports' ? 'active' : ''}"><i class="bi bi-clipboard-plus me-2"></i>Repair Reports</a></li>
-          <li><a href="${contextPath}/technician/contracts" class="nav-link ${activePage == 'contracts' ? 'active' : ''}"><i class="bi bi-file-earmark-text me-2"></i>Contracts</a></li>
-          <li><a href="${contextPath}/technician/contracts?action=equipment" class="nav-link ${activePage == 'equipment' ? 'active' : ''}"><i class="bi bi-gear me-2"></i>Equipment</a></li>
-          <li><a href="${contextPath}/technician/work-history" class="nav-link ${activePage == 'work' ? 'active' : ''}"><i class="bi bi-clock-history me-2"></i>Work History</a></li>
+          <li class="nav-item"><a href="${contextPath}/technician/dashboard" class="nav-link ${activePage == 'dashboard' ? 'active' : ''}"><i class="bi bi-grid me-2"></i>Bảng điều khiển</a></li>
+          <li><a href="${contextPath}/technician/tasks" class="nav-link ${activePage == 'tasks' ? 'active' : ''}"><i class="bi bi-list-task me-2"></i>Công việc của tôi</a></li>
+          <li><a href="${contextPath}/technician/reports" class="nav-link ${activePage == 'reports' ? 'active' : ''}"><i class="bi bi-clipboard-plus me-2"></i>Báo cáo sửa chữa</a></li>
+          <li><a href="${contextPath}/technician/contracts" class="nav-link ${activePage == 'contracts' ? 'active' : ''}"><i class="bi bi-file-earmark-text me-2"></i>Hợp đồng</a></li>
+          <li><a href="${contextPath}/technician/contracts?action=equipment" class="nav-link ${activePage == 'equipment' ? 'active' : ''}"><i class="bi bi-gear me-2"></i>Thiết bị</a></li>
+          <li><a href="${contextPath}/technician/work-history" class="nav-link ${activePage == 'work' ? 'active' : ''}"><i class="bi bi-clock-history me-2"></i>Lịch sử công việc</a></li>
         </ul>
       </div>
     </aside>
@@ -37,13 +37,13 @@
             <li class="nav-item me-2"><a class="nav-link" href="#"><i class="bi bi-bell"></i></a></li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-circle me-2"></i> <span>Technician</span>
+                <i class="bi bi-person-circle me-2"></i> <span>Kỹ thuật viên</span>
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                <li><a class="dropdown-item" href="${contextPath}/manageProfile">Profile</a></li>
-                <li><a class="dropdown-item" href="#">Settings</a></li>
+                <li><a class="dropdown-item" href="${contextPath}/manageProfile">Hồ sơ</a></li>
+                <li><a class="dropdown-item" href="#">Cài đặt</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="${contextPath}/logout">Logout</a></li>
+                <li><a class="dropdown-item" href="${contextPath}/logout">Đăng xuất</a></li>
               </ul>
             </li>
           </ul>

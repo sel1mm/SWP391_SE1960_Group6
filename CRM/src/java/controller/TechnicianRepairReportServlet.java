@@ -101,12 +101,12 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                         // If we have an effective request, reuse assignment/completion checks by request
                         if (requestId != null) {
                             if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
-                                req.setAttribute("error", "You are not assigned to this scheduled task");
+                                req.setAttribute("error", "Bạn không được giao công việc đã lên lịch này");
                                 doGetReportList(req, resp, technicianId);
                                 return;
                             }
                             if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
-                                req.setAttribute("error", "Cannot create report for completed task");
+                                req.setAttribute("error", "Không thể tạo báo cáo cho công việc đã hoàn thành");
                                 doGetReportList(req, resp, technicianId);
                                 return;
                             }
@@ -142,7 +142,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                             System.err.println("Error loading schedule customer info: " + ex.getMessage());
                         }
                     } catch (NumberFormatException e) {
-                        req.setAttribute("error", "Invalid schedule ID");
+                        req.setAttribute("error", "Mã lịch trình không hợp lệ");
                         doGetReportList(req, resp, technicianId);
                         return;
                     }
@@ -154,7 +154,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                         requestId = Integer.parseInt(requestIdParam);
                         // Validate that technician is assigned to this request
                         if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
-                            req.setAttribute("error", "You are not assigned to this request");
+                            req.setAttribute("error", "Bạn không được giao yêu cầu này");
                             doGetReportList(req, resp, technicianId);
                             return;
                         }
@@ -169,7 +169,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                             RepairReport existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
                             if (existingReport != null) {
                                 // Report already exists, redirect to edit instead
-                                req.setAttribute("info", "A repair report already exists for this task. Redirecting to edit...");
+                                req.setAttribute("info", "Đã tồn tại báo cáo sửa chữa cho công việc này. Đang chuyển hướng đến chỉnh sửa...");
                                 resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReport.getReportId());
                                 return;
                             }
@@ -183,7 +183,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                             selectedRequestType = serviceRequest.getRequestType();
                         }
                     } catch (NumberFormatException e) {
-                        req.setAttribute("error", "Invalid request ID");
+                        req.setAttribute("error", "Mã yêu cầu không hợp lệ");
                         doGetReportList(req, resp, technicianId);
                         return;
                     }
@@ -194,7 +194,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 try {
                     availableParts = getAllAvailableParts();
                 } catch (SQLException e) {
-                    req.setAttribute("error", "Error loading parts: " + e.getMessage());
+                    req.setAttribute("error", "Lỗi khi tải linh kiện: " + e.getMessage());
                     availableParts = new ArrayList<>();
                 }
                 
@@ -255,14 +255,14 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 RepairReport report = reportDAO.findById(reportId);
                 
                 if (report == null) {
-                    req.setAttribute("error", "Report not found");
+                    req.setAttribute("error", "Không tìm thấy báo cáo");
                     doGetReportList(req, resp, technicianId);
                     return;
                 }
                 
                 // Verify report belongs to this technician
                 if (report.getTechnicianId() == null || report.getTechnicianId() != technicianId) {
-                    req.setAttribute("error", "Report not found or not assigned to you");
+                    req.setAttribute("error", "Không tìm thấy báo cáo hoặc báo cáo không được giao cho bạn");
                     doGetReportList(req, resp, technicianId);
                     return;
                 }
@@ -271,12 +271,12 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 WorkTaskDAO workTaskDAO = new WorkTaskDAO();
                 try {
                     if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, report.getRequestId())) {
-                        req.setAttribute("error", "You are no longer assigned to this task");
+                        req.setAttribute("error", "Bạn không còn được giao công việc này");
                         doGetReportList(req, resp, technicianId);
                         return;
                     }
                 } catch (SQLException e) {
-                    req.setAttribute("error", "Error validating task assignment: " + e.getMessage());
+                    req.setAttribute("error", "Lỗi khi xác thực phân công công việc: " + e.getMessage());
                     doGetReportList(req, resp, technicianId);
                     return;
                 }
@@ -290,12 +290,12 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 // Check if report can be edited (status must be Pending)
                 try {
                     if (!reportDAO.canTechnicianEditReport(reportId, technicianId)) {
-                        req.setAttribute("error", "This report cannot be edited (quotation status is not Pending)");
+                        req.setAttribute("error", "Báo cáo này không thể chỉnh sửa (trạng thái báo giá không phải là Đang chờ)");
                         doGetReportList(req, resp, technicianId);
                         return;
                     }
                 } catch (SQLException e) {
-                    req.setAttribute("error", "Error checking edit permission: " + e.getMessage());
+                    req.setAttribute("error", "Lỗi khi kiểm tra quyền chỉnh sửa: " + e.getMessage());
                     doGetReportList(req, resp, technicianId);
                     return;
                 }
@@ -313,7 +313,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 try {
                     availableParts = getAllAvailableParts();
                 } catch (SQLException e) {
-                    req.setAttribute("error", "Error loading parts: " + e.getMessage());
+                    req.setAttribute("error", "Lỗi khi tải linh kiện: " + e.getMessage());
                     availableParts = new ArrayList<>();
                 }
                 
@@ -381,7 +381,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     req.setAttribute("activePage", "reports");
                     req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
                 } else {
-                    req.setAttribute("error", "Report not found or not assigned to you");
+                    req.setAttribute("error", "Không tìm thấy báo cáo hoặc báo cáo không được giao cho bạn");
                     doGetReportList(req, resp, technicianId);
                 }
                 
@@ -393,7 +393,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         } catch (SQLException e) {
             throw new ServletException("Database error: " + e.getMessage(), e);
         } catch (NumberFormatException e) {
-            req.setAttribute("error", "Invalid ID parameter");
+            req.setAttribute("error", "Tham số ID không hợp lệ");
             doGetReportList(req, resp, sessionId.intValue());
         }
     }
@@ -496,27 +496,27 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                         scheduleId = Integer.parseInt(scheduleIdStr);
                         Integer effectiveReqId = getEffectiveRequestIdForSchedule(scheduleId);
                         if (effectiveReqId == null) {
-                            req.setAttribute("error", "This schedule is not linked to any Service Request.");
+                            req.setAttribute("error", "Lịch trình này không được liên kết với bất kỳ Yêu cầu Dịch vụ nào.");
                             doGet(req, resp);
                             return;
                         }
                         requestId = effectiveReqId;
                     } catch (NumberFormatException e) {
-                        req.setAttribute("error", "Invalid schedule ID");
+                        req.setAttribute("error", "Mã lịch trình không hợp lệ");
                         doGet(req, resp);
                         return;
                     }
                 } else {
                     // Validate request ID (request-origin)
                     if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
-                        req.setAttribute("error", "Request ID is required");
+                        req.setAttribute("error", "Mã yêu cầu là bắt buộc");
                         doGet(req, resp);
                         return;
                     }
                     try {
                         requestId = Integer.parseInt(requestIdStr);
                     } catch (NumberFormatException e) {
-                        req.setAttribute("error", "Invalid request ID");
+                        req.setAttribute("error", "Mã yêu cầu không hợp lệ");
                         doGet(req, resp);
                         return;
                     }
@@ -546,12 +546,12 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     }
                     if (existingReport != null) {
                         // Report already exists, redirect to edit instead
-                        req.setAttribute("error", "A repair report already exists for this task. Redirecting to edit...");
+                        req.setAttribute("error", "Đã tồn tại báo cáo sửa chữa cho công việc này. Đang chuyển hướng đến chỉnh sửa...");
                         resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReport.getReportId());
                         return;
                     }
                 } catch (SQLException e) {
-                    req.setAttribute("error", "Error checking for existing report: " + e.getMessage());
+                    req.setAttribute("error", "Lỗi khi kiểm tra báo cáo hiện có: " + e.getMessage());
                     doGet(req, resp);
                     return;
                 }
@@ -654,7 +654,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                         req.setAttribute("availableParts", getAllAvailableParts());
                     } catch (SQLException e) {
                         req.setAttribute("availableParts", new ArrayList<Map<String, Object>>());
-                        req.setAttribute("error", "Error loading parts: " + e.getMessage());
+                        req.setAttribute("error", "Lỗi khi tải linh kiện: " + e.getMessage());
                     }
                     req.setAttribute("subtotal", calculateSubtotal(parts));
                     Map<String, Object> customerRequestInfo = null;
@@ -692,7 +692,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     req.getSession().setAttribute("successMessage", "Repair Report has been submitted successfully ✅");
                     resp.sendRedirect(req.getContextPath() + "/technician/reports");
                 } else {
-                    req.setAttribute("error", "Failed to create repair report");
+                    req.setAttribute("error", "Không thể tạo báo cáo sửa chữa");
                     doGet(req, resp);
                 }
                 
@@ -703,14 +703,14 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 // Get existing report data first
                 RepairReport existingReport = reportDAO.findById(reportId);
                 if (existingReport == null) {
-                    req.setAttribute("error", "Report not found");
+                    req.setAttribute("error", "Không tìm thấy báo cáo");
                     doGet(req, resp);
                     return;
                 }
                 
                 // Verify report belongs to this technician
                 if (existingReport.getTechnicianId() == null || existingReport.getTechnicianId() != technicianId) {
-                    req.setAttribute("error", "Report not found or not assigned to you");
+                    req.setAttribute("error", "Không tìm thấy báo cáo hoặc báo cáo không được giao cho bạn");
                     doGet(req, resp);
                     return;
                 }
@@ -719,12 +719,12 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 WorkTaskDAO workTaskDAO = new WorkTaskDAO();
                 try {
                     if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, existingReport.getRequestId())) {
-                        req.setAttribute("error", "You are no longer assigned to this task");
+                        req.setAttribute("error", "Bạn không còn được giao công việc này");
                         doGet(req, resp);
                         return;
                     }
                 } catch (SQLException e) {
-                    req.setAttribute("error", "Error validating task assignment: " + e.getMessage());
+                    req.setAttribute("error", "Lỗi khi xác thực phân công công việc: " + e.getMessage());
                     doGet(req, resp);
                     return;
                 }
@@ -732,12 +732,12 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 // Check if report can be edited (status must be Pending)
                 try {
                     if (!reportDAO.canTechnicianEditReport(reportId, technicianId)) {
-                        req.setAttribute("error", "This report cannot be edited (quotation status is not Pending)");
+                        req.setAttribute("error", "Báo cáo này không thể chỉnh sửa (trạng thái báo giá không phải là Đang chờ)");
                         doGet(req, resp);
                         return;
                     }
                 } catch (SQLException e) {
-                    req.setAttribute("error", "Error checking edit permission: " + e.getMessage());
+                    req.setAttribute("error", "Lỗi khi kiểm tra quyền chỉnh sửa: " + e.getMessage());
                     doGet(req, resp);
                     return;
                 }
@@ -837,10 +837,10 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 if (updated) {
                     // Clear session (request-specific cart)
                     req.getSession().removeAttribute(cartKey);
-                    req.setAttribute("success", "Repair report updated successfully");
+                    req.setAttribute("success", "Báo cáo sửa chữa đã được cập nhật thành công");
                     resp.sendRedirect(req.getContextPath() + "/technician/reports?action=detail&reportId=" + reportId);
                 } else {
-                    req.setAttribute("error", "Failed to update repair report");
+                    req.setAttribute("error", "Không thể cập nhật báo cáo sửa chữa");
                     doGet(req, resp);
                 }
                 
