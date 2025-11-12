@@ -3110,7 +3110,7 @@
 
                                                                                                } else {
                                                                                                    // ✅ SERVICE - HIỂN THỊ NÚT THANH TOÁN NGAY Ở CẢ PENDING VÀ APPROVED
-                                                                                                   if ((isPending || isApproved) && hasUnpaidParts) {
+                                                                                                   if (isPending && hasUnpaidParts) {
                                                                                                        // Hiển thị nút "Thanh toán tất cả" + "Từ chối"
                                                                                                        html += '<button class="btn-pay-all" onclick="event.stopPropagation(); payForTechnician(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
                                                                                                        html += '<i class="fas fa-credit-card"></i> Thanh toán tất cả';
