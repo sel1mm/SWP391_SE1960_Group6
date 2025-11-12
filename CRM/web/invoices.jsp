@@ -717,7 +717,6 @@
                 font-size: 0.75rem;
             }
 
-
             /* ========== CHATBOT STYLES ========== */
             .chatbot-container {
                 position: fixed;
@@ -1056,258 +1055,6 @@
             .chatbot-send:disabled {
                 opacity: 0.5;
                 cursor: not-allowed;
-
-            /* INVOICE DETAIL STYLES - NEW DESIGN */
-            .info-box {
-                background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-                border-radius: 12px;
-                padding: 20px;
-                border: 2px solid #e9ecef;
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                transition: all 0.3s;
-                height: 100%;
-            }
-
-            .info-box:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-                border-color: #ffc107;
-            }
-
-            .info-icon {
-                width: 60px;
-                height: 60px;
-                background: linear-gradient(135deg, #ffc107, #ff9800);
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-size: 1.8rem;
-                flex-shrink: 0;
-            }
-
-            .info-content {
-                flex: 1;
-            }
-
-            .info-label {
-                font-size: 0.85rem;
-                color: #6c757d;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-bottom: 5px;
-            }
-
-            .info-value-large {
-                font-size: 1.3rem;
-                color: #1e3c72;
-                font-weight: 700;
-            }
-
-            .payment-method-box {
-                background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-                border-radius: 12px;
-                padding: 25px;
-                text-align: center;
-                border: 2px solid #90caf9;
-                height: 100%;
-            }
-
-            .payment-label {
-                font-size: 1rem;
-                color: #1e3c72;
-                font-weight: 700;
-                margin-bottom: 15px;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-            }
-
-            .payment-value {
-                margin-top: 10px;
-            }
-
-            .total-amount-box {
-                background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-                border-radius: 12px;
-                padding: 25px;
-                text-align: center;
-                box-shadow: 0 8px 25px rgba(30, 60, 114, 0.3);
-                height: 100%;
-            }
-
-            .total-label-new {
-                color: rgba(255, 255, 255, 0.95);
-                font-size: 1rem;
-                font-weight: 700;
-                margin-bottom: 15px;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-            }
-
-            .total-amount-new {
-                color: #ffc107;
-                font-size: 2.2rem;
-                font-weight: 700;
-                margin-bottom: 8px;
-                text-shadow: 0 2px 10px rgba(255, 193, 7, 0.4);
-                line-height: 1.2;
-            }
-
-            .total-usd-new {
-                color: rgba(255, 255, 255, 0.8);
-                font-size: 1.1rem;
-                font-style: italic;
-            }
-
-            /* PARTS TABLE STYLES */
-            .parts-detail-table {
-                font-size: 0.95rem;
-            }
-
-            .parts-detail-table thead th {
-                background: linear-gradient(135deg, #1e3c72, #2a5298);
-                color: white;
-                font-weight: 600;
-                text-transform: uppercase;
-                font-size: 0.85rem;
-                letter-spacing: 0.5px;
-                padding: 15px 12px;
-                border: none;
-            }
-
-            .parts-detail-table tbody tr {
-                transition: all 0.3s;
-            }
-
-            .parts-detail-table tbody tr:hover {
-                background-color: rgba(30, 60, 114, 0.05);
-                transform: scale(1.01);
-            }
-
-            .parts-detail-table tbody td {
-                padding: 15px 12px;
-                vertical-align: middle;
-            }
-
-            .report-id {
-                font-family: 'Courier New', monospace;
-                font-weight: 600;
-                color: #6c757d;
-                background: #f8f9fa;
-                padding: 4px 8px;
-                border-radius: 4px;
-            }
-
-            .part-info {
-                line-height: 1.6;
-            }
-
-            .part-name {
-                color: #2c3e50;
-                font-size: 1rem;
-            }
-
-            .quantity-badge {
-                background: linear-gradient(135deg, #17a2b8, #138496);
-                color: white;
-                padding: 6px 12px;
-                border-radius: 20px;
-                font-weight: 600;
-                display: inline-block;
-            }
-
-            .price-text {
-                color: #28a745;
-                font-weight: 600;
-                font-size: 1rem;
-            }
-
-            .total-price {
-                color: #dc3545;
-                font-size: 1.1rem;
-            }
-
-            .parts-detail-table tfoot th {
-                background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-                color: #1e3c72;
-                font-weight: 700;
-                font-size: 1.1rem;
-                padding: 20px 12px;
-                border-top: 3px solid #1e3c72;
-            }
-
-            .grand-total {
-                color: #dc3545;
-                font-size: 1.5rem;
-                font-weight: 700;
-            }
-
-            /* CATEGORY STATS STYLES */
-            .category-stat-card {
-                background: white;
-                border-radius: 12px;
-                padding: 20px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                transition: all 0.3s;
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                border-left: 4px solid #ffc107;
-            }
-
-            .category-stat-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            }
-
-            .stat-icon {
-                width: 60px;
-                height: 60px;
-                background: linear-gradient(135deg, #ffc107, #ff9800);
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-size: 1.8rem;
-                flex-shrink: 0;
-            }
-
-            .stat-content {
-                flex: 1;
-            }
-
-            .stat-category {
-                font-weight: 700;
-                color: #1e3c72;
-                font-size: 1.1rem;
-                margin-bottom: 8px;
-            }
-
-            .stat-amount {
-                color: #dc3545;
-                font-size: 1.3rem;
-                font-weight: 700;
-                margin-bottom: 8px;
-            }
-
-            .stat-details {
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-            }
-
-            .bg-gradient-warning {
-                background: linear-gradient(135deg, #ffc107, #ff9800);
-            }
-
-            .bg-gradient-info {
-                background: linear-gradient(135deg, #0dcaf0, #0aa2c0);
-
             }
 
             /* RESPONSIVE */
@@ -1316,7 +1063,7 @@
                     grid-template-columns: repeat(2, 1fr);
                     gap: 40px;
                 }
-            
+            }
 
             @media (max-width: 768px) {
                 .sidebar {
@@ -1359,47 +1106,9 @@
                     align-items: flex-start;
                 }
 
-
                 .chatbot-window {
                     width: calc(100vw - 30px);
                     right: 15px;
-
-                /* PAGINATION STYLES */
-                .pagination {
-                    margin-top: 20px;
-                    margin-bottom: 10px;
-                }
-
-                .pagination .page-link {
-                    color: #1e3c72;
-                    border: 1px solid #dee2e6;
-                    padding: 8px 15px;
-                    margin: 0 3px;
-                    border-radius: 8px;
-                    transition: all 0.3s;
-                    font-weight: 500;
-                }
-
-                .pagination .page-link:hover {
-                    background: linear-gradient(135deg, #1e3c72, #2a5298);
-                    color: white;
-                    border-color: #1e3c72;
-                    transform: translateY(-2px);
-                }
-
-                .pagination .page-item.active .page-link {
-                    background: linear-gradient(135deg, #1e3c72, #2a5298);
-                    border-color: #1e3c72;
-                    color: white;
-                    font-weight: 700;
-                }
-
-                .pagination .page-item.disabled .page-link {
-                    color: #6c757d;
-                    pointer-events: none;
-                    background-color: #fff;
-                    border-color: #dee2e6;
-
                 }
             }
         </style>
@@ -1633,13 +1342,12 @@
 
                 <!-- CHI TIẾT HÓA ĐƠN (nếu có) -->
                 <c:if test="${viewMode == 'detail' && not empty selectedInvoice}">
-                    <div class="mb-4">
-                        <!-- Header với nút quay lại -->
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="mb-0" style="color: #1e3c72; font-weight: 700;">
+                    <div class="table-container mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">
                                 <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
                                 Chi Tiết Hóa Đơn #INV${selectedInvoice.invoiceId}
-                            </h3>
+                            </h4>
                             <div>
                                 <button class="btn btn-outline-primary btn-sm me-2" onclick="printInvoice(${selectedInvoice.invoiceId})">
                                     <i class="fas fa-print"></i> In Hóa Đơn
@@ -1653,255 +1361,212 @@
                             </div>
                         </div>
 
-                        <!-- Card chính chứa thông tin hóa đơn -->
-                        <div class="card border-0 shadow-lg mb-4">
-                            <!-- Header Card với gradient -->
-                            <div class="card-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px;">
-                                <div class="row align-items-center">
-                                    <div class="col-md-8">
-                                        <h5 class="mb-0" style="font-weight: 700;">
-                                            <i class="fas fa-file-invoice me-2"></i>Thông Tin Hóa Đơn #INV${selectedInvoice.invoiceId}
-                                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông Tin Hóa Đơn</h6>
                                     </div>
-                                    <div class="col-md-4 text-end">
+                                    <div class="card-body">
+                                        <table class="table table-borderless">
+                                            <tr>
+                                                <td><strong>Mã Hóa Đơn:</strong></td>
+                                                <td>#INV${selectedInvoice.invoiceId}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Mã Hợp Đồng:</strong></td>
+                                                <td><span class="badge bg-primary">${formattedContractId}</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Ngày Phát Hành:</strong></td>
+                                                <td><fmt:formatDate value="${selectedInvoice.issueDate}" pattern="dd/MM/yyyy"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Hạn Thanh Toán:</strong></td>
+                                                <td><fmt:formatDate value="${selectedInvoice.dueDate}" pattern="dd/MM/yyyy"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Tổng Tiền:</strong></td>
+                                                <td><strong class="text-success fs-5"><fmt:formatNumber value="${selectedInvoice.totalAmount * 26000}" pattern="#,###"/> đ</strong></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Trạng Thái:</strong></td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${selectedInvoice.status == 'Paid'}">
+                                                            <span class="badge badge-paid fs-6">
+                                                                <i class="fas fa-check-circle"></i> Đã Thanh Toán
+                                                            </span>
+                                                        </c:when>
+                                                        <c:when test="${selectedInvoice.status == 'Pending'}">
+                                                            <span class="badge badge-pending fs-6">
+                                                                <i class="fas fa-clock"></i> Chưa Thanh Toán
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="badge badge-overdue fs-6">
+                                                                <i class="fas fa-exclamation-triangle"></i> Quá Hạn
+                                                            </span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0"><i class="fas fa-list me-2"></i>Chi Tiết Dịch Vụ</h6>
+                                    </div>
+                                    <div class="card-body">
                                         <c:choose>
-                                            <c:when test="${selectedInvoice.status == 'Paid'}">
-                                                <span class="badge bg-success fs-6 px-3 py-2">
-                                                    <i class="fas fa-check-circle"></i> Đã Thanh Toán
-                                                </span>
-                                            </c:when>
-                                            <c:when test="${selectedInvoice.status == 'Pending'}">
-                                                <span class="badge bg-warning text-dark fs-6 px-3 py-2">
-                                                    <i class="fas fa-clock"></i> Chưa Thanh Toán
-                                                </span>
+                                            <c:when test="${not empty invoiceDetails}">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Mô Tả</th>
+                                                                <th class="text-end">Số Tiền</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <c:forEach var="detail" items="${invoiceDetails}">
+                                                                <tr>
+                                                                    <td>${detail.description}</td>
+                                                                    <td class="text-end">
+                                                                        <fmt:formatNumber value="${detail.amount * 26000}" pattern="#,###"/> đ
+                                                                    </td>
+                                                                </tr>
+                                                            </c:forEach>
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr class="table-active">
+                                                                <th>Tổng Cộng:</th>
+                                                                <th class="text-end">
+                                                                    <fmt:formatNumber value="${selectedInvoice.totalAmount * 26000}" pattern="#,###"/> đ
+                                                                </th>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
                                             </c:when>
                                             <c:otherwise>
-                                                <span class="badge bg-danger fs-6 px-3 py-2">
-                                                    <i class="fas fa-exclamation-triangle"></i> Quá Hạn
-                                                </span>
+                                                <p class="text-muted text-center">Không có chi tiết dịch vụ</p>
                                             </c:otherwise>
                                         </c:choose>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="card-body p-4">
-                                <!-- Thông tin cơ bản - 3 cột -->
-                                <div class="row mb-4">
-                                    <div class="col-md-4">
-                                        <div class="info-box">
-                                            <div class="info-icon">
-                                                <i class="fas fa-file-contract"></i>
-                                            </div>
-                                            <div class="info-content">
-                                                <div class="info-label">Mã Hợp Đồng</div>
-                                                <div class="info-value-large">${formattedContractId}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="info-box">
-                                            <div class="info-icon">
-                                                <i class="fas fa-calendar-alt"></i>
-                                            </div>
-                                            <div class="info-content">
-                                                <div class="info-label">Ngày Phát Hành</div>
-                                                <div class="info-value-large">
-                                                    <fmt:formatDate value="${selectedInvoice.issueDate}" pattern="dd/MM/yyyy"/>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="info-box">
-                                            <div class="info-icon">
-                                                <i class="fas fa-calendar-check"></i>
-                                            </div>
-                                            <div class="info-content">
-                                                <div class="info-label">Hạn Thanh Toán</div>
-                                                <div class="info-value-large">
-                                                    <fmt:formatDate value="${selectedInvoice.dueDate}" pattern="dd/MM/yyyy"/>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Phương thức thanh toán và tổng tiền -->
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="payment-method-box">
-                                            <div class="payment-label">
-                                                <i class="fas fa-credit-card me-2"></i>Phương Thức Thanh Toán
-                                            </div>
-                                            <div class="payment-value">
-                                                <c:choose>
-                                                    <c:when test="${selectedInvoice.paymentMethod == 'Bank'}">
-                                                        <span class="badge bg-info fs-5 px-4 py-2">
-                                                            <i class="fas fa-university"></i> Chuyển Khoản Ngân Hàng
-                                                        </span>
-                                                    </c:when>
-                                                    <c:when test="${selectedInvoice.paymentMethod == 'Cash'}">
-                                                        <span class="badge bg-success fs-5 px-4 py-2">
-                                                            <i class="fas fa-money-bill"></i> Tiền Mặt
-                                                        </span>
-                                                    </c:when>
-                                                    <c:when test="${selectedInvoice.paymentMethod == 'VNPAY'}">
-                                                        <span class="badge bg-primary fs-5 px-4 py-2">
-                                                            <i class="fas fa-credit-card"></i> VNPAY
-                                                        </span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="text-muted fs-5">Chưa thanh toán</span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="total-amount-box">
-                                            <div class="total-label-new">
-                                                <i class="fas fa-money-bill-wave me-2"></i>Tổng Tiền Hóa Đơn
-                                            </div>
-                                            <div class="total-amount-new">
-                                                <fmt:formatNumber value="${selectedInvoice.totalAmount * 26000}" pattern="#,###"/> đ
-                                            </div>
-                                            <div class="total-usd-new">
-                                                ≈ $<fmt:formatNumber value="${selectedInvoice.totalAmount}" pattern="#,##0.00"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
-                        <!-- Chi tiết linh kiện đã thay thế -->
+                        <!-- Chi tiết linh kiện sử dụng -->
                         <c:if test="${not empty repairPartDetails}">
-                            <div class="card border-0 shadow-lg mb-4">
-                                <div class="card-header bg-gradient-warning text-dark py-3">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-cogs me-2"></i>Chi Tiết Linh Kiện Đã Thay Thế
-                                    </h5>
-                                </div>
-                                <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover mb-0 parts-detail-table">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th style="width: 50px;" class="text-center">STT</th>
-                                                    <th style="width: 120px;">Mã Báo Cáo</th>
-                                                    <th>Tên Linh Kiện</th>
-                                                    <th style="width: 150px;">Danh Mục</th>
-                                                    <th style="width: 100px;" class="text-center">Số Lượng</th>
-                                                    <th style="width: 150px;" class="text-end">Đơn Giá</th>
-                                                    <th style="width: 180px;" class="text-end">Thành Tiền</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <c:forEach var="part" items="${repairPartDetails}" varStatus="status">
-                                                    <tr class="part-row">
-                                                        <td class="text-center">
-                                                            <span class="badge bg-secondary">${status.index + 1}</span>
-                                                        </td>
-                                                        <td>
-                                                            <span class="report-id">#RPT${part.reportId}</span>
-                                                        </td>
-                                                        <td>
-                                                            <div class="part-info">
-                                                                <strong class="part-name">${part.partName}</strong>
-                                                                <c:if test="${not empty part.reportDescription}">
-                                                                    <small class="d-block text-muted">
-                                                                        <i class="fas fa-info-circle"></i> ${part.reportDescription}
-                                                                    </small>
-                                                                </c:if>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span class="badge bg-info text-dark">
-                                                                <i class="fas fa-tag"></i> ${part.category}
-                                                            </span>
-                                                        </td>
-                                                        <td class="text-center">
-                                                            <span class="quantity-badge">
-                                                                <i class="fas fa-cubes"></i> ${part.quantity}
-                                                            </span>
-                                                        </td>
-                                                        <td class="text-end">
-                                                            <span class="price-text">
-                                                                <fmt:formatNumber value="${part.price * 26000}" pattern="#,###"/> đ
-                                                            </span>
-                                                        </td>
-                                                        <td class="text-end">
-                                                            <strong class="total-price">
-                                                                <fmt:formatNumber value="${part.totalPrice * 26000}" pattern="#,###"/> đ
-                                                            </strong>
-                                                        </td>
-                                                    </tr>
-                                                </c:forEach>
-                                            </tbody>
-                                            <tfoot class="table-active">
-                                                <tr class="total-row">
-                                                    <th colspan="6" class="text-end">
-                                                        <i class="fas fa-calculator me-2"></i>Tổng Tiền Linh Kiện:
-                                                    </th>
-                                                    <th class="text-end">
-                                                        <span class="grand-total">
-                                                            <fmt:formatNumber value="${partsTotalAmount * 26000}" pattern="#,###"/> đ
-                                                        </span>
-                                                    </th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </c:if>
-
-                        <!-- Thống kê theo danh mục -->
-                        <c:if test="${not empty partsCategoryStats}">
-                            <div class="card border-0 shadow-lg">
-                                <div class="card-header bg-gradient-info text-white py-3">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-chart-pie me-2"></i>Thống Kê Theo Danh Mục Linh Kiện
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row g-3">
-                                        <c:forEach var="stat" items="${partsCategoryStats}">
-                                            <div class="col-md-4">
-                                                <div class="category-stat-card">
-                                                    <div class="stat-icon">
-                                                        <i class="fas fa-cogs"></i>
-                                                    </div>
-                                                    <div class="stat-content">
-                                                        <div class="stat-category">${stat.category}</div>
-                                                        <div class="stat-amount">
-                                                            <fmt:formatNumber value="${stat.categoryTotal * 26000}" pattern="#,###"/> đ
-                                                        </div>
-                                                        <div class="stat-details">
-                                                            <span class="badge bg-light text-dark me-2">
-                                                                <i class="fas fa-box"></i> ${stat.partCount} loại
-                                                            </span>
-                                                            <span class="badge bg-light text-dark">
-                                                                <i class="fas fa-cubes"></i> ${stat.totalQuantity} cái
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0"><i class="fas fa-cogs me-2"></i>Chi Tiết Linh Kiện Sử Dụng</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th><i class="fas fa-hashtag me-1"></i>Báo Cáo</th>
+                                                            <th><i class="fas fa-cog me-1"></i>Tên Linh Kiện</th>
+                                                            <th><i class="fas fa-tags me-1"></i>Danh Mục</th>
+                                                            <th class="text-center"><i class="fas fa-sort-numeric-up me-1"></i>Số Lượng</th>
+                                                            <th class="text-end"><i class="fas fa-dollar-sign me-1"></i>Đơn Giá</th>
+                                                            <th class="text-end"><i class="fas fa-calculator me-1"></i>Thành Tiền</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <c:forEach var="part" items="${repairPartDetails}">
+                                                            <tr>
+                                                                <td>
+                                                                    <small class="text-muted">#${part.reportId}</small><br>
+                                                                    <span class="text-truncate" style="max-width: 150px; display: inline-block;" title="${part.reportDescription}">
+                                                                        ${part.reportDescription}
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <strong>${part.partName}</strong>
+                                                                </td>
+                                                                <td>
+                                                                    <span class="badge bg-secondary">${part.category}</span>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <span class="badge bg-primary">${part.quantity}</span>
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    <fmt:formatNumber value="${part.price * 26000}" pattern="#,###"/> đ
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    <strong class="text-success">
+                                                                        <fmt:formatNumber value="${part.totalPrice * 26000}" pattern="#,###"/> đ
+                                                                    </strong>
+                                                                </td>
+                                                            </tr>
+                                                        </c:forEach>
+                                                    </tbody>
+                                                    <tfoot class="table-active">
+                                                        <tr>
+                                                            <th colspan="5" class="text-end">Tổng Tiền Linh Kiện:</th>
+                                                            <th class="text-end">
+                                                                <strong class="text-success fs-5">
+                                                                    <fmt:formatNumber value="${partsTotalAmount * 26000}" pattern="#,###"/> đ
+                                                                </strong>
+                                                            </th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
                                             </div>
-                                        </c:forEach>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </c:if>
 
-                        <!-- Nếu không có linh kiện -->
-                        <c:if test="${empty repairPartDetails}">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-body text-center py-5">
-                                    <i class="fas fa-box-open fa-4x text-muted mb-3" style="opacity: 0.3;"></i>
-                                    <h5 class="text-muted">Không có thông tin linh kiện</h5>
-                                    <p class="text-muted">Hóa đơn này không bao gồm chi phí thay thế linh kiện</p>
+                        <!-- Thống kê theo danh mục linh kiện -->
+                        <c:if test="${not empty partsCategoryStats}">
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Thống Kê Theo Danh Mục Linh Kiện</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <c:forEach var="stat" items="${partsCategoryStats}">
+                                                    <div class="col-md-4 mb-3">
+                                                        <div class="card border-left-primary h-100">
+                                                            <div class="card-body">
+                                                                <div class="row no-gutters align-items-center">
+                                                                    <div class="col mr-2">
+                                                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                                            ${stat.category}
+                                                                        </div>
+                                                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                                            <fmt:formatNumber value="${stat.categoryTotal * 26000}" pattern="#,###"/> đ
+                                                                        </div>
+                                                                        <div class="text-muted small">
+                                                                            ${stat.partCount} loại linh kiện • ${stat.totalQuantity} cái
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-auto">
+                                                                        <i class="fas fa-cogs fa-2x text-gray-300"></i>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </c:forEach>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </c:if>
@@ -2045,145 +1710,31 @@
                             </c:otherwise>
                         </c:choose>
                     </div>
-<<<<<<< Updated upstream
-=======
                 </div>
             </div>
-            <!-- ✅ THÊM PHÂN TRANG Ở ĐÂY -->
-            <c:if test="${totalPages > 1}">
-                <nav aria-label="Page navigation" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
-                            <c:if test="${currentPage > 1}">
-                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage - 1})">
-                                    <i class="fas fa-chevron-left"></i> Trước
-                                </a>
-                            </c:if>
-                            <c:if test="${currentPage <= 1}">
-                                <span class="page-link">
-                                    <i class="fas fa-chevron-left"></i> Trước
-                                </span>
-                            </c:if>
-                        </li>
-
-                        <c:forEach var="i" begin="1" end="${totalPages}">
-                            <li class="page-item ${i == currentPage ? 'active' : ''}">
-                                <c:if test="${i != currentPage}">
-                                    <a class="page-link" href="javascript:void(0)" onclick="goToPage(${i})">
-                                        ${i}
-                                    </a>
-                                </c:if>
-                                <c:if test="${i == currentPage}">
-                                    <span class="page-link">${i}</span>
-                                </c:if>
-                            </li>
-                        </c:forEach>
-
-                        <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
-                            <c:if test="${currentPage < totalPages}">
-                                <a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage + 1})">
-                                    Tiếp <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </c:if>
-                            <c:if test="${currentPage >= totalPages}">
-                                <span class="page-link">
-                                    Tiếp <i class="fas fa-chevron-right"></i>
-                                </span>
-                            </c:if>
-                        </li>
-                    </ul>
-                </nav>
-
-                <div class="text-center text-muted mb-3">
-                    <small>
-                        Trang <strong>${currentPage}</strong> của <strong>${totalPages}</strong> 
-                        | Hiển thị <strong>${fn:length(invoiceList)}</strong> hóa đơn
-                    </small>
->>>>>>> Stashed changes
-                </div>
-            </c:if>
-            <!-- ✅ KẾT THÚC PHÂN TRANG -->
-
-            <!-- FOOTER -->
-            <footer class="site-footer">
-                <div class="footer-content">
-                    <div class="footer-grid">
-                        <div class="footer-section">
-                            <h5>CRM System</h5>
-                            <p class="footer-about">
-                                Giải pháp quản lý khách hàng toàn diện, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ.
-                            </p>
-                        </div>
-
-                        <div class="footer-section">
-                            <h5>Tính năng chính</h5>
-                            <ul class="footer-links">
-                                <li><a href="#">→ Quản lý khách hàng</a></li>
-                                <li><a href="#">→ Quản lý hợp đồng</a></li>
-                                <li><a href="#">→ Quản lý thiết bị</a></li>
-                                <li><a href="#">→ Quản lý hóa đơn</a></li>
-                            </ul>
-                        </div>
-
-                        <div class="footer-section">
-                            <h5>Hỗ trợ</h5>
-                            <ul class="footer-links">
-                                <li><a href="#">→ Trung tâm trợ giúp</a></li>
-                                <li><a href="#">→ Hướng dẫn sử dụng</a></li>
-                                <li><a href="#">→ Liên hệ hỗ trợ</a></li>
-                                <li><a href="#">→ Câu hỏi thường gặp</a></li>
-                            </ul>
-                        </div>
-
-                        <div class="footer-section">
-                            <h5>Thông tin</h5>
-                            <ul class="footer-links">
-                                <li><a href="#">→ Về chúng tôi</a></li>
-                                <li><a href="#">→ Điều khoản dịch vụ</a></li>
-                                <li><a href="#">→ Chính sách bảo mật</a></li>
-                                <li><a href="#">→ Liên hệ</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="footer-bottom">
-                        <div class="footer-copyright">
-                            © 2025 CRM System. All rights reserved. Made with <i class="fas fa-heart text-danger"></i> in Vietnam
-                        </div>
-                        <div class="footer-social">
-                            <a href="#" class="social-link" title="Facebook">
-                                <i class="fab fa-facebook-f"></i>
-                            </a>
-                            <a href="#" class="social-link" title="Twitter">
-                                <i class="fab fa-twitter"></i>
-                            </a>
-                            <a href="#" class="social-link" title="LinkedIn">
-                                <i class="fab fa-linkedin-in"></i>
-                            </a>
-                            <a href="#" class="social-link" title="Instagram">
-                                <i class="fab fa-instagram"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
         </div>
 
-        <!-- SCROLL TO TOP BUTTON -->
-        <div class="scroll-to-top" id="scrollToTop">
-            <i class="fas fa-arrow-up"></i>
-        </div>
+        <!-- FOOTER -->
+        <footer class="site-footer">
+            <div class="footer-content">
+                <div class="footer-grid">
+                    <div class="footer-section">
+                        <h5>CRM System</h5>
+                        <p class="footer-about">
+                            Giải pháp quản lý khách hàng toàn diện, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ.
+                        </p>
+                    </div>
 
-        <!-- SCRIPTS -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-                                    // Toggle Sidebar
-                                    function toggleSidebar() {
-                                        const sidebar = document.getElementById('sidebar');
-                                        const toggleIcon = document.getElementById('toggleIcon');
-                                        sidebar.classList.toggle('collapsed');
+                    <div class="footer-section">
+                        <h5>Tính năng chính</h5>
+                        <ul class="footer-links">
+                            <li><a href="#">→ Quản lý khách hàng</a></li>
+                            <li><a href="#">→ Quản lý hợp đồng</a></li>
+                            <li><a href="#">→ Quản lý thiết bị</a></li>
+                            <li><a href="#">→ Quản lý hóa đơn</a></li>
+                        </ul>
+                    </div>
 
-<<<<<<< Updated upstream
                     <div class="footer-section">
                         <h5>Hỗ trợ</h5>
                         <ul class="footer-links">
@@ -2695,147 +2246,6 @@
                 
                 return formatted;
             }
-=======
-                                        if (sidebar.classList.contains('collapsed')) {
-                                            toggleIcon.classList.remove('fa-chevron-left');
-                                            toggleIcon.classList.add('fa-chevron-right');
-                                        } else {
-                                            toggleIcon.classList.remove('fa-chevron-right');
-                                            toggleIcon.classList.add('fa-chevron-left');
-                                        }
-                                    }
-                                    // ========== PAGINATION ==========
-                                    function goToPage(pageNumber) {
-                                        const urlParams = new URLSearchParams(window.location.search);
-                                        urlParams.set('page', pageNumber);
-
-                                        // Giữ lại action nếu đang search
-                                        if (!urlParams.has('action') && window.location.search.includes('action=search')) {
-                                            urlParams.set('action', 'search');
-                                        }
-
-                                        window.location.href = '${pageContext.request.contextPath}/invoices?' + urlParams.toString();
-                                    }
-
-                                    // Refresh Page
-                                    function refreshPage() {
-                                        location.reload();
-                                    }
-
-                                    // Toast Notification Function
-                                    function showToast(message, type = 'success') {
-                                        const container = document.getElementById('toastContainer');
-                                        const toast = document.createElement('div');
-                                        toast.className = 'toast-notification ' + type;
-
-                                        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-
-                                        toast.innerHTML =
-                                                '<div class="toast-icon ' + type + '">' +
-                                                '<i class="fas ' + icon + '"></i>' +
-                                                '</div>' +
-                                                '<div class="toast-content">' +
-                                                '<strong>' + (type === 'success' ? 'Thành công!' : 'Lỗi!') + '</strong>' +
-                                                '<p style="margin: 0; font-size: 0.9rem;">' + message + '</p>' +
-                                                '</div>' +
-                                                '<button class="toast-close" onclick="closeToast(this)">' +
-                                                '<i class="fas fa-times"></i>' +
-                                                '</button>';
-
-                                        container.appendChild(toast);
-
-                                        setTimeout(function () {
-                                            toast.classList.add('hiding');
-                                            setTimeout(function () {
-                                                toast.remove();
-                                            }, 400);
-                                        }, 5000);
-                                    }
-
-                                    function closeToast(btn) {
-                                        const toast = btn.closest('.toast-notification');
-                                        toast.classList.add('hiding');
-                                        setTimeout(() => toast.remove(), 400);
-                                    }
-
-                                    // Scroll to Top
-                                    const scrollToTopBtn = document.getElementById('scrollToTop');
-
-                                    window.addEventListener('scroll', () => {
-                                        if (window.pageYOffset > 300) {
-                                            scrollToTopBtn.classList.add('show');
-                                        } else {
-                                            scrollToTopBtn.classList.remove('show');
-                                        }
-                                    });
-
-                                    scrollToTopBtn.addEventListener('click', () => {
-                                        window.scrollTo({
-                                            top: 0,
-                                            behavior: 'smooth'
-                                        });
-                                    });
-
-                                    // Check for URL parameters to show toast
-                                    window.addEventListener('DOMContentLoaded', () => {
-                                        const urlParams = new URLSearchParams(window.location.search);
-                                        const success = urlParams.get('success');
-                                        const error = urlParams.get('error');
-
-                                        if (success) {
-                                            showToast(decodeURIComponent(success), 'success');
-                                        }
-                                        if (error) {
-                                            showToast(decodeURIComponent(error), 'error');
-                                        }
-                                    });
-
-                                    // Mobile Sidebar Toggle
-                                    if (window.innerWidth <= 768) {
-                                        const sidebar = document.getElementById('sidebar');
-                                        document.addEventListener('click', (e) => {
-                                            if (!sidebar.contains(e.target) && sidebar.classList.contains('show')) {
-                                                sidebar.classList.remove('show');
-                                            }
-                                        });
-                                    }
-
-                                    // Add animation to stats cards on page load
-                                    window.addEventListener('load', () => {
-                                        const statsCards = document.querySelectorAll('.stats-card');
-                                        statsCards.forEach((card, index) => {
-                                            setTimeout(() => {
-                                                card.style.opacity = '0';
-                                                card.style.transform = 'translateY(20px)';
-                                                card.style.transition = 'all 0.5s ease';
-
-                                                setTimeout(() => {
-                                                    card.style.opacity = '1';
-                                                    card.style.transform = 'translateY(0)';
-                                                }, 50);
-                                            }, index * 100);
-                                        });
-                                    });
-
-                                    // Xuất hóa đơn PDF
-                                    function exportInvoicePDF(invoiceId) {
-                                        window.open('${pageContext.request.contextPath}/invoices?action=exportPDF&id=' + invoiceId, '_blank');
-                                    }
-
-                                    // In hóa đơn
-                                    function printInvoice(invoiceId) {
-                                        window.open('${pageContext.request.contextPath}/invoices?action=print&id=' + invoiceId, '_blank');
-                                    }
-
-                                    // Làm nổi bật hóa đơn quá hạn
-                                    document.addEventListener('DOMContentLoaded', function () {
-                                        const overdueRows = document.querySelectorAll('tr:has(.badge-overdue)');
-                                        overdueRows.forEach(row => {
-                                            row.style.backgroundColor = 'rgba(220, 53, 69, 0.05)';
-                                            row.style.borderLeft = '4px solid #dc3545';
-                                        });
-                                    });
->>>>>>> Stashed changes
         </script>
     </body>
 </html>
