@@ -2937,5 +2937,18 @@ public class ServiceRequestDAO extends MyDAO {
         }
 
     }
+public int getRequestIdByReportId(int reportId) {
+    String sql = "SELECT requestId FROM RepairReport WHERE reportId = ?";
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setInt(1, reportId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            return rs.getInt("requestId");
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return -1;
+}
 
 }

@@ -1249,7 +1249,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6>Tổng Tiền</h6>
-                                    <h2><fmt:formatNumber value="${totalAmount != null ? totalAmount : 0}" pattern="#,###" /> đ</h2>
+                                    <h2><fmt:formatNumber value="${(totalAmount != null ? totalAmount : 0) * 26000}" pattern="#,###" /> đ</h2>
                                 </div>
                                 <i class="fas fa-dollar-sign"></i>
                             </div>
@@ -1361,7 +1361,7 @@
                                 </a>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="card border-0 shadow-sm">
@@ -1388,7 +1388,7 @@
                                             </tr>
                                             <tr>
                                                 <td><strong>Tổng Tiền:</strong></td>
-                                                <td><strong class="text-success fs-5"><fmt:formatNumber value="${selectedInvoice.totalAmount}" pattern="#,###"/> đ</strong></td>
+                                                <td><strong class="text-success fs-5"><fmt:formatNumber value="${selectedInvoice.totalAmount * 26000}" pattern="#,###"/> đ</strong></td>
                                             </tr>
                                             <tr>
                                                 <td><strong>Trạng Thái:</strong></td>
@@ -1416,7 +1416,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <div class="card border-0 shadow-sm">
                                     <div class="card-header bg-success text-white">
@@ -1438,7 +1438,7 @@
                                                                 <tr>
                                                                     <td>${detail.description}</td>
                                                                     <td class="text-end">
-                                                                        <fmt:formatNumber value="${detail.amount}" pattern="#,###"/> đ
+                                                                        <fmt:formatNumber value="${detail.amount * 26000}" pattern="#,###"/> đ
                                                                     </td>
                                                                 </tr>
                                                             </c:forEach>
@@ -1447,7 +1447,7 @@
                                                             <tr class="table-active">
                                                                 <th>Tổng Cộng:</th>
                                                                 <th class="text-end">
-                                                                    <fmt:formatNumber value="${selectedInvoice.totalAmount}" pattern="#,###"/> đ
+                                                                    <fmt:formatNumber value="${selectedInvoice.totalAmount * 26000}" pattern="#,###"/> đ
                                                                 </th>
                                                             </tr>
                                                         </tfoot>
@@ -1462,7 +1462,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Chi tiết linh kiện sử dụng -->
                         <c:if test="${not empty repairPartDetails}">
                             <div class="row mt-4">
@@ -1503,11 +1503,11 @@
                                                                     <span class="badge bg-primary">${part.quantity}</span>
                                                                 </td>
                                                                 <td class="text-end">
-                                                                    <fmt:formatNumber value="${part.price}" pattern="#,###"/> đ
+                                                                    <fmt:formatNumber value="${part.price * 26000}" pattern="#,###"/> đ
                                                                 </td>
                                                                 <td class="text-end">
                                                                     <strong class="text-success">
-                                                                        <fmt:formatNumber value="${part.totalPrice}" pattern="#,###"/> đ
+                                                                        <fmt:formatNumber value="${part.totalPrice * 26000}" pattern="#,###"/> đ
                                                                     </strong>
                                                                 </td>
                                                             </tr>
@@ -1518,7 +1518,7 @@
                                                             <th colspan="5" class="text-end">Tổng Tiền Linh Kiện:</th>
                                                             <th class="text-end">
                                                                 <strong class="text-success fs-5">
-                                                                    <fmt:formatNumber value="${partsTotalAmount}" pattern="#,###"/> đ
+                                                                    <fmt:formatNumber value="${partsTotalAmount * 26000}" pattern="#,###"/> đ
                                                                 </strong>
                                                             </th>
                                                         </tr>
@@ -1530,7 +1530,7 @@
                                 </div>
                             </div>
                         </c:if>
-                        
+
                         <!-- Thống kê theo danh mục linh kiện -->
                         <c:if test="${not empty partsCategoryStats}">
                             <div class="row mt-4">
@@ -1551,7 +1551,7 @@
                                                                             ${stat.category}
                                                                         </div>
                                                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                                            <fmt:formatNumber value="${stat.categoryTotal}" pattern="#,###"/> đ
+                                                                            <fmt:formatNumber value="${stat.categoryTotal * 26000}" pattern="#,###"/> đ
                                                                         </div>
                                                                         <div class="text-muted small">
                                                                             ${stat.partCount} loại linh kiện • ${stat.totalQuantity} cái
@@ -1571,171 +1571,230 @@
                                 </div>
                             </div>
                         </c:if>
-                        </div>
-
                     </div>
-                </c:if>
 
-                <!-- TABLE -->
-                <div class="table-container">
-                    <div class="table-responsive">
-                        <c:choose>
-                            <c:when test="${not empty invoiceList}">
-                                <table class="table table-hover">
-                                    <thead class="table-light">
+                </div>
+            </c:if>
+
+            <!-- TABLE -->
+            <div class="table-container">
+                <div class="table-responsive">
+                    <c:choose>
+                        <c:when test="${not empty invoiceList}">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th><i class="fas fa-hashtag me-2"></i>Mã HĐ</th>
+                                        <th><i class="fas fa-file-contract me-2"></i>Mã Hợp Đồng</th>
+                                        <th><i class="fas fa-calendar-alt me-2"></i>Ngày Phát Hành</th>
+                                        <th><i class="fas fa-calendar-check me-2"></i>Hạn Thanh Toán</th>
+                                        <th><i class="fas fa-money-bill-wave me-2"></i>Tổng Tiền</th>
+                                        <th><i class="fas fa-credit-card me-2"></i>Phương Thức</th>
+                                        <th><i class="fas fa-info-circle me-2"></i>Trạng Thái</th>
+                                        <th class="text-center"><i class="fas fa-cog me-2"></i>Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <c:forEach var="item" items="${invoiceList}" varStatus="status">
                                         <tr>
-                                            <th><i class="fas fa-hashtag me-2"></i>Mã HĐ</th>
-                                            <th><i class="fas fa-file-contract me-2"></i>Mã Hợp Đồng</th>
-                                            <th><i class="fas fa-calendar-alt me-2"></i>Ngày Phát Hành</th>
-                                            <th><i class="fas fa-calendar-check me-2"></i>Hạn Thanh Toán</th>
-                                            <th><i class="fas fa-money-bill-wave me-2"></i>Tổng Tiền</th>
-                                            <th><i class="fas fa-credit-card me-2"></i>Phương Thức</th>
-                                            <th><i class="fas fa-info-circle me-2"></i>Trạng Thái</th>
-                                            <th class="text-center"><i class="fas fa-cog me-2"></i>Thao Tác</th>
+                                            <td><strong class="text-primary">#INV${item.invoice.invoiceId}</strong></td>
+                                            <td><span class="badge bg-primary">${item.formattedContractId}</span></td>
+                                            <td>
+                                                <i class="fas fa-calendar text-muted me-2"></i>
+                                                <c:choose>
+                                                    <c:when test="${not empty item.invoice.issueDate}">
+                                                        ${item.invoice.issueDate}
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="text-muted">Chưa có</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                            <td>
+                                                <i class="fas fa-calendar text-muted me-2"></i>
+                                                <c:choose>
+                                                    <c:when test="${not empty item.invoice.dueDate}">
+                                                        ${item.invoice.dueDate}
+                                                        <c:if test="${item.invoice.status == 'Pending' || item.invoice.status == 'Overdue'}">
+                                                            <small class="text-danger ms-1">
+                                                                <i class="fas fa-exclamation-triangle"></i> Kiểm tra hạn
+                                                            </small>
+                                                        </c:if>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="text-muted">Chưa có</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                            <td><strong class="text-success"><fmt:formatNumber value="${item.invoice.totalAmount * 26000}" pattern="#,###"/> đ</strong></td>
+                                            <td>
+                                                <c:choose>
+                                                    <c:when test="${not empty item.invoice.paymentMethod}">
+                                                        <c:choose>
+                                                            <c:when test="${item.invoice.paymentMethod == 'Bank'}">
+                                                                <span class="badge bg-info text-dark">
+                                                                    <i class="fas fa-university"></i> Ngân Hàng
+                                                                </span>
+                                                            </c:when>
+                                                            <c:when test="${item.invoice.paymentMethod == 'Cash'}">
+                                                                <span class="badge bg-success">
+                                                                    <i class="fas fa-money-bill"></i> Tiền Mặt
+                                                                </span>
+                                                            </c:when>
+                                                            <c:when test="${item.invoice.paymentMethod == 'VNPAY'}">
+                                                                <span class="badge bg-primary">
+                                                                    <i class="fas fa-credit-card"></i> VNPAY
+                                                                </span>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <span class="badge bg-secondary">
+                                                                    <i class="fas fa-question"></i> ${item.invoice.paymentMethod}
+                                                                </span>
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="text-muted">
+                                                            <i class="fas fa-minus"></i> Chưa thanh toán
+                                                        </span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                            <td>
+                                                <c:choose>
+                                                    <c:when test="${item.invoice.status == 'Paid'}">
+                                                        <span class="badge badge-paid">
+                                                            <i class="fas fa-check-circle"></i> Đã Thanh Toán
+                                                        </span>
+                                                    </c:when>
+                                                    <c:when test="${item.invoice.status == 'Pending'}">
+                                                        <span class="badge badge-pending">
+                                                            <i class="fas fa-clock"></i> Chưa Thanh Toán
+                                                        </span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge badge-overdue">
+                                                            <i class="fas fa-exclamation-triangle"></i> Quá Hạn
+                                                        </span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                            <td class="text-center">
+                                                <a href="${pageContext.request.contextPath}/invoices?action=view&id=${item.invoice.invoiceId}" 
+                                                   class="btn btn-sm btn-info btn-action" title="Xem chi tiết hóa đơn">
+                                                    <i class="fas fa-eye"></i> Chi Tiết
+                                                </a>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach var="item" items="${invoiceList}" varStatus="status">
-                                            <tr>
-                                                <td><strong class="text-primary">#INV${item.invoice.invoiceId}</strong></td>
-                                                <td><span class="badge bg-primary">${item.formattedContractId}</span></td>
-                                                <td>
-                                                    <i class="fas fa-calendar text-muted me-2"></i>
-                                                    <c:choose>
-                                                        <c:when test="${not empty item.invoice.issueDate}">
-                                                            ${item.invoice.issueDate}
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="text-muted">Chưa có</span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </td>
-                                                <td>
-                                                    <i class="fas fa-calendar text-muted me-2"></i>
-                                                    <c:choose>
-                                                        <c:when test="${not empty item.invoice.dueDate}">
-                                                            ${item.invoice.dueDate}
-                                                            <c:if test="${item.invoice.status == 'Pending' || item.invoice.status == 'Overdue'}">
-                                                                <small class="text-danger ms-1">
-                                                                    <i class="fas fa-exclamation-triangle"></i> Kiểm tra hạn
-                                                                </small>
-                                                            </c:if>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="text-muted">Chưa có</span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </td>
-                                                <td><strong class="text-success"><fmt:formatNumber value="${item.invoice.totalAmount}" pattern="#,###"/> đ</strong></td>
-                                                <td>
-                                                    <c:choose>
-                                                        <c:when test="${not empty item.invoice.paymentMethod}">
-                                                            <c:choose>
-                                                                <c:when test="${item.invoice.paymentMethod == 'Bank'}">
-                                                                    <span class="badge bg-info text-dark">
-                                                                        <i class="fas fa-university"></i> Ngân Hàng
-                                                                    </span>
-                                                                </c:when>
-                                                                <c:when test="${item.invoice.paymentMethod == 'Cash'}">
-                                                                    <span class="badge bg-success">
-                                                                        <i class="fas fa-money-bill"></i> Tiền Mặt
-                                                                    </span>
-                                                                </c:when>
-                                                                <c:when test="${item.invoice.paymentMethod == 'VNPAY'}">
-                                                                    <span class="badge bg-primary">
-                                                                        <i class="fas fa-credit-card"></i> VNPAY
-                                                                    </span>
-                                                                </c:when>
-                                                                <c:otherwise>
-                                                                    <span class="badge bg-secondary">
-                                                                        <i class="fas fa-question"></i> ${item.invoice.paymentMethod}
-                                                                    </span>
-                                                                </c:otherwise>
-                                                            </c:choose>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="text-muted">
-                                                                <i class="fas fa-minus"></i> Chưa thanh toán
-                                                            </span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </td>
-                                                <td>
-                                                    <c:choose>
-                                                        <c:when test="${item.invoice.status == 'Paid'}">
-                                                            <span class="badge badge-paid">
-                                                                <i class="fas fa-check-circle"></i> Đã Thanh Toán
-                                                            </span>
-                                                        </c:when>
-                                                        <c:when test="${item.invoice.status == 'Pending'}">
-                                                            <span class="badge badge-pending">
-                                                                <i class="fas fa-clock"></i> Chưa Thanh Toán
-                                                            </span>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="badge badge-overdue">
-                                                                <i class="fas fa-exclamation-triangle"></i> Quá Hạn
-                                                            </span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </td>
-                                                <td class="text-center">
-                                                    <a href="${pageContext.request.contextPath}/invoices?action=view&id=${item.invoice.invoiceId}" 
-                                                       class="btn btn-sm btn-info btn-action" title="Xem chi tiết hóa đơn">
-                                                        <i class="fas fa-eye"></i> Chi Tiết
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
-                            </c:when>
-                            <c:otherwise>
-                                <div class="text-center py-5">
-                                    <i class="fas fa-inbox fa-4x text-muted mb-3" style="opacity: 0.3;"></i>
-                                    <h4 class="text-muted">Không tìm thấy hóa đơn</h4>
-                                    <p class="text-muted">
-                                        <c:choose>
-                                            <c:when test="${searchMode}">
-                                                Không tìm thấy hóa đơn phù hợp với từ khóa "<strong>${keyword}</strong>"
-                                            </c:when>
-                                            <c:otherwise>
-                                                Hiện tại bạn chưa có hóa đơn nào trong hệ thống
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </p>
-                                    <c:if test="${searchMode}">
-                                        <a href="${pageContext.request.contextPath}/invoices" class="btn btn-primary mt-3">
-                                            <i class="fas fa-arrow-left"></i> Quay lại danh sách
-                                        </a>
-                                    </c:if>
-                                </div>
-                            </c:otherwise>
-                        </c:choose>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="text-center py-5">
+                                <i class="fas fa-inbox fa-4x text-muted mb-3" style="opacity: 0.3;"></i>
+                                <h4 class="text-muted">Không tìm thấy hóa đơn</h4>
+                                <p class="text-muted">
+                                    <c:choose>
+                                        <c:when test="${searchMode}">
+                                            Không tìm thấy hóa đơn phù hợp với từ khóa "<strong>${keyword}</strong>"
+                                        </c:when>
+                                        <c:otherwise>
+                                            Hiện tại bạn chưa có hóa đơn nào trong hệ thống
+                                        </c:otherwise>
+                                    </c:choose>
+                                </p>
+                                <c:if test="${searchMode}">
+                                    <a href="${pageContext.request.contextPath}/invoices" class="btn btn-primary mt-3">
+                                        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                                    </a>
+                                </c:if>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="site-footer">
+            <div class="footer-content">
+                <div class="footer-grid">
+                    <div class="footer-section">
+                        <h5>CRM System</h5>
+                        <p class="footer-about">
+                            Giải pháp quản lý khách hàng toàn diện, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ.
+                        </p>
+                    </div>
+
+                    <div class="footer-section">
+                        <h5>Tính năng chính</h5>
+                        <ul class="footer-links">
+                            <li><a href="#">→ Quản lý khách hàng</a></li>
+                            <li><a href="#">→ Quản lý hợp đồng</a></li>
+                            <li><a href="#">→ Quản lý thiết bị</a></li>
+                            <li><a href="#">→ Quản lý hóa đơn</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-section">
+                        <h5>Hỗ trợ</h5>
+                        <ul class="footer-links">
+                            <li><a href="#">→ Trung tâm trợ giúp</a></li>
+                            <li><a href="#">→ Hướng dẫn sử dụng</a></li>
+                            <li><a href="#">→ Liên hệ hỗ trợ</a></li>
+                            <li><a href="#">→ Câu hỏi thường gặp</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-section">
+                        <h5>Thông tin</h5>
+                        <ul class="footer-links">
+                            <li><a href="#">→ Về chúng tôi</a></li>
+                            <li><a href="#">→ Điều khoản dịch vụ</a></li>
+                            <li><a href="#">→ Chính sách bảo mật</a></li>
+                            <li><a href="#">→ Liên hệ</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <div class="footer-copyright">
+                        © 2025 CRM System. All rights reserved. Made with <i class="fas fa-heart text-danger"></i> in Vietnam
+                    </div>
+                    <div class="footer-social">
+                        <a href="#" class="social-link" title="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link" title="Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link" title="LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="social-link" title="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
                     </div>
                 </div>
             </div>
+        </footer>
+    </div>
 
-            <!-- FOOTER -->
-            <footer class="site-footer">
-                <div class="footer-content">
-                    <div class="footer-grid">
-                        <div class="footer-section">
-                            <h5>CRM System</h5>
-                            <p class="footer-about">
-                                Giải pháp quản lý khách hàng toàn diện, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ.
-                            </p>
-                        </div>
+    <!-- SCROLL TO TOP BUTTON -->
+    <div class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-arrow-up"></i>
+    </div>
 
-                        <div class="footer-section">
-                            <h5>Tính năng chính</h5>
-                            <ul class="footer-links">
-                                <li><a href="#">→ Quản lý khách hàng</a></li>
-                                <li><a href="#">→ Quản lý hợp đồng</a></li>
-                                <li><a href="#">→ Quản lý thiết bị</a></li>
-                                <li><a href="#">→ Quản lý hóa đơn</a></li>
-                            </ul>
-                        </div>
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+                                // Toggle Sidebar
+                                function toggleSidebar() {
+                                    const sidebar = document.getElementById('sidebar');
+                                    const toggleIcon = document.getElementById('toggleIcon');
+                                    sidebar.classList.toggle('collapsed');
+
 
                         <div class="footer-section">
                             <h5>Hỗ trợ</h5>
@@ -1929,36 +1988,42 @@
                             document.addEventListener('click', (e) => {
                                 if (!sidebar.contains(e.target) && sidebar.classList.contains('show')) {
                                     sidebar.classList.remove('show');
+
+                                    if (sidebar.classList.contains('collapsed')) {
+                                        toggleIcon.classList.remove('fa-chevron-left');
+                                        toggleIcon.classList.add('fa-chevron-right');
+                                    } else {
+                                        toggleIcon.classList.remove('fa-chevron-right');
+                                        toggleIcon.classList.add('fa-chevron-left');
+                                    }
+
                                 }
-                            });
-                        }
 
-                        // Add animation to stats cards on page load
-                        window.addEventListener('load', () => {
-                            const statsCards = document.querySelectorAll('.stats-card');
-                            statsCards.forEach((card, index) => {
-                                setTimeout(() => {
-                                    card.style.opacity = '0';
-                                    card.style.transform = 'translateY(20px)';
-                                    card.style.transition = 'all 0.5s ease';
+                                // Refresh Page
+                                function refreshPage() {
+                                    location.reload();
+                                }
 
-                                    setTimeout(() => {
-                                        card.style.opacity = '1';
-                                        card.style.transform = 'translateY(0)';
-                                    }, 50);
-                                }, index * 100);
-                            });
-                        });
+                                // Toast Notification Function
+                                function showToast(message, type = 'success') {
+                                    const container = document.getElementById('toastContainer');
+                                    const toast = document.createElement('div');
+                                    toast.className = 'toast-notification ' + type;
 
-                        // Xuất hóa đơn PDF
-                        function exportInvoicePDF(invoiceId) {
-                            window.open('${pageContext.request.contextPath}/invoices?action=exportPDF&id=' + invoiceId, '_blank');
-                        }
+                                    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
 
-                        // In hóa đơn
-                        function printInvoice(invoiceId) {
-                            window.open('${pageContext.request.contextPath}/invoices?action=print&id=' + invoiceId, '_blank');
-                        }
+                                    toast.innerHTML =
+                                            '<div class="toast-icon ' + type + '">' +
+                                            '<i class="fas ' + icon + '"></i>' +
+                                            '</div>' +
+                                            '<div class="toast-content">' +
+                                            '<strong>' + (type === 'success' ? 'Thành công!' : 'Lỗi!') + '</strong>' +
+                                            '<p style="margin: 0; font-size: 0.9rem;">' + message + '</p>' +
+                                            '</div>' +
+                                            '<button class="toast-close" onclick="closeToast(this)">' +
+                                            '<i class="fas fa-times"></i>' +
+                                            '</button>';
+
 
                         // Làm nổi bật hóa đơn quá hạn
                         document.addEventListener('DOMContentLoaded', function() {
@@ -2245,4 +2310,100 @@ function formatMessageWidget(text) {
 }
         </script>
     </body>
+
+                                    container.appendChild(toast);
+
+                                    setTimeout(function () {
+                                        toast.classList.add('hiding');
+                                        setTimeout(function () {
+                                            toast.remove();
+                                        }, 400);
+                                    }, 5000);
+                                }
+
+                                function closeToast(btn) {
+                                    const toast = btn.closest('.toast-notification');
+                                    toast.classList.add('hiding');
+                                    setTimeout(() => toast.remove(), 400);
+                                }
+
+                                // Scroll to Top
+                                const scrollToTopBtn = document.getElementById('scrollToTop');
+
+                                window.addEventListener('scroll', () => {
+                                    if (window.pageYOffset > 300) {
+                                        scrollToTopBtn.classList.add('show');
+                                    } else {
+                                        scrollToTopBtn.classList.remove('show');
+                                    }
+                                });
+
+                                scrollToTopBtn.addEventListener('click', () => {
+                                    window.scrollTo({
+                                        top: 0,
+                                        behavior: 'smooth'
+                                    });
+                                });
+
+                                // Check for URL parameters to show toast
+                                window.addEventListener('DOMContentLoaded', () => {
+                                    const urlParams = new URLSearchParams(window.location.search);
+                                    const success = urlParams.get('success');
+                                    const error = urlParams.get('error');
+
+                                    if (success) {
+                                        showToast(decodeURIComponent(success), 'success');
+                                    }
+                                    if (error) {
+                                        showToast(decodeURIComponent(error), 'error');
+                                    }
+                                });
+
+                                // Mobile Sidebar Toggle
+                                if (window.innerWidth <= 768) {
+                                    const sidebar = document.getElementById('sidebar');
+                                    document.addEventListener('click', (e) => {
+                                        if (!sidebar.contains(e.target) && sidebar.classList.contains('show')) {
+                                            sidebar.classList.remove('show');
+                                        }
+                                    });
+                                }
+
+                                // Add animation to stats cards on page load
+                                window.addEventListener('load', () => {
+                                    const statsCards = document.querySelectorAll('.stats-card');
+                                    statsCards.forEach((card, index) => {
+                                        setTimeout(() => {
+                                            card.style.opacity = '0';
+                                            card.style.transform = 'translateY(20px)';
+                                            card.style.transition = 'all 0.5s ease';
+
+                                            setTimeout(() => {
+                                                card.style.opacity = '1';
+                                                card.style.transform = 'translateY(0)';
+                                            }, 50);
+                                        }, index * 100);
+                                    });
+                                });
+
+                                // Xuất hóa đơn PDF
+                                function exportInvoicePDF(invoiceId) {
+                                    window.open('${pageContext.request.contextPath}/invoices?action=exportPDF&id=' + invoiceId, '_blank');
+                                }
+
+                                // In hóa đơn
+                                function printInvoice(invoiceId) {
+                                    window.open('${pageContext.request.contextPath}/invoices?action=print&id=' + invoiceId, '_blank');
+                                }
+
+                                // Làm nổi bật hóa đơn quá hạn
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    const overdueRows = document.querySelectorAll('tr:has(.badge-overdue)');
+                                    overdueRows.forEach(row => {
+                                        row.style.backgroundColor = 'rgba(220, 53, 69, 0.05)';
+                                        row.style.borderLeft = '4px solid #dc3545';
+                                    });
+                                });
+    </script>
+</body>
 </html>

@@ -744,4 +744,28 @@ public class InvoiceDAO extends DBContext {
         }
         return false;
     }
+    public Invoice getInvoiceByReportId(int reportId) {
+    String sql = "SELECT i.* FROM Invoice i " +
+                 "JOIN InvoiceDetail d ON i.InvoiceId = d.InvoiceId " +
+                 "JOIN RepairReport r ON d.repairReportDetailId = r.reportId " +
+                 "WHERE r.reportId = ?";
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setInt(1, reportId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            Invoice inv = new Invoice();
+            inv.setInvoiceId(rs.getInt("InvoiceId"));
+            inv.setContractId(rs.getInt("ContractId"));
+            inv.setIssueDate(rs.getDate("IssueDate").toLocalDate());
+            inv.setDueDate(rs.getDate("DueDate").toLocalDate());
+            inv.setTotalAmount(rs.getDouble("TotalAmount"));
+            inv.setStatus(rs.getString("Status"));
+            inv.setPaymentMethod(rs.getString("paymentMethod"));
+            return inv;
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
+}
 }
