@@ -1989,6 +1989,7 @@
                             }
                         });
 
+<<<<<<< Updated upstream
                 window.addEventListener('scroll', function () {
                     const scrollBtn = document.getElementById('scrollToTop');
                     if (window.pageYOffset > 300) {
@@ -2272,6 +2273,25 @@ function formatMessageWidget(text) {
     return formatted;
 }
 
+=======
+                        window.addEventListener('scroll', function () {
+                            const scrollBtn = document.getElementById('scrollToTop');
+                            if (window.pageYOffset > 300) {
+                                scrollBtn.classList.add('show');
+                            } else {
+                                scrollBtn.classList.remove('show');
+                            }
+                        });
+
+                        window.addEventListener('scroll', function () {
+                            const scrollBtn = document.getElementById('scrollToTop');
+                            if (window.pageYOffset > 300) {
+                                scrollBtn.classList.add('show');
+                            } else {
+                                scrollBtn.classList.remove('show');
+                            }
+                        });
+>>>>>>> Stashed changes
         </script>
 
     </body>
