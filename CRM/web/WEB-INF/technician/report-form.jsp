@@ -183,6 +183,32 @@
                 </div>
               </div>
             </div>
+              
+              <!-- Warranty Eligibility Checkbox (Only for Warranty requests) -->
+            <div id="warrantyEligibilitySection" class="mb-3 d-none">
+                <div class="card border-warning">
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="notEligibleForWarranty" 
+                                   name="notEligibleForWarranty" 
+                                   value="true">
+                            <label class="form-check-label fw-bold text-danger" for="notEligibleForWarranty">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Thiết bị KHÔNG đủ điều kiện bảo hành (do lỗi người dùng/hư hỏng ngoài phạm vi)
+                            </label>
+                            <div class="form-text text-muted">
+                                <i class="bi bi-info-circle"></i> Đánh dấu nếu thiết bị bị hư hỏng do sử dụng sai, 
+                                va đập, hoặc các nguyên nhân nằm ngoài phạm vi bảo hành.
+                                <strong>Khi chọn, bạn không cần thêm linh kiện hay chi phí.</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <c:set var="initialRequestType" value="${not empty selectedRequestType ? selectedRequestType : (not empty customerRequestInfo ? customerRequestInfo.requestType : '')}" />
             </c:if>
             
             <div class="row">
@@ -478,6 +504,12 @@
       requestTypeDescription.textContent = isWarrantyMode
         ? 'Các lần thăm bảo hành miễn phí cho khách hàng. Linh kiện là tùy chọn và chi phí được ghi nhận là ₫0.'
         : 'Quy trình sửa chữa tiêu chuẩn. Linh kiện và chi phí ước tính sẽ được tính phí cho khách hàng.';
+    }
+    
+    // ✅ THÊM: Hiển thị/ẩn warranty eligibility section
+    const warrantyEligibilitySection = document.getElementById('warrantyEligibilitySection');
+    if (warrantyEligibilitySection) {
+      warrantyEligibilitySection.classList.toggle('d-none', !isWarrantyMode);
     }
 
     if (partsRequiredIndicator) {
@@ -1375,22 +1407,78 @@
   // Ensure at least one part is selected before submit
   const reportForm = document.getElementById('reportForm');
   if (reportForm) {
-    reportForm.addEventListener('submit', function(e) {
+  reportForm.addEventListener('submit', function(e) {
+    const notEligibleCheckbox = document.getElementById('notEligibleForWarranty');
+    const isNotEligible = notEligibleCheckbox && notEligibleCheckbox.checked;
+    
+    // ✅ Skip parts validation if warranty not eligible
+    if (!isWarrantyMode || !isNotEligible) {
       const partsCount = selectedPartsCount ? parseInt(selectedPartsCount.textContent) || 0 : 0;
       if (!isWarrantyMode && partsCount <= 0) {
         e.preventDefault();
         alert('Vui lòng chọn ít nhất một linh kiện cho báo cáo sửa chữa.');
         return false;
       }
-      if (isWarrantyMode && estimatedCostInput) {
-        estimatedCostInput.value = 0;
-      }
-      
-      // Server will handle VND to USD conversion
-      // The form submits VND value, server converts it to USD before saving
-      // Contract validation removed - contract is automatically determined from ServiceRequest
-    });
-  }
+    }
+    
+    if (isWarrantyMode && estimatedCostInput) {
+      estimatedCostInput.value = 0;
+    }
+  });
+}
   
 })();
+
+// ✅ Handle warranty not eligible checkbox
+window.addEventListener('DOMContentLoaded', function() {
+  const notEligibleCheckbox = document.getElementById('notEligibleForWarranty');
+  const partsSection = document.querySelector('.mb-3:has(#partSearchInput)');
+  const detailsTextarea = document.getElementById('details');
+  
+  if (notEligibleCheckbox) {
+    notEligibleCheckbox.addEventListener('change', function() {
+      const isNotEligible = this.checked;
+      
+      
+      // Disable/enable parts selection
+      if (partSearchInput) partSearchInput.disabled = isNotEligible;
+      
+      // Show/hide parts section
+      if (partsSection) {
+        if (isNotEligible) {
+          partsSection.style.opacity = '0.5';
+          partsSection.style.pointerEvents = 'none';
+        } else {
+          partsSection.style.opacity = '1';
+          partsSection.style.pointerEvents = 'auto';
+        }
+      }
+      
+      // Add note to details if checked
+      if (isNotEligible && detailsTextarea) {
+        const currentDetails = detailsTextarea.value.trim();
+        const warrantyNote = "\n\n[KHÔNG ĐỦ ĐIỀU KIỆN BẢO HÀNH] Thiết bị bị hư hỏng do sử dụng sai cách/va đập - nằm ngoài phạm vi bảo hành.";
+        
+        if (!currentDetails.includes('[KHÔNG ĐỦ ĐIỀU KIỆN BẢO HÀNH]')) {
+          detailsTextarea.value = currentDetails + warrantyNote;
+          
+          // Update character count
+          const event = new Event('input');
+          detailsTextarea.dispatchEvent(event);
+        }
+      }
+      
+      // Show alert
+      if (isNotEligible) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-warning alert-dismissible fade show mt-2';
+        alert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' +
+                         '<strong>Lưu ý:</strong> Báo cáo sẽ được đánh dấu là "Không đủ điều kiện" và tự động bị từ chối. ' +
+                         'Yêu cầu dịch vụ sẽ được đóng.' +
+                         '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        notEligibleCheckbox.closest('.card-body').appendChild(alert);
+      }
+    });
+  }
+});
 </script>

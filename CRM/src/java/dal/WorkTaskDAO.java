@@ -14,6 +14,7 @@ public class WorkTaskDAO extends MyDAO {
 
     /**
      * Get a valid database connection with validation
+     *
      * @return Connection if valid, throws SQLException if not available
      * @throws SQLException if connection is null or closed
      */
@@ -206,10 +207,10 @@ public class WorkTaskDAO extends MyDAO {
                 + "FROM WorkTask wt "
                 + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
                 + "WHERE wt.taskId = ?";
-        
+
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, taskId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     WorkTask task = mapResultSetToWorkTask(rs);
@@ -286,7 +287,7 @@ public class WorkTaskDAO extends MyDAO {
     public boolean hasOverlappingTasks(int technicianId, LocalDate startDate, LocalDate endDate, int excludeTaskId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM WorkTask WHERE technicianId = ? AND status IN ('In Progress', 'Pending') "
                 + "AND taskId != ? AND ((startDate <= ? AND endDate >= ?) OR (startDate <= ? AND endDate >= ?))";
-        
+
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, technicianId);
             ps.setInt(2, excludeTaskId);
@@ -425,7 +426,7 @@ public class WorkTaskDAO extends MyDAO {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     tasks.add(mapResultSetToWorkTask(rs));
@@ -455,7 +456,7 @@ public class WorkTaskDAO extends MyDAO {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
@@ -534,6 +535,7 @@ public class WorkTaskDAO extends MyDAO {
      * DTO for report dropdown entries
      */
     public static class WorkTaskForReport {
+
         private int taskId;
         private String origin;
         private Integer requestId;
@@ -586,9 +588,9 @@ public class WorkTaskDAO extends MyDAO {
      * (for report creation) Includes customer info and requestType from
      * ServiceRequest
      */
-public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throws SQLException {
+    public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throws SQLException {
         List<WorkTaskForReport> tasks = new ArrayList<>();
-        
+
         String sql = """
             SELECT wt.taskId,
                    wt.requestId,
@@ -653,7 +655,7 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
                 return false;
             }
         } catch (SQLException ex) {
-        
+
             return false;
         }
     }
@@ -661,28 +663,30 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
     /**
      * Check if technician is assigned to a specific request ID
      */
-  public boolean isTechnicianAssignedToRequest(int technicianId, int requestId) throws SQLException {
-    String sql = "SELECT COUNT(*) FROM WorkTask wt "
-            + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
-            + "WHERE wt.technicianId = ? "
-            + "AND COALESCE(wt.requestId, ms.requestId) = ?";
-    
-    try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
-        ps.setInt(1, technicianId);
-        ps.setInt(2, requestId);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1) > 0;
+    public boolean isTechnicianAssignedToRequest(int technicianId, int requestId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM WorkTask wt "
+                + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
+                + "WHERE wt.technicianId = ? "
+                + "AND COALESCE(wt.requestId, ms.requestId) = ?";
+
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, technicianId);
+            ps.setInt(2, requestId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
             }
         }
+
+        return false;
     }
-    
-    return false;
-}
+
     /**
      * Check if a specific technician's work task is completed for a request
-     * This ensures each technician can work independently on the same ServiceRequest
+     * This ensures each technician can work independently on the same
+     * ServiceRequest
      */
     public boolean isTechnicianTaskCompleted(int technicianId, int requestId) throws SQLException {
         String sql = "SELECT wt.status FROM WorkTask wt "
@@ -690,11 +694,11 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
                 + "WHERE wt.technicianId = ? "
                 + "AND COALESCE(wt.requestId, ms.requestId) = ? "
                 + "LIMIT 1";
-        
+
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, technicianId);
             ps.setInt(2, requestId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return "Completed".equals(rs.getString("status"));
@@ -709,11 +713,11 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
      */
     public boolean isTechnicianAssignedToSchedule(int technicianId, int scheduleId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM WorkTask WHERE technicianId = ? AND scheduleId = ?";
-        
+
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, technicianId);
             ps.setInt(2, scheduleId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1) > 0;
@@ -736,7 +740,6 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
         }
         return tasks;
     }
-
 
     public int getTaskIdByRequestId(int requestId) throws SQLException {
         String sql = "SELECT wt.taskId FROM WorkTask wt "
@@ -812,7 +815,7 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
 
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, requestId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     WorkTask task = new WorkTask();
@@ -856,7 +859,7 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, requestId);
             ps.setInt(2, technicianId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int count = rs.getInt(1);
@@ -893,7 +896,7 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
 
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, requestId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int total = rs.getInt("total");
@@ -927,7 +930,7 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
 
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, requestId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     int taskId = rs.getInt("taskId");
@@ -939,5 +942,68 @@ public List<WorkTaskForReport> getAssignedTasksForReport(int technicianId) throw
 
         return statuses;
     }
+
+    /**
+     * Complete work task for a specific request and technician Used when
+     * warranty inspection result is NotEligible
+     *
+     * @param technicianId The technician ID
+     * @param requestId The request ID
+     * @return true if task was updated, false otherwise
+     * @throws SQLException if database error occurs
+     */
+    public boolean completeTaskForRequest(int technicianId, int requestId) throws SQLException {
+        String sql = "UPDATE WorkTask SET status = 'Completed', endDate = CURRENT_DATE "
+                + "WHERE technicianId = ? AND requestId = ? AND status != 'Completed'";
+
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, technicianId);
+            ps.setInt(2, requestId);
+
+            int affected = ps.executeUpdate();
+
+            if (affected > 0) {
+                System.out.println("✅ WorkTask completed for technician #" + technicianId
+                        + " on request #" + requestId);
+            } else {
+                System.out.println("⚠️ No active WorkTask found for technician #" + technicianId
+                        + " on request #" + requestId);
+            }
+
+            return affected > 0;
+        }
+    }
+
+    /**
+     * Complete work task for a schedule and technician Used for schedule-origin
+     * reports when warranty inspection is NotEligible
+     *
+     * @param technicianId The technician ID
+     * @param scheduleId The schedule ID
+     * @return true if task was updated, false otherwise
+     * @throws SQLException if database error occurs
+     */
+    public boolean completeTaskForSchedule(int technicianId, int scheduleId) throws SQLException {
+        String sql = "UPDATE WorkTask SET status = 'Completed', endDate = CURRENT_DATE "
+                + "WHERE technicianId = ? AND scheduleId = ? AND status != 'Completed'";
+
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, technicianId);
+            ps.setInt(2, scheduleId);
+
+            int affected = ps.executeUpdate();
+
+            if (affected > 0) {
+                System.out.println("✅ WorkTask completed for technician #" + technicianId
+                        + " on schedule #" + scheduleId);
+            } else {
+                System.out.println("⚠️ No active WorkTask found for technician #" + technicianId
+                        + " on schedule #" + scheduleId);
+            }
+
+            return affected > 0;
+        }
+    }
+
 
 }

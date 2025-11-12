@@ -199,8 +199,8 @@ public class RepairReportDAO extends MyDAO {
             connection.setAutoCommit(false);
 
             // Insert RepairReport header (supports both request-origin and schedule-origin)
-            xSql = "INSERT INTO RepairReport (requestId, scheduleId, origin, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            xSql = "INSERT INTO RepairReport (requestId, scheduleId, origin, technicianId, details, diagnosis, estimatedCost, quotationStatus, repairDate, inspectionResult) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             ps = connection.prepareStatement(xSql, Statement.RETURN_GENERATED_KEYS);
             // requestId is primitive int; interpret <= 0 as NULL for DB
             if (report.getRequestId() > 0) {
@@ -220,6 +220,9 @@ public class RepairReportDAO extends MyDAO {
             ps.setBigDecimal(7, report.getEstimatedCost());
             ps.setString(8, report.getQuotationStatus());
             ps.setDate(9, Date.valueOf(report.getRepairDate()));
+            ps.setString(10, report.getInspectionResult() != null ? 
+                               report.getInspectionResult() : "Eligible"); 
+            // ✅ Set inspection result (Eligible hoặc NotEligible)
             // targetContractId column doesn't exist - connectiontract is automatically determined from ServiceRequest when report is approved
 
             int affected = ps.executeUpdate();
@@ -247,14 +250,14 @@ public class RepairReportDAO extends MyDAO {
                 for (RepairReportDetail detail : details) {
                     int partId = detail.getPartId();
                     int quantity = detail.getQuantity();
-                    
+
                     // Select available PartDetail records for this part (up to quantity needed)
                     List<Integer> reservedPartDetailIds = new ArrayList<>();
-                    String selectSql = "SELECT partDetailId FROM PartDetail " +
-                                     "WHERE partId = ? AND status = 'Available' " +
-                                     "ORDER BY partDetailId ASC " +
-                                     "LIMIT ? FOR UPDATE";
-                    
+                    String selectSql = "SELECT partDetailId FROM PartDetail "
+                            + "WHERE partId = ? AND status = 'Available' "
+                            + "ORDER BY partDetailId ASC "
+                            + "LIMIT ? FOR UPDATE";
+
                     try (PreparedStatement selectPs = connection.prepareStatement(selectSql)) {
                         selectPs.setInt(1, partId);
                         selectPs.setInt(2, quantity);
@@ -264,26 +267,28 @@ public class RepairReportDAO extends MyDAO {
                             }
                         }
                     }
-                    
+
                     // Validate we have enough available parts
                     if (reservedPartDetailIds.size() < quantity) {
                         connection.rollback();
-                        throw new SQLException("Insufficient available parts for partId " + partId + 
-                                             ". Required: " + quantity + ", Available: " + reservedPartDetailIds.size());
+                        throw new SQLException("Insufficient available parts for partId " + partId
+                                + ". Required: " + quantity + ", Available: " + reservedPartDetailIds.size());
                     }
-                    
+
                     // Update PartDetail status to 'InUse' for reserved parts
                     if (!reservedPartDetailIds.isEmpty()) {
-                        String updateSql = "UPDATE PartDetail SET status = 'InUse', " +
-                                         "lastUpdatedBy = ?, lastUpdatedDate = ? " +
-                                         "WHERE partDetailId IN (";
+                        String updateSql = "UPDATE PartDetail SET status = 'InUse', "
+                                + "lastUpdatedBy = ?, lastUpdatedDate = ? "
+                                + "WHERE partDetailId IN (";
                         StringBuilder updateSqlBuilder = new StringBuilder(updateSql);
                         for (int i = 0; i < reservedPartDetailIds.size(); i++) {
-                            if (i > 0) updateSqlBuilder.append(",");
+                            if (i > 0) {
+                                updateSqlBuilder.append(",");
+                            }
                             updateSqlBuilder.append("?");
                         }
                         updateSqlBuilder.append(")");
-                        
+
                         try (PreparedStatement updatePs = connection.prepareStatement(updateSqlBuilder.toString())) {
                             updatePs.setInt(1, report.getTechnicianId() != null ? report.getTechnicianId() : 1);
                             updatePs.setDate(2, Date.valueOf(java.time.LocalDate.now()));
@@ -297,7 +302,7 @@ public class RepairReportDAO extends MyDAO {
                             }
                         }
                     }
-                    
+
                     // Insert RepairReportDetail - for quantity > 1, we need to insert multiple rows
                     // Each row represents one PartDetail instance
                     for (int i = 0; i < reservedPartDetailIds.size(); i++) {
@@ -383,36 +388,37 @@ public class RepairReportDAO extends MyDAO {
         int affected = ps.executeUpdate();
         return affected > 0;
     }
-    
+
     /**
-     * Update repair report with new parts list
-     * Releases old reserved parts and reserves new ones
+     * Update repair report with new parts list Releases old reserved parts and
+     * reserves new ones
+     *
      * @param report The repair report to update
      * @param newDetails New list of parts
      * @return true if successful
      */
     public boolean updateReportWithDetails(RepairReport report, List<RepairReportDetail> newDetails) throws SQLException {
         boolean originalAutoCommit = connection.getAutoCommit();
-        
+
         try {
             connection.setAutoCommit(false);
-            
+
             // 1. Return old reserved parts to Available
             returnReservedPartsToAvailable(report.getReportId());
-            
+
             // 2. Delete old RepairReportDetail rows
             xSql = "DELETE FROM RepairReportDetail WHERE reportId = ?";
             ps = connection.prepareStatement(xSql);
             ps.setInt(1, report.getReportId());
             ps.executeUpdate();
-            
+
             // 3. Update report header
             boolean headerUpdated = updateRepairReport(report);
             if (!headerUpdated) {
                 connection.rollback();
                 return false;
             }
-            
+
             // 4. Reserve new parts and insert new details (reuse logic from insertReportWithDetails)
             if (newDetails != null && !newDetails.isEmpty()) {
                 xSql = "INSERT INTO RepairReportDetail (reportId, partId, partDetailId, quantity, unitPrice) "
@@ -422,14 +428,14 @@ public class RepairReportDAO extends MyDAO {
                 for (RepairReportDetail detail : newDetails) {
                     int partId = detail.getPartId();
                     int quantity = detail.getQuantity();
-                    
+
                     // Reserve specific PartDetail records
                     List<Integer> reservedPartDetailIds = new ArrayList<>();
-                    String selectSql = "SELECT partDetailId FROM PartDetail " +
-                                     "WHERE partId = ? AND status = 'Available' " +
-                                     "ORDER BY partDetailId ASC " +
-                                     "LIMIT ? FOR UPDATE";
-                    
+                    String selectSql = "SELECT partDetailId FROM PartDetail "
+                            + "WHERE partId = ? AND status = 'Available' "
+                            + "ORDER BY partDetailId ASC "
+                            + "LIMIT ? FOR UPDATE";
+
                     try (PreparedStatement selectPs = connection.prepareStatement(selectSql)) {
                         selectPs.setInt(1, partId);
                         selectPs.setInt(2, quantity);
@@ -439,25 +445,27 @@ public class RepairReportDAO extends MyDAO {
                             }
                         }
                     }
-                    
+
                     if (reservedPartDetailIds.size() < quantity) {
                         connection.rollback();
-                        throw new SQLException("Insufficient available parts for partId " + partId + 
-                                             ". Required: " + quantity + ", Available: " + reservedPartDetailIds.size());
+                        throw new SQLException("Insufficient available parts for partId " + partId
+                                + ". Required: " + quantity + ", Available: " + reservedPartDetailIds.size());
                     }
-                    
+
                     // Update PartDetail status to 'InUse'
                     if (!reservedPartDetailIds.isEmpty()) {
-                        String updateSql = "UPDATE PartDetail SET status = 'InUse', " +
-                                         "lastUpdatedBy = ?, lastUpdatedDate = ? " +
-                                         "WHERE partDetailId IN (";
+                        String updateSql = "UPDATE PartDetail SET status = 'InUse', "
+                                + "lastUpdatedBy = ?, lastUpdatedDate = ? "
+                                + "WHERE partDetailId IN (";
                         StringBuilder updateSqlBuilder = new StringBuilder(updateSql);
                         for (int i = 0; i < reservedPartDetailIds.size(); i++) {
-                            if (i > 0) updateSqlBuilder.append(",");
+                            if (i > 0) {
+                                updateSqlBuilder.append(",");
+                            }
                             updateSqlBuilder.append("?");
                         }
                         updateSqlBuilder.append(")");
-                        
+
                         try (PreparedStatement updatePs = connection.prepareStatement(updateSqlBuilder.toString())) {
                             updatePs.setInt(1, report.getTechnicianId() != null ? report.getTechnicianId() : 1);
                             updatePs.setDate(2, Date.valueOf(java.time.LocalDate.now()));
@@ -467,7 +475,7 @@ public class RepairReportDAO extends MyDAO {
                             updatePs.executeUpdate();
                         }
                     }
-                    
+
                     // Insert RepairReportDetail rows
                     for (int i = 0; i < reservedPartDetailIds.size(); i++) {
                         ps.setInt(1, report.getReportId());
@@ -478,7 +486,7 @@ public class RepairReportDAO extends MyDAO {
                         ps.addBatch();
                     }
                 }
-                
+
                 int[] batchResults = ps.executeBatch();
                 for (int result : batchResults) {
                     if (result == PreparedStatement.EXECUTE_FAILED) {
@@ -487,10 +495,10 @@ public class RepairReportDAO extends MyDAO {
                     }
                 }
             }
-            
+
             connection.commit();
             return true;
-            
+
         } catch (SQLException e) {
             connection.rollback();
             throw e;
@@ -652,7 +660,9 @@ public class RepairReportDAO extends MyDAO {
                     report.setEstimatedCost(rs.getBigDecimal("estimatedCost"));
                     report.setQuotationStatus(rs.getString("quotationStatus"));
                     Date d = rs.getDate("repairDate");
-                    if (d != null) report.setRepairDate(d.toLocalDate());
+                    if (d != null) {
+                        report.setRepairDate(d.toLocalDate());
+                    }
                     report.setInvoiceDetailId(rs.getObject("invoiceDetailId", Integer.class));
                     return report;
                 }
@@ -1129,42 +1139,45 @@ public class RepairReportDAO extends MyDAO {
 
         return details;
     }
-    
-   /**
+
+    /**
      * ✅ Get payment status for a specific part (RepairReportDetail)
      */
     public String getPartPaymentStatus(int partDetailId) throws SQLException {
-        String sql = "SELECT COALESCE(id.paymentStatus, 'Pending') as paymentStatus " +
-                     "FROM RepairReportDetail rrd " +
-                     "LEFT JOIN InvoiceDetail id ON rrd.detailId = id.repairReportDetailId " +
-                     "WHERE rrd.detailId = ?";
-        
+        String sql = "SELECT COALESCE(id.paymentStatus, 'Pending') as paymentStatus "
+                + "FROM RepairReportDetail rrd "
+                + "LEFT JOIN InvoiceDetail id ON rrd.detailId = id.repairReportDetailId "
+                + "WHERE rrd.detailId = ?";
+
         try {
             ps = connection.prepareStatement(sql);
             ps.setInt(1, partDetailId);
             rs = ps.executeQuery();
-            
+
             if (rs.next()) {
                 return rs.getString("paymentStatus");
             }
         } finally {
             closeResources();
         }
-        
+
         return "Pending";
     }
-     /**
-     * Return reserved parts to Available status when report is rejected
-     * This method finds all PartDetail records linked to this report and returns them to Available
+
+    /**
+     * Return reserved parts to Available status when report is rejected This
+     * method finds all PartDetail records linked to this report and returns
+     * them to Available
+     *
      * @param reportId ID of the repair report
      * @return number of PartDetail records returned to Available
      */
     public int returnReservedPartsToAvailable(int reportId) throws SQLException {
         // Get all partDetailIds linked to this report
         List<Integer> partDetailIds = new ArrayList<>();
-        String selectSql = "SELECT DISTINCT partDetailId FROM RepairReportDetail " +
-                         "WHERE reportId = ? AND partDetailId IS NOT NULL";
-        
+        String selectSql = "SELECT DISTINCT partDetailId FROM RepairReportDetail "
+                + "WHERE reportId = ? AND partDetailId IS NOT NULL";
+
         try (PreparedStatement selectPs = connection.prepareStatement(selectSql)) {
             selectPs.setInt(1, reportId);
             try (ResultSet rs = selectPs.executeQuery()) {
@@ -1173,23 +1186,25 @@ public class RepairReportDAO extends MyDAO {
                 }
             }
         }
-        
+
         if (partDetailIds.isEmpty()) {
             return 0;
         }
-        
+
         // Update PartDetail status back to 'Available'
         StringBuilder updateSql = new StringBuilder(
-            "UPDATE PartDetail SET status = 'Available', " +
-            "lastUpdatedBy = 1, lastUpdatedDate = ? " +
-            "WHERE partDetailId IN ("
+                "UPDATE PartDetail SET status = 'Available', "
+                + "lastUpdatedBy = 1, lastUpdatedDate = ? "
+                + "WHERE partDetailId IN ("
         );
         for (int i = 0; i < partDetailIds.size(); i++) {
-            if (i > 0) updateSql.append(",");
+            if (i > 0) {
+                updateSql.append(",");
+            }
             updateSql.append("?");
         }
         updateSql.append(") AND status = 'InUse'");
-        
+
         int updated = 0;
         try (PreparedStatement updatePs = connection.prepareStatement(updateSql.toString())) {
             updatePs.setDate(1, Date.valueOf(java.time.LocalDate.now()));
@@ -1198,23 +1213,24 @@ public class RepairReportDAO extends MyDAO {
             }
             updated = updatePs.executeUpdate();
         }
-        
+
         return updated;
     }
-    
+
     /**
      * Hủy 1 linh kiện cụ thể (đánh dấu status = "Cancelled")
+     *
      * @param partDetailId ID của PartDetail cần hủy
      * @return true nếu hủy thành công
      */
     public boolean cancelPartDetail(int partDetailId) throws SQLException {
         xSql = "UPDATE PartDetail SET status = 'Cancelled' WHERE partDetailId = ?";
-        
+
         try {
             ps = connection.prepareStatement(xSql);
             ps.setInt(1, partDetailId);
             int rowsAffected = ps.executeUpdate();
-            
+
             System.out.println("✅ Updated " + rowsAffected + " row(s) for partDetailId: " + partDetailId);
             return rowsAffected > 0;
         } catch (SQLException e) {
@@ -1223,6 +1239,77 @@ public class RepairReportDAO extends MyDAO {
         }
     }
 
-    
+    public List<RepairReport> getReportsByRequestId(int requestId) throws SQLException {
+        List<RepairReport> reports = new ArrayList<>();
+        String sql = "SELECT * FROM RepairReport WHERE requestId = ? ORDER BY createdDate DESC";
+
+        try (Connection conn = new DBContext().connection; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, requestId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    reports.add(mapResultSetToRepairReport(rs));
+                }
+            }
+        }
+        return reports;
+    }
+
+    public boolean areAllWarrantyReportsRejected(int requestId) throws SQLException {
+        String sql = "SELECT "
+                + "  COUNT(DISTINCT wt.technicianId) as totalTechnicians, "
+                + "  COUNT(DISTINCT CASE WHEN rr.inspectionResult = 'NotEligible' "
+                + "                      THEN rr.technicianId END) as rejectedCount "
+                + "FROM WorkTask wt "
+                + "LEFT JOIN RepairReport rr ON wt.requestId = rr.requestId "
+                + "                          AND wt.technicianId = rr.technicianId "
+                + "WHERE wt.requestId = ? "
+                + "  AND wt.status IN ('Assigned', 'InProgress', 'Completed')";
+
+        try (Connection conn = new DBContext().connection; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, requestId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int totalTechnicians = rs.getInt("totalTechnicians");
+                    int rejectedCount = rs.getInt("rejectedCount");
+
+                    // Only return true if:
+                    // 1. There are technicians assigned
+                    // 2. All assigned technicians have submitted reports
+                    // 3. All reports are marked as NotEligible
+                    return totalTechnicians > 0
+                            && rejectedCount == totalTechnicians
+                            && rejectedCount > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if at least one technician has approved warranty (Eligible)
+     *
+     * @param requestId The service request ID
+     * @return true if at least one approved, false otherwise
+     */
+    public boolean hasAnyApprovedWarrantyReport(int requestId) throws SQLException {
+        String sql = "SELECT COUNT(*) as approvedCount "
+                + "FROM RepairReport "
+                + "WHERE requestId = ? "
+                + "  AND inspectionResult = 'Eligible' "
+                + "  AND quotationStatus = 'Pending'";
+
+        try (Connection conn = new DBContext().connection; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, requestId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("approvedCount") > 0;
+                }
+            }
+        }
+        return false;
+    }
 
 }
