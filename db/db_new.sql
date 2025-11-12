@@ -1569,7 +1569,7 @@ INSERT INTO Account (
 ) VALUES (
     13,
     'storekeeper1',
-    '$2a$12$/EBvaV2Yx3HLbxL642jaEuYKh3KY7PYf7pZ8KOze.B7ZDX16Ky0Ba',
+    '$2a$12$2RKO9JRG8wKWZKF1cCA.nu28b0wiQKApNKjwuKP.A7mcmcA4Hf.by',
     'Trần Bảo Lâm',
     'lamtranbao1234@gmail.com',
     '1234567891',
@@ -3294,13 +3294,6 @@ AND CONSTRAINT_NAME LIKE 'FK_%';
 -- 4. Test Insert (Optional)
 -- ============================================
 
--- Test insert vào Invoice với paymentMethod
-INSERT INTO Invoice (contractId, issueDate, dueDate, totalAmount, status, paymentMethod)
-VALUES (1, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), 1000000, 'Pending', 'VNPay');
-
--- Xem kết quả
-SELECT * FROM Invoice ORDER BY invoiceId DESC LIMIT 1;
-
 -- Xóa test data (nếu cần)
 -- DELETE FROM Invoice WHERE invoiceId = LAST_INSERT_ID();
 
@@ -3344,3 +3337,120 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+SET SQL_SAFE_UPDATES = 0;
+UPDATE Part
+SET lastUpdatedBy = 13;
+SET SQL_SAFE_UPDATES = 1;
+Select * From PartDetail ;
+INSERT INTO PartDetail (partDetailId, partId, serialNumber, status, location, categoryId, lastUpdatedBy, lastUpdatedDate)
+VALUES
+(52, 1, 'ABC-123-4567', 'Available', 'Main Warehouse', 1, 13, '2025-11-12'),
+(53, 2, 'DEF-456-7890', 'Available', 'Floor 10 HVAC Room', 2, 13, '2025-11-12'),
+(54, 3, 'GHI-789-0123', 'Available', 'Rooftop Unit 02', 3, 13, '2025-11-12'),
+(55, 4, 'JKL-234-5678', 'Available', 'Main Warehouse', 4, 13, '2025-11-12'),
+(56, 5, 'MNO-567-8901', 'Available', 'Floor 10 HVAC Room', 5, 13, '2025-11-12'),
+(57, 6, 'PQR-890-1234', 'Available', 'Storage Room A', 1, 13, '2025-11-12'),
+(58, 7, 'STU-123-4567', 'Available', 'Main Warehouse', 2, 13, '2025-11-12'),
+(59, 8, 'VWX-456-7890', 'Available', 'Rooftop Unit 03', 3, 13, '2025-11-12'),
+(60, 9, 'YZA-789-0123', 'Available', 'Floor 10 HVAC Room', 4, 13, '2025-11-12'),
+(61, 10, 'BCD-234-5678', 'Available', 'Main Warehouse', 5, 13, '2025-11-12'),
+(62, 11, 'EFG-567-8901', 'Available', 'Storage Room B', 1, 13, '2025-11-12'),
+(63, 12, 'HIJ-890-1234', 'Available', 'Rooftop Unit 01', 2, 13, '2025-11-12'),
+(64, 13, 'KLM-123-4567', 'Available', 'Main Warehouse', 3, 13, '2025-11-12'),
+(65, 14, 'NOP-456-7890', 'Available', 'Floor 10 HVAC Room', 4, 13, '2025-11-12'),
+(66, 15, 'QRS-789-0123', 'Available', 'Storage Room A', 5, 13, '2025-11-12'),
+(67, 16, 'TUV-234-5678', 'Available', 'Main Warehouse', 1, 13, '2025-11-12'),
+(68, 17, 'WXY-567-8901', 'Available', 'Rooftop Unit 02', 2, 13, '2025-11-12'),
+(69, 18, 'ZAB-890-1234', 'Available', 'Floor 10 HVAC Room', 3, 13, '2025-11-12'),
+(70, 19, 'CDE-123-4567', 'Available', 'Main Warehouse', 4, 13, '2025-11-12'),
+(71, 20, 'FGH-456-7890', 'Available', 'Storage Room C', 5, 13, '2025-11-12'),
+(72, 21, 'IJK-789-0123', 'Available', 'Rooftop Unit 03', 1, 13, '2025-11-12'),
+(73, 22, 'LMN-234-5678', 'Available', 'Main Warehouse', 2, 13, '2025-11-12'),
+(74, 23, 'OPQ-567-8901', 'Available', 'Floor 10 HVAC Room', 3, 13, '2025-11-12'),
+(75, 24, 'RST-890-1234', 'Available', 'Storage Room A', 4, 13, '2025-11-12'),
+(76, 25, 'UVW-123-4567', 'Available', 'Main Warehouse', 5, 13, '2025-11-12'),
+(77, 1, 'XYZ-456-7890', 'Available', 'Rooftop Unit 01', 1, 13, '2025-11-12'),
+(78, 2, 'ABC-789-0123', 'Available', 'Floor 10 HVAC Room', 2, 13, '2025-11-12'),
+(79, 3, 'DEF-234-5678', 'Available', 'Main Warehouse', 3, 13, '2025-11-12'),
+(80, 4, 'GHI-567-8901', 'Available', 'Storage Room B', 4, 13, '2025-11-12'),
+(81, 5, 'JKL-890-1234', 'Available', 'Rooftop Unit 02', 5, 13, '2025-11-12'),
+(82, 6, 'MNO-123-4567', 'Available', 'Main Warehouse', 1, 13, '2025-11-12'),
+(83, 7, 'PQR-456-7890', 'Available', 'Floor 10 HVAC Room', 2, 13, '2025-11-12'),
+(84, 8, 'STU-789-0123', 'Available', 'Storage Room C', 3, 13, '2025-11-12'),
+(85, 9, 'VWX-234-5678', 'Available', 'Main Warehouse', 4, 13, '2025-11-12'),
+(86, 10, 'YZA-567-8901', 'Available', 'Rooftop Unit 03', 5, 13, '2025-11-12'),
+(87, 11, 'BCD-890-1234', 'Available', 'Floor 10 HVAC Room', 1, 13, '2025-11-12'),
+(88, 12, 'EFG-123-4567', 'Available', 'Main Warehouse', 2, 13, '2025-11-12'),
+(89, 13, 'HIJ-456-7890', 'Available', 'Storage Room A', 3, 13, '2025-11-12'),
+(90, 14, 'KLM-789-0123', 'Available', 'Rooftop Unit 01', 4, 13, '2025-11-12'),
+(91, 15, 'NOP-234-5678', 'Available', 'Main Warehouse', 5, 13, '2025-11-12'),
+(92, 16, 'QRS-567-8901', 'Available', 'Floor 10 HVAC Room', 1, 13, '2025-11-12'),
+(93, 17, 'TUV-890-1234', 'Available', 'Storage Room B', 2, 13, '2025-11-12'),
+(94, 18, 'WXY-123-4567', 'Available', 'Main Warehouse', 3, 13, '2025-11-12'),
+(95, 19, 'ZAB-456-7890', 'Available', 'Rooftop Unit 02', 4, 13, '2025-11-12'),
+(96, 20, 'CDE-789-0123', 'Available', 'Floor 10 HVAC Room', 5, 13, '2025-11-12'),
+(97, 21, 'FGH-234-5678', 'Available', 'Main Warehouse', 1, 13, '2025-11-12'),
+(98, 22, 'IJK-567-8901', 'Available', 'Storage Room C', 2, 13, '2025-11-12'),
+(99, 23, 'LMN-890-1234', 'Available', 'Rooftop Unit 03', 3, 13, '2025-11-12'),
+(100, 24, 'OPQ-123-4567', 'Available', 'Main Warehouse', 4, 13, '2025-11-12'),
+(101, 25, 'RST-456-7890', 'Available', 'Floor 10 HVAC Room', 5, 13, '2025-11-12'),
+(102, 1, 'UVW-789-0123', 'Available', 'Storage Room A', 1, 13, '2025-11-12'),
+(103, 2, 'XYZ-234-5678', 'Available', 'Main Warehouse', 2, 13, '2025-11-12'),
+(104, 3, 'ABC-567-8901', 'Available', 'Rooftop Unit 01', 3, 13, '2025-11-12'),
+(105, 4, 'DEF-890-1234', 'Available', 'Floor 10 HVAC Room', 4, 13, '2025-11-12'),
+(106, 5, 'GHI-123-4567', 'Available', 'Main Warehouse', 5, 13, '2025-11-12'),
+(107, 6, 'JKL-456-7890', 'Available', 'Storage Room B', 1, 13, '2025-11-12'),
+(108, 7, 'MNO-789-0123', 'Available', 'Rooftop Unit 02', 2, 13, '2025-11-12'),
+(109, 8, 'PQR-234-5678', 'Available', 'Main Warehouse', 3, 13, '2025-11-12'),
+(110, 9, 'STU-567-8901', 'Available', 'Floor 10 HVAC Room', 4, 13, '2025-11-12'),
+(111, 10, 'VWX-890-1234', 'Available', 'Storage Room C', 5, 13, '2025-11-12'),
+(112, 11, 'YZA-123-4567', 'Available', 'Main Warehouse', 1, 13, '2025-11-12'),
+(113, 12, 'BCD-456-7890', 'Available', 'Rooftop Unit 03', 2, 13, '2025-11-12'),
+(114, 13, 'EFG-789-0123', 'Available', 'Floor 10 HVAC Room', 3, 13, '2025-11-12'),
+(115, 14, 'HIJ-234-5678', 'Available', 'Main Warehouse', 4, 13, '2025-11-12'),
+(116, 15, 'KLM-567-8901', 'Available', 'Storage Room A', 5, 13, '2025-11-12'),
+(117, 16, 'NOP-890-1234', 'Available', 'Rooftop Unit 01', 1, 13, '2025-11-12'),
+(118, 17, 'QRS-123-4567', 'Available', 'Main Warehouse', 2, 13, '2025-11-12'),
+(119, 18, 'TUV-456-7890', 'Available', 'Floor 10 HVAC Room', 3, 13, '2025-11-12'),
+(120, 19, 'WXY-789-0123', 'Available', 'Storage Room B', 4, 13, '2025-11-12'),
+(121, 20, 'ZAB-234-5678', 'Available', 'Main Warehouse', 5, 13, '2025-11-12'),
+(122, 21, 'CDE-567-8901', 'Available', 'Rooftop Unit 02', 1, 13, '2025-11-12'),
+(123, 22, 'FGH-890-1234', 'Available', 'Floor 10 HVAC Room', 2, 13, '2025-11-12'),
+(124, 23, 'IJK-123-4567', 'Available', 'Main Warehouse', 3, 13, '2025-11-12'),
+(125, 24, 'LMN-456-7890', 'Available', 'Storage Room C', 4, 13, '2025-11-12'),
+(126, 25, 'OPQ-789-0123', 'Available', 'Rooftop Unit 03', 5, 13, '2025-11-12'),
+(127, 1, 'RST-234-5678', 'Available', 'Main Warehouse', 1, 13, '2025-11-12'),
+(128, 2, 'UVW-567-8901', 'Available', 'Floor 10 HVAC Room', 2, 13, '2025-11-12'),
+(129, 3, 'XYZ-890-1234', 'Available', 'Storage Room A', 3, 13, '2025-11-12'),
+(130, 4, 'ABC-123-4568', 'Available', 'Main Warehouse', 4, 13, '2025-11-12'),
+(131, 5, 'DEF-456-7891', 'Available', 'Rooftop Unit 01', 5, 13, '2025-11-12'),
+(132, 6, 'GHI-789-0124', 'Available', 'Floor 10 HVAC Room', 1, 13, '2025-11-12'),
+(133, 7, 'JKL-234-5679', 'Available', 'Main Warehouse', 2, 13, '2025-11-12'),
+(134, 8, 'MNO-567-8902', 'Available', 'Storage Room B', 3, 13, '2025-11-12'),
+(135, 9, 'PQR-890-1235', 'Available', 'Rooftop Unit 02', 4, 13, '2025-11-12'),
+(136, 10, 'STU-123-4568', 'Available', 'Main Warehouse', 5, 13, '2025-11-12'),
+(137, 11, 'VWX-456-7891', 'Available', 'Floor 10 HVAC Room', 1, 13, '2025-11-12'),
+(138, 12, 'YZA-789-0124', 'Available', 'Storage Room C', 2, 13, '2025-11-12'),
+(139, 13, 'BCD-234-5679', 'Available', 'Main Warehouse', 3, 13, '2025-11-12'),
+(140, 14, 'EFG-567-8902', 'Available', 'Rooftop Unit 03', 4, 13, '2025-11-12'),
+(141, 15, 'HIJ-890-1235', 'Available', 'Floor 10 HVAC Room', 5, 13, '2025-11-12'),
+(142, 16, 'KLM-123-4568', 'Available', 'Main Warehouse', 1, 13, '2025-11-12'),
+(143, 17, 'NOP-456-7891', 'Available', 'Storage Room A', 2, 13, '2025-11-12'),
+(144, 18, 'QRS-789-0124', 'Available', 'Rooftop Unit 01', 3, 13, '2025-11-12'),
+(145, 19, 'TUV-234-5679', 'Available', 'Main Warehouse', 4, 13, '2025-11-12'),
+(146, 20, 'WXY-567-8902', 'Available', 'Floor 10 HVAC Room', 5, 13, '2025-11-12'),
+(147, 21, 'ZAB-890-1235', 'Available', 'Storage Room B', 1, 13, '2025-11-12'),
+(148, 22, 'CDE-123-4568', 'Available', 'Main Warehouse', 2, 13, '2025-11-12'),
+(149, 23, 'FGH-456-7891', 'Available', 'Rooftop Unit 02', 3, 13, '2025-11-12'),
+(150, 24, 'IJK-789-0124', 'Available', 'Floor 10 HVAC Room', 4, 13, '2025-11-12'),
+(151, 25, 'LMN-234-5679', 'Available', 'Main Warehouse', 5, 13, '2025-11-12');
+
+
+ALTER TABLE RepairReport
+ADD COLUMN inspectionResult ENUM('Eligible', 'NotEligible') DEFAULT 'Eligible';
+
+
+ALTER TABLE Contract
+ADD COLUMN fileAttachment VARCHAR(255);
+
