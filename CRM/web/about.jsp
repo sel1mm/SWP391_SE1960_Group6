@@ -1,22 +1,23 @@
-<%-- 
-    Document   : index
-    Created on : Oct 3, 2025, 8:38:16 PM
-    Author     : doand
---%>
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.time.LocalDate" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<%
+    LocalDate currentDate = LocalDate.now();
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("'Tháng' MM 'năm' yyyy");
+    String formattedDate = currentDate.format(formatter);
+%>
 <!DOCTYPE html>
-<html>
+<html lang="vi">
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CRM System - Quản lý Khách hàng Chuyên nghiệp</title>
+        <title>About Us - CRM System</title>
         <style>
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
             }
-
             body {
                 font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
                 background: #f8f9fc;
@@ -24,7 +25,7 @@
                 line-height: 1.6;
             }
 
-            /* Navigation Bar */
+            /* Navbar */
             .navbar {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 padding: 0;
@@ -33,7 +34,6 @@
                 top: 0;
                 z-index: 1000;
             }
-
             .nav-container {
                 max-width: 1200px;
                 margin: 0 auto;
@@ -42,7 +42,6 @@
                 align-items: center;
                 padding: 1rem 2rem;
             }
-
             .logo {
                 color: white;
                 font-size: 28px;
@@ -51,13 +50,11 @@
                 align-items: center;
                 gap: 10px;
             }
-
             .nav-links {
                 display: flex;
                 gap: 30px;
                 align-items: center;
             }
-
             .nav-links a {
                 color: white;
                 text-decoration: none;
@@ -67,11 +64,9 @@
                 padding: 8px 16px;
                 border-radius: 6px;
             }
-
             .nav-links a:hover {
                 background: rgba(255,255,255,0.2);
             }
-
             .btn-login {
                 background: transparent;
                 color: white;
@@ -84,11 +79,10 @@
             .hero {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
-                padding: 80px 20px;
+                padding: 60px 20px 80px;
                 position: relative;
                 overflow: hidden;
             }
-
             .hero::before {
                 content: '';
                 position: absolute;
@@ -99,7 +93,6 @@
                 background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,106.7C1248,96,1344,96,1392,96L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
                 background-size: cover;
             }
-
             .hero-content {
                 max-width: 1200px;
                 margin: 0 auto;
@@ -107,25 +100,18 @@
                 position: relative;
                 z-index: 1;
             }
-
             .hero h1 {
-                font-size: 52px;
-                margin-bottom: 20px;
+                font-size: 42px;
+                margin-bottom: 15px;
                 font-weight: 700;
                 line-height: 1.2;
                 animation: fadeInUp 0.8s ease-out;
             }
-
             .hero p {
-                font-size: 20px;
-                margin-bottom: 40px;
+                font-size: 18px;
                 opacity: 0.95;
-                max-width: 700px;
-                margin-left: auto;
-                margin-right: auto;
                 animation: fadeInUp 0.8s ease-out 0.2s both;
             }
-
             @keyframes fadeInUp {
                 from {
                     opacity: 0;
@@ -137,300 +123,127 @@
                 }
             }
 
-            /* Form Section */
-            .form-container {
+            /* Content Wrapper */
+            .content-wrapper {
                 max-width: 1200px;
-                margin: -50px auto 60px;
+                margin: -40px auto 80px;
                 padding: 0 20px;
                 position: relative;
                 z-index: 10;
             }
-
-            .form-card {
+            .content-card {
                 background: white;
-                padding: 50px;
+                padding: 60px;
                 border-radius: 20px;
                 box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-                text-align: center;
                 animation: fadeInUp 0.8s ease-out 0.4s both;
             }
-
-            .form-card h2 {
-                color: #667eea;
-                font-size: 32px;
-                margin-bottom: 15px;
+            .section {
+                margin-bottom: 45px;
+            }
+            .section-title {
+                font-size: 1.5em;
+                color: #2c3748;
+                margin-bottom: 20px;
+                padding-left: 20px;
+                border-left: 5px solid #667eea;
                 font-weight: 700;
             }
-
-            .form-group {
-                display: flex;
-                gap: 15px;
-                justify-content: center;
-                align-items: center;
-                flex-wrap: wrap;
+            .section-content {
+                padding-left: 25px;
             }
 
-            .form-group input[type="text"] {
-                width: 350px;
-                padding: 16px 24px;
-                font-size: 16px;
-                border: 2px solid #e2e8f0;
-                border-radius: 12px;
-                transition: all 0.3s;
-                outline: none;
-            }
-
-            .form-group input[type="text"]:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
-            }
-
-            .form-group input[type="submit"] {
-                padding: 16px 40px;
-                font-size: 16px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border: none;
-                border-radius: 12px;
-                cursor: pointer;
-                font-weight: 600;
-                transition: all 0.3s;
-            }
-
-            .form-group input[type="submit"]:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 10px 30px rgba(102,126,234,0.4);
-            }
-
-            /* Stats Section */
-            .stats {
-                max-width: 1200px;
-                margin: 0 auto 80px;
-                padding: 0 20px;
+            /* ================== TEAM MEMBER CSS ================== */
+            .team-grid {
                 display: grid;
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
                 gap: 30px;
+                margin-top: 40px;
             }
-
-            .stat-card {
-                background: white;
-                padding: 35px;
-                border-radius: 15px;
-                text-align: center;
-                box-shadow: 0 5px 25px rgba(0,0,0,0.08);
-                transition: all 0.3s;
-            }
-
-            .stat-card:hover {
-                transform: translateY(-10px);
-                box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-            }
-
-            .stat-number {
-                font-size: 42px;
-                font-weight: 700;
-                color: #667eea;
-                margin-bottom: 10px;
-            }
-
-            .stat-label {
-                color: #666;
-                font-size: 16px;
-                font-weight: 500;
-            }
-
-            /* Features Section */
-            .features-section {
-                background: white;
-                padding: 80px 20px;
-            }
-
-            .section-header {
-                text-align: center;
-                max-width: 700px;
-                margin: 0 auto 60px;
-            }
-
-            .section-header h2 {
-                font-size: 42px;
-                color: #2d3748;
-                margin-bottom: 15px;
-                font-weight: 700;
-            }
-
-            .section-header p {
-                font-size: 18px;
-                color: #666;
-            }
-
-            .features {
-                max-width: 1200px;
-                margin: 0 auto;
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 35px;
-            }
-
-            .feature-card {
+            .team-member {
                 background: #f8f9fc;
-                padding: 40px 30px;
                 border-radius: 15px;
                 text-align: center;
+                padding: 30px 20px;
                 transition: all 0.3s;
                 border: 2px solid transparent;
             }
-
-            .feature-card:hover {
-                transform: translateY(-10px);
+            .team-member:hover {
+                transform: translateY(-8px);
                 border-color: #667eea;
                 background: white;
-                box-shadow: 0 15px 40px rgba(102,126,234,0.15);
+                box-shadow: 0 10px 30px rgba(102,126,234,0.15);
             }
-
-            .feature-icon {
-                font-size: 60px;
-                margin-bottom: 20px;
-                display: inline-block;
-                transition: all 0.3s;
+            .team-member img {
+                width: 150px;
+                height: 150px;
+                border-radius: 50%;
+                object-fit: cover;
+                margin-bottom: 15px;
+                border: 2px solid #e0e0e0;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
             }
-
-            .feature-card:hover .feature-icon {
-                transform: scale(1.1);
+            .team-member img:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             }
-
-            .feature-card h3 {
+            .team-member h4 {
+                font-size: 18px;
                 color: #2d3748;
-                font-size: 22px;
-                margin-bottom: 12px;
+                margin-bottom: 8px;
                 font-weight: 600;
             }
-
-            .feature-card p {
+            .team-member p {
                 color: #666;
-                line-height: 1.7;
-                font-size: 15px;
+                font-size: 14px;
+            }
+            @media (max-width: 768px) {
+                .team-grid {
+                    grid-template-columns: 1fr;
+                    gap: 20px;
+                }
+                .team-member img {
+                    width: 120px;
+                    height: 120px;
+                }
             }
 
-            /* CTA Section */
-            .cta-section {
+            /* Back button */
+            .back-button {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 24px;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
-                padding: 80px 20px;
-                text-align: center;
-            }
-
-            .cta-content {
-                max-width: 800px;
-                margin: 0 auto;
-            }
-
-            .cta-content h2 {
-                font-size: 40px;
-                margin-bottom: 20px;
-                font-weight: 700;
-            }
-
-            .cta-content p {
-                font-size: 18px;
-                margin-bottom: 35px;
-                opacity: 0.95;
-            }
-
-            .cta-buttons {
-                display: flex;
-                gap: 20px;
-                justify-content: center;
-                flex-wrap: wrap;
-            }
-
-            .btn {
-                padding: 16px 40px;
-                border-radius: 12px;
                 text-decoration: none;
+                border-radius: 12px;
                 font-weight: 600;
-                font-size: 16px;
-                transition: all 0.3s;
-                display: inline-block;
+                font-size: 0.95em;
+                box-shadow: 0 4px 15px rgba(102,126,234,0.3);
+                transition: all 0.3s ease;
+                margin-bottom: 30px;
             }
-
-            .btn-white {
-                background: white;
-                color: #667eea;
-            }
-
-            .btn-white:hover {
+            .back-button:hover {
                 transform: translateY(-3px);
-                box-shadow: 0 10px 30px rgba(255,255,255,0.3);
+                box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+            }
+            .back-icon {
+                font-size: 1.1em;
+                transition: transform 0.3s ease;
+            }
+            .back-button:hover .back-icon {
+                transform: translateX(-3px);
             }
 
-            .btn-outline {
-                background: transparent;
-                color: white;
-                border: 2px solid white;
-            }
-
-            .btn-outline:hover {
-                background: white;
-                color: #667eea;
-            }
-
-            /* Footer hover effects */
-            footer a:hover {
-                color: white !important;
-                padding-left: 5px;
-            }
-
-            /* Responsive */
-            @media (max-width: 768px) {
-                .nav-links {
-                    display: none;
-                }
-
-                .hero h1 {
-                    font-size: 32px;
-                }
-
-                .hero p {
-                    font-size: 16px;
-                }
-
-                .form-card {
-                    padding: 30px 20px;
-                }
-
-                .form-group input[type="text"] {
-                    width: 100%;
-                }
-
-                .stats {
-                    grid-template-columns: 1fr;
-                }
-
-                .features {
-                    grid-template-columns: 1fr;
-                }
-
-                footer > div > div:first-child,
-                footer > div > div:nth-child(3) {
-                    grid-template-columns: 1fr !important;
-                }
-
-
-            }
-
-
-
-
-            /* ===========================
-   FOOTER SECTION
-=========================== */
+            /* Footer */
             footer {
-                background: #1a202c; /* nền tối hiện đại */
+                background: #1a202c;
                 padding: 80px 20px 40px;
                 color: #cbd5e0;
-                margin-top: 80px;
+                margin-top: 100px;
             }
-
             .footer-grid {
                 max-width: 1200px;
                 margin: 0 auto;
@@ -438,8 +251,6 @@
                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
                 gap: 60px;
             }
-
-            /* Tiêu đề chính */
             .footer-title {
                 font-size: 18px;
                 font-weight: 700;
@@ -449,65 +260,48 @@
                 align-items: center;
                 gap: 10px;
             }
-
             .title-bar {
                 width: 4px;
                 height: 20px;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 border-radius: 2px;
             }
-
-            /* Các heading phụ */
             .footer-heading {
                 font-size: 16px;
                 font-weight: 700;
                 margin-bottom: 25px;
                 color: #fff;
             }
-
-            /* Nội dung mô tả */
             .footer-desc {
                 font-size: 14px;
                 line-height: 1.8;
                 color: #cbd5e0;
                 margin-bottom: 20px;
             }
-
             .footer-version {
                 font-size: 13px;
                 color: #a0aec0;
             }
-
-            /* Danh sách link hoặc span */
             .footer-list {
                 list-style: none;
                 padding: 0;
                 margin: 0;
             }
-
             .footer-list li {
                 margin-bottom: 12px;
                 font-size: 14px;
                 transition: all 0.3s;
             }
-
-            /* Liên kết và span hiển thị */
-            .footer-list a,
-            .footer-list span {
+            .footer-list a, .footer-list span {
                 color: #cbd5e0;
                 text-decoration: none;
                 display: inline-block;
                 transition: all 0.3s;
             }
-
-            /* Hover hiệu ứng mượt */
-            .footer-list a:hover,
-            .footer-list span:hover {
+            .footer-list a:hover, .footer-list span:hover {
                 color: #fff;
                 transform: translateX(4px);
             }
-
-            /* Footer bottom */
             .footer-bottom {
                 text-align: center;
                 margin-top: 60px;
@@ -516,29 +310,74 @@
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
                 padding-top: 20px;
             }
+            /* ================== TEAM MEMBER CSS (CẢI TIẾN) ================== */
+            .team-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 30px;
+                margin-top: 40px;
+            }
 
-            /* Responsive Footer */
+            .team-member {
+                background: #ffffff;
+                border-radius: 20px;
+                text-align: center;
+                padding: 25px 15px;
+                transition: all 0.4s ease;
+                border: 1px solid #e0e0e0;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+
+            .team-member:hover {
+                transform: translateY(-10px);
+                border-color: #667eea;
+                box-shadow: 0 15px 35px rgba(102,126,234,0.2);
+                background: #f8f9ff;
+            }
+
+            .team-member img {
+                width: 140px;
+                height: 140px;
+                border-radius: 50%;
+                object-fit: cover;
+                margin-bottom: 15px;
+                border: 3px solid #e0e0e0;
+                box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+                transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            }
+
+            /* Hover avatar */
+            .team-member img:hover {
+                transform: scale(1.08);
+                box-shadow: 0 6px 15px rgba(102,126,234,0.3);
+                border-color: #667eea;
+            }
+
+            /* Name & Role */
+            .team-member h4 {
+                font-size: 18px;
+                color: #2d3748;
+                margin-bottom: 6px;
+                font-weight: 600;
+            }
+            .team-member p {
+                color: #718096;
+                font-size: 14px;
+                margin-bottom: 0;
+            }
+
+            /* Mobile */
             @media (max-width: 768px) {
-                footer {
-                    padding: 60px 20px 30px;
+                .team-grid {
+                    grid-template-columns: 1fr;
+                    gap: 20px;
                 }
-
-                .footer-grid {
-                    gap: 40px;
-                }
-
-                .footer-title {
-                    font-size: 16px;
-                }
-
-                .footer-heading {
-                    font-size: 15px;
-                }
-
-                .footer-list li {
-                    font-size: 13.5px;
+                .team-member img {
+                    width: 120px;
+                    height: 120px;
                 }
             }
+
 
         </style>
     </head>
@@ -549,20 +388,15 @@
                 <div class="logo">CRM System</div>
                 <div class="nav-links">
                     <a href="home.jsp">Trang chủ</a>
-
-
                     <% 
-    model.Account acc = (model.Account) session.getAttribute("session_login");
-    if (acc == null) { 
+                        model.Account acc = (model.Account) session.getAttribute("session_login");
+                        if (acc == null) { 
                     %>
                     <a href="login" class="btn-login">Đăng nhập</a>
                     <% 
                         } else { 
-                            // ✅ Lấy role từ session thay vì từ Account
                             String userRole = (String) session.getAttribute("session_role");
                             String dashboardLink = "#";
-
-                            // Xác định link Dashboard theo role
                             if ("admin".equalsIgnoreCase(userRole)) {
                                 dashboardLink = "admin.jsp";
                             } else if ("Technical Manager".equalsIgnoreCase(userRole)) {
@@ -579,89 +413,97 @@
                                 dashboardLink = "home.jsp";
                             }
                     %>
-                    <!-- Nếu đã đăng nhập -->
                     <a href="#" style="color: white; font-size: 15px; text-decoration: none;">
                         👋 Xin chào, <strong><%= acc.getUsername() %></strong>
                     </a>
-
-                    <!-- Nút Dashboard -->
                     <a href="<%= dashboardLink %>" class="btn-login" style="background: rgba(255,255,255,0.2); text-decoration: none;">
                         📊 Dashboard
                     </a>
-
-                    <!-- Nút Đăng xuất -->
                     <a href="logout" class="btn-login" style="background: rgba(255,255,255,0.2); text-decoration: none;">
                         Đăng xuất
                     </a>
                     <% 
                         } 
                     %>
-
                 </div>
             </div>
         </nav>
 
-
         <!-- Hero Section -->
         <section class="hero">
             <div class="hero-content">
-                <h1>Quản lý Khách hàng và Thiết bị</h1>
-                <p>Giải pháp toàn diện cho việc chăm sóc khách hàng, quản lý hợp đồng và theo dõi thiết bị, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ</p>
+                <h1>About Us</h1>
+                <p>Đội ngũ phát triển CRM System</p>
             </div>
         </section>
 
-        <!-- Form Section -->
-        <div class="form-container">
-            <div class="form-card">
-                <h2>Bắt đầu trải nghiệm ngay hôm nay</h2>
+        <!-- Content Section -->
+        <div class="content-wrapper">
+            <div class="content-card">
+                <a href="home.jsp" class="back-button">
+                    <span class="back-icon">←</span>
+                    Về Trang chủ
+                </a>
+
+                <div class="last-updated">
+                    📅 Cập nhật lần cuối: <%= formattedDate %>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">Tầm nhìn & Sứ mệnh</h2>
+                    <div class="section-content">
+                        <p><strong>Tầm nhìn:</strong> Trở thành giải pháp CRM hàng đầu tại Việt Nam, giúp doanh nghiệp tối ưu hóa quản lý khách hàng và nâng cao hiệu quả kinh doanh.</p>
+                        <p><strong>Sứ mệnh:</strong> Cung cấp hệ thống CRM thông minh, dễ sử dụng, hỗ trợ doanh nghiệp xây dựng mối quan hệ khách hàng bền vững và nâng cao chất lượng dịch vụ.</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">Đội ngũ phát triển</h2>
+                    <div class="section-content">
+                        <div class="team-grid">
+                            <div class="team-member">
+                                <img src="https://tse2.mm.bing.net/th/id/OIP.x4FIT_6vXJzLBmpIBNT9qAAAAA?cb=ucfimg2ucfimg=1&w=225&h=225&rs=1&pid=ImgDetMain&o=7&rm=3" alt="Member X">
+
+                                <h4>Doan Dinh Giap</h4>
+                                <p>Fullstack Developer</p>
+                            </div>
+                            <div class="team-member">
+                                <img src="https://scontent.fhan20-1.fna.fbcdn.net/v/t39.30808-1/494196726_711819304605422_7343151851657339219_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=103&cb2=99be929b-bd9a46d7&ccb=1-7&_nc_sid=e99d92&_nc_ohc=rZj9dMr_MFUQ7kNvwGw9r7f&_nc_oc=Adl2rMagbpZ58hMxSo5xi6dJH-Jje8StMc7hf6lNcT83SLFV8F-5n_ZLyNXuNkk64aSSRxpNVUzOoUDH7WL9EcsJ&_nc_zt=24&_nc_ht=scontent.fhan20-1.fna&_nc_gid=Xi5gi8lTw3Umsp5LzdUANQ&oh=00_AfjqrMNdh_bUozwqvetYTeeWcevien5uYD5gEI-RsEp1_g&oe=691BD30F" alt="Member X">
+
+                                <h4>Le Anh Vu</h4>
+                                <p>Fullstack Developer</p>
+                            </div>
+                            <div class="team-member">
+                                <img src="https://sf-static.upanhlaylink.com/img/image_2025111468fe8db3474ae500c0cfbdc5afd2be8e.jpg" alt="Member X">
+
+                                <h4>Nguyen Hai Bach</h4>
+                                <p>Fullstack Developer</p>
+                            </div>
+                        </div>
+                        <div class="team-grid" style="margin-top: 50px;">
+                            <div class="team-member">
+                                <img src="https://scontent.fhan2-3.fna.fbcdn.net/v/t39.30808-6/481290867_1672572963648920_5946532814955947331_n.jpg?_nc_cat=111&cb2=99be929b-bd9a46d7&ccb=1-7&_nc_sid=a5f93a&_nc_ohc=dShoP7NRJDMQ7kNvwEWnoiT&_nc_oc=Adn5jcdn0BAgiOVISRNHOnDU4yvZHIKIoGlMcQXG2LwYfeHCX161wp7M95FP62JK2WsOkI6m_r90reXaDoMUmRYi&_nc_zt=23&_nc_ht=scontent.fhan2-3.fna&_nc_gid=Np6ZKS4A9SUgQKQktAS3sg&oh=00_Afh7s1tFQbqXz9EtS0NnkVHL1034QcbOwEXWDa2ZOSgbJA&oe=691BCD27" alt="Member X">
+
+                                <h4>Pham Quoc Binh</h4>
+                                <p>Fullstack Developer</p>
+                            </div>
+                            <div class="team-member">
+                                <img src="https://scontent.fhan20-1.fna.fbcdn.net/v/t39.30808-6/482201770_628898369742777_2807123171304223555_n.jpg?_nc_cat=102&cb2=99be929b-bd9a46d7&ccb=1-7&_nc_sid=a5f93a&_nc_ohc=77zEQqNV8HMQ7kNvwG4RGWx&_nc_oc=Adm6uchEyFAmfReF0k55imDgOz_XSGDaOpyQxIaHHYdMFrfyAODoGVhn__WwoGqOVHtghfVKlPiQtRir0ipdXqOn&_nc_zt=23&_nc_ht=scontent.fhan20-1.fna&_nc_gid=IoudbxgHJP_iqeKwkBi3Vw&oh=00_AfiKA_mqVVj-b4NTFpbi13ii4zem1o7qU4fFDdti66tW_A&oe=691BCBA8" alt="Member X">
+
+                                <h4>Tran Bao Lam</h4>
+                                <p>Fullstack Developer</p>
+                            </div>
+                            <div class="team-member">
+                                <img src="https://tse3.mm.bing.net/th/id/OIP.AjWni_SG6OK4HruyGYqLTQAAAA?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3" alt="Member X">
+
+                                <h4>Nguyen Khanh Hung</h4>
+                                <p>Fullstack Developer</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Features Section -->
-        <section class="features-section" id="features">
-            <div class="section-header">
-                <h2>Tính năng vượt trội</h2>
-                <p>Tất cả những gì bạn cần để quản lý và phát triển mối quan hệ khách hàng</p>
-            </div>
-            <div class="features">
-                <div class="feature-card">
-                    <div class="feature-icon">👥</div>
-                    <h3>Quản lý Khách hàng</h3>
-                    <p>Tập trung toàn bộ thông tin khách hàng, lịch sử giao dịch và tương tác tại một nơi</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Báo cáo Thống kê</h3>
-                    <p>Phân tích dữ liệu chi tiết với biểu đồ trực quan, hỗ trợ ra quyết định chính xác</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">📝</div>
-                    <h3>Quản lý Hợp đồng</h3>
-                    <p>Theo dõi và quản lý hợp đồng, gia hạn tự động với khả năng cá nhân hóa cao</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">📅</div>
-                    <h3>Quản lý Lịch hẹn</h3>
-                    <p>Lên lịch cuộc họp, nhắc nhở tự động và đồng bộ với Google Calendar</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">💬</div>
-                    <h3>Hỗ trợ Khách hàng</h3>
-                    <p>Quản lý ticket, live chat và tích hợp đa kênh để hỗ trợ nhanh chóng</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <h3>Bảo mật cao</h3>
-                    <p>Mã hóa dữ liệu, xác thực 2 lớp và tuân thủ tiêu chuẩn bảo mật quốc tế</p>
-                </div>
-            </div>
-        </section>
-
         <!-- Footer -->
         <footer style="background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); color: #e2e8f0; padding: 80px 20px 40px; margin-top: 100px; border-top: 1px solid #4a5568;">
             <div style="max-width: 1200px; margin: 0 auto;">
@@ -700,8 +542,8 @@
                         <ul class="footer-list">
                             <li><a href="about.jsp">→ Về chúng tôi</a></li>
                             <li><a href="tos.jsp">→ Điều khoản sử dụng</a></li>
-                             <li><a href="baohanh.jsp">→ Điều khoản sử dụng</a></li>
-                             <li><a href="tos.jsp">→ Báo giá dịch vụ</a></li>
+                            <li><a href="baohanh.jsp">→ Chính sách bảo hành</a></li>
+                            <li><a href="baogia.jsp">→ Báo giá dịch vụ</a></li>
 
                         </ul>
                     </div>
