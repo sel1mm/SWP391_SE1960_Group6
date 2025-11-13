@@ -3,8 +3,9 @@ package dal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
-public class MyDAO extends DBContext {
+public class MyDAO extends DBContext implements AutoCloseable {
   // Deprecated: Use 'connection' from DBContext instead
   // Kept for backward compatibility but should not be used directly
   @Deprecated
@@ -22,16 +23,28 @@ public class MyDAO extends DBContext {
      con = connection;
   }
   @Override
-  public void finalize() {
-     // Note: Connection should be managed by connection pool or DBContext
-     // This finalize is kept for backward compatibility but may not be needed
-     try {
-        // Don't close connection here as it may be shared or managed by pool
-        // if(con != null && !con.isClosed()) con.close();
-     }
-     catch(Exception e) {
-        e.printStackTrace();
+  public void close() {
+     closeQuietly(rs);
+     closeQuietly(ps);
+     if (connection != null) {
+        try {
+           connection.close();
+        } catch (SQLException ex) {
+           ex.printStackTrace();
+        } finally {
+           connection = null;
+           con = null;
+        }
      }
   }
-    
+
+  private void closeQuietly(AutoCloseable    resource) {
+     if (resource != null) {
+        try {
+           resource.close();
+        } catch (Exception ex) {
+           ex.printStackTrace();
+        }
+     }
+  }
 }

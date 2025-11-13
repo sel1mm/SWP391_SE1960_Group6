@@ -51,10 +51,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         String requestIdParam = req.getParameter("requestId");
         String scheduleIdParam = req.getParameter("scheduleId");
 
-        try {
-            RepairReportDAO reportDAO = new RepairReportDAO();
-            ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO();
-            int technicianId = sessionId.intValue();
+        int technicianId = sessionId.intValue();
+        try (RepairReportDAO reportDAO = new RepairReportDAO();
+                ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO()) {
 
             // Handle AJAX requests for parts search and cart operations
             if ("searchParts".equals(action)) {
@@ -81,173 +80,174 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             }
 
             if ("create".equals(action)) {
-                // Show create form with assigned tasks dropdown
-                WorkTaskDAO workTaskDAO = new WorkTaskDAO();
-                List<WorkTaskDAO.WorkTaskForReport> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
+                try (WorkTaskDAO workTaskDAO = new WorkTaskDAO()) {
+                    // Show create form with assigned tasks dropdown
+                    List<WorkTaskDAO.WorkTaskForReport> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
 
-                Integer requestId = null;
-                Integer scheduleId = null;
-                String selectedRequestType = null;
+                    Integer requestId = null;
+                    Integer scheduleId = null;
+                    String selectedRequestType = null;
 
-                // 1) If scheduleId is provided, derive effective requestId from MaintenanceSchedule
-                if (scheduleIdParam != null && !scheduleIdParam.trim().isEmpty()) {
-                    try {
-                        scheduleId = Integer.parseInt(scheduleIdParam);
-                        Integer effectiveReqId = getEffectiveRequestIdForSchedule(scheduleId);
-                        // For schedule-origin, allow no linked ServiceRequest. Use effectiveReqId if available.
-                        requestId = effectiveReqId;
-
-                        // Validate assignment for schedule/request context
-                        // If we have an effective request, reuse assignment/completion checks by request
-                        if (requestId != null) {
-                            if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
-                                req.setAttribute("error", "Bạn không được giao công việc đã lên lịch này");
-                                doGetReportList(req, resp, technicianId);
-                                return;
-                            }
-                            if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
-                                req.setAttribute("error", "Không thể tạo báo cáo cho công việc đã hoàn thành");
-                                doGetReportList(req, resp, technicianId);
-                                return;
-                            }
-                        }
-                        // Duplicate check by schedule (preferred)
+                    // 1) If scheduleId is provided, derive effective requestId from MaintenanceSchedule
+                    if (scheduleIdParam != null && !scheduleIdParam.trim().isEmpty()) {
                         try {
-                            RepairReport existingReportBySchedule = new RepairReportDAO().findByScheduleIdAndTechnician(scheduleId, technicianId);
-                            if (existingReportBySchedule != null) {
-                                resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReportBySchedule.getReportId());
-                                return;
-                            }
-                        } catch (SQLException ex) {
-                            System.err.println("Duplicate check by schedule failed: " + ex.getMessage());
-                        }
+                            scheduleId = Integer.parseInt(scheduleIdParam);
+                            Integer effectiveReqId = getEffectiveRequestIdForSchedule(scheduleId);
+                            // For schedule-origin, allow no linked ServiceRequest. Use effectiveReqId if available.
+                            requestId = effectiveReqId;
 
-                        // Set UI context for schedule-origin (maintenance)
-                        req.setAttribute("origin", "Schedule");
-                        req.setAttribute("isScheduleOrigin", true);
-                        req.setAttribute("selectedRequestType", "Maintenance");
+                            // Validate assignment for schedule/request context
+                            // If we have an effective request, reuse assignment/completion checks by request
+                            if (requestId != null) {
+                                if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
+                                    req.setAttribute("error", "Bạn không được giao công việc đã lên lịch này");
+                                    doGetReportList(req, resp, technicianId);
+                                    return;
+                                }
+                                if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
+                                    req.setAttribute("error", "Không thể tạo báo cáo cho công việc đã hoàn thành");
+                                    doGetReportList(req, resp, technicianId);
+                                    return;
+                                }
+                            }
+                            // Duplicate check by schedule (preferred)
+                            try {
+                                RepairReport existingReportBySchedule = reportDAO.findByScheduleIdAndTechnician(scheduleId, technicianId);
+                                if (existingReportBySchedule != null) {
+                                    resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReportBySchedule.getReportId());
+                                    return;
+                                }
+                            } catch (SQLException ex) {
+                                System.err.println("Duplicate check by schedule failed: " + ex.getMessage());
+                            }
 
-                        // Load schedule's customer info for display (via Contract -> Account)
-                        try {
-                            Map<String, Object> schedCustomer = getScheduleCustomerInfo(scheduleId);
-                            if (schedCustomer != null) {
-                                req.setAttribute("scheduleCustomerId", schedCustomer.get("customerAccountId"));
-                                req.setAttribute("scheduleCustomerName", schedCustomer.get("customerName"));
+                            // Set UI context for schedule-origin (maintenance)
+                            req.setAttribute("origin", "Schedule");
+                            req.setAttribute("isScheduleOrigin", true);
+                            req.setAttribute("selectedRequestType", "Maintenance");
+
+                            // Load schedule's customer info for display (via Contract -> Account)
+                            try {
+                                Map<String, Object> schedCustomer = getScheduleCustomerInfo(scheduleId);
+                                if (schedCustomer != null) {
+                                    req.setAttribute("scheduleCustomerId", schedCustomer.get("customerAccountId"));
+                                    req.setAttribute("scheduleCustomerName", schedCustomer.get("customerName"));
+                                }
+                                String taskStatus = getScheduleTaskStatus(technicianId, scheduleId);
+                                if (taskStatus != null) {
+                                    req.setAttribute("scheduleTaskStatus", taskStatus);
+                                }
+                            } catch (SQLException ex) {
+                                System.err.println("Error loading schedule customer info: " + ex.getMessage());
                             }
-                            String taskStatus = getScheduleTaskStatus(technicianId, scheduleId);
-                            if (taskStatus != null) {
-                                req.setAttribute("scheduleTaskStatus", taskStatus);
-                            }
-                        } catch (SQLException ex) {
-                            System.err.println("Error loading schedule customer info: " + ex.getMessage());
+                        } catch (NumberFormatException e) {
+                            req.setAttribute("error", "Mã lịch trình không hợp lệ");
+                            doGetReportList(req, resp, technicianId);
+                            return;
                         }
-                    } catch (NumberFormatException e) {
-                        req.setAttribute("error", "Mã lịch trình không hợp lệ");
-                        doGetReportList(req, resp, technicianId);
-                        return;
                     }
-                }
 
-                // 2) If requestId provided explicitly (request-origin)
-                if (requestId == null && requestIdParam != null && !requestIdParam.trim().isEmpty()) {
-                    try {
-                        requestId = Integer.parseInt(requestIdParam);
-                        // Validate that technician is assigned to this request
-                        if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
-                            req.setAttribute("error", "Bạn không được giao yêu cầu này");
-                            doGetReportList(req, resp, technicianId);
-                            return;
-                        }
-                        // Check if this technician's task is completed
-                        if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
-                            req.setAttribute("error", "Cannot create report for completed task");
-                            doGetReportList(req, resp, technicianId);
-                            return;
-                        }
-                        // Check if a repair report already exists for this requestId by this technician
+                    // 2) If requestId provided explicitly (request-origin)
+                    if (requestId == null && requestIdParam != null && !requestIdParam.trim().isEmpty()) {
                         try {
-                            RepairReport existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
-                            if (existingReport != null) {
-                                // Report already exists, redirect to edit instead
-                                req.setAttribute("info", "Đã tồn tại báo cáo sửa chữa cho công việc này. Đang chuyển hướng đến chỉnh sửa...");
-                                resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReport.getReportId());
+                            requestId = Integer.parseInt(requestIdParam);
+                            // Validate that technician is assigned to this request
+                            if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
+                                req.setAttribute("error", "Bạn không được giao yêu cầu này");
+                                doGetReportList(req, resp, technicianId);
                                 return;
+                            }
+                            // Check if this technician's task is completed
+                            if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
+                                req.setAttribute("error", "Cannot create report for completed task");
+                                doGetReportList(req, resp, technicianId);
+                                return;
+                            }
+                            // Check if a repair report already exists for this requestId by this technician
+                            try {
+                                RepairReport existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
+                                if (existingReport != null) {
+                                    // Report already exists, redirect to edit instead
+                                    req.setAttribute("info", "Đã tồn tại báo cáo sửa chữa cho công việc này. Đang chuyển hướng đến chỉnh sửa...");
+                                    resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReport.getReportId());
+                                    return;
+                                }
+                            } catch (SQLException e) {
+                                // Log error but continue - allow creation if check fails
+                                System.err.println("Error checking for existing report: " + e.getMessage());
+                            }
+
+                            var serviceRequest = serviceRequestDAO.getRequestById(requestId);
+                            if (serviceRequest != null) {
+                                selectedRequestType = serviceRequest.getRequestType();
+                            }
+                        } catch (NumberFormatException e) {
+                            req.setAttribute("error", "Mã yêu cầu không hợp lệ");
+                            doGetReportList(req, resp, technicianId);
+                            return;
+                        }
+                    }
+
+                    // Load all available parts for dropdown
+                    List<Map<String, Object>> availableParts = null;
+                    try {
+                        availableParts = getAllAvailableParts();
+                    } catch (SQLException e) {
+                        req.setAttribute("error", "Lỗi khi tải linh kiện: " + e.getMessage());
+                        availableParts = new ArrayList<>();
+                    }
+
+                    // Get selected parts from session (scoped to this request)
+                    String cartKey = (scheduleId != null)
+                            ? ("selectedParts_schedule_" + scheduleId)
+                            : ("selectedParts_" + (requestId != null ? requestId : "new"));
+                    @SuppressWarnings("unchecked")
+                    List<RepairReportDetail> selectedParts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
+                    if (selectedParts == null) {
+                        selectedParts = new ArrayList<>();
+                        req.getSession().setAttribute(cartKey, selectedParts);
+                    }
+
+                    // Calculate subtotal
+                    BigDecimal subtotal = calculateSubtotal(selectedParts);
+
+                    // Get customer and request info for the summary box
+                    Map<String, Object> customerRequestInfo = null;
+                    List<Map<String, Object>> customerContracts = new ArrayList<>();
+                    if (requestId != null) {
+                        try {
+                            customerRequestInfo = getCustomerRequestInfo(requestId);
+                            if (customerRequestInfo != null) {
+                                int customerAccountId = (Integer) customerRequestInfo.get("customerAccountId");
+                                customerContracts = getCustomerContracts(customerAccountId);
                             }
                         } catch (SQLException e) {
-                            // Log error but continue - allow creation if check fails
-                            System.err.println("Error checking for existing report: " + e.getMessage());
+                            // Log error but continue
+                            System.err.println("Error loading customer info: " + e.getMessage());
                         }
-
-                        var serviceRequest = serviceRequestDAO.getRequestById(requestId);
-                        if (serviceRequest != null) {
-                            selectedRequestType = serviceRequest.getRequestType();
-                        }
-                    } catch (NumberFormatException e) {
-                        req.setAttribute("error", "Mã yêu cầu không hợp lệ");
-                        doGetReportList(req, resp, technicianId);
-                        return;
                     }
-                }
 
-                // Load all available parts for dropdown
-                List<Map<String, Object>> availableParts = null;
-                try {
-                    availableParts = getAllAvailableParts();
-                } catch (SQLException e) {
-                    req.setAttribute("error", "Lỗi khi tải linh kiện: " + e.getMessage());
-                    availableParts = new ArrayList<>();
-                }
+                    // Pass session search data to request for JSP access
+                    req.setAttribute("partsSearchQuery", req.getSession().getAttribute("partsSearchQuery"));
+                    req.setAttribute("partsSearchResults", req.getSession().getAttribute("partsSearchResults"));
 
-                // Get selected parts from session (scoped to this request)
-                String cartKey = (scheduleId != null)
-                        ? ("selectedParts_schedule_" + scheduleId)
-                        : ("selectedParts_" + (requestId != null ? requestId : "new"));
-                @SuppressWarnings("unchecked")
-                List<RepairReportDetail> selectedParts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
-                if (selectedParts == null) {
-                    selectedParts = new ArrayList<>();
-                    req.getSession().setAttribute(cartKey, selectedParts);
-                }
-
-                // Calculate subtotal
-                BigDecimal subtotal = calculateSubtotal(selectedParts);
-
-                // Get customer and request info for the summary box
-                Map<String, Object> customerRequestInfo = null;
-                List<Map<String, Object>> customerContracts = new ArrayList<>();
-                if (requestId != null) {
-                    try {
-                        customerRequestInfo = getCustomerRequestInfo(requestId);
-                        if (customerRequestInfo != null) {
-                            int customerAccountId = (Integer) customerRequestInfo.get("customerAccountId");
-                            customerContracts = getCustomerContracts(customerAccountId);
-                        }
-                    } catch (SQLException e) {
-                        // Log error but continue
-                        System.err.println("Error loading customer info: " + e.getMessage());
+                    req.setAttribute("requestId", requestId);
+                    if (scheduleId != null) {
+                        req.setAttribute("scheduleId", scheduleId);
                     }
+                    req.setAttribute("assignedTasks", assignedTasks);
+                    req.setAttribute("availableParts", availableParts);
+                    req.setAttribute("selectedParts", selectedParts);
+                    req.setAttribute("subtotal", subtotal);
+                    req.setAttribute("customerRequestInfo", customerRequestInfo);
+                    req.setAttribute("customerContracts", customerContracts);
+                    req.setAttribute("selectedRequestType", selectedRequestType);
+                    req.setAttribute("isWarrantyRequest", "Warranty".equalsIgnoreCase(selectedRequestType));
+                    req.setAttribute("pageTitle", "Create Repair Report");
+                    req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
+                    req.setAttribute("activePage", "reports");
+                    req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
                 }
-
-                // Pass session search data to request for JSP access
-                req.setAttribute("partsSearchQuery", req.getSession().getAttribute("partsSearchQuery"));
-                req.setAttribute("partsSearchResults", req.getSession().getAttribute("partsSearchResults"));
-
-                req.setAttribute("requestId", requestId);
-                if (scheduleId != null) {
-                    req.setAttribute("scheduleId", scheduleId);
-                }
-                req.setAttribute("assignedTasks", assignedTasks);
-                req.setAttribute("availableParts", availableParts);
-                req.setAttribute("selectedParts", selectedParts);
-                req.setAttribute("subtotal", subtotal);
-                req.setAttribute("customerRequestInfo", customerRequestInfo);
-                req.setAttribute("customerContracts", customerContracts);
-                req.setAttribute("selectedRequestType", selectedRequestType);
-                req.setAttribute("isWarrantyRequest", "Warranty".equalsIgnoreCase(selectedRequestType));
-                req.setAttribute("pageTitle", "Create Repair Report");
-                req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
-                req.setAttribute("activePage", "reports");
-                req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
 
             } else if ("edit".equals(action) && reportIdParam != null) {
                 // Show edit form
@@ -268,8 +268,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 }
 
                 // Verify WorkTask is still assigned to this technician
-                WorkTaskDAO workTaskDAO = new WorkTaskDAO();
-                try {
+                try (WorkTaskDAO workTaskDAO = new WorkTaskDAO()) {
                     if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, report.getRequestId())) {
                         req.setAttribute("error", "Bạn không còn được giao công việc này");
                         doGetReportList(req, resp, technicianId);
@@ -400,13 +399,12 @@ public class TechnicianRepairReportServlet extends HttpServlet {
 
     private void doGetReportList(HttpServletRequest req, HttpServletResponse resp, int technicianId)
             throws ServletException, IOException {
-        try {
+        try (RepairReportDAO reportDAO = new RepairReportDAO()) {
             String searchQuery = sanitize(req.getParameter("q"));
             String statusFilter = sanitize(req.getParameter("status"));
             int page = parseInt(req.getParameter("page"), 1);
             int pageSize = Math.min(parseInt(req.getParameter("pageSize"), 10), 100);
 
-            RepairReportDAO reportDAO = new RepairReportDAO();
             List<RepairReportDAO.RepairReportWithCustomer> reportsWithCustomer = reportDAO.getRepairReportsForTechnicianWithCustomer(technicianId, searchQuery, statusFilter, page, pageSize);
             int totalReports = reportDAO.getRepairReportCountForTechnicianWithCustomer(technicianId, statusFilter);
 
@@ -442,10 +440,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
 
         String action = req.getParameter("action");
 
-        try {
-            RepairReportDAO reportDAO = new RepairReportDAO();
-            ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO();
-            int technicianId = sessionId.intValue();
+        int technicianId = sessionId.intValue();
+        try (RepairReportDAO reportDAO = new RepairReportDAO();
+                ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO()) {
 
             // Handle parts management actions
             if ("searchParts".equals(action)) {
@@ -481,265 +478,240 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             }
 
             if ("create".equals(action)) {
-                // Create new report with validation
-                WorkTaskDAO workTaskDAO = new WorkTaskDAO();
-                RepairReport report = new RepairReport();
-                String requestIdStr = req.getParameter("requestId");
-                String scheduleIdStr = req.getParameter("scheduleId");
+                try (WorkTaskDAO workTaskDAO = new WorkTaskDAO()) {
+                    RepairReport report = new RepairReport();
+                    String requestIdStr = req.getParameter("requestId");
+                    String scheduleIdStr = req.getParameter("scheduleId");
 
-                Integer requestId = null;
-                Integer scheduleId = null;
+                    Integer requestId = null;
+                    Integer scheduleId = null;
 
-                // Accept either scheduleId (schedule-origin) or requestId (request-origin)
-                if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
-                    try {
-                        scheduleId = Integer.parseInt(scheduleIdStr);
-                        Integer effectiveReqId = getEffectiveRequestIdForSchedule(scheduleId);
-                        if (effectiveReqId == null) {
-                            req.setAttribute("error", "Lịch trình này không được liên kết với bất kỳ Yêu cầu Dịch vụ nào.");
+                    // Accept either scheduleId (schedule-origin) or requestId (request-origin)
+                    if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
+                        try {
+                            scheduleId = Integer.parseInt(scheduleIdStr);
+                            Integer effectiveReqId = getEffectiveRequestIdForSchedule(scheduleId);
+                            if (effectiveReqId == null) {
+                                req.setAttribute("error", "Lịch trình này không được liên kết với bất kỳ Yêu cầu Dịch vụ nào.");
+                                doGet(req, resp);
+                                return;
+                            }
+                            requestId = effectiveReqId;
+                        } catch (NumberFormatException e) {
+                            req.setAttribute("error", "Mã lịch trình không hợp lệ");
                             doGet(req, resp);
                             return;
                         }
-                        requestId = effectiveReqId;
-                    } catch (NumberFormatException e) {
-                        req.setAttribute("error", "Mã lịch trình không hợp lệ");
-                        doGet(req, resp);
-                        return;
-                    }
-                } else {
-                    // Validate request ID (request-origin)
-                    if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
-                        req.setAttribute("error", "Mã yêu cầu là bắt buộc");
-                        doGet(req, resp);
-                        return;
-                    }
-                    try {
-                        requestId = Integer.parseInt(requestIdStr);
-                    } catch (NumberFormatException e) {
-                        req.setAttribute("error", "Mã yêu cầu không hợp lệ");
-                        doGet(req, resp);
-                        return;
-                    }
-                }
-
-                // Validate technician assignment and task status
-                if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
-                    req.setAttribute("error", "You are not assigned to this request");
-                    doGet(req, resp);
-                    return;
-                }
-
-                if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
-                    req.setAttribute("error", "Cannot create report for completed task");
-                    doGet(req, resp);
-                    return;
-                }
-
-                // Check if a repair report already exists for this requestId by this technician
-                try {
-                    RepairReport existingReport = null;
-                    if (scheduleId != null) {
-                        existingReport = reportDAO.findByScheduleIdAndTechnician(scheduleId, technicianId);
-                    }
-                    if (existingReport == null) {
-                        existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
-                    }
-                    if (existingReport != null) {
-                        // Report already exists, redirect to edit instead
-                        req.setAttribute("error", "Đã tồn tại báo cáo sửa chữa cho công việc này. Đang chuyển hướng đến chỉnh sửa...");
-                        resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReport.getReportId());
-                        return;
-                    }
-                } catch (SQLException e) {
-                    req.setAttribute("error", "Lỗi khi kiểm tra báo cáo hiện có: " + e.getMessage());
-                    doGet(req, resp);
-                    return;
-                }
-
-                String requestType = null;
-                boolean isWarranty = false;
-                if (requestId != null) {
-                    var serviceRequest = serviceRequestDAO.getRequestById(requestId);
-                    if (serviceRequest != null) {
-                        requestType = serviceRequest.getRequestType();
-                        isWarranty = "Warranty".equalsIgnoreCase(requestType);
-                    }
-                }
-
-                // ✅ THÊM: Kiểm tra warranty eligibility
-                String notEligibleParam = req.getParameter("notEligibleForWarranty");
-                boolean isNotEligibleForWarranty = "true".equalsIgnoreCase(notEligibleParam);
-
-                report.setRequestId(requestId);
-                if (scheduleId != null) {
-                    report.setScheduleId(scheduleId);
-                    report.setOrigin("Schedule");
-                } else {
-                    report.setOrigin("ServiceRequest");
-                }
-                report.setTechnicianId(technicianId);
-                report.setDetails(req.getParameter("details"));
-                // Diagnosis field is replaced by parts - keep empty or use summary
-                report.setDiagnosis(""); // Parts are stored in RepairReportDetail
-
-                // targetContractId removed - contract is automatically determined from ServiceRequest
-                // when the repair report is approved (via database trigger)
-                // ✅ THÊM: Set inspection result
-                if (isWarranty && isNotEligibleForWarranty) {
-                    report.setInspectionResult("NotEligible");
-                    report.setQuotationStatus("Rejected"); // Auto-reject
-                } else {
-                    report.setInspectionResult("Eligible");
-                    report.setQuotationStatus("Pending");
-                }
-
-                // Get selected parts from session (scoped to this request)
-                String cartKey = scheduleId != null
-                        ? "selectedParts_schedule_" + scheduleId
-                        : "selectedParts_" + report.getRequestId();
-                @SuppressWarnings("unchecked")
-                List<RepairReportDetail> parts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
-                if (parts == null) {
-                    parts = new ArrayList<>();
-                }
-
-                List<String> validationErrors = new ArrayList<>();
-
-                // Run validations (targetContractId validation removed - contract is auto-determined from ServiceRequest)
-//                validationErrors.addAll(validateRepairReportInput(req, false, parts, isWarranty));
-                // Skip validation nếu not eligible
-                if (!(isWarranty && isNotEligibleForWarranty)) {
-                    validationErrors.addAll(validateRepairReportInput(req, false, parts, isWarranty));
-                }
-
-                // Calculate estimated cost from parts if not manually overridden
-                // Warranty requests are always recorded as zero cost for the customer
-                BigDecimal estimatedCost;
-                if (scheduleId != null) {
-                    // Schedule-origin: customer billed 0
-                    estimatedCost = BigDecimal.ZERO;
-                } else if (isWarranty) {
-                    estimatedCost = BigDecimal.ZERO;
-                } else {
-                    String estimatedCostStr = req.getParameter("estimatedCost");
-                    if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
+                    } else {
+                        // Validate request ID (request-origin)
+                        if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
+                            req.setAttribute("error", "Mã yêu cầu là bắt buộc");
+                            doGet(req, resp);
+                            return;
+                        }
                         try {
-                            // Input is in VND, convert to USD (divide by 26000)
-                            BigDecimal vndValue = new BigDecimal(estimatedCostStr);
-                            BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
-                            estimatedCost = usdValue;
+                            requestId = Integer.parseInt(requestIdStr);
                         } catch (NumberFormatException e) {
-                            validationErrors.add("Invalid estimated cost format");
+                            req.setAttribute("error", "Mã yêu cầu không hợp lệ");
+                            doGet(req, resp);
+                            return;
+                        }
+                    }
+
+                    // Validate technician assignment and task status
+                    if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
+                        req.setAttribute("error", "You are not assigned to this request");
+                        doGet(req, resp);
+                        return;
+                    }
+
+                    if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
+                        req.setAttribute("error", "Cannot create report for completed task");
+                        doGet(req, resp);
+                        return;
+                    }
+
+                    // Check if a repair report already exists for this requestId by this technician
+                    try {
+                        RepairReport existingReport = null;
+                        if (scheduleId != null) {
+                            existingReport = reportDAO.findByScheduleIdAndTechnician(scheduleId, technicianId);
+                        }
+                        if (existingReport == null) {
+                            existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
+                        }
+                        if (existingReport != null) {
+                            req.setAttribute("error", "Đã tồn tại báo cáo sửa chữa cho công việc này. Đang chuyển hướng đến chỉnh sửa...");
+                            resp.sendRedirect(req.getContextPath() + "/technician/reports?action=edit&reportId=" + existingReport.getReportId());
+                            return;
+                        }
+                    } catch (SQLException e) {
+                        req.setAttribute("error", "Lỗi khi kiểm tra báo cáo hiện có: " + e.getMessage());
+                        doGet(req, resp);
+                        return;
+                    }
+
+                    String requestType = null;
+                    boolean isWarranty = false;
+                    if (requestId != null) {
+                        var serviceRequest = serviceRequestDAO.getRequestById(requestId);
+                        if (serviceRequest != null) {
+                            requestType = serviceRequest.getRequestType();
+                            isWarranty = "Warranty".equalsIgnoreCase(requestType);
+                        }
+                    }
+
+                    // ✅ THÊM: Kiểm tra warranty eligibility
+                    String notEligibleParam = req.getParameter("notEligibleForWarranty");
+                    boolean isNotEligibleForWarranty = "true".equalsIgnoreCase(notEligibleParam);
+
+                    report.setRequestId(requestId);
+                    if (scheduleId != null) {
+                        report.setScheduleId(scheduleId);
+                        report.setOrigin("Schedule");
+                    } else {
+                        report.setOrigin("ServiceRequest");
+                    }
+                    report.setTechnicianId(technicianId);
+                    report.setDetails(req.getParameter("details"));
+                    report.setDiagnosis(""); // Parts are stored in RepairReportDetail
+
+                    if (isWarranty && isNotEligibleForWarranty) {
+                        report.setInspectionResult("NotEligible");
+                        report.setQuotationStatus("Rejected"); // Auto-reject
+                    } else {
+                        report.setInspectionResult("Eligible");
+                        report.setQuotationStatus("Pending");
+                    }
+
+                    // Get selected parts from session (scoped to this request)
+                    String cartKey = scheduleId != null
+                            ? "selectedParts_schedule_" + scheduleId
+                            : "selectedParts_" + report.getRequestId();
+                    @SuppressWarnings("unchecked")
+                    List<RepairReportDetail> parts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
+                    if (parts == null) {
+                        parts = new ArrayList<>();
+                    }
+
+                    List<String> validationErrors = new ArrayList<>();
+                    if (!(isWarranty && isNotEligibleForWarranty)) {
+                        validationErrors.addAll(validateRepairReportInput(req, false, parts, isWarranty));
+                    }
+
+                    // Calculate estimated cost (VND -> USD) unless warranty/maintenance
+                    BigDecimal estimatedCost;
+                    if (scheduleId != null) {
+                        estimatedCost = BigDecimal.ZERO;
+                    } else if (isWarranty) {
+                        estimatedCost = BigDecimal.ZERO;
+                    } else {
+                        String estimatedCostStr = req.getParameter("estimatedCost");
+                        if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
+                            try {
+                                BigDecimal vndValue = new BigDecimal(estimatedCostStr);
+                                BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
+                                estimatedCost = usdValue;
+                            } catch (NumberFormatException e) {
+                                validationErrors.add("Invalid estimated cost format");
+                                estimatedCost = calculateTotalFromParts(parts);
+                            }
+                        } else {
                             estimatedCost = calculateTotalFromParts(parts);
                         }
-                    } else {
-                        estimatedCost = calculateTotalFromParts(parts);
                     }
-                }
-                report.setEstimatedCost(estimatedCost);
-                report.setRepairDate(LocalDate.parse(req.getParameter("repairDate")));
-                if (isWarranty && isNotEligibleForWarranty) {
-                    report.setQuotationStatus("Rejected");
-                } else {
-                    report.setQuotationStatus("Pending");
-                }
-
-                if (!validationErrors.isEmpty()) {
-                    req.setAttribute("validationErrors", validationErrors);
-                    req.setAttribute("requestId", report.getRequestId());
-                    req.setAttribute("selectedRequestType", scheduleId != null ? "Maintenance" : requestType);
-                    req.setAttribute("isWarrantyRequest", isWarranty);
-                    req.setAttribute("selectedParts", parts);
-                    if (scheduleId != null) {
-                        req.setAttribute("scheduleId", scheduleId);
-                        req.setAttribute("origin", "Schedule");
-                        req.setAttribute("isScheduleOrigin", true);
-                        try {
-                            Map<String, Object> schedCustomer = getScheduleCustomerInfo(scheduleId);
-                            if (schedCustomer != null) {
-                                req.setAttribute("scheduleCustomerId", schedCustomer.get("customerAccountId"));
-                                req.setAttribute("scheduleCustomerName", schedCustomer.get("customerName"));
-                            }
-                            String taskStatus = getScheduleTaskStatus(technicianId, scheduleId);
-                            if (taskStatus != null) {
-                                req.setAttribute("scheduleTaskStatus", taskStatus);
-                            }
-                        } catch (SQLException ex) {
-                            System.err.println("Error loading schedule info: " + ex.getMessage());
-                        }
-                    } else {
-                        req.setAttribute("isScheduleOrigin", false);
-                    }
-                    try {
-                        req.setAttribute("availableParts", getAllAvailableParts());
-                    } catch (SQLException e) {
-                        req.setAttribute("availableParts", new ArrayList<Map<String, Object>>());
-                        req.setAttribute("error", "Lỗi khi tải linh kiện: " + e.getMessage());
-                    }
-                    req.setAttribute("subtotal", calculateSubtotal(parts));
-                    Map<String, Object> customerRequestInfo = null;
-                    List<Map<String, Object>> customerContracts = new ArrayList<>();
-                    try {
-                        customerRequestInfo = getCustomerRequestInfo(report.getRequestId());
-                        if (customerRequestInfo != null) {
-                            Integer customerAccountId = (Integer) customerRequestInfo.get("customerAccountId");
-                            if (customerAccountId != null) {
-                                customerContracts = getCustomerContracts(customerAccountId);
-                            }
-                        }
-                    } catch (SQLException e) {
-                        System.err.println("Error loading customer info: " + e.getMessage());
-                    }
-                    req.setAttribute("customerRequestInfo", customerRequestInfo);
-                    req.setAttribute("customerContracts", customerContracts);
-                    req.setAttribute("partsSearchQuery", req.getSession().getAttribute("partsSearchQuery"));
-                    req.setAttribute("partsSearchResults", req.getSession().getAttribute("partsSearchResults"));
-                    // Get assigned tasks for dropdown
-                    List<WorkTaskDAO.WorkTaskForReport> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
-                    req.setAttribute("assignedTasks", assignedTasks);
-                    req.setAttribute("pageTitle", "Create Repair Report");
-                    req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
-                    req.setAttribute("activePage", "reports");
-                    req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
-                    return;
-                }
-
-                // Use transactional insert with details
-                int reportId = reportDAO.insertReportWithDetails(report, parts);
-                if (reportId > 0) {
+                    report.setEstimatedCost(estimatedCost);
+                    report.setRepairDate(LocalDate.parse(req.getParameter("repairDate")));
                     if (isWarranty && isNotEligibleForWarranty) {
-                        try {
-                            // Complete WorkTask
-                            workTaskDAO.completeTaskForRequest(technicianId, requestId);
-
-                            // Reject ServiceRequest
-//                            serviceRequestDAO.updateRequestStatus(requestId, "Rejected");
-
-// ✅ QUAN TRỌNG: Chỉ reject ServiceRequest nếu TẤT CẢ technicians đều reject
-                boolean allRejected = reportDAO.areAllWarrantyReportsRejected(requestId);
-                
-                        if (allRejected) {
-                            // Tất cả technicians đã từ chối bảo hành
-                            serviceRequestDAO.updateRequestStatus(requestId, "Rejected");
-                            System.out.println("✓ All technicians rejected warranty - Request " + requestId + " marked as Rejected");
-                        } else {
-                            // Vẫn còn ít nhất 1 technician chấp nhận bảo hành hoặc chưa submit
-                            System.out.println("✓ This technician rejected warranty, but request " + requestId + 
-                                             " remains open (other technicians may approve)");
-                        }
-
-                            System.out.println("✓ Warranty inspection: Not Eligible - Request rejected, Task completed");
-                        } catch (SQLException e) {
-                            System.err.println("Error updating task/request status: " + e.getMessage());
-                        }
+                        report.setQuotationStatus("Rejected");
+                    } else {
+                        report.setQuotationStatus("Pending");
                     }
-                    // Clear selected parts from session (request-specific cart)
-                    req.getSession().removeAttribute(cartKey);
-                    req.getSession().setAttribute("successMessage", "Repair Report has been submitted successfully ✅");
-                    resp.sendRedirect(req.getContextPath() + "/technician/reports");
-                } else {
-                    req.setAttribute("error", "Không thể tạo báo cáo sửa chữa");
-                    doGet(req, resp);
+
+                    if (!validationErrors.isEmpty()) {
+                        req.setAttribute("validationErrors", validationErrors);
+                        req.setAttribute("requestId", report.getRequestId());
+                        req.setAttribute("selectedRequestType", scheduleId != null ? "Maintenance" : requestType);
+                        req.setAttribute("isWarrantyRequest", isWarranty);
+                        req.setAttribute("selectedParts", parts);
+                        if (scheduleId != null) {
+                            req.setAttribute("scheduleId", scheduleId);
+                            req.setAttribute("origin", "Schedule");
+                            req.setAttribute("isScheduleOrigin", true);
+                            try {
+                                Map<String, Object> schedCustomer = getScheduleCustomerInfo(scheduleId);
+                                if (schedCustomer != null) {
+                                    req.setAttribute("scheduleCustomerId", schedCustomer.get("customerAccountId"));
+                                    req.setAttribute("scheduleCustomerName", schedCustomer.get("customerName"));
+                                }
+                                String taskStatus = getScheduleTaskStatus(technicianId, scheduleId);
+                                if (taskStatus != null) {
+                                    req.setAttribute("scheduleTaskStatus", taskStatus);
+                                }
+                            } catch (SQLException ex) {
+                                System.err.println("Error loading schedule info: " + ex.getMessage());
+                            }
+                        } else {
+                            req.setAttribute("isScheduleOrigin", false);
+                        }
+                        try {
+                            req.setAttribute("availableParts", getAllAvailableParts());
+                        } catch (SQLException e) {
+                            req.setAttribute("availableParts", new ArrayList<Map<String, Object>>());
+                            req.setAttribute("error", "Lỗi khi tải linh kiện: " + e.getMessage());
+                        }
+                        req.setAttribute("subtotal", calculateSubtotal(parts));
+                        Map<String, Object> customerRequestInfo = null;
+                        List<Map<String, Object>> customerContracts = new ArrayList<>();
+                        try {
+                            customerRequestInfo = getCustomerRequestInfo(report.getRequestId());
+                            if (customerRequestInfo != null) {
+                                Integer customerAccountId = (Integer) customerRequestInfo.get("customerAccountId");
+                                if (customerAccountId != null) {
+                                    customerContracts = getCustomerContracts(customerAccountId);
+                                }
+                            }
+                        } catch (SQLException e) {
+                            System.err.println("Error loading customer info: " + e.getMessage());
+                        }
+                        req.setAttribute("customerRequestInfo", customerRequestInfo);
+                        req.setAttribute("customerContracts", customerContracts);
+                        req.setAttribute("partsSearchQuery", req.getSession().getAttribute("partsSearchQuery"));
+                        req.setAttribute("partsSearchResults", req.getSession().getAttribute("partsSearchResults"));
+                        List<WorkTaskDAO.WorkTaskForReport> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
+                        req.setAttribute("assignedTasks", assignedTasks);
+                        req.setAttribute("pageTitle", "Create Repair Report");
+                        req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
+                        req.setAttribute("activePage", "reports");
+                        req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+                        return;
+                    }
+
+                    int reportId = reportDAO.insertReportWithDetails(report, parts);
+                    if (reportId > 0) {
+                        if (isWarranty && isNotEligibleForWarranty) {
+                            try {
+                                workTaskDAO.completeTaskForRequest(technicianId, requestId);
+                                boolean allRejected = reportDAO.areAllWarrantyReportsRejected(requestId);
+                                if (allRejected) {
+                                    serviceRequestDAO.updateRequestStatus(requestId, "Rejected");
+                                    System.out.println("✓ All technicians rejected warranty - Request " + requestId + " marked as Rejected");
+                                } else {
+                                    System.out.println("✓ This technician rejected warranty, but request " + requestId
+                                            + " remains open (other technicians may approve)");
+                                }
+                                System.out.println("✓ Warranty inspection: Not Eligible - Request rejected, Task completed");
+                            } catch (SQLException e) {
+                                System.err.println("Error updating task/request status: " + e.getMessage());
+                            }
+                        }
+                        req.getSession().removeAttribute(cartKey);
+                        req.getSession().setAttribute("successMessage", "Repair Report has been submitted successfully ✅");
+                        resp.sendRedirect(req.getContextPath() + "/technician/reports");
+                    } else {
+                        req.setAttribute("error", "Không thể tạo báo cáo sửa chữa");
+                        doGet(req, resp);
+                    }
                 }
 
             } else if ("update".equals(action)) {
@@ -762,132 +734,123 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 }
 
                 // Verify WorkTask is still assigned to this technician
-                WorkTaskDAO workTaskDAO = new WorkTaskDAO();
-                try {
-                    if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, existingReport.getRequestId())) {
-                        req.setAttribute("error", "Bạn không còn được giao công việc này");
+                try (WorkTaskDAO workTaskDAO = new WorkTaskDAO()) {
+                    try {
+                        if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, existingReport.getRequestId())) {
+                            req.setAttribute("error", "Bạn không còn được giao công việc này");
+                            doGet(req, resp);
+                            return;
+                        }
+                    } catch (SQLException e) {
+                        req.setAttribute("error", "Lỗi khi xác thực phân công công việc: " + e.getMessage());
                         doGet(req, resp);
                         return;
                     }
-                } catch (SQLException e) {
-                    req.setAttribute("error", "Lỗi khi xác thực phân công công việc: " + e.getMessage());
-                    doGet(req, resp);
-                    return;
-                }
 
-                // Check if report can be edited (status must be Pending)
-                try {
-                    if (!reportDAO.canTechnicianEditReport(reportId, technicianId)) {
-                        req.setAttribute("error", "Báo cáo này không thể chỉnh sửa (trạng thái báo giá không phải là Đang chờ)");
+                    // Check if report can be edited (status must be Pending)
+                    try {
+                        if (!reportDAO.canTechnicianEditReport(reportId, technicianId)) {
+                            req.setAttribute("error", "Báo cáo này không thể chỉnh sửa (trạng thái báo giá không phải là Đang chờ)");
+                            doGet(req, resp);
+                            return;
+                        }
+                    } catch (SQLException e) {
+                        req.setAttribute("error", "Lỗi khi kiểm tra quyền chỉnh sửa: " + e.getMessage());
                         doGet(req, resp);
                         return;
                     }
-                } catch (SQLException e) {
-                    req.setAttribute("error", "Lỗi khi kiểm tra quyền chỉnh sửa: " + e.getMessage());
-                    doGet(req, resp);
-                    return;
-                }
 
-                String requestType = null;
-                boolean isWarranty = false;
-                var serviceRequest = serviceRequestDAO.getRequestById(existingReport.getRequestId());
-                if (serviceRequest != null) {
-                    requestType = serviceRequest.getRequestType();
-                    isWarranty = "Warranty".equalsIgnoreCase(requestType);
-                }
+                    String requestType = null;
+                    boolean isWarranty = false;
+                    var serviceRequest = serviceRequestDAO.getRequestById(existingReport.getRequestId());
+                    if (serviceRequest != null) {
+                        requestType = serviceRequest.getRequestType();
+                        isWarranty = "Warranty".equalsIgnoreCase(requestType);
+                    }
 
-                RepairReport report = new RepairReport();
-                report.setReportId(reportId);
-                report.setRequestId(existingReport.getRequestId()); // Use existing requestId
-                report.setTechnicianId(technicianId);
-                report.setDetails(req.getParameter("details"));
-                report.setDiagnosis(""); // Parts replace diagnosis
+                    RepairReport report = new RepairReport();
+                    report.setReportId(reportId);
+                    report.setRequestId(existingReport.getRequestId());
+                    report.setTechnicianId(technicianId);
+                    report.setDetails(req.getParameter("details"));
+                    report.setDiagnosis("");
 
-                // Get selected parts from session (or existing parts if session is empty)
-                String cartKey = existingReport.getScheduleId() != null
-                        ? "selectedParts_schedule_" + existingReport.getScheduleId()
-                        : "selectedParts_" + existingReport.getRequestId();
-                @SuppressWarnings("unchecked")
-                List<RepairReportDetail> parts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
-                if (parts == null || parts.isEmpty()) {
-                    // If no parts in session, load existing parts from database
-                    parts = reportDAO.getReportDetails(reportId);
-                }
+                    String cartKey = existingReport.getScheduleId() != null
+                            ? "selectedParts_schedule_" + existingReport.getScheduleId()
+                            : "selectedParts_" + existingReport.getRequestId();
+                    @SuppressWarnings("unchecked")
+                    List<RepairReportDetail> parts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
+                    if (parts == null || parts.isEmpty()) {
+                        parts = reportDAO.getReportDetails(reportId);
+                    }
 
-                // Input is in VND, convert to USD for database storage (warranty -> zero)
-                BigDecimal estimatedCost;
-                if (isWarranty) {
-                    estimatedCost = BigDecimal.ZERO;
-                } else {
-                    String estimatedCostStr = req.getParameter("estimatedCost");
-                    if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
-                        try {
-                            // Input is in VND, convert to USD (divide by 26000)
-                            BigDecimal vndValue = new BigDecimal(estimatedCostStr);
-                            BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
-                            estimatedCost = usdValue;
-                        } catch (NumberFormatException e) {
+                    BigDecimal estimatedCost;
+                    if (isWarranty) {
+                        estimatedCost = BigDecimal.ZERO;
+                    } else {
+                        String estimatedCostStr = req.getParameter("estimatedCost");
+                        if (estimatedCostStr != null && !estimatedCostStr.trim().isEmpty()) {
+                            try {
+                                BigDecimal vndValue = new BigDecimal(estimatedCostStr);
+                                BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
+                                estimatedCost = usdValue;
+                            } catch (NumberFormatException e) {
+                                estimatedCost = calculateTotalFromParts(parts);
+                            }
+                        } else {
                             estimatedCost = calculateTotalFromParts(parts);
                         }
-                    } else {
-                        estimatedCost = calculateTotalFromParts(parts);
                     }
-                }
-                report.setEstimatedCost(estimatedCost);
-                report.setRepairDate(existingReport.getRepairDate()); // Use existing repair date
-                report.setQuotationStatus("Pending"); // Keep as Pending
+                    report.setEstimatedCost(estimatedCost);
+                    report.setRepairDate(existingReport.getRepairDate());
+                    report.setQuotationStatus("Pending");
 
-                // Validate input using new validation system
-                List<String> validationErrors = validateRepairReportInput(req, true, parts, isWarranty); // true = update mode
-                if (!validationErrors.isEmpty()) {
-                    req.setAttribute("validationErrors", validationErrors);
-                    req.setAttribute("report", report);
-                    req.setAttribute("selectedRequestType", requestType);
-                    req.setAttribute("isWarrantyRequest", isWarranty);
-                    req.setAttribute("selectedParts", parts);
-                    req.setAttribute("subtotal", calculateSubtotal(parts));
-                    try {
-                        req.setAttribute("availableParts", getAllAvailableParts());
-                    } catch (SQLException e) {
-                        req.setAttribute("availableParts", new ArrayList<Map<String, Object>>());
-                    }
-                    Map<String, Object> customerRequestInfo = null;
-                    List<Map<String, Object>> customerContracts = new ArrayList<>();
-                    try {
-                        customerRequestInfo = getCustomerRequestInfo(report.getRequestId());
-                        if (customerRequestInfo != null) {
-                            Integer customerAccountId = (Integer) customerRequestInfo.get("customerAccountId");
-                            if (customerAccountId != null) {
-                                customerContracts = getCustomerContracts(customerAccountId);
-                            }
+                    List<String> validationErrors = validateRepairReportInput(req, true, parts, isWarranty);
+                    if (!validationErrors.isEmpty()) {
+                        req.setAttribute("validationErrors", validationErrors);
+                        req.setAttribute("report", report);
+                        req.setAttribute("selectedRequestType", requestType);
+                        req.setAttribute("isWarrantyRequest", isWarranty);
+                        req.setAttribute("selectedParts", parts);
+                        req.setAttribute("subtotal", calculateSubtotal(parts));
+                        try {
+                            req.setAttribute("availableParts", getAllAvailableParts());
+                        } catch (SQLException e) {
+                            req.setAttribute("availableParts", new ArrayList<Map<String, Object>>());
                         }
-                    } catch (SQLException e) {
-                        System.err.println("Error loading customer info: " + e.getMessage());
+                        Map<String, Object> customerRequestInfo = null;
+                        List<Map<String, Object>> customerContracts = new ArrayList<>();
+                        try {
+                            customerRequestInfo = getCustomerRequestInfo(report.getRequestId());
+                            if (customerRequestInfo != null) {
+                                Integer customerAccountId = (Integer) customerRequestInfo.get("customerAccountId");
+                                if (customerAccountId != null) {
+                                    customerContracts = getCustomerContracts(customerAccountId);
+                                }
+                            }
+                        } catch (SQLException e) {
+                            System.err.println("Error loading customer info: " + e.getMessage());
+                        }
+                        req.setAttribute("customerRequestInfo", customerRequestInfo);
+                        req.setAttribute("customerContracts", customerContracts);
+                        req.setAttribute("partsSearchQuery", req.getSession().getAttribute("partsSearchQuery"));
+                        req.setAttribute("partsSearchResults", req.getSession().getAttribute("partsSearchResults"));
+                        req.setAttribute("pageTitle", "Edit Repair Report");
+                        req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
+                        req.setAttribute("activePage", "reports");
+                        req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+                        return;
                     }
-                    req.setAttribute("customerRequestInfo", customerRequestInfo);
-                    req.setAttribute("customerContracts", customerContracts);
-                    req.setAttribute("partsSearchQuery", req.getSession().getAttribute("partsSearchQuery"));
-                    req.setAttribute("partsSearchResults", req.getSession().getAttribute("partsSearchResults"));
-                    req.setAttribute("pageTitle", "Edit Repair Report");
-                    req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
-                    req.setAttribute("activePage", "reports");
-                    req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
-                    return;
-                }
 
-                // For update, we need to delete old details and insert new ones
-                // This requires a more complex update method - for now, we'll update the report header
-                // and note that parts editing requires deleting and recreating the report
-                // TODO: Implement updateReportWithDetails method if needed
-                boolean updated = reportDAO.updateRepairReport(report);
-                if (updated) {
-                    // Clear session (request-specific cart)
-                    req.getSession().removeAttribute(cartKey);
-                    req.setAttribute("success", "Báo cáo sửa chữa đã được cập nhật thành công");
-                    resp.sendRedirect(req.getContextPath() + "/technician/reports?action=detail&reportId=" + reportId);
-                } else {
-                    req.setAttribute("error", "Không thể cập nhật báo cáo sửa chữa");
-                    doGet(req, resp);
+                    boolean updated = reportDAO.updateRepairReport(report);
+                    if (updated) {
+                        req.getSession().removeAttribute(cartKey);
+                        req.setAttribute("success", "Báo cáo sửa chữa đã được cập nhật thành công");
+                        resp.sendRedirect(req.getContextPath() + "/technician/reports?action=detail&reportId=" + reportId);
+                    } else {
+                        req.setAttribute("error", "Không thể cập nhật báo cáo sửa chữa");
+                        doGet(req, resp);
+                    }
                 }
 
             } else {
@@ -972,8 +935,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         if ((parts == null || parts.isEmpty()) && !isWarranty) {
             errors.add("At least one part must be selected");
         } else if (parts != null && !parts.isEmpty()) {
-            try {
-                PartDetailDAO partDetailDAO = new PartDetailDAO();
+            try (PartDetailDAO partDetailDAO = new PartDetailDAO()) {
                 for (RepairReportDetail part : parts) {
                     // Validate partId exists
                     if (part.getPartId() <= 0) {
@@ -2097,11 +2059,10 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
-        try {
+        try (RepairReportDAO reportDAO = new RepairReportDAO()) {
             String scheduleIdStr = req.getParameter("scheduleId");
             String requestIdStr = req.getParameter("requestId");
 
-            RepairReportDAO reportDAO = new RepairReportDAO();
             RepairReport existingReport = null;
 
             if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
