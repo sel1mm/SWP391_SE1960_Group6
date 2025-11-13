@@ -192,7 +192,17 @@ public class ViewCustomerContractController extends HttpServlet {
         List<Account> customerList = accountDAO.getAccountsByRole("Customer");
         request.setAttribute("customerList", customerList);
 
+        int totalContractsCount = contractDAO.countAllContracts();
+        int activeContractsCount = contractDAO.countByStatus("Active");
+        int totalServiceRequestsCount = contractDAO.countTotalServiceRequests();
+        Map<String, Object> topCustomer = contractDAO.getCustomerWithMostContracts();
+
         request.setAttribute("contractList", contractList);
+
+        request.setAttribute("totalContractsCount", totalContractsCount);
+        request.setAttribute("activeContractsCount", activeContractsCount);
+        request.setAttribute("totalServiceRequestsCount", totalServiceRequestsCount);
+        request.setAttribute("topCustomer", topCustomer);
         request.setAttribute("paramKeyword", keyword);
         request.setAttribute("paramStatus", status);
         request.setAttribute("paramContractType", contractType);
@@ -962,7 +972,7 @@ public class ViewCustomerContractController extends HttpServlet {
 
             int contractId = contractDAO.createContractWithCreatedDate(
                     customerId, contractDate, contractType, status, details.trim(), fileUrl
-            );  
+            );
 
             System.out.println("Created contract ID: " + contractId);
 

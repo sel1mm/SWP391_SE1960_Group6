@@ -155,8 +155,18 @@ public class ViewCustomerRequest extends HttpServlet {
 
         List<Account> customerList = accountDAO.getAccountsByRole("Customer");
 
+        int totalRequestsCount = serviceRequestDAO.countAllRequests();
+        int pendingCount = serviceRequestDAO.countByStatus("Pending");
+        int serviceCount = serviceRequestDAO.countByRequestType("Service");
+        int warrantyCount = serviceRequestDAO.countByRequestType("Warranty");
+
         request.setAttribute("requestList", requestList);
         request.setAttribute("customerList", customerList);
+
+        request.setAttribute("totalRequestsCount", totalRequestsCount);
+        request.setAttribute("pendingCount", pendingCount);
+        request.setAttribute("serviceCount", serviceCount);
+        request.setAttribute("warrantyCount", warrantyCount);
 
         request.setAttribute("paramKeyword", keyword);
         request.setAttribute("paramStatus", status);

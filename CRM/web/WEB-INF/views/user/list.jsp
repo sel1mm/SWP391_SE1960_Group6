@@ -1,39 +1,55 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
 <!DOCTYPE html>
 <html lang="vi">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Bảng Điều Khiển Quản Trị</title>
+        <title>Quản lý người dùng</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
         <style>
-            .card-hover:hover {
-                transform: translateY(-5px);
-                transition: transform 0.3s ease;
+            .table th {
+                background-color: #f8f9fa;
             }
-            .card-hover {
-                transition: transform 0.3s ease;
+            .status-badge {
+                font-size: 0.8em;
+            }
+            /* 🎨 Pagination Style */
+            .pagination .page-item.active .page-link {
+                background-color: #007bff;
+                border-color: #007bff;
+                color: white;
+            }
+            .pagination .page-link {
+                color: #007bff;
+                border-radius: 0.25rem;
+                border: 1px solid #dee2e6;
+            }
+            .pagination .page-link:hover {
+                background-color: #e9ecef;
             }
         </style>
     </head>
     <body>
         <div class="container-fluid">
             <div class="row">
+
                 <!-- Sidebar -->
-                <div class="col-md-2 min-vh-100 d-flex flex-column justify-content-between" style="background-color: #000000;">
-                    <!-- Top of sidebar -->
+               <div class="col-md-2 min-vh-100 d-flex flex-column justify-content-between" style="background-color: #000000;">
                     <div class="p-3">
-                        <h4 class="text-white">Hệ Thống CRM</h4>
+                        <h4 class="text-white">CRM System</h4>
                         <ul class="nav flex-column">
                             <li class="nav-item">
                                 <a class="nav-link text-white" href="${pageContext.request.contextPath}/home.jsp">
-                                    <i class="fas fa-home"></i> Trang chủ
+                                    <i class="fas fa-home"></i> Trang Chủ
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-white active" href="${pageContext.request.contextPath}/admin.jsp">
-                                    <i class="fas fa-tachometer-alt"></i> Bảng Điều Khiển Admin
+                                    <i class="fas fa-tachometer-alt"></i> Admin Dashboard
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -49,7 +65,7 @@
                         </ul>
                     </div>
 
-                    <!-- Logout button at bottom -->
+                    <!-- Logout -->
                     <div class="p-3 border-top border-secondary">
                         <a href="${pageContext.request.contextPath}/logout"
                            class="btn btn-outline-light w-100 d-flex align-items-center justify-content-center gap-2">
@@ -61,137 +77,214 @@
                 <!-- Main Content -->
                 <div class="col-md-10">
                     <div class="p-4">
+
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2><i class="fas fa-tachometer-alt"></i> Bảng Điều Khiển Admin</h2>
-                            <div class="text-muted">
-                                <i class="fas fa-user-shield"></i> Khu vực quản trị
+                            <h2><i class="fas fa-users"></i> Quản lý người dùng</h2>
+                            <a href="${pageContext.request.contextPath}/user/create" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Thêm người dùng
+                            </a>
+                        </div>
+
+                        <!-- Search Form -->
+                        <form class="row mb-3" method="get" action="${pageContext.request.contextPath}/user/list">
+                            <div class="col-md-3">
+                                <input type="text" class="form-control" name="keyword"
+                                       placeholder="Tìm kiếm bằng username, email hoặc full name..."
+                                       value="${param.keyword}">
                             </div>
-                        </div>
+                            <div class="col-md-2">
+                                <select name="status" class="form-select">
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>Hoạt động</option>
+                                    <option value="Inactive" ${param.status == 'Inactive' ? 'selected' : ''}>Không hoạt động</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="roleId" class="form-select">
+                                    <option value="">Tất cả vai trò</option>
+                                    <c:forEach var="role" items="${allRoles}">
+                                        <option value="${role.roleId}" ${param.roleId == role.roleId ? 'selected' : ''}>
+                                            ${role.roleName}
+                                        </option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i> Tìm kiếm
+                                </button>
+                            </div>
+                            <div class="col-md-2">
+                                <a href="${pageContext.request.contextPath}/user/list" class="btn btn-secondary w-100">
+                                    <i class="fas fa-undo"></i> Reset
+                                </a>
+                            </div>
+                        </form>
 
-                        <!-- Welcome Message -->
-                        <div class="alert alert-info">
-                            <h5><i class="fas fa-info-circle"></i> Chào mừng đến Bảng Điều Khiển Quản Trị</h5>
-                            <p class="mb-0">Quản lý người dùng, vai trò và các thiết lập hệ thống tại đây.</p>
-                        </div>
+                        <!-- Messages -->
+                        <c:if test="${not empty message}">
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                ${message}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        </c:if>
 
-                        <!-- Management Cards -->
-                        <div class="row">
-                            <!-- User Management -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card card-hover h-100">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-users fa-3x text-primary mb-3"></i>
-                                        <h4 class="card-title">Quản Lý Người Dùng</h4>
-                                        <p class="card-text">Tạo mới, chỉnh sửa và quản lý tài khoản người dùng. Phân quyền và vai trò.</p>
-                                        <div class="d-grid gap-2">
-                                            <a href="${pageContext.request.contextPath}/user/list" class="btn btn-primary">
-                                                <i class="fas fa-users"></i> Danh Sách Người Dùng
-                                            </a>
-                                            <a href="${pageContext.request.contextPath}/user/create" class="btn btn-outline-primary">
-                                                <i class="fas fa-user-plus"></i> Thêm Người Dùng
-                                            </a>
+                        <c:if test="${not empty error}">
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                ${error}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        </c:if>
+
+                        <!-- User List -->
+                        <div class="card">
+                            <div class="card-body">
+                                <c:choose>
+                                    <c:when test="${not empty users}">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>Username</th>
+                                                        <th>Họ và Tên</th>
+                                                        <th>Email</th>
+                                                        <th>Phone</th>
+                                                        <th>Vai trò</th>
+                                                        <th>Trạng Thái</th>
+                                                        <th>Thao tác</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <c:forEach var="user" items="${users}">
+                                                        <tr>
+                                                            <td>${user.accountId}</td>
+                                                            <td>${user.username}</td>
+                                                            <td>${user.fullName}</td>
+                                                            <td>${user.email}</td>
+                                                            <td>${user.phone}</td>
+                                                            <td>
+                                                                <c:set var="userRoles" value="${userRolesMap[user.accountId]}" />
+                                                                <c:choose>
+                                                                    <c:when test="${not empty userRoles}">
+                                                                        <c:forEach var="role" items="${userRoles}">
+                                                                            <span class="badge bg-info text-dark me-1">${role.roleName}</span>
+                                                                        </c:forEach>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="text-muted">Không có vai trò</span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </td>
+                                                            <td>
+                                                                <c:choose>
+                                                                    <c:when test="${user.status == 'Active'}">
+                                                                        <span class="badge bg-success status-badge">Hoạt động</span>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="badge bg-secondary status-badge">Không hoạt động</span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </td>
+                                                            <td>
+                                                                <div class="btn-group" role="group">
+                                                                    <a href="${pageContext.request.contextPath}/user/edit?id=${user.accountId}"
+                                                                       class="btn btn-sm btn-outline-primary" title="Edit">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </a>
+                                                                    <a href="${pageContext.request.contextPath}/user/roles?id=${user.accountId}"
+                                                                       class="btn btn-sm btn-outline-info" title="Manage Roles">
+                                                                        <i class="fas fa-user-tag"></i>
+                                                                    </a>
+                                                                    <c:choose>
+                                                                        <c:when test="${user.accountId ne sessionScope.session_login.accountId}">
+                                                                            <c:choose>
+                                                                                <c:when test="${user.status == 'Active'}">
+                                                                                    <a href="${pageContext.request.contextPath}/user/delete?id=${user.accountId}"
+                                                                                       class="btn btn-sm btn-outline-danger"
+                                                                                       onclick="return confirm('Bạn có chắc chắn muốn ban người dùng này')"
+                                                                                       title="Ban User">
+                                                                                        <i class="fas fa-user-slash"></i>
+                                                                                    </a>
+                                                                                </c:when>
+                                                                                <c:otherwise>
+                                                                                    <a href="${pageContext.request.contextPath}/user/delete?id=${user.accountId}"
+                                                                                       class="btn btn-sm btn-outline-success"
+                                                                                       onclick="return confirm('Bạn có chắc chắn muốn unban người dùng này?')"
+                                                                                       title="Unban User">
+                                                                                        <i class="fas fa-user-check"></i>
+                                                                                    </a>
+                                                                                </c:otherwise>
+                                                                            </c:choose>
+                                                                        </c:when>
+                                                                    </c:choose>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </c:forEach>
+                                                </tbody>
+                                            </table>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- Role Management -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card card-hover h-100">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-user-tag fa-3x text-success mb-3"></i>
-                                        <h4 class="card-title">Quản Lý Vai Trò</h4>
-                                        <p class="card-text">Tạo và quản lý vai trò. Định nghĩa quyền truy cập cho từng loại người dùng.</p>
-                                        <div class="d-grid gap-2">
-                                            <a href="${pageContext.request.contextPath}/role/list" class="btn btn-success">
-                                                <i class="fas fa-user-tag"></i> Danh Sách Vai Trò
-                                            </a>
-                                            <a href="${pageContext.request.contextPath}/role/create" class="btn btn-outline-success">
-                                                <i class="fas fa-plus"></i> Thêm Vai Trò
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                        <!-- Pagination (VN style) -->
+                                        <c:if test="${totalPages > 1}">
+                                            <nav aria-label="User pagination">
+                                                <ul class="pagination justify-content-center mt-4">
+                                                    <!-- Trước -->
+                                                    <c:choose>
+                                                        <c:when test="${currentPage > 1}">
+                                                            <li class="page-item">
+                                                                <a class="page-link"
+                                                                   href="?page=${currentPage - 1}&keyword=${param.keyword}&status=${param.status}&roleId=${param.roleId}">
+                                                                    &lsaquo; Trước</a>
+                                                            </li>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <li class="page-item disabled">
+                                                                <span class="page-link">&lsaquo; Trước</span>
+                                                            </li>
+                                                        </c:otherwise>
+                                                    </c:choose>
 
-                        <!-- Quick Stats -->
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5><i class="fas fa-chart-bar"></i> Thống Kê Nhanh</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row text-center">
-                                            <div class="col-md-3">
-                                                <div class="p-3">
-                                                    <i class="fas fa-users fa-2x text-primary mb-2"></i>
-                                                    <h4 class="text-primary">Người dùng</h4>
-                                                    <p class="text-muted">Tổng số người dùng</p>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="p-3">
-                                                    <i class="fas fa-user-tag fa-2x text-success mb-2"></i>
-                                                    <h4 class="text-success">Vai trò</h4>
-                                                    <p class="text-muted">Tổng số vai trò</p>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="p-3">
-                                                    <i class="fas fa-user-check fa-2x text-info mb-2"></i>
-                                                    <h4 class="text-info">Hoạt động</h4>
-                                                    <p class="text-muted">Tài khoản đang hoạt động</p>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="p-3">
-                                                    <i class="fas fa-user-times fa-2x text-warning mb-2"></i>
-                                                    <h4 class="text-warning">Không hoạt động</h4>
-                                                    <p class="text-muted">Tài khoản bị vô hiệu hóa</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                                    <!-- Số trang -->
+                                                    <c:forEach var="i" begin="1" end="${totalPages}">
+                                                        <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                                            <a class="page-link"
+                                                               href="?page=${i}&keyword=${param.keyword}&status=${param.status}&roleId=${param.roleId}">
+                                                                ${i}</a>
+                                                        </li>
+                                                    </c:forEach>
 
-                        <!-- System Information -->
-                        <div class="row mt-4">
-                            <div class="col-md-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5><i class="fas fa-cog"></i> Thông Tin Hệ Thống</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <h6>Chức năng khả dụng:</h6>
-                                                <ul class="list-unstyled">
-                                                    <li><i class="fas fa-check text-success"></i> CRUD người dùng</li>
-                                                    <li><i class="fas fa-check text-success"></i> Quản lý vai trò</li>
-                                                    <li><i class="fas fa-check text-success"></i> Gán vai trò cho người dùng</li>
-                                                    <li><i class="fas fa-check text-success"></i> Quản lý mật khẩu</li>
-                                                    <li><i class="fas fa-check text-success"></i> Kiểm soát trạng thái tài khoản</li>
+                                                    <!-- Tiếp -->
+                                                    <c:choose>
+                                                        <c:when test="${currentPage < totalPages}">
+                                                            <li class="page-item">
+                                                                <a class="page-link"
+                                                                   href="?page=${currentPage + 1}&keyword=${param.keyword}&status=${param.status}&roleId=${param.roleId}">
+                                                                    Tiếp &rsaquo;</a>
+                                                            </li>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <li class="page-item disabled">
+                                                                <span class="page-link">Tiếp &rsaquo;</span>
+                                                            </li>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </ul>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <h6>Tính năng bảo mật:</h6>
-                                                <ul class="list-unstyled">
-                                                    <li><i class="fas fa-shield-alt text-primary"></i> Mã hoá mật khẩu</li>
-                                                    <li><i class="fas fa-lock text-primary"></i> Phân quyền theo vai trò</li>
-                                                    <li><i class="fas fa-user-shield text-primary"></i> Quyền quản trị viên</li>
-                                                    <li><i class="fas fa-key text-primary"></i> Xác thực an toàn</li>
-                                                </ul>
-                                            </div>
+                                            </nav>
+                                        </c:if>
+
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="text-center py-5">
+                                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                            <h5 class="text-muted">Không tìm thấy người dùng</h5>
+                                            <p class="text-muted">Bắt đầu bằng cách thêm người dùng mới.</p>
                                         </div>
-                                    </div>
-                                </div>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
