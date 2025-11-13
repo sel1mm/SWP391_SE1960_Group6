@@ -1118,6 +1118,7 @@ public class ContractDAO extends MyDAO {
             c.contractType, 
             c.status, 
             c.details,
+            c.FileAttachment,
             a.fullName AS customerName, 
             a.email AS customerEmail, 
             a.phone AS customerPhone,
@@ -1156,6 +1157,7 @@ public class ContractDAO extends MyDAO {
                     c.setContractType(rs.getString("contractType"));
                     c.setStatus(rs.getString("status"));
                     c.setDetails(rs.getString("details"));
+                    c.setFileAttachment(rs.getString("FileAttachment"));
                     c.setRequestCount(rs.getInt("requestCount"));
                     list.add(c);
                 }
@@ -1186,6 +1188,7 @@ public class ContractDAO extends MyDAO {
             c.contractType, 
             c.status, 
             c.details,
+            c.FileAttachment,
             a.fullName AS customerName, 
             a.email AS customerEmail, 
             a.phone AS customerPhone,
@@ -1259,6 +1262,7 @@ public class ContractDAO extends MyDAO {
                     c.setContractType(rs.getString("contractType"));
                     c.setStatus(rs.getString("status"));
                     c.setDetails(rs.getString("details"));
+                    c.setFileAttachment(rs.getString("FileAttachment"));
                     c.setRequestCount(rs.getInt("requestCount"));
                     list.add(c);
                 }
@@ -1612,6 +1616,36 @@ public class ContractDAO extends MyDAO {
 
         System.out.println("⚠️ Equipment " + equipmentId + " not found in any contract for customer " + customerId);
         return null;
+    }
+
+    // Tạo hợp đồng mới với createdDate = NOW() và fileAttachment
+    public int createContractWithCreatedDate(int customerId, LocalDate contractDate,
+            String contractType, String status, String details, String fileUrl) throws SQLException {
+        String sql = """
+        INSERT INTO Contract (customerId, contractDate, contractType, status, details, fileAttachment, createdDate)
+        VALUES (?, ?, ?, ?, ?, ?, NOW())
+    """;
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, customerId);
+            ps.setDate(2, java.sql.Date.valueOf(contractDate));
+            ps.setString(3, contractType);
+            ps.setString(4, status);
+            ps.setString(5, details);
+            ps.setString(6, fileUrl);
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int newId = rs.getInt(1);
+                        System.out.println("✅ Created new contract ID: " + newId + " with file: " + fileUrl);
+                        return newId;
+                    }
+                }
+            }
+            System.out.println("⚠️ Failed to create contract for customerId: " + customerId);
+            return -1;
+        }
     }
 
 }

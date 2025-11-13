@@ -6,15 +6,15 @@
 <div class="container-fluid">
   <div class="row mb-3 align-items-center">
     <div class="col">
-      <h1 class="h4 crm-page-title">Work History</h1>
-      <p class="text-muted">View all your tasks and submitted reports</p>
+      <h1 class="h4 crm-page-title">Lịch sử công việc</h1>
+      <p class="text-muted">Xem toàn bộ công việc và báo cáo đã gửi của bạn</p>
     </div>
     <div class="col-auto">
       <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/tasks">
-        <i class="bi bi-list-task me-1"></i>Current Tasks
+        <i class="bi bi-list-task me-1"></i>Công việc hiện tại
       </a>
       <a class="btn btn-primary" href="${pageContext.request.contextPath}/technician/reports">
-        <i class="bi bi-clipboard-plus me-1"></i>My Reports
+        <i class="bi bi-clipboard-plus me-1"></i>Báo cáo của tôi
       </a>
     </div>
   </div>
@@ -24,19 +24,19 @@
     <div class="card-body">
       <form id="workHistorySearchForm" class="row g-2 align-items-center" method="get" action="${pageContext.request.contextPath}/technician/work-history">
         <div class="col-12 col-md-4">
-          <input type="text" name="q" value="${searchQuery}" class="form-control" placeholder="Search tasks and reports..."/>
+          <input type="text" name="q" value="${searchQuery}" class="form-control" placeholder="Tìm kiếm công việc và báo cáo..."/>
         </div>
         <div class="col-6 col-md-3">
           <select class="form-select" name="status">
-            <option value="">All Statuses</option>
-            <option value="Assigned" ${statusFilter == 'Assigned' ? 'selected' : ''}>Assigned</option>
-            <option value="In Progress" ${statusFilter == 'In Progress' ? 'selected' : ''}>In Progress</option>
-            <option value="Completed" ${statusFilter == 'Completed' ? 'selected' : ''}>Completed</option>
-            <option value="Failed" ${statusFilter == 'Failed' ? 'selected' : ''}>Failed</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="Assigned" ${statusFilter == 'Assigned' ? 'selected' : ''}>Đã giao</option>
+            <option value="In Progress" ${statusFilter == 'In Progress' ? 'selected' : ''}>Đang thực hiện</option>
+            <option value="Completed" ${statusFilter == 'Completed' ? 'selected' : ''}>Hoàn thành</option>
+            <option value="Failed" ${statusFilter == 'Failed' ? 'selected' : ''}>Thất bại</option>
           </select>
         </div>
         <div class="col-6 col-md-3 text-end">
-          <button class="btn btn-secondary" type="submit"><i class="bi bi-search me-1"></i>Search</button>
+          <button class="btn btn-secondary" type="submit"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
         </div>
       </form>
     </div>
@@ -46,8 +46,8 @@
     <div class="col-lg-8">
       <div class="card crm-card-shadow">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">All Tasks</h5>
-          <span class="badge bg-primary">${totalTasks} total</span>
+          <h5 class="mb-0">Tất cả công việc</h5>
+          <span class="badge bg-primary">${totalTasks} công việc</span>
         </div>
         <div class="card-body">
           <c:choose>
@@ -56,12 +56,12 @@
                 <table class="table table-hover">
                   <thead>
                     <tr>
-                      <th>Task ID</th>
-                      <th>Type</th>
-                      <th>Details</th>
-                      <th>Status</th>
-                      <th>Start Date</th>
-                      <th>End Date</th>
+                      <th>Mã công việc</th>
+                      <th>Loại</th>
+                      <th>Chi tiết</th>
+                      <th>Trạng thái</th>
+                      <th>Ngày bắt đầu</th>
+                      <th>Ngày kết thúc</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -78,22 +78,22 @@
                           <c:set var="status" value="${task.status}"/>
                           <c:choose>
                             <c:when test="${status == 'Pending'}">
-                              <span class="badge bg-warning">Pending</span>
+                              <span class="badge bg-warning">Đang chờ</span>
                             </c:when>
                             <c:when test="${status == 'Assigned'}">
-                              <span class="badge bg-info">Assigned</span>
+                              <span class="badge bg-info">Đã giao</span>
                             </c:when>
                             <c:when test="${status == 'In Progress'}">
-                              <span class="badge bg-primary">In Progress</span>
+                              <span class="badge bg-primary">Đang thực hiện</span>
                             </c:when>
                             <c:when test="${status == 'Completed'}">
-                              <span class="badge bg-success">Completed</span>
+                              <span class="badge bg-success">Hoàn thành</span>
                             </c:when>
                             <c:when test="${status == 'On Hold'}">
-                              <span class="badge bg-secondary">On Hold</span>
+                              <span class="badge bg-secondary">Tạm hoãn</span>
                             </c:when>
                             <c:when test="${status == 'Cancelled'}">
-                              <span class="badge bg-danger">Cancelled</span>
+                              <span class="badge bg-danger">Đã hủy</span>
                             </c:when>
                             <c:otherwise>
                               <span class="badge bg-dark">${task.status}</span>
@@ -106,7 +106,7 @@
                               ${task.startDate}
                             </c:when>
                             <c:otherwise>
-                              <span class="text-muted">Not set</span>
+                              <span class="text-muted">Chưa đặt</span>
                             </c:otherwise>
                           </c:choose>
                         </td>
@@ -116,7 +116,7 @@
                               ${task.endDate}
                             </c:when>
                             <c:otherwise>
-                              <span class="text-muted">Not set</span>
+                              <span class="text-muted">Chưa đặt</span>
                             </c:otherwise>
                           </c:choose>
                         </td>
@@ -128,7 +128,7 @@
               
               <!-- Pagination -->
               <c:if test="${totalPages > 1}">
-                <nav aria-label="Task pagination">
+                <nav aria-label="Phân trang công việc">
                   <ul class="pagination justify-content-center">
                     <c:forEach begin="1" end="${totalPages}" var="pageNum">
                       <li class="page-item ${pageNum == currentPage ? 'active' : ''}">
@@ -143,8 +143,8 @@
               <div class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-clipboard fs-1 d-block mb-2"></i>
-                  <p>No tasks found</p>
-                  <small>Tasks assigned to you will appear here</small>
+                  <p>Không tìm thấy công việc</p>
+                  <small>Các công việc được giao cho bạn sẽ hiển thị tại đây</small>
                 </div>
               </div>
             </c:otherwise>
@@ -156,8 +156,8 @@
     <div class="col-lg-4">
       <div class="card crm-card-shadow">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Submitted Reports</h5>
-          <span class="badge bg-primary">${totalSubmittedReports} reports</span>
+          <h5 class="mb-0">Báo cáo đã gửi</h5>
+          <span class="badge bg-primary">${totalSubmittedReports} báo cáo</span>
         </div>
         <div class="card-body">
           <c:choose>
@@ -166,12 +166,12 @@
                 <c:forEach var="report" items="${submittedReports}">
                   <div class="list-group-item">
                     <div class="d-flex w-100 justify-content-between">
-                      <h6 class="mb-1">Report #${report.reportId}</h6>
+                      <h6 class="mb-1">Báo cáo #${report.reportId}</h6>
                       <small class="text-muted">₫<fmt:formatNumber value="${report.estimatedCost * 26000}" type="number" maxFractionDigits="0"/></small>
                     </div>
                     <p class="mb-1">${fn:escapeXml(report.details)}</p>
                     <small class="text-primary">
-                      <i class="bi bi-calendar-event me-1"></i>Submitted: ${report.repairDate}
+                      <i class="bi bi-calendar-event me-1"></i>Đã gửi: ${report.repairDate}
                     </small>
                   </div>
                 </c:forEach>
@@ -181,8 +181,8 @@
               <div class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-file-earmark-text fs-1 d-block mb-2"></i>
-                  <p>No reports found</p>
-                  <small>Your submitted reports will appear here</small>
+                  <p>Không tìm thấy báo cáo</p>
+                  <small>Các báo cáo bạn đã gửi sẽ hiển thị tại đây</small>
                 </div>
               </div>
             </c:otherwise>

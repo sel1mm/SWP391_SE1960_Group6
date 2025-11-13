@@ -580,351 +580,411 @@
                 }
             }
             /* ========== CHATBOT STYLES ========== */
-    .chatbot-container {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 99999;
-    }
+            .chatbot-container {
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                z-index: 99999;
+            }
 
-    .chatbot-button {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s;
-        position: relative;
-    }
+            .chatbot-button {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border: none;
+                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s;
+                position: relative;
+            }
 
-    .chatbot-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
-    }
+            .chatbot-button:hover {
+                transform: scale(1.1);
+                box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+            }
 
-    .chatbot-button i {
-        color: white;
-        font-size: 24px;
-    }
+            .chatbot-button i {
+                color: white;
+                font-size: 24px;
+            }
 
-    .chatbot-badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        width: 20px;
-        height: 20px;
-        background: #ff4757;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        color: white;
-        font-weight: bold;
-        animation: pulse 2s infinite;
-    }
+            .chatbot-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                width: 20px;
+                height: 20px;
+                background: #ff4757;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+                color: white;
+                font-weight: bold;
+                animation: pulse 2s infinite;
+            }
 
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-    }
+            @keyframes pulse {
+                0%, 100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.1);
+                }
+            }
 
-    .chatbot-window {
-        position: fixed;
-        bottom: 100px;
-        right: 30px;
-        width: 420px;
-        height: 650px;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        display: none;
-        flex-direction: column;
-        overflow: hidden;
-        animation: slideUp 0.3s ease-out;
-    }
 
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+            .chatbot-window {
+                position: fixed;
+                bottom: 100px;
+                right: 30px;
+                width: 420px;
+                height: 650px;
+                background: white;
+                border-radius: 20px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                display: none;
+                flex-direction: column;
+                overflow: hidden;
+                animation: slideUp 0.3s ease-out;
+            }
 
-    .chatbot-window.active {
-        display: flex;
-    }
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
 
-    .chatbot-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+            .chatbot-window.active {
+                display: flex;
+            }
 
-    .chatbot-header h4 {
-        margin: 0;
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
+            .chatbot-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
 
-    .chatbot-close {
-        background: rgba(255,255,255,0.2);
-        border: none;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        color: white;
-        transition: all 0.3s;
-    }
+            .chatbot-header h4 {
+                margin: 0;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
 
-    .chatbot-close:hover {
-        background: rgba(255,255,255,0.3);
-    }
+            .chatbot-close {
+                background: rgba(255,255,255,0.2);
+                border: none;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                cursor: pointer;
+                color: white;
+                transition: all 0.3s;
+            }
 
-    /* ========== CHATBOT RECOMMENDATIONS ========== */
-    .chatbot-recommendations {
-        padding: 15px 20px;
-        background: white;
-        border-bottom: 1px solid #eee;
-        max-height: 150px;
-        overflow-y: auto;
-    }
+            .chatbot-close:hover {
+                background: rgba(255,255,255,0.3);
+            }
 
-    .recommendations-title {
-        font-size: 0.8rem;
-        color: #667eea;
-        font-weight: 600;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
+            /* ========== CHATBOT RECOMMENDATIONS ========== */
+            .chatbot-recommendations {
+                padding: 15px 20px;
+                background: white;
+                border-bottom: 1px solid #eee;
+                max-height: 150px;
+                overflow-y: auto;
+            }
 
-    .recommendation-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
+            .recommendations-title {
+                font-size: 0.8rem;
+                color: #667eea;
+                font-weight: 600;
+                margin-bottom: 10px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
 
-    .recommendation-chip {
-        background: #f8f9fa;
-        border: 1px solid #e0e0e0;
-        border-radius: 20px;
-        padding: 6px 12px;
-        font-size: 0.75rem;
-        color: #333;
-        cursor: pointer;
-        transition: all 0.3s;
-        white-space: nowrap;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+            .recommendation-chips {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
 
-    .recommendation-chip:hover {
-        background: #667eea;
-        color: white;
-        border-color: #667eea;
-        transform: translateY(-2px);
-    }
+            .recommendation-chip {
+                background: #f8f9fa;
+                border: 1px solid #e0e0e0;
+                border-radius: 20px;
+                padding: 6px 12px;
+                font-size: 0.75rem;
+                color: #333;
+                cursor: pointer;
+                transition: all 0.3s;
+                white-space: nowrap;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
 
-    .recommendation-category {
-        width: 100%;
-        font-size: 0.7rem;
-        color: #888;
-        margin-top: 5px;
-        margin-bottom: 3px;
-        font-weight: 500;
-    }
+            .recommendation-chip:hover {
+                background: #667eea;
+                color: white;
+                border-color: #667eea;
+                transform: translateY(-2px);
+            }
 
-    /* Scrollbar for recommendations */
-    .chatbot-recommendations::-webkit-scrollbar {
-        width: 4px;
-    }
+            .recommendation-category {
+                width: 100%;
+                font-size: 0.7rem;
+                color: #888;
+                margin-top: 5px;
+                margin-bottom: 3px;
+                font-weight: 500;
+            }
 
-    .chatbot-recommendations::-webkit-scrollbar-thumb {
-        background: #ddd;
-        border-radius: 10px;
-    }
+            /* Scrollbar for recommendations */
+            .chatbot-recommendations::-webkit-scrollbar {
+                width: 4px;
+            }
 
-    .chatbot-messages {
-        flex: 1;
-        padding: 20px;
-        overflow-y: auto;
-        background: #f8f9fa;
-    }
+            .chatbot-recommendations::-webkit-scrollbar-thumb {
+                background: #ddd;
+                border-radius: 10px;
+            }
 
-    .chatbot-messages::-webkit-scrollbar {
-        width: 6px;
-    }
+            .chatbot-messages {
+                flex: 1;
+                padding: 20px;
+                overflow-y: auto;
+                background: #f8f9fa;
+            }
 
-    .chatbot-messages::-webkit-scrollbar-thumb {
-        background: #ddd;
-        border-radius: 10px;
-    }
+            .chatbot-messages::-webkit-scrollbar {
+                width: 6px;
+            }
 
-    .message {
-        margin-bottom: 15px;
-        display: flex;
-        gap: 10px;
-        animation: fadeIn 0.3s;
-    }
+            .chatbot-messages::-webkit-scrollbar-thumb {
+                background: #ddd;
+                border-radius: 10px;
+            }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+            .message {
+                margin-bottom: 15px;
+                display: flex;
+                gap: 10px;
+                animation: fadeIn 0.3s;
+            }
 
-    .message.bot {
-        justify-content: flex-start;
-    }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
 
-    .message.user {
-        justify-content: flex-end;
-    }
+            .message.bot {
+                justify-content: flex-start;
+            }
 
-    .message-avatar {
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        flex-shrink: 0;
-    }
+            .message.user {
+                justify-content: flex-end;
+            }
 
-    .message.bot .message-avatar {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
+            .message-avatar {
+                width: 35px;
+                height: 35px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                flex-shrink: 0;
+            }
 
-    .message.user .message-avatar {
-        background: #ffc107;
-        color: white;
-    }
+            .message.bot .message-avatar {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
 
-    .message-content {
-        max-width: 70%;
-        padding: 12px 16px;
-        border-radius: 18px;
-        line-height: 1.5;
-        font-size: 0.9rem;
-    }
+            .message.user .message-avatar {
+                background: #ffc107;
+                color: white;
+            }
 
-    .message.bot .message-content {
-        background: white;
-        color: #333;
-        border-bottom-left-radius: 4px;
-        white-space: pre-line;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
+            .message-content {
+                max-width: 70%;
+                padding: 12px 16px;
+                border-radius: 18px;
+                line-height: 1.5;
+                font-size: 0.9rem;
+            }
 
-    .message.user .message-content {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-bottom-right-radius: 4px;
-    }
+            .message.bot .message-content {
+                background: white;
+                color: #333;
+                border-bottom-left-radius: 4px;
+                white-space: pre-line;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
 
-    .message.bot .message-content strong {
-        color: #1e3c72;
-        font-weight: 600;
-    }
+            .message.user .message-content {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-bottom-right-radius: 4px;
+            }
 
-    .typing-indicator {
-        display: flex;
-        gap: 4px;
-        padding: 12px 16px;
-        background: white;
-        border-radius: 18px;
-        width: fit-content;
-    }
+            .message.bot .message-content strong {
+                color: #1e3c72;
+                font-weight: 600;
+            }
 
-    .typing-dot {
-        width: 8px;
-        height: 8px;
-        background: #667eea;
-        border-radius: 50%;
-        animation: typing 1.4s infinite;
-    }
+            .typing-indicator {
+                display: flex;
+                gap: 4px;
+                padding: 12px 16px;
+                background: white;
+                border-radius: 18px;
+                width: fit-content;
+            }
 
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+            .typing-dot {
+                width: 8px;
+                height: 8px;
+                background: #667eea;
+                border-radius: 50%;
+                animation: typing 1.4s infinite;
+            }
 
-    @keyframes typing {
-        0%, 60%, 100% { transform: translateY(0); }
-        30% { transform: translateY(-10px); }
-    }
+            .typing-dot:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .typing-dot:nth-child(3) {
+                animation-delay: 0.4s;
+            }
 
-    .chatbot-input {
-        padding: 20px;
-        background: white;
-        border-top: 1px solid #eee;
-        display: flex;
-        gap: 10px;
-    }
+            @keyframes typing {
+                0%, 60%, 100% {
+                    transform: translateY(0);
+                }
+                30% {
+                    transform: translateY(-10px);
+                }
+            }
 
-    .chatbot-input input {
-        flex: 1;
-        border: 1px solid #ddd;
-        border-radius: 25px;
-        padding: 12px 20px;
-        font-size: 0.9rem;
-        outline: none;
-        transition: all 0.3s;
-    }
+            .chatbot-input {
+                padding: 20px;
+                background: white;
+                border-top: 1px solid #eee;
+                display: flex;
+                gap: 10px;
+            }
 
-    .chatbot-input input:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
+            .chatbot-input input {
+                flex: 1;
+                border: 1px solid #ddd;
+                border-radius: 25px;
+                padding: 12px 20px;
+                font-size: 0.9rem;
+                outline: none;
+                transition: all 0.3s;
+            }
 
-    .chatbot-send {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        color: white;
-        cursor: pointer;
-        transition: all 0.3s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+            .chatbot-input input:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
 
-    .chatbot-send:hover:not(:disabled) {
-        transform: scale(1.1);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    }
+            .chatbot-send {
+                width: 45px;
+                height: 45px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border: none;
+                color: white;
+                cursor: pointer;
+                transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
 
-    .chatbot-send:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
+            .chatbot-send:hover:not(:disabled) {
+                transform: scale(1.1);
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            }
 
-    @media (max-width: 768px) {
-        .chatbot-window {
-            width: calc(100vw - 30px);
-            right: 15px;
-        }
-    }
+            .chatbot-send:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            @media (max-width: 768px) {
+                .chatbot-window {
+                    width: calc(100vw - 30px);
+                    right: 15px;
+                }
+            }
+            #maintenanceHistoryModal .table {
+                font-size: 0.9rem;
+            }
+
+            #maintenanceHistoryModal .table td {
+                vertical-align: middle;
+            }
+
+            #maintenanceHistoryModal .badge {
+                font-size: 0.8rem;
+                padding: 0.35em 0.65em;
+            }
+
+            #historyTableBody tr:hover {
+                background-color: #f8f9fa;
+            }
+            /* ✅ FORCE TEXT COLOR CHO MAINTENANCE HISTORY TABLE */
+            #maintenanceHistoryModal table,
+            #maintenanceHistoryModal table * {
+                color: #000 !important;
+            }
+
+            #maintenanceHistoryModal tbody tr {
+                background-color: #ffffff !important;
+            }
+
+            #maintenanceHistoryModal tbody td {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                padding: 12px 8px !important;
+            }
+
+            #maintenanceHistoryModal tbody td strong,
+            #maintenanceHistoryModal tbody td span:not(.badge) {
+                color: #000000 !important;
+            }
+
+            /* ✅ CHỈ BADGE MỚI CÓ MÀU RIÊNG */
+            #maintenanceHistoryModal .badge {
+                color: inherit !important;
+            }
         </style>
     </head>
     <body>
@@ -1095,12 +1155,12 @@
                 </div>
 
 
-               
+
                 <!-- SEARCH BAR -->
                 <div class="search-filter-bar">
                     <form action="${pageContext.request.contextPath}/equipment" method="get">
                         <input type="hidden" name="action" value="search"/>
-                        
+
                         <!-- Hàng 1: Search + Dropdowns -->
                         <div class="row g-3 mb-2">
                             <div class="col-md-3">
@@ -1167,7 +1227,7 @@
                         </div>
                     </form>
                 </div>
-                    
+
 
                 <!-- TABLE -->
                 <div class="table-container">
@@ -1182,7 +1242,8 @@
                                             <th>Serial Number</th>
                                             <th>Loại</th>
                                             <th>Mã Hợp Đồng</th>
-                                            <th>Ngày Lắp Đặt</th>
+                                            <th>Ngày Bắt Đầu</th>
+                                            <th>Ngày Kết Thúc</th>
                                             <th>Trạng Thái</th>
                                             <th>Thao Tác</th>
                                         </tr>
@@ -1191,8 +1252,6 @@
                                         <c:forEach var="item" items="${equipmentList}" varStatus="status">
                                             <tr>
                                                 <td><strong>${status.index + 1}</strong></td>
-
-                                                <!-- ✅ SỬA: Thêm .equipment vào -->
                                                 <td><strong>${item.equipment.model}</strong></td>
                                                 <td>${item.equipment.serialNumber}</td>
                                                 <td>
@@ -1215,40 +1274,86 @@
                                                     </c:choose>
                                                 </td>
                                                 <td><span class="badge bg-primary">${item.contractId}</span></td>
+
+                                                <!-- ✅ NGÀY BẮT ĐẦU -->
                                                 <td>
                                                     <c:choose>
-                                                        <c:when test="${not empty item.equipment.installDate}">
-                                                            ${item.equipment.installDate}
+                                                        <c:when test="${not empty item.startDate}">
+                                                            <i class="fas fa-calendar-plus text-success me-1"></i>
+                                                            ${item.startDate}
                                                         </c:when>
                                                         <c:otherwise>
-                                                            <span class="text-muted">Chưa cập nhật</span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </td>
-                                                <td>
-                                                    <c:choose>
-                                                        <c:when test="${item.status == 'Active'}">
-                                                            <span class="badge badge-active">
-                                                                <i class="fas fa-circle"></i> Hoạt Động
-                                                            </span>
-                                                        </c:when>
-                                                        <c:when test="${item.status == 'Repair'}">
-                                                            <span class="badge badge-repair">
-                                                                <i class="fas fa-wrench"></i> Đang Sửa
-                                                            </span>
-                                                        </c:when>
-                                                        <c:when test="${item.status == 'Maintenance'}">
-                                                            <span class="badge badge-maintenance">
-                                                                <i class="fas fa-cog"></i> Bảo Trì
-                                                            </span>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="badge badge-active">
-                                                                <i class="fas fa-circle"></i> Hoạt Động
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-minus"></i> Chưa có
                                                             </span>
                                                         </c:otherwise>
                                                     </c:choose>
                                                 </td>
+
+                                                <!-- ✅ NGÀY KẾT THÚC -->
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${not empty item.endDate}">
+                                                            <i class="fas fa-calendar-times text-danger me-1"></i>
+                                                            ${item.endDate}
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-minus"></i> Chưa có
+                                                            </span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
+
+                                                <!-- ✅ TRẠNG THÁI DỰA TRÊN NGÀY -->
+                                                <td>
+                                                    <c:choose>
+                                                        <%-- Logic: Nếu có endDate và ngày hiện tại < endDate thì Active, ngược lại Expired --%>
+                                                        <c:when test="${not empty item.endDate}">
+                                                            <jsp:useBean id="now" class="java.util.Date"/>
+                                                            <fmt:parseDate value="${item.endDate}" pattern="yyyy-MM-dd" var="parsedEndDate"/>
+
+                                                            <c:choose>
+                                                                <c:when test="${now.time < parsedEndDate.time}">
+                                                                    <span class="badge bg-success">
+                                                                        <i class="fas fa-check-circle"></i> Đang Hoạt Động
+                                                                    </span>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span class="badge bg-danger">
+                                                                        <i class="fas fa-times-circle"></i> Hết Hạn
+                                                                    </span>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <%-- Nếu không có endDate, sử dụng status từ servlet --%>
+                                                            <c:choose>
+                                                                <c:when test="${item.status == 'Active'}">
+                                                                    <span class="badge bg-success">
+                                                                        <i class="fas fa-check-circle"></i> Đang Hoạt Động
+                                                                    </span>
+                                                                </c:when>
+                                                                <c:when test="${item.status == 'Repair'}">
+                                                                    <span class="badge badge-repair">
+                                                                        <i class="fas fa-wrench"></i> Đang Sửa
+                                                                    </span>
+                                                                </c:when>
+                                                                <c:when test="${item.status == 'Maintenance'}">
+                                                                    <span class="badge badge-maintenance">
+                                                                        <i class="fas fa-cog"></i> Bảo Trì
+                                                                    </span>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span class="badge bg-warning text-dark">
+                                                                        <i class="fas fa-question-circle"></i> Pending
+                                                                    </span>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
+
                                                 <td>
                                                     <button class="btn btn-sm btn-info btn-action"
                                                             data-id="${item.equipment.equipmentId}"
@@ -1265,8 +1370,17 @@
                                                             data-repair-details="${item.repairDetails}"
                                                             data-estimated-cost="${item.estimatedCost}"
                                                             data-quotation-status="${item.quotationStatus}"
+                                                            data-start-date="${item.startDate}"
+                                                            data-end-date="${item.endDate}"
                                                             onclick="viewEquipmentDetail(this)">
                                                         <i class="fas fa-eye"></i> Chi Tiết
+                                                    </button>
+
+                                                    <button class="btn btn-sm btn-primary btn-action"
+                                                            data-id="${item.equipment.equipmentId}"
+                                                            data-model="${item.equipment.model}"
+                                                            onclick="viewMaintenanceHistory(this)">
+                                                        <i class="fas fa-history"></i> Lịch Sử Bảo Trì
                                                     </button>
 
                                                     <c:if test="${item.status == 'Active'}">
@@ -1309,8 +1423,8 @@
                             </c:otherwise>
                         </c:choose>
                     </div>
-                    
-                    <!-- PHÂN TRANG -->
+
+                    <!-- PHÂN TRANG - GIỮ NGUYÊN -->
                     <c:if test="${totalPages > 1}">
                         <nav aria-label="Page navigation" class="mt-4">
                             <ul class="pagination justify-content-center">
@@ -1362,814 +1476,1025 @@
                             </small>
                         </div>
                     </c:if>
-
                 </div>
-            </div>
 
-            <!-- FOOTER -->
-            <footer class="site-footer">
-                <div class="footer-content">
-                    <div class="footer-grid">
-                        <div class="footer-section">
-                            <h5>CRM System</h5>
-                            <p class="footer-about">
-                                Giải pháp quản lý khách hàng toàn diện, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ.
+                <!-- FOOTER -->
+                <footer class="site-footer">
+                    <div class="footer-content">
+                        <div class="footer-grid">
+                            <div class="footer-section">
+                                <h5>CRM System</h5>
+                                <p class="footer-about">
+                                    Giải pháp quản lý khách hàng toàn diện, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ.
+                                </p>
+                            </div>
+
+                            <div class="footer-section">
+                                <h5>Tính năng chính</h5>
+                                <ul class="footer-links">
+                                    <li><a href="#">→ Quản lý khách hàng</a></li>
+                                    <li><a href="#">→ Quản lý hợp đồng</a></li>
+                                    <li><a href="#">→ Quản lý thiết bị</a></li>
+                                    <li><a href="#">→ Báo cáo & Phân tích</a></li>
+                                </ul>
+                            </div>
+
+                            <div class="footer-section">
+                                <h5>Hỗ trợ</h5>
+                                <ul class="footer-links">
+                                    <li><a href="#">→ Trung tâm trợ giúp</a></li>
+                                    <li><a href="#">→ Hướng dẫn sử dụng</a></li>
+                                    <li><a href="#">→ Liên hệ hỗ trợ</a></li>
+                                    <li><a href="#">→ Câu hỏi thường gặp</a></li>
+                                </ul>
+                            </div>
+
+                            <div class="footer-section">
+                                <h5>Thông tin</h5>
+                                <ul class="footer-links">
+                                    <li><a href="#">→ Về chúng tôi</a></li>
+                                    <li><a href="#">→ Điều khoản sử dụng</a></li>
+                                    <li><a href="#">→ Chính sách bảo mật</a></li>
+                                    <li><a href="#">→ Liên hệ</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="footer-bottom">
+                            <p class="footer-copyright">
+                                &copy; 2025 CRM System. All rights reserved. | Phát triển bởi <strong>Group 6</strong>
                             </p>
                         </div>
-
-                        <div class="footer-section">
-                            <h5>Tính năng chính</h5>
-                            <ul class="footer-links">
-                                <li><a href="#">→ Quản lý khách hàng</a></li>
-                                <li><a href="#">→ Quản lý hợp đồng</a></li>
-                                <li><a href="#">→ Quản lý thiết bị</a></li>
-                                <li><a href="#">→ Báo cáo & Phân tích</a></li>
-                            </ul>
-                        </div>
-
-                        <div class="footer-section">
-                            <h5>Hỗ trợ</h5>
-                            <ul class="footer-links">
-                                <li><a href="#">→ Trung tâm trợ giúp</a></li>
-                                <li><a href="#">→ Hướng dẫn sử dụng</a></li>
-                                <li><a href="#">→ Liên hệ hỗ trợ</a></li>
-                                <li><a href="#">→ Câu hỏi thường gặp</a></li>
-                            </ul>
-                        </div>
-
-                        <div class="footer-section">
-                            <h5>Thông tin</h5>
-                            <ul class="footer-links">
-                                <li><a href="#">→ Về chúng tôi</a></li>
-                                <li><a href="#">→ Điều khoản sử dụng</a></li>
-                                <li><a href="#">→ Chính sách bảo mật</a></li>
-                                <li><a href="#">→ Liên hệ</a></li>
-                            </ul>
-                        </div>
                     </div>
+                </footer>
 
-                    <div class="footer-bottom">
-                        <p class="footer-copyright">
-                            &copy; 2025 CRM System. All rights reserved. | Phát triển bởi <strong>Group 6</strong>
-                        </p>
-                    </div>
+                <!-- Scroll to Top Button -->
+                <div class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">
+                    <i class="fas fa-arrow-up"></i>
                 </div>
-            </footer>
-
-            <!-- Scroll to Top Button -->
-            <div class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">
-                <i class="fas fa-arrow-up"></i>
             </div>
-        </div>
 
-        <!-- ✅ MODAL VIEW EQUIPMENT - CẬP NHẬT HIỂN THỊ THÔNG TIN SỬA CHỮA -->
-        <div class="modal fade" id="viewModal" tabindex="-1">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header bg-info text-white">
-                        <h5 class="modal-title">
-                            <i class="fas fa-info-circle"></i> Chi Tiết Thiết Bị
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- THÔNG TIN CƠ BẢN -->
-                        <div class="card mb-3">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0"><i class="fas fa-tools"></i> Thông Tin Thiết Bị</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <strong>Tên Thiết Bị:</strong>
-                                        <p class="fw-normal" id="viewEquipmentName"></p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <strong>Serial Number:</strong>
-                                        <p class="fw-normal" id="viewSerialNumber"></p>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <strong>Mã Hợp Đồng:</strong>
-                                        <p class="fw-normal" id="viewContractId"></p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <strong>Ngày Lắp Đặt:</strong>
-                                        <p class="fw-normal" id="viewInstallDate"></p>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <strong>Cập Nhật Lần Cuối:</strong>
-                                        <p class="fw-normal" id="viewLastUpdate"></p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <strong>Trạng Thái:</strong>
-                                        <span class="badge" id="viewStatus"></span>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <strong>Mô Tả:</strong>
-                                    <div class="border rounded p-3 bg-light" id="viewDescription"></div>
-                                </div>
-                            </div>
+            <!-- ✅ MODAL VIEW EQUIPMENT - CẬP NHẬT HIỂN THỊ THÔNG TIN SỬA CHỮA -->
+            <div class="modal fade" id="viewModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header bg-info text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-info-circle"></i> Chi Tiết Thiết Bị
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
-
-                        <!-- ✅ THÔNG TIN SỬA CHỮA (CHỈ HIỂN THỊ KHI STATUS = REPAIR) -->
-                        <div id="repairInfoSection" style="display: none;">
-                            <div class="card border-warning">
-                                <div class="card-header bg-warning text-dark">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-wrench"></i> Thông Tin Sửa Chữa
-                                    </h6>
+                        <div class="modal-body">
+                            <!-- THÔNG TIN CƠ BẢN -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-tools"></i> Thông Tin Thiết Bị</h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="row mb-3">
                                         <div class="col-md-6">
-                                            <strong><i class="fas fa-user-cog"></i> Kỹ Thuật Viên:</strong>
-                                            <p class="text-primary fw-bold" id="viewTechnicianName">Đang tải...</p>
+                                            <strong>Tên Thiết Bị:</strong>
+                                            <p class="fw-normal" id="viewEquipmentName"></p>
                                         </div>
                                         <div class="col-md-6">
-                                            <strong><i class="fas fa-calendar-check"></i> Ngày Bắt Đầu Sửa:</strong>
-                                            <p id="viewRepairDate">N/A</p>
+                                            <strong>Serial Number:</strong>
+                                            <p class="fw-normal" id="viewSerialNumber"></p>
                                         </div>
-                                    </div>                                  
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times"></i> Đóng
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                                    </div>
 
-        <!-- MODAL CREATE SERVICE REQUEST for Equipment -->
-        <div class="modal fade" id="createRequestModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-warning text-dark">
-                        <h5 class="modal-title">
-                            <i class="fas fa-plus-circle"></i> Tạo Đơn Hỗ Trợ Thiết Bị
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post" id="createRequestForm">
-                        <input type="hidden" name="action" value="CreateServiceRequest">
-                        <input type="hidden" name="supportType" value="equipment">
-                        <input type="hidden" name="equipmentIds" id="requestEquipmentId">
-                        <input type="hidden" name="contractId" id="requestContractIdValue">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>Mã Hợp Đồng:</strong>
+                                            <p class="fw-normal" id="viewContractId"></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Ngày Lắp Đặt:</strong>
+                                            <p class="fw-normal" id="viewInstallDate"></p>
+                                        </div>
+                                    </div>
 
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">
-                                        <i class="fas fa-tools"></i> Tên Thiết Bị
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" class="form-control" 
-                                           id="requestEquipmentName" readonly>
-                                </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>Cập Nhật Lần Cuối:</strong>
+                                            <p class="fw-normal" id="viewLastUpdate"></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Trạng Thái:</strong>
+                                            <span class="badge" id="viewStatus"></span>
+                                        </div>
+                                    </div>
 
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">
-                                        <i class="fas fa-file-contract"></i> Mã Hợp Đồng
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" class="form-control" 
-                                           id="requestContractId" readonly>
+                                    <div class="mb-3">
+                                        <strong>Mô Tả:</strong>
+                                        <div class="border rounded p-3 bg-light" id="viewDescription"></div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">
-                                        <i class="fas fa-barcode"></i> Serial Number
-                                    </label>
-                                    <input type="text" class="form-control" 
-                                           id="requestSerialNumber" readonly>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">
-                                        <i class="fas fa-exclamation-circle"></i> Mức Độ Ưu Tiên 
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <select class="form-select" name="priorityLevel" required>
-                                        <option value="">-- Chọn mức độ --</option>
-                                        <option value="Normal">⚪ Bình Thường</option>
-                                        <option value="High">🟡 Cao</option>
-                                        <option value="Urgent">🔴 Khẩn Cấp</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">
-                                    <i class="fas fa-comment-dots"></i> Mô Tả Vấn Đề 
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <textarea class="form-control" name="description" id="requestDescription" rows="5" 
-                                          placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải với thiết bị..."
-                                          minlength="10" maxlength="1000" required></textarea>
-                                <div class="d-flex justify-content-between align-items-center mt-1">
-                                    <small class="form-text text-muted">
-                                        <i class="fas fa-info-circle"></i> Tối thiểu 10 ký tự, tối đa 1000 ký tự
-                                    </small>
-                                    <span id="charCount" class="text-muted" style="font-size: 0.875rem;">0/1000</span>
+                            <!-- ✅ THÔNG TIN SỬA CHỮA (CHỈ HIỂN THỊ KHI STATUS = REPAIR) -->
+                            <div id="repairInfoSection" style="display: none;">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-wrench"></i> Thông Tin Sửa Chữa
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong><i class="fas fa-user-cog"></i> Kỹ Thuật Viên:</strong>
+                                                <p class="text-primary fw-bold" id="viewTechnicianName">Đang tải...</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong><i class="fas fa-calendar-check"></i> Ngày Bắt Đầu Sửa:</strong>
+                                                <p id="viewRepairDate">N/A</p>
+                                            </div>
+                                        </div>                                  
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                <i class="fas fa-times"></i> Hủy
-                            </button>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="fas fa-paper-plane"></i> Gửi Yêu Cầu
+                                <i class="fas fa-times"></i> Đóng
                             </button>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
-        </div>
-                        <div class="chatbot-container">
-    <button class="chatbot-button" onclick="toggleChatbotWidget()">
-        <i class="fas fa-comment-dots"></i>
-        <span class="chatbot-badge">AI</span>
-    </button>
 
-    <div class="chatbot-window" id="chatbotWindowWidget">
-        <div class="chatbot-header">
-            <h4>
-                <i class="fas fa-robot"></i>
-                Trợ lý AI
-            </h4>
-            <button class="chatbot-close" onclick="toggleChatbotWidget()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
+            <!-- MODAL CREATE SERVICE REQUEST for Equipment -->
+            <div class="modal fade" id="createRequestModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title">
+                                <i class="fas fa-plus-circle"></i> Tạo Đơn Hỗ Trợ Thiết Bị
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form action="${pageContext.request.contextPath}/managerServiceRequest" method="post" id="createRequestForm" onsubmit="return validateEquipmentRequestForm(event)">
+                            <input type="hidden" name="action" value="CreateServiceRequest">
+                            <input type="hidden" name="supportType" value="equipment">
+                            <input type="hidden" name="equipmentIds" id="requestEquipmentId">
+                            <input type="hidden" name="contractId" id="requestContractIdValue">
 
-        <!-- PHẦN RECOMMENDATIONS -->
-        <div class="chatbot-recommendations" id="chatbotRecommendationsWidget">
-            <div class="recommendations-title">
-                <i class="fas fa-lightbulb"></i>
-                Câu hỏi thường gặp
-            </div>
-            <div class="recommendation-chips" id="recommendationChipsWidget">
-                <!-- Recommendations sẽ được thêm bằng JavaScript -->
-            </div>
-        </div>
+                            <div class="modal-body">
+                                <!-- ✅ THÊM MỚI: Loại Yêu Cầu (Request Type) -->
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-tags"></i> Loại Yêu Cầu 
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" name="requestType" id="equipmentRequestType" required>
+                                        <option value="Service">🔧 Service (Dịch vụ sửa chữa)</option>
+                                        <option value="Warranty">🛡️ Warranty (Bảo hành)</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle"></i> Service: Dịch vụ sửa chữa thông thường | Warranty: Sửa chữa theo bảo hành hợp đồng
+                                    </small>
+                                </div>
 
-        <div class="chatbot-messages" id="chatMessagesWidget">
-            <div class="message bot">
-                <div class="message-avatar">
-                    <i class="fas fa-robot"></i>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-tools"></i> Tên Thiết Bị
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" 
+                                               id="requestEquipmentName" readonly>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-file-contract"></i> Mã Hợp Đồng
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" 
+                                               id="requestContractId" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-barcode"></i> Serial Number
+                                        </label>
+                                        <input type="text" class="form-control" 
+                                               id="requestSerialNumber" readonly>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-exclamation-circle"></i> Mức Độ Ưu Tiên 
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select" name="priorityLevel" id="equipmentPriorityLevel" required>
+                                            <option value="">-- Chọn mức độ --</option>
+                                            <option value="Normal">⚪ Bình Thường</option>
+                                            <option value="High">🟡 Cao</option>
+                                            <option value="Urgent">🔴 Khẩn Cấp</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-comment-dots"></i> Mô Tả Vấn Đề 
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea class="form-control" name="description" id="equipmentRequestDescription" rows="5" 
+                                              placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải với thiết bị..."
+                                              minlength="10" maxlength="1000" required
+                                              oninput="updateEquipmentCharCount()"></textarea>
+                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle"></i> Tối thiểu 10 ký tự, tối đa 1000 ký tự
+                                        </small>
+                                        <span id="equipmentCharCount" class="text-muted" style="font-size: 0.875rem;">0/1000</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times"></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-paper-plane"></i> Gửi Yêu Cầu
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div class="message-content">
-                    Xin chào! Tôi là trợ lý AI của hệ thống. Tôi có thể giúp bạn trả lời các câu hỏi về dịch vụ, hợp đồng, thiết bị và hóa đơn. Bạn cần hỗ trợ gì?
+            </div>
+
+
+
+            <!-- ✅ MODAL LỊCH SỬ BẢO TRÌ - ĐÃ SỬA -->
+            <div class="modal fade" id="maintenanceHistoryModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-history"></i> Lịch Sử Bảo Trì - <span id="historyEquipmentName"></span>
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <!-- ✅ THÊM STYLE CHO MODAL BODY -->
+                        <div class="modal-body" style="min-height: 400px; max-height: 70vh; overflow-y: auto; padding: 20px;">
+
+                            <!-- Loading spinner -->
+                            <div id="historyLoading" class="text-center py-5" style="display: none;">
+                                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-3 text-muted fw-bold">Đang tải lịch sử bảo trì...</p>
+                            </div>
+
+                            <!-- Empty state -->
+                            <div id="historyEmpty" class="text-center py-5" style="display: none;">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">Chưa có lịch sử bảo trì</h5>
+                                <p class="text-muted">Thiết bị này chưa được bảo trì lần nào</p>
+                            </div>
+
+                            <!-- History table -->
+                            <div id="historyContent" style="display: none;">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-bordered mb-0">
+                                        <thead class="table-light" style="position: sticky; top: 0; z-index: 10; background-color: #f8f9fa;">
+                                            <tr>
+                                                <th width="5%" class="text-center">STT</th>
+                                                <th width="15%">Kỹ Thuật Viên</th>
+                                                <th width="15%">Ngày Giờ Bảo Trì</th>
+                                                <th width="12%">Loại Bảo Trì</th>                                           
+                                                <th width="12%">Loại Task</th>
+                                                <th width="10%">Trạng Thái</th>
+                                                <!-- <th width="19%">Chi Tiết</th> -->
+                                            </tr>
+                                        </thead>
+                                        <tbody id="historyTableBody" style="background-color: #ffffff;">
+                                            <!-- Data will be inserted here by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination for history -->
+                                <nav aria-label="History pagination" id="historyPagination" class="mt-3" style="display: none;">
+                                    <ul class="pagination justify-content-center mb-0" id="historyPaginationList">
+                                        <!-- Pagination will be inserted here by JavaScript -->
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times"></i> Đóng
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="chatbot-input">
-            <input type="text" id="chatInputWidget" placeholder="Nhập câu hỏi của bạn..." onkeypress="handleKeyPressWidget(event)">
-            <button class="chatbot-send" id="sendBtnWidget" onclick="sendMessageWidget()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
-</div>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
 
-                // ========== TOAST NOTIFICATION ==========
-                let currentToastTimeout = null;
+            <div class="chatbot-container">
+                <button class="chatbot-button" onclick="toggleChatbotWidget()">
+                    <i class="fas fa-comment-dots"></i>
+                    <span class="chatbot-badge">AI</span>
+                </button>
 
-                function showToast(message, type) {
-                    const container = document.getElementById('toastContainer');
-                    if (currentToastTimeout) {
-                        clearTimeout(currentToastTimeout);
-                    }
+                <div class="chatbot-window" id="chatbotWindowWidget">
+                    <div class="chatbot-header">
+                        <h4>
+                            <i class="fas fa-robot"></i>
+                            Trợ lý AI
+                        </h4>
+                        <button class="chatbot-close" onclick="toggleChatbotWidget()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
 
-                    let iconClass = 'fa-check-circle';
-                    if (type === 'error')
-                        iconClass = 'fa-exclamation-circle';
+                    <!-- PHẦN RECOMMENDATIONS -->
+                    <div class="chatbot-recommendations" id="chatbotRecommendationsWidget">
+                        <div class="recommendations-title">
+                            <i class="fas fa-lightbulb"></i>
+                            Câu hỏi thường gặp
+                        </div>
+                        <div class="recommendation-chips" id="recommendationChipsWidget">
+                            <!-- Recommendations sẽ được thêm bằng JavaScript -->
+                        </div>
+                    </div>
 
-                    const toastDiv = document.createElement('div');
-                    toastDiv.className = 'toast-notification ' + type;
+                    <div class="chatbot-messages" id="chatMessagesWidget">
+                        <div class="message bot">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                Xin chào! Tôi là trợ lý AI của hệ thống. Tôi có thể giúp bạn trả lời các câu hỏi về dịch vụ, hợp đồng, thiết bị và hóa đơn. Bạn cần hỗ trợ gì?
+                            </div>
+                        </div>
+                    </div>
 
-                    const iconDiv = document.createElement('div');
-                    iconDiv.className = 'toast-icon ' + type;
-                    iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
+                    <div class="chatbot-input">
+                        <input type="text" id="chatInputWidget" placeholder="Nhập câu hỏi của bạn..." onkeypress="handleKeyPressWidget(event)">
+                        <button class="chatbot-send" id="sendBtnWidget" onclick="sendMessageWidget()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'toast-content';
-                    contentDiv.textContent = message;
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            <script>
 
-                    const closeBtn = document.createElement('button');
-                    closeBtn.className = 'toast-close';
-                    closeBtn.type = 'button';
-                    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                    closeBtn.onclick = hideToast;
+                            // ========== TOAST NOTIFICATION ==========
+                            let currentToastTimeout = null;
 
-                    toastDiv.appendChild(iconDiv);
-                    toastDiv.appendChild(contentDiv);
-                    toastDiv.appendChild(closeBtn);
+                            function showToast(message, type) {
+                                const container = document.getElementById('toastContainer');
+                                if (currentToastTimeout) {
+                                    clearTimeout(currentToastTimeout);
+                                }
 
-                    container.innerHTML = '';
-                    container.appendChild(toastDiv);
+                                let iconClass = 'fa-check-circle';
+                                if (type === 'error')
+                                    iconClass = 'fa-exclamation-circle';
 
-                    currentToastTimeout = setTimeout(hideToast, 5000);
-                }
+                                const toastDiv = document.createElement('div');
+                                toastDiv.className = 'toast-notification ' + type;
 
-                function hideToast() {
-                    const container = document.getElementById('toastContainer');
-                    const toast = container.querySelector('.toast-notification');
-                    if (toast) {
-                        toast.classList.add('hiding');
-                        setTimeout(() => {
-                            container.innerHTML = '';
-                        }, 400);
-                    }
-                    if (currentToastTimeout) {
-                        clearTimeout(currentToastTimeout);
-                        currentToastTimeout = null;
-                    }
-                }
+                                const iconDiv = document.createElement('div');
+                                iconDiv.className = 'toast-icon ' + type;
+                                iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
 
-                // ========== CHARACTER COUNT ==========
-                function updateCharCount() {
-                    const textarea = document.getElementById('requestDescription');
-                    const charCount = document.getElementById('charCount');
-                    if (!textarea || !charCount)
-                        return;
+                                const contentDiv = document.createElement('div');
+                                contentDiv.className = 'toast-content';
+                                contentDiv.textContent = message;
 
-                    const currentLength = textarea.value.length;
-                    charCount.textContent = currentLength + '/1000';
+                                const closeBtn = document.createElement('button');
+                                closeBtn.className = 'toast-close';
+                                closeBtn.type = 'button';
+                                closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                                closeBtn.onclick = hideToast;
 
-                    if (currentLength > 900) {
-                        charCount.className = 'text-danger';
-                    } else if (currentLength > 700) {
-                        charCount.className = 'text-warning';
-                    } else {
-                        charCount.className = 'text-muted';
-                    }
-                }
+                                toastDiv.appendChild(iconDiv);
+                                toastDiv.appendChild(contentDiv);
+                                toastDiv.appendChild(closeBtn);
 
-                // ========== ✅ VIEW EQUIPMENT DETAIL - SỬ DỤNG DATA TỪ SERVLET ==========
-                function viewEquipmentDetail(button) {
-                    const equipmentId = button.getAttribute('data-id');
-                    const model = button.getAttribute('data-model');
-                    const serial = button.getAttribute('data-serial');
-                    const contract = button.getAttribute('data-contract');
-                    const description = button.getAttribute('data-description');
-                    const installDate = button.getAttribute('data-install-date');
-                    const lastUpdate = button.getAttribute('data-last-update');
-                    const status = button.getAttribute('data-status');
-                    
-                    // ✅ LẤY THÔNG TIN SỬA CHỮA TỪ DATA ATTRIBUTES
-                    const technicianName = button.getAttribute('data-technician-name');
-                    const repairDate = button.getAttribute('data-repair-date');
-                    const diagnosis = button.getAttribute('data-diagnosis');
-                    const repairDetails = button.getAttribute('data-repair-details');
-                    const estimatedCost = button.getAttribute('data-estimated-cost');
-                    const quotationStatus = button.getAttribute('data-quotation-status');
+                                container.innerHTML = '';
+                                container.appendChild(toastDiv);
 
-                    // Điền thông tin cơ bản
-                    document.getElementById('viewEquipmentName').textContent = model || 'N/A';
-                    document.getElementById('viewSerialNumber').textContent = serial || 'N/A';
-                    document.getElementById('viewContractId').textContent = contract || 'N/A';
-                    document.getElementById('viewInstallDate').textContent = installDate || 'N/A';
-                    document.getElementById('viewLastUpdate').textContent = lastUpdate || 'N/A';
-                    document.getElementById('viewDescription').textContent = description || 'Không có mô tả';
-
-                    const statusBadge = document.getElementById('viewStatus');
-                    if (status === 'Active') {
-                        statusBadge.className = 'badge badge-active';
-                        statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Đang hoạt động';
-                    } else if (status === 'Repair') {
-                        statusBadge.className = 'badge badge-repair';
-                        statusBadge.innerHTML = '<i class="fas fa-wrench"></i> Đang sửa chữa';
-                    } else if (status === 'Maintenance') {
-                        statusBadge.className = 'badge badge-maintenance';
-                        statusBadge.innerHTML = '<i class="fas fa-cog"></i> Đang bảo trì';
-                    }
-
-                    // ✅ NẾU THIẾT BỊ ĐANG SỬA CHỮA → HIỂN THỊ THÔNG TIN SỬA CHỮA
-                    const repairSection = document.getElementById('repairInfoSection');
-                    if (status === 'Repair') {
-                        repairSection.style.display = 'block';
-
-                        // Hiển thị thông tin sửa chữa từ data attributes
-                        document.getElementById('viewTechnicianName').innerHTML = 
-                            '<i class="fas fa-user-check"></i> ' + (technicianName && technicianName !== 'null' ? technicianName : 'Chưa phân công');
-                        document.getElementById('viewRepairDate').textContent = 
-                            (repairDate && repairDate !== 'null' ? repairDate : 'N/A');                      
-                    } else {
-                        repairSection.style.display = 'none';
-                    }
-
-                    new bootstrap.Modal(document.getElementById('viewModal')).show();
-                }
-
-                // ========== CREATE REQUEST ==========
-                function createRequest(button) {
-                    const equipmentId = button.getAttribute('data-id');
-                    const contractId = button.getAttribute('data-contract');
-                    const serialNumber = button.getAttribute('data-serial');
-                    const equipmentName = button.getAttribute('data-model');
-
-                    // Xử lý contractId - cho phép cả thiết bị có và không có hợp đồng
-                    let cleanContractId = '';
-                    if (contractId && contractId !== 'N/A') {
-                        cleanContractId = contractId.replace('HD', '').replace('#', '');
-                    }
-
-                    document.getElementById('requestEquipmentId').value = equipmentId;
-                    document.getElementById('requestContractIdValue').value = cleanContractId;
-                    document.getElementById('requestEquipmentName').value = equipmentName;
-                    document.getElementById('requestContractId').value = contractId || 'N/A';
-                    document.getElementById('requestSerialNumber').value = serialNumber;
-
-                    new bootstrap.Modal(document.getElementById('createRequestModal')).show();
-                }
-
-                function toggleSidebar() {
-                    const sidebar = document.getElementById('sidebar');
-                    const toggleIcon = document.getElementById('toggleIcon');
-                    sidebar.classList.toggle('collapsed');
-
-                    if (sidebar.classList.contains('collapsed')) {
-                        toggleIcon.classList.remove('fa-chevron-left');
-                        toggleIcon.classList.add('fa-chevron-right');
-                    } else {
-                        toggleIcon.classList.remove('fa-chevron-right');
-                        toggleIcon.classList.add('fa-chevron-left');
-                    }
-                }
-
-                function refreshPage() {
-                    window.location.href = '${pageContext.request.contextPath}/equipment';
-                }
-
-                function scrollToTop() {
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-                }
-
-                // ========== PAGINATION ==========
-                function goToPage(pageNumber) {
-                    const form = document.querySelector('form[action*="/equipment"]');
-                    if (form) {
-                        // Tạo hidden input cho page number
-                        let pageInput = form.querySelector('input[name="page"]');
-                        if (!pageInput) {
-                            pageInput = document.createElement('input');
-                            pageInput.type = 'hidden';
-                            pageInput.name = 'page';
-                            form.appendChild(pageInput);
-                        }
-                        pageInput.value = pageNumber;
-                        
-                        // Submit form
-                        form.submit();
-                    }
-                }
-
-                // ========== DATE RANGE VALIDATION ==========
-                function validateDateRange() {
-                    const fromDate = document.querySelector('input[name="fromDate"]');
-                    const toDate = document.querySelector('input[name="toDate"]');
-                    
-                    if (fromDate && toDate && fromDate.value && toDate.value) {
-                        if (fromDate.value > toDate.value) {
-                            showToast('Từ ngày không thể lớn hơn đến ngày!', 'error');
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-
-                // ========== EVENT LISTENERS ==========
-                document.addEventListener('DOMContentLoaded', function () {
-                    const descriptionTextarea = document.getElementById('requestDescription');
-                    if (descriptionTextarea) {
-                        descriptionTextarea.addEventListener('input', updateCharCount);
-                    }
-
-                    // Reset form when modal closes
-                    const createModal = document.getElementById('createRequestModal');
-                    if (createModal) {
-                        createModal.addEventListener('hidden.bs.modal', function () {
-                            document.getElementById('createRequestForm').reset();
-                            updateCharCount();
-                        });
-                    }
-
-                    // Add date range validation to search form
-                    const searchForm = document.querySelector('form[action*="/equipment"]');
-                    if (searchForm) {
-                        searchForm.addEventListener('submit', function(e) {
-                            if (!validateDateRange()) {
-                                e.preventDefault();        
+                                currentToastTimeout = setTimeout(hideToast, 5000);
                             }
-                        });
-                    }
-                });
 
-                window.addEventListener('scroll', function () {
-                    const scrollBtn = document.getElementById('scrollToTop');
-                    if (window.pageYOffset > 300) {
-                        scrollBtn.classList.add('show');
-                    } else {
-                        scrollBtn.classList.remove('show');
-                    }
-                });
-                const FAQ_DATA_WIDGET = [
-    {
-        "category": "Giới thiệu chung",
-        "questions": [
-            {
-                "question": "Hệ thống của bạn cung cấp dịch vụ gì?",
-                "answer": "Hệ thống của chúng tôi cung cấp dịch vụ bảo hành và bảo trì thiết bị cho khách hàng. Khi quý khách mua thiết bị, chúng tôi sẽ tạo hợp đồng và lưu thông tin vào hệ thống. Khi thiết bị cần sửa chữa, quý khách chỉ cần tạo yêu cầu trực tuyến, chúng tôi sẽ xử lý và thực hiện sửa chữa theo quy trình chuyên nghiệp."
-            },
-            {
-                "question": "Làm thế nào để liên hệ bộ phận hỗ trợ khách hàng?",
-                "answer": "Quý khách có thể liên hệ với bộ phận hỗ trợ khách hàng qua:\n- Hotline: [Số điện thoại]\n- Email: [Địa chỉ email]\n- Chat trực tuyến trên website\n- Hoặc tạo yêu cầu hỗ trợ trực tiếp trên hệ thống"
-            }
-        ]
-    },
-    {
-        "category": "Yêu cầu dịch vụ",
-        "questions": [
-            {
-                "question": "Làm thế nào để tạo yêu cầu bảo hành/bảo trì?",
-                "answer": "Để tạo yêu cầu, quý khách thực hiện theo các bước sau:\n\n1. Truy cập trang \"Yêu cầu dịch vụ\"\n2. Nhấn nút \"Tạo yêu cầu mới\" ở góc trên màn hình\n3. Chọn \"Hỗ trợ thiết bị\"\n4. Chọn thiết bị cần bảo hành từ danh sách\n5. Chọn mức độ ưu tiên cho yêu cầu\n6. Mô tả chi tiết vấn đề của thiết bị\n7. Kiểm tra lại thông tin và nhấn \"Gửi yêu cầu\""
-            },
-            {
-                "question": "Thời gian xử lý yêu cầu mất bao lâu?",
-                "answer": "Thời gian xử lý yêu cầu phụ thuộc vào:\n- Mức độ ưu tiên của yêu cầu\n- Tình trạng thiết bị\n- Khả năng sẵn có của phụ tùng\n\nThông thường:\n- Yêu cầu khẩn cấp: 24-48 giờ\n- Yêu cầu thường: 3-5 ngày làm việc"
-            },
-            {
-                "question": "Các trạng thái của yêu cầu dịch vụ có ý nghĩa gì?",
-                "answer": "Yêu cầu sẽ đi qua các trạng thái:\n\n1. Chờ xác nhận: Yêu cầu vừa được tạo\n2. Chờ xử lý: Đã được xác nhận, chờ phân công\n3. Đang xử lý: Kỹ thuật viên đang xử lý\n4. Hoàn thành: Đã sửa chữa xong\n5. Đã hủy: Yêu cầu bị hủy"
-            }
-        ]
-    },
-    {
-        "category": "Hợp đồng",
-        "questions": [
-            {
-                "question": "Làm thế nào để xem thông tin hợp đồng?",
-                "answer": "Để xem thông tin hợp đồng:\n\n1. Truy cập trang \"Hợp đồng\"\n2. Xem danh sách tất cả các hợp đồng\n3. Nhấn \"Danh sách thiết bị\" để xem chi tiết\n\nThông tin bao gồm:\n- Mã hợp đồng\n- Loại hợp đồng\n- Ngày hiệu lực\n- Trạng thái"
-            },
-            {
-                "question": "Chính sách bảo hành như thế nào?",
-                "answer": "Chính sách bảo hành:\n\n- Thời gian: Theo hợp đồng (12-36 tháng)\n- Phạm vi: Lỗi nhà sản xuất, hỏng hóc bình thường\n- Miễn phí phụ tùng và sửa chữa\n\nKhông bảo hành:\n- Sử dụng sai cách\n- Va đập, rơi vỡ\n- Can thiệp bởi bên thứ ba"
-            }
-        ]
-    },
-    {
-        "category": "Hóa đơn & Thanh toán",
-        "questions": [
-            {
-                "question": "Làm thế nào để xem hóa đơn?",
-                "answer": "Để xem hóa đơn:\n\n1. Truy cập trang \"Hóa đơn\"\n2. Xem danh sách hóa đơn\n\nThông tin gồm:\n- Mã hóa đơn\n- Số tiền\n- Ngày phát hành\n- Hạn thanh toán\n- Trạng thái"
-            },
-            {
-                "question": "Làm thế nào để thanh toán hóa đơn?",
-                "answer": "Các phương thức thanh toán:\n\n1. Thanh toán trực tuyến:\n- Chuyển khoản ngân hàng\n- Ví điện tử (Momo, ZaloPay)\n- Thẻ ATM/Tín dụng\n\n2. Thanh toán trực tiếp:\n- Tại văn phòng\n- Thu tiền tận nơi"
-            }
-        ]
-    },
-    {
-        "category": "Thiết bị",
-        "questions": [
-            {
-                "question": "Làm thế nào để xem thông tin thiết bị?",
-                "answer": "Để xem thiết bị:\n\n1. Truy cập trang \"Thiết bị\"\n2. Xem danh sách thiết bị\n3. Nhấn \"Chi tiết\" để xem thêm\n\nThông tin:\n- Tên thiết bị\n- Mã/Serial number\n- Hợp đồng liên quan\n- Trạng thái\n- Thời hạn bảo hành"
-            }
-        ]
-    }
-];
+                            function hideToast() {
+                                const container = document.getElementById('toastContainer');
+                                const toast = container.querySelector('.toast-notification');
+                                if (toast) {
+                                    toast.classList.add('hiding');
+                                    setTimeout(() => {
+                                        container.innerHTML = '';
+                                    }, 400);
+                                }
+                                if (currentToastTimeout) {
+                                    clearTimeout(currentToastTimeout);
+                                    currentToastTimeout = null;
+                                }
+                            }
 
-// Initialize recommendations when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    showNewRecommendationsWidget();
-});
+                            // ========== CHARACTER COUNT ==========
+                            function updateCharCount() {
+                                const textarea = document.getElementById('requestDescription');
+                                const charCount = document.getElementById('charCount');
+                                if (!textarea || !charCount)
+                                    return;
 
-function showNewRecommendationsWidget() {
-    const container = document.getElementById('recommendationChipsWidget');
-    if (!container) return;
+                                const currentLength = textarea.value.length;
+                                charCount.textContent = currentLength + '/1000';
 
-    container.innerHTML = '';
+                                if (currentLength > 900) {
+                                    charCount.className = 'text-danger';
+                                } else if (currentLength > 700) {
+                                    charCount.className = 'text-warning';
+                                } else {
+                                    charCount.className = 'text-muted';
+                                }
+                            }
 
-    // Get all questions
-    const allQuestions = FAQ_DATA_WIDGET.flatMap(category => 
-        category.questions.map(q => ({
-            question: q.question,
-            category: category.category
-        }))
-    );
+                            // ========== ✅ VIEW EQUIPMENT DETAIL - SỬ DỤNG DATA TỪ SERVLET ==========
+                            function viewEquipmentDetail(button) {
+                                const equipmentId = button.getAttribute('data-id');
+                                const model = button.getAttribute('data-model');
+                                const serial = button.getAttribute('data-serial');
+                                const contract = button.getAttribute('data-contract');
+                                const description = button.getAttribute('data-description');
+                                const installDate = button.getAttribute('data-install-date');
+                                const lastUpdate = button.getAttribute('data-last-update');
+                                const status = button.getAttribute('data-status');
 
-    // Random 6 questions
-    const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
-    const selectedQuestions = shuffled.slice(0, 6);
+                                // ✅ LẤY THÔNG TIN SỬA CHỮA TỪ DATA ATTRIBUTES
+                                const technicianName = button.getAttribute('data-technician-name');
+                                const repairDate = button.getAttribute('data-repair-date');
+                                const diagnosis = button.getAttribute('data-diagnosis');
+                                const repairDetails = button.getAttribute('data-repair-details');
+                                const estimatedCost = button.getAttribute('data-estimated-cost');
+                                const quotationStatus = button.getAttribute('data-quotation-status');
 
-    // Group by category
-    const questionsByCategory = {};
-    selectedQuestions.forEach(item => {
-        if (!questionsByCategory[item.category]) {
-            questionsByCategory[item.category] = [];
-        }
-        questionsByCategory[item.category].push(item.question);
-    });
+                                // Điền thông tin cơ bản
+                                document.getElementById('viewEquipmentName').textContent = model || 'N/A';
+                                document.getElementById('viewSerialNumber').textContent = serial || 'N/A';
+                                document.getElementById('viewContractId').textContent = contract || 'N/A';
+                                document.getElementById('viewInstallDate').textContent = installDate || 'N/A';
+                                document.getElementById('viewLastUpdate').textContent = lastUpdate || 'N/A';
+                                document.getElementById('viewDescription').textContent = description || 'Không có mô tả';
 
-    // Render chips
-    Object.entries(questionsByCategory).forEach(([category, questions]) => {
-        const categoryDiv = document.createElement('div');
-        categoryDiv.className = 'recommendation-category';
-        categoryDiv.textContent = category;
-        container.appendChild(categoryDiv);
+                                const statusBadge = document.getElementById('viewStatus');
+                                if (status === 'Active') {
+                                    statusBadge.className = 'badge badge-active';
+                                    statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Đang hoạt động';
+                                } else if (status === 'Repair') {
+                                    statusBadge.className = 'badge badge-repair';
+                                    statusBadge.innerHTML = '<i class="fas fa-wrench"></i> Đang sửa chữa';
+                                } else if (status === 'Maintenance') {
+                                    statusBadge.className = 'badge badge-maintenance';
+                                    statusBadge.innerHTML = '<i class="fas fa-cog"></i> Đang bảo trì';
+                                }
 
-        questions.forEach(question => {
-            const chip = document.createElement('div');
-            chip.className = 'recommendation-chip';
-            chip.textContent = question;
-            chip.title = question;
-            chip.onclick = () => sendRecommendedQuestionWidget(question);
-            container.appendChild(chip);
-        });
-    });
-}
+                                // ✅ NẾU THIẾT BỊ ĐANG SỬA CHỮA → HIỂN THỊ THÔNG TIN SỬA CHỮA
+                                const repairSection = document.getElementById('repairInfoSection');
+                                if (status === 'Repair') {
+                                    repairSection.style.display = 'block';
 
-function sendRecommendedQuestionWidget(question) {
-    const input = document.getElementById('chatInputWidget');
-    input.value = question;
-    sendMessageWidget();
-}
+                                    // Hiển thị thông tin sửa chữa từ data attributes
+                                    document.getElementById('viewTechnicianName').innerHTML =
+                                            '<i class="fas fa-user-check"></i> ' + (technicianName && technicianName !== 'null' ? technicianName : 'Chưa phân công');
+                                    document.getElementById('viewRepairDate').textContent =
+                                            (repairDate && repairDate !== 'null' ? repairDate : 'N/A');
+                                } else {
+                                    repairSection.style.display = 'none';
+                                }
 
-function hideRecommendationsWidget() {
-    const recommendations = document.getElementById('chatbotRecommendationsWidget');
-    if (recommendations) {
-        recommendations.style.display = 'none';
-    }
-}
+                                new bootstrap.Modal(document.getElementById('viewModal')).show();
+                            }
 
-function showRecommendationsWidget() {
-    const recommendations = document.getElementById('chatbotRecommendationsWidget');
-    if (recommendations) {
-        recommendations.style.display = 'block';
-        showNewRecommendationsWidget();
-    }
-}
+                            // ========== CREATE REQUEST ==========
+                            function createRequest(button) {
+                                const equipmentId = button.getAttribute('data-id');
+                                const contractId = button.getAttribute('data-contract');
+                                const serialNumber = button.getAttribute('data-serial');
+                                const equipmentName = button.getAttribute('data-model');
 
-function toggleChatbotWidget() {
-    const chatWindow = document.getElementById('chatbotWindowWidget');
-    chatWindow.classList.toggle('active');
-    
-    if (chatWindow.classList.contains('active')) {
-        showRecommendationsWidget();
-        setTimeout(() => {
-            document.getElementById('chatInputWidget').focus();
-        }, 300);
-    }
-}
+                                // Xử lý contractId - cho phép cả thiết bị có và không có hợp đồng
+                                let cleanContractId = '';
+                                if (contractId && contractId !== 'N/A') {
+                                    cleanContractId = contractId.replace('HD', '').replace('#', '');
+                                }
 
-function handleKeyPressWidget(event) {
-    if (event.key === 'Enter') {
-        sendMessageWidget();
-    }
-}
+                                document.getElementById('requestEquipmentId').value = equipmentId;
+                                document.getElementById('requestContractIdValue').value = cleanContractId;
+                                document.getElementById('requestEquipmentName').value = equipmentName;
+                                document.getElementById('requestContractId').value = contractId || 'N/A';
+                                document.getElementById('requestSerialNumber').value = serialNumber;
 
-function addMessageWidget(content, isUser = false) {
-    const messagesDiv = document.getElementById('chatMessagesWidget');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    avatar.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    
-    if (isUser) {
-        contentDiv.textContent = content;
-        messageDiv.appendChild(contentDiv);
-        messageDiv.appendChild(avatar);
-    } else {
-        contentDiv.innerHTML = formatMessageWidget(content);
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(contentDiv);
-    }
-    
-    messagesDiv.appendChild(messageDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
+                                new bootstrap.Modal(document.getElementById('createRequestModal')).show();
+                            }
 
-function showTypingWidget() {
-    const messagesDiv = document.getElementById('chatMessagesWidget');
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'message bot';
-    typingDiv.id = 'typingIndicatorWidget';
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    avatar.innerHTML = '<i class="fas fa-robot"></i>';
-    
-    const typing = document.createElement('div');
-    typing.className = 'typing-indicator';
-    typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-    
-    typingDiv.appendChild(avatar);
-    typingDiv.appendChild(typing);
-    messagesDiv.appendChild(typingDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
+                            function toggleSidebar() {
+                                const sidebar = document.getElementById('sidebar');
+                                const toggleIcon = document.getElementById('toggleIcon');
+                                sidebar.classList.toggle('collapsed');
 
-function hideTypingWidget() {
-    const typing = document.getElementById('typingIndicatorWidget');
-    if (typing) {
-        typing.remove();
-    }
-}
+                                if (sidebar.classList.contains('collapsed')) {
+                                    toggleIcon.classList.remove('fa-chevron-left');
+                                    toggleIcon.classList.add('fa-chevron-right');
+                                } else {
+                                    toggleIcon.classList.remove('fa-chevron-right');
+                                    toggleIcon.classList.add('fa-chevron-left');
+                                }
+                            }
 
-async function sendMessageWidget() {
-    const input = document.getElementById('chatInputWidget');
-    const sendBtn = document.getElementById('sendBtnWidget');
-    const question = input.value.trim();
-    
-    if (!question) return;
-    
-    hideRecommendationsWidget();
-    addMessageWidget(question, true);
-    input.value = '';
-    
-    input.disabled = true;
-    sendBtn.disabled = true;
-    
-    showTypingWidget();
-    
-    try {
-        const response = await fetch('${pageContext.request.contextPath}/askGemini', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ q: question })
-        });
-        
-        const data = await response.json();
-        hideTypingWidget();
-        
-        if (data.success && data.answer) {
-            addMessageWidget(data.answer, false);
-        } else {
-            addMessageWidget(data.error || 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.', false);
-        }
-        
-        setTimeout(() => {
-            showRecommendationsWidget();
-        }, 500);
-        
-    } catch (error) {
-        hideTypingWidget();
-        addMessageWidget('Xin lỗi, không thể kết nối đến server. Vui lòng thử lại sau.', false);
-        console.error('Error:', error);
-        
-        setTimeout(() => {
-            showRecommendationsWidget();
-        }, 500);
-    } finally {
-        input.disabled = false;
-        sendBtn.disabled = false;
-        input.focus();
-    }
-}
+                            function refreshPage() {
+                                window.location.href = '${pageContext.request.contextPath}/equipment';
+                            }
 
-function formatMessageWidget(text) {
-    if (!text) return '';
-    
-    let formatted = text.replace(/\n/g, '<br>');
-    formatted = formatted.replace(/(\d+\.)\s/g, '<br>$1 ');
-    formatted = formatted.replace(/^- /gm, '<br>• ');
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    formatted = formatted.replace(/([A-Z][^.!?]*:\s*)/g, '<strong>$1</strong>');
-    
-    return formatted;
-}
-        </script>
+                            function scrollToTop() {
+                                window.scrollTo({
+                                    top: 0,
+                                    behavior: 'smooth'
+                                });
+                            }
+
+                            // ========== PAGINATION ==========
+                            function goToPage(pageNumber) {
+                                const form = document.querySelector('form[action*="/equipment"]');
+                                if (form) {
+                                    // Tạo hidden input cho page number
+                                    let pageInput = form.querySelector('input[name="page"]');
+                                    if (!pageInput) {
+                                        pageInput = document.createElement('input');
+                                        pageInput.type = 'hidden';
+                                        pageInput.name = 'page';
+                                        form.appendChild(pageInput);
+                                    }
+                                    pageInput.value = pageNumber;
+
+                                    // Submit form
+                                    form.submit();
+                                }
+                            }
+                            // ========== CHARACTER COUNT FOR EQUIPMENT REQUEST ==========
+                            function updateEquipmentCharCount() {
+                                const textarea = document.getElementById('equipmentRequestDescription');
+                                const charCount = document.getElementById('equipmentCharCount');
+                                if (!textarea || !charCount)
+                                    return;
+
+                                const currentLength = textarea.value.length;
+                                charCount.textContent = currentLength + '/1000';
+
+                                if (currentLength > 900) {
+                                    charCount.className = 'text-danger';
+                                } else if (currentLength > 700) {
+                                    charCount.className = 'text-warning';
+                                } else {
+                                    charCount.className = 'text-muted';
+                                }
+                            }
+
+                            // ========== VALIDATE EQUIPMENT REQUEST FORM ==========
+                            function validateEquipmentRequestForm(event) {
+                                const description = document.getElementById('equipmentRequestDescription').value.trim();
+                                const priorityLevel = document.getElementById('equipmentPriorityLevel').value;
+                                const requestType = document.getElementById('equipmentRequestType').value;
+
+                                if (!requestType) {
+                                    event.preventDefault();
+                                    showToast('Vui lòng chọn loại yêu cầu!', 'error');
+                                    return false;
+                                }
+
+                                if (!priorityLevel) {
+                                    event.preventDefault();
+                                    showToast('Vui lòng chọn mức độ ưu tiên!', 'error');
+                                    return false;
+                                }
+
+                                if (description.length < 10) {
+                                    event.preventDefault();
+                                    showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
+                                    document.getElementById('equipmentRequestDescription').focus();
+                                    return false;
+                                }
+
+                                if (description.length > 1000) {
+                                    event.preventDefault();
+                                    showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
+                                    document.getElementById('equipmentRequestDescription').focus();
+                                    return false;
+                                }
+
+                                return true;
+                            }
+
+                            // ========== CẬP NHẬT HÀM createRequest ==========
+                            function createRequest(button) {
+                                const equipmentId = button.getAttribute('data-id');
+                                const contractId = button.getAttribute('data-contract');
+                                const serialNumber = button.getAttribute('data-serial');
+                                const equipmentName = button.getAttribute('data-model');
+
+                                // Xử lý contractId - cho phép cả thiết bị có và không có hợp đồng
+                                let cleanContractId = '';
+                                if (contractId && contractId !== 'N/A') {
+                                    cleanContractId = contractId.replace('HD', '').replace('#', '');
+                                }
+
+                                document.getElementById('requestEquipmentId').value = equipmentId;
+                                document.getElementById('requestContractIdValue').value = cleanContractId;
+                                document.getElementById('requestEquipmentName').value = equipmentName;
+                                document.getElementById('requestContractId').value = contractId || 'N/A';
+                                document.getElementById('requestSerialNumber').value = serialNumber;
+
+                                // Reset form về giá trị mặc định
+                                document.getElementById('equipmentRequestType').value = 'Service';
+                                document.getElementById('equipmentPriorityLevel').value = '';
+                                document.getElementById('equipmentRequestDescription').value = '';
+                                updateEquipmentCharCount();
+
+                                new bootstrap.Modal(document.getElementById('createRequestModal')).show();
+                            }
+
+                            // ========== DATE RANGE VALIDATION ==========
+                            function validateDateRange() {
+                                const fromDate = document.querySelector('input[name="fromDate"]');
+                                const toDate = document.querySelector('input[name="toDate"]');
+
+                                if (fromDate && toDate && fromDate.value && toDate.value) {
+                                    if (fromDate.value > toDate.value) {
+                                        showToast('Từ ngày không thể lớn hơn đến ngày!', 'error');
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            }
+
+                            // ========== EVENT LISTENERS ==========
+                            document.addEventListener('DOMContentLoaded', function () {
+                                // ✅ Event cho textarea trong equipment request modal
+                                const equipmentDescriptionTextarea = document.getElementById('equipmentRequestDescription');
+                                if (equipmentDescriptionTextarea) {
+                                    equipmentDescriptionTextarea.addEventListener('input', updateEquipmentCharCount);
+                                }
+
+                                // ✅ Reset form khi đóng modal tạo đơn thiết bị
+                                const createRequestModal = document.getElementById('createRequestModal');
+                                if (createRequestModal) {
+                                    createRequestModal.addEventListener('hidden.bs.modal', function () {
+                                        document.getElementById('createRequestForm').reset();
+                                        updateEquipmentCharCount();
+                                    });
+
+                                    createRequestModal.addEventListener('shown.bs.modal', function () {
+                                        updateEquipmentCharCount();
+                                    });
+                                }
+
+                                // ✅ Add date range validation to search form
+                                const searchForm = document.querySelector('form[action*="/equipment"]');
+                                if (searchForm) {
+                                    searchForm.addEventListener('submit', function (e) {
+                                        if (!validateDateRange()) {
+                                            e.preventDefault();
+                                        }
+                                    });
+                                }
+                            });
+
+
+                            window.addEventListener('scroll', function () {
+                                const scrollBtn = document.getElementById('scrollToTop');
+                                if (window.pageYOffset > 300) {
+                                    scrollBtn.classList.add('show');
+                                } else {
+                                    scrollBtn.classList.remove('show');
+                                }
+                            });
+
+                            window.addEventListener('scroll', function () {
+                                const scrollBtn = document.getElementById('scrollToTop');
+                                if (window.pageYOffset > 300) {
+                                    scrollBtn.classList.add('show');
+                                } else {
+                                    scrollBtn.classList.remove('show');
+                                }
+                            });
+
+
+
+
+
+                            let maintenanceHistoryData = [];
+                            const HISTORY_PAGE_SIZE = 10;
+                            let currentHistoryPage = 1;
+
+                            function viewMaintenanceHistory(button) {
+                                const equipmentId = button.getAttribute('data-id');
+                                const equipmentName = button.getAttribute('data-model');
+
+                                console.log('========================================');
+                                console.log('🔍 [JS] viewMaintenanceHistory CALLED');
+                                console.log('🔍 [JS] Equipment ID:', equipmentId, 'Name:', equipmentName);
+
+                                // ✅ SET EQUIPMENT NAME
+                                document.getElementById('historyEquipmentName').textContent = equipmentName;
+
+                                // ✅ RESET STATES TRƯỚC KHI MỞ MODAL
+                                document.getElementById('historyLoading').style.display = 'block';
+                                document.getElementById('historyEmpty').style.display = 'none';
+                                document.getElementById('historyContent').style.display = 'none';
+
+                                // ✅ MỞ MODAL (CHỈ MỘT LẦN)
+                                const modalElement = document.getElementById('maintenanceHistoryModal');
+                                const modal = new bootstrap.Modal(modalElement);
+                                modal.show();
+
+                                console.log('✅ [JS] Modal opened');
+
+                                // ✅ ĐỢI MODAL MỞ XONG RỒI MỚI FETCH DATA
+                                setTimeout(() => {
+                                    const url = '${pageContext.request.contextPath}/equipment?action=getMaintenanceHistory&equipmentId=' + equipmentId;
+                                    console.log('📡 [JS] Fetching from:', url);
+
+                                    fetch(url)
+                                            .then(response => {
+                                                console.log('📡 [JS] Response status:', response.status);
+                                                if (!response.ok) {
+                                                    throw new Error('HTTP ' + response.status);
+                                                }
+                                                return response.text();
+                                            })
+                                            .then(text => {
+                                                console.log('========================================');
+                                                console.log('📦 [JS] RAW RESPONSE:');
+                                                console.log(text);
+                                                console.log('========================================');
+
+                                                // Parse JSON
+                                                const data = JSON.parse(text);
+                                                console.log('📦 [JS] PARSED DATA:', data);
+
+                                                // ✅ ẨN LOADING
+                                                document.getElementById('historyLoading').style.display = 'none';
+
+                                                if (data.success && data.data && data.data.length > 0) {
+                                                    console.log('✅ [JS] Found', data.data.length, 'maintenance records');
+
+                                                    // ✅ IN RA TỪNG RECORD
+                                                    data.data.forEach((record, index) => {
+                                                        console.log('----------------------------');
+                                                        console.log('📝 Record ' + (index + 1) + ':');
+                                                        console.log('  scheduleId:', record.scheduleId);
+                                                        console.log('  technicianName:', record.technicianName, typeof record.technicianName);
+                                                        console.log('  scheduledDate:', record.scheduledDate);
+                                                        console.log('  maintenanceDateTime:', record.maintenanceDateTime);
+                                                        console.log('  scheduleType:', record.scheduleType);
+                                                        console.log('  priorityLevel:', record.priorityLevel);
+                                                        console.log('  status:', record.status);
+                                                        console.log('  taskDetails:', record.taskDetails);
+                                                        console.log('  Full object:', record);
+                                                        console.log('----------------------------');
+                                                    });
+
+                                                    maintenanceHistoryData = data.data;
+                                                    currentHistoryPage = 1;
+
+                                                    // ✅ GỌI displayMaintenanceHistory() VỚI TIMEOUT ĐỂ ĐẢM BẢO MODAL ĐÃ RENDER XONG
+                                                    setTimeout(() => {
+                                                        displayMaintenanceHistory();
+                                                    }, 100);
+
+                                                } else {
+                                                    console.log('⚠️ [JS] No maintenance history found');
+                                                    document.getElementById('historyEmpty').style.display = 'block';
+                                                }
+                                            })
+                                            .catch(error => {
+                                                console.error('❌ [JS] Error:', error);
+                                                document.getElementById('historyLoading').style.display = 'none';
+                                                document.getElementById('historyEmpty').style.display = 'block';
+                                            });
+                                }, 300); // ✅ ĐỢI 300MS CHO MODAL MỞ XONG
+
+                                console.log('========================================');
+                            }
+
+                            function displayMaintenanceHistory() {
+                                console.log('🎬 [JS] displayMaintenanceHistory() STARTED');
+
+                                const tbody = document.getElementById('historyTableBody');
+                                tbody.innerHTML = '';
+
+                                const totalPages = Math.ceil(maintenanceHistoryData.length / HISTORY_PAGE_SIZE);
+                                const startIndex = (currentHistoryPage - 1) * HISTORY_PAGE_SIZE;
+                                const endIndex = Math.min(startIndex + HISTORY_PAGE_SIZE, maintenanceHistoryData.length);
+                                const pageData = maintenanceHistoryData.slice(startIndex, endIndex);
+
+                                console.log('📊 Total records:', maintenanceHistoryData.length);
+                                console.log('📊 Current page:', currentHistoryPage, 'of', totalPages);
+
+                                pageData.forEach((history, index) => {
+                                    const row = document.createElement('tr');
+
+                                    // 1. STT
+                                    const sttCell = document.createElement('td');
+                                    sttCell.className = 'text-center';
+                                    sttCell.textContent = startIndex + index + 1;
+                                    row.appendChild(sttCell);
+
+                                    // 2. KỸ THUẬT VIÊN
+                                    const techCell = document.createElement('td');
+                                    const techIcon = document.createElement('i');
+                                    techIcon.className = 'fas fa-user-cog text-primary';
+                                    const techText = document.createElement('strong');
+                                    techText.textContent = history.technicianName || 'Chưa phân công';
+                                    techText.style.marginLeft = '8px';
+                                    techCell.appendChild(techIcon);
+                                    techCell.appendChild(techText);
+                                    row.appendChild(techCell);
+
+                                    // 3. NGÀY GIỜ BẢO TRÌ
+                                    const dateCell = document.createElement('td');
+                                    const dateIcon = document.createElement('i');
+                                    dateIcon.className = 'fas fa-calendar-alt text-info';
+                                    dateIcon.style.marginRight = '8px';
+
+                                    let formattedDateTime = 'N/A';
+                                    let scheduledDateStr = history.scheduledDate || history.maintenanceDateTime;
+                                    if (scheduledDateStr) {
+                                        try {
+                                            const date = new Date(scheduledDateStr.replace(' ', 'T'));
+                                            if (!isNaN(date.getTime())) {
+                                                formattedDateTime = date.toLocaleDateString('vi-VN') + ' ' +
+                                                        date.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'});
+                                            }
+                                        } catch (e) {
+                                            console.error('Date parse error:', e);
+                                        }
+                                    }
+
+                                    const dateText = document.createTextNode(formattedDateTime);
+                                    dateCell.appendChild(dateIcon);
+                                    dateCell.appendChild(dateText);
+                                    row.appendChild(dateCell);
+
+                                    // 4. LOẠI BẢO TRÌ
+                                    const typeCell = document.createElement('td');
+                                    const maintenanceType = history.scheduleType || history.maintenanceType || 'N/A';
+                                    const typeBadge = document.createElement('span');
+                                    typeBadge.className = 'badge';
+
+                                    if (maintenanceType === 'Corrective') {
+                                        typeBadge.className += ' bg-warning text-dark';
+                                        typeBadge.innerHTML = '<i class="fas fa-wrench me-1"></i>Sửa Chữa';
+                                    } else if (maintenanceType === 'Preventive' || maintenanceType === 'Periodic') {
+                                        typeBadge.className += ' bg-info';
+                                        typeBadge.innerHTML = '<i class="fas fa-calendar-check me-1"></i>Định Kỳ';
+                                    } else if (maintenanceType === 'Emergency') {
+                                        typeBadge.className += ' bg-danger';
+                                        typeBadge.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Khẩn Cấp';
+                                    } else {
+                                        typeBadge.className += ' bg-secondary';
+                                        typeBadge.textContent = 'N/A';
+                                    }
+
+                                    typeCell.appendChild(typeBadge);
+                                    row.appendChild(typeCell);
+
+                                    // 6. LOẠI TASK
+                                    const taskTypeCell = document.createElement('td');
+                                    const taskType = history.taskType || 'Scheduled';
+                                    const taskBadge = document.createElement('span');
+                                    taskBadge.className = 'badge';
+
+                                    if (taskType === 'Request') {
+                                        taskBadge.className += ' bg-primary';
+                                        taskBadge.innerHTML = '<i class="fas fa-tasks me-1"></i>Request';
+                                    } else {
+                                        taskBadge.className += ' bg-success';
+                                        taskBadge.innerHTML = '<i class="fas fa-clock me-1"></i>Scheduled';
+                                    }
+
+                                    taskTypeCell.appendChild(taskBadge);
+                                    row.appendChild(taskTypeCell);
+
+                                    // 7. TRẠNG THÁI
+                                    const statusCell = document.createElement('td');
+                                    const status = history.scheduleStatus || history.status || 'Scheduled';
+                                    const statusBadge = document.createElement('span');
+                                    statusBadge.className = 'badge';
+
+                                    if (status === 'Completed') {
+                                        statusBadge.className += ' bg-success';
+                                        statusBadge.innerHTML = '<i class="fas fa-check-circle me-1"></i>Hoàn Thành';
+                                    } else if (status === 'In Progress') {
+                                        statusBadge.className += ' bg-warning text-dark';
+                                        statusBadge.innerHTML = '<i class="fas fa-spinner me-1"></i>Đang Thực Hiện';
+                                    } else if (status === 'Assigned') {
+                                        statusBadge.className += ' bg-info';
+                                        statusBadge.innerHTML = '<i class="fas fa-user-check me-1"></i>Đã Phân Công';
+                                    } else if (status === 'Scheduled') {
+                                        statusBadge.className += ' bg-primary';
+                                        statusBadge.innerHTML = '<i class="fas fa-calendar me-1"></i>Đã Lên Lịch';
+                                    } else {
+                                        statusBadge.className += ' bg-secondary';
+                                        statusBadge.innerHTML = '<i class="fas fa-clock me-1"></i>Chờ Xử Lý';
+                                    }
+
+                                    statusCell.appendChild(statusBadge);
+                                    row.appendChild(statusCell);
+
+                                    // 8. CHI TIẾT
+                                    //                                const detailsCell = document.createElement('td');
+                                    //                                detailsCell.style.maxWidth = '200px';
+                                    //                                detailsCell.style.wordWrap = 'break-word';
+                                    //
+                                    //                                const details = history.taskDetails || history.recurrenceRule || '';
+                                    //                                if (details && details !== 'null' && details !== 'false' && details.trim() !== '') {
+                                    //                                    detailsCell.textContent = details;
+                                    //                                } else {
+                                    //                                    const emptyText = document.createElement('span');
+                                    //                                    emptyText.className = 'text-muted';
+                                    //                                    emptyText.textContent = 'Không có mô tả';
+                                    //                                    detailsCell.appendChild(emptyText);
+                                    //                                }
+                                    //
+                                    //                                row.appendChild(detailsCell);
+                                    tbody.appendChild(row);
+                                });
+
+                                // HIỂN THỊ TABLE
+                                document.getElementById('historyLoading').style.display = 'none';
+                                document.getElementById('historyEmpty').style.display = 'none';
+                                document.getElementById('historyContent').style.display = 'block';
+
+                                // PAGINATION
+                                if (totalPages > 1) {
+                                    displayHistoryPagination(totalPages);
+                                } else {
+                                    document.getElementById('historyPagination').style.display = 'none';
+                                }
+
+                                console.log('✅ [JS] displayMaintenanceHistory() COMPLETED. Rows:', tbody.children.length);
+                            }
+                            function displayHistoryPagination(totalPages) {
+                                const paginationList = document.getElementById('historyPaginationList');
+                                paginationList.innerHTML = '';
+
+                                // Previous button
+                                const prevLi = document.createElement('li');
+                                prevLi.className = 'page-item' + (currentHistoryPage <= 1 ? ' disabled' : '');
+                                prevLi.innerHTML = `
+                        <a class="page-link" href="javascript:void(0)" onclick="${currentHistoryPage > 1 ? 'goToHistoryPage(' + (currentHistoryPage - 1) + ')' : ''}">
+                            <i class="fas fa-chevron-left"></i> Trước
+                        </a>
+                    `;
+                                paginationList.appendChild(prevLi);
+
+                                // Page numbers
+                                for (let i = 1; i <= totalPages; i++) {
+                                    const li = document.createElement('li');
+                                    li.className = 'page-item' + (i === currentHistoryPage ? ' active' : '');
+                                    li.innerHTML = `
+                            <a class="page-link" href="javascript:void(0)" onclick="goToHistoryPage(${i})">
+                ${i}
+                            </a>
+                        `;
+                                    paginationList.appendChild(li);
+                                }
+
+                                // Next button
+                                const nextLi = document.createElement('li');
+                                nextLi.className = 'page-item' + (currentHistoryPage >= totalPages ? ' disabled' : '');
+                                nextLi.innerHTML = `
+                        <a class="page-link" href="javascript:void(0)" onclick="${currentHistoryPage < totalPages ? 'goToHistoryPage(' + (currentHistoryPage + 1) + ')' : ''}">
+                            Tiếp <i class="fas fa-chevron-right"></i>
+                        </a>
+                    `;
+                                paginationList.appendChild(nextLi);
+
+                                document.getElementById('historyPagination').style.display = 'block';
+                            }
+
+                            function goToHistoryPage(pageNumber) {
+                                currentHistoryPage = pageNumber;
+                                displayMaintenanceHistory();
+                            }
+            </script>
+
 
     </body>
 </html>

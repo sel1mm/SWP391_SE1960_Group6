@@ -56,17 +56,17 @@ public class TechnicianValidator {
         ValidationResult result = new ValidationResult("details");
         
         if (details == null || details.trim().isEmpty()) {
-            result.addError("Details is required");
+            result.addError("Chi tiết là bắt buộc");
             return result;
         }
         
         String trimmed = details.trim();
         if (trimmed.length() > MAX_DETAILS_LENGTH) {
-            result.addError("Details must be " + MAX_DETAILS_LENGTH + " characters or less");
+            result.addError("Chi tiết phải nhỏ hơn hoặc bằng " + MAX_DETAILS_LENGTH + " ký tự");
         }
         
         if (!SAFE_TEXT_PATTERN.matcher(trimmed).matches()) {
-            result.addError("Details can only contain letters, numbers, spaces, and these characters: , . - ( )");
+            result.addError("Chi tiết chỉ được chứa chữ, số, khoảng trắng và các ký tự: , . - ( )");
         }
         
         return result;
@@ -79,17 +79,17 @@ public class TechnicianValidator {
         ValidationResult result = new ValidationResult("diagnosis");
         
         if (diagnosis == null || diagnosis.trim().isEmpty()) {
-            result.addError("Diagnosis is required");
+            result.addError("Chẩn đoán là bắt buộc");
             return result;
         }
         
         String trimmed = diagnosis.trim();
         if (trimmed.length() > MAX_DIAGNOSIS_LENGTH) {
-            result.addError("Diagnosis must be " + MAX_DIAGNOSIS_LENGTH + " characters or less");
+            result.addError("Chẩn đoán phải nhỏ hơn hoặc bằng " + MAX_DIAGNOSIS_LENGTH + " ký tự");
         }
         
         if (!SAFE_TEXT_PATTERN.matcher(trimmed).matches()) {
-            result.addError("Diagnosis can only contain letters, numbers, spaces, and these characters: , . - ( )");
+            result.addError("Chẩn đoán chỉ được chứa chữ, số, khoảng trắng và các ký tự: , . - ( )");
         }
         
         return result;
@@ -104,28 +104,28 @@ public class TechnicianValidator {
         ValidationResult result = new ValidationResult("estimatedCost");
         
         if (costStr == null || costStr.trim().isEmpty()) {
-            result.addError("Estimated cost is required");
+            result.addError("Chi phí ước tính là bắt buộc");
             return result;
         }
         
         String trimmed = costStr.trim();
         if (!NUMERIC_PATTERN.matcher(trimmed).matches()) {
-            result.addError("Estimated cost must be a valid number (e.g., 1500.00)");
+            result.addError("Chi phí ước tính phải là số hợp lệ (ví dụ: 1500.00)");
             return result;
         }
         
         try {
             double cost = Double.parseDouble(trimmed);
             if (cost <= 0) {
-                result.addError("Estimated cost must be greater than 0");
+                result.addError("Chi phí ước tính phải lớn hơn 0");
             }
             // Max VND value: 99,999,999,999 (matches form input max attribute)
             // This ensures converted USD value fits in DECIMAL(12,2) database limit
             if (cost > 99999999999.0) {
-                result.addError("Estimated cost cannot exceed 99,999,999,999 VND");
+                result.addError("Chi phí ước tính không được vượt quá 99.999.999.999 VND");
             }
         } catch (NumberFormatException e) {
-            result.addError("Invalid number format");
+            result.addError("Định dạng số không hợp lệ");
         }
         
         return result;
@@ -140,7 +140,7 @@ public class TechnicianValidator {
         ValidationResult result = new ValidationResult("repairDate");
         
         if (dateStr == null || dateStr.trim().isEmpty()) {
-            result.addError("Repair date is required");
+            result.addError("Ngày sửa chữa là bắt buộc");
             return result;
         }
         
@@ -156,18 +156,18 @@ public class TechnicianValidator {
                 LocalDate today = LocalDate.now();
                 
                 if (repairDate.isBefore(today)) {
-                    result.addError("Repair date cannot be in the past");
+                    result.addError("Ngày sửa chữa không được ở trong quá khứ");
                 }
                 
                 // Check if date is too far in the future (e.g., more than 1 year)
                 LocalDate maxDate = today.plusYears(1);
                 if (repairDate.isAfter(maxDate)) {
-                    result.addError("Repair date cannot be more than 1 year in the future");
+                    result.addError("Ngày sửa chữa không được quá 1 năm trong tương lai");
                 }
             }
             
         } catch (DateTimeParseException e) {
-            result.addError("Invalid date format. Please use YYYY-MM-DD format");
+            result.addError("Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD");
         }
         
         return result;
@@ -180,17 +180,17 @@ public class TechnicianValidator {
         ValidationResult result = new ValidationResult("description");
         
         if (description == null || description.trim().isEmpty()) {
-            result.addError("Description is required");
+            result.addError("Mô tả là bắt buộc");
             return result;
         }
         
         String trimmed = description.trim();
         if (trimmed.length() > MAX_DESCRIPTION_LENGTH) {
-            result.addError("Description must be " + MAX_DESCRIPTION_LENGTH + " characters or less");
+            result.addError("Mô tả phải nhỏ hơn hoặc bằng " + MAX_DESCRIPTION_LENGTH + " ký tự");
         }
         
         if (!SAFE_TEXT_PATTERN.matcher(trimmed).matches()) {
-            result.addError("Description can only contain letters, numbers, spaces, and these characters: , . - ( )");
+            result.addError("Mô tả chỉ được chứa chữ, số, khoảng trắng và các ký tự: , . - ( )");
         }
         
         return result;
@@ -203,17 +203,17 @@ public class TechnicianValidator {
         ValidationResult result = new ValidationResult("customerName");
         
         if (name == null || name.trim().isEmpty()) {
-            result.addError("Customer name is required");
+            result.addError("Tên khách hàng là bắt buộc");
             return result;
         }
         
         String trimmed = name.trim();
         if (trimmed.length() > MAX_NAME_LENGTH) {
-            result.addError("Customer name must be " + MAX_NAME_LENGTH + " characters or less");
+            result.addError("Tên khách hàng phải nhỏ hơn hoặc bằng " + MAX_NAME_LENGTH + " ký tự");
         }
         
         if (!SAFE_TEXT_PATTERN.matcher(trimmed).matches()) {
-            result.addError("Customer name can only contain letters, numbers, spaces, and these characters: , . - ( )");
+            result.addError("Tên khách hàng chỉ được chứa chữ, số, khoảng trắng và các ký tự: , . - ( )");
         }
         
         return result;
@@ -226,17 +226,17 @@ public class TechnicianValidator {
         ValidationResult result = new ValidationResult("email");
         
         if (email == null || email.trim().isEmpty()) {
-            result.addError("Email is required");
+            result.addError("Email là bắt buộc");
             return result;
         }
         
         String trimmed = email.trim();
         if (trimmed.length() > MAX_EMAIL_LENGTH) {
-            result.addError("Email must be " + MAX_EMAIL_LENGTH + " characters or less");
+            result.addError("Email phải nhỏ hơn hoặc bằng " + MAX_EMAIL_LENGTH + " ký tự");
         }
         
         if (!EMAIL_PATTERN.matcher(trimmed).matches()) {
-            result.addError("Please enter a valid email address (e.g., user@example.com)");
+            result.addError("Vui lòng nhập địa chỉ email hợp lệ (ví dụ: user@example.com)");
         }
         
         return result;
@@ -249,7 +249,7 @@ public class TechnicianValidator {
         ValidationResult result = new ValidationResult(fieldName);
         
         if (value == null || value.trim().isEmpty()) {
-            result.addError(fieldName + " is required");
+            result.addError(fieldName + " là bắt buộc");
         }
         
         return result;
@@ -266,11 +266,11 @@ public class TechnicianValidator {
             LocalDate endDate = LocalDate.parse(endDateStr.trim());
             
             if (!endDate.isAfter(startDate)) {
-                result.addError("End date must be after start date");
+                result.addError("Ngày kết thúc phải sau ngày bắt đầu");
             }
             
         } catch (DateTimeParseException e) {
-            result.addError("Invalid date format in date range");
+            result.addError("Định dạng ngày không hợp lệ trong khoảng thời gian");
         }
         
         return result;
@@ -305,21 +305,21 @@ public class TechnicianValidator {
     public static String getExampleText(String fieldName) {
         switch (fieldName.toLowerCase()) {
             case "details":
-                return "<strong>Example:</strong> Equipment malfunction, replaced faulty component";
+                return "<strong>Ví dụ:</strong> Thiết bị hỏng, đã thay linh kiện lỗi";
             case "diagnosis":
-                return "<strong>Example:</strong> Motor overheating due to worn bearings";
+                return "<strong>Ví dụ:</strong> Động cơ quá nhiệt do bạc đạn mòn";
             case "estimatedcost":
-                return "<strong>Example:</strong> 1500.00";
+                return "<strong>Ví dụ:</strong> 1500.00";
             case "repairdate":
-                return "<strong>Example:</strong> 2024-12-25";
+                return "<strong>Ví dụ:</strong> 2024-12-25";
             case "description":
-                return "<strong>Example:</strong> Annual maintenance contract for industrial equipment";
+                return "<strong>Ví dụ:</strong> Hợp đồng bảo trì hằng năm cho thiết bị công nghiệp";
             case "customername":
-                return "<strong>Example:</strong> ABC Manufacturing Company";
+                return "<strong>Ví dụ:</strong> Công ty sản xuất ABC";
             case "email":
-                return "<strong>Example:</strong> contact@abccompany.com";
+                return "<strong>Ví dụ:</strong> contact@abccompany.com";
             default:
-                return "<strong>Example:</strong> Please provide valid input";
+                return "<strong>Ví dụ:</strong> Vui lòng nhập dữ liệu hợp lệ";
         }
     }
 }

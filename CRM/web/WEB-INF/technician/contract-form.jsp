@@ -20,19 +20,19 @@
 
   <div class="row mb-3 align-items-center">
     <div class="col">
-      <h1 class="h4 crm-page-title">Create New Contract</h1>
-      <p class="text-muted">Create a new contract for customer with required part assignment</p>
+      <h1 class="h4 crm-page-title">Tạo hợp đồng mới</h1>
+      <p class="text-muted">Tạo hợp đồng mới cho khách hàng với linh kiện bắt buộc</p>
     </div>
     <div class="col-auto">
       <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
-        <i class="bi bi-arrow-left me-1"></i>Back to Contracts
+        <i class="bi bi-arrow-left me-1"></i>Quay lại hợp đồng
       </a>
     </div>
   </div>
 
   <div class="card crm-card-shadow">
     <div class="card-header">
-      <h5 class="mb-0">Contract Information</h5>
+      <h5 class="mb-0">Thông tin hợp đồng</h5>
     </div>
     <div class="card-body">
       <form id="contractForm" action="${pageContext.request.contextPath}/technician/contracts" method="POST" novalidate>
@@ -41,65 +41,65 @@
         <div class="row">
           <div class="col-md-6">
             <div class="mb-3">
-              <label for="customerId" class="form-label fw-bold">Customer <span class="text-danger">*</span></label>
+              <label for="customerId" class="form-label fw-bold">Khách hàng <span class="text-danger">*</span></label>
               <select class="form-select" id="customerId" name="customerId" required>
-                <option value="">Select Customer</option>
+                <option value="">Chọn khách hàng</option>
                 <c:forEach var="customer" items="${customers}">
                   <option value="${customer.accountId}">${customer.fullName} (ID: ${customer.accountId})</option>
                 </c:forEach>
               </select>
-              <div class="invalid-feedback">Please select a customer.</div>
+              <div class="invalid-feedback">Vui lòng chọn khách hàng.</div>
             </div>
           </div>
           
           <div class="col-md-6">
             <div class="mb-3">
-              <label for="contractType" class="form-label fw-bold">Contract Type <span class="text-danger">*</span></label>
+              <label for="contractType" class="form-label fw-bold">Loại hợp đồng <span class="text-danger">*</span></label>
               <select class="form-select" id="contractType" name="contractType" required>
-                <option value="">Select Type</option>
-                <option value="Equipment Warranty Return">Equipment Warranty Return</option>
-                <option value="Equipment Purchase">Equipment Purchase</option>
+                <option value="">Chọn loại</option>
+                <option value="Equipment Warranty Return">Trả thiết bị bảo hành</option>
+                <option value="Equipment Purchase">Mua thiết bị</option>
               </select>
-              <div class="invalid-feedback">Please select a contract type.</div>
+              <div class="invalid-feedback">Vui lòng chọn loại hợp đồng.</div>
             </div>
           </div>
         </div>
         
         <div class="mb-3">
-          <label for="description" class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+          <label for="description" class="form-label fw-bold">Mô tả <span class="text-danger">*</span></label>
           <textarea class="form-control" id="description" name="description" rows="3" 
-                    placeholder="Describe the contract details..." maxlength="500" required></textarea>
-          <div class="form-text">Maximum 500 characters</div>
-          <div class="invalid-feedback">Please provide a description (max 500 characters).</div>
+                    placeholder="Mô tả chi tiết hợp đồng..." maxlength="500" required></textarea>
+          <div class="form-text">Tối đa 500 ký tự</div>
+          <div class="invalid-feedback">Vui lòng nhập mô tả (tối đa 500 ký tự).</div>
         </div>
         
         <div class="row">
           <div class="col-md-6">
             <div class="mb-3">
-              <label for="contractDate" class="form-label fw-bold">Contract Date <span class="text-danger">*</span></label>
+              <label for="contractDate" class="form-label fw-bold">Ngày ký <span class="text-danger">*</span></label>
               <input type="date" class="form-control" id="contractDate" name="contractDate" required>
-              <div class="invalid-feedback">Please select a contract date.</div>
+              <div class="invalid-feedback">Vui lòng chọn ngày ký hợp đồng.</div>
             </div>
           </div>
           
           <div class="col-md-6">
             <div class="mb-3">
-              <label for="status" class="form-label fw-bold">Status <span class="text-danger">*</span></label>
+              <label for="status" class="form-label fw-bold">Trạng thái <span class="text-danger">*</span></label>
               <select class="form-select" id="status" name="status" required>
-                <option value="">Select Status</option>
-                <option value="Active">Active</option>
-                <option value="Completed">Completed</option>
+                <option value="">Chọn trạng thái</option>
+                <option value="Active">Đang hiệu lực</option>
+                <option value="Completed">Đã hoàn thành</option>
               </select>
-              <div class="invalid-feedback">Please select a status.</div>
+              <div class="invalid-feedback">Vui lòng chọn trạng thái.</div>
             </div>
           </div>
         </div>
         
         <!-- Part Selection -->
         <div class="mb-3">
-          <label for="partId" class="form-label fw-bold">Part for Repair <span class="text-danger">*</span></label>
+          <label for="partId" class="form-label fw-bold">Linh kiện sửa chữa <span class="text-danger">*</span></label>
           <select class="form-select" id="partId" name="partId" required>
-            <option value="">Select a part</option>
+            <option value="">Chọn linh kiện</option>
             <c:forEach var="part" items="${availableParts}">
               <option value="${part.equipmentId}" 
                       data-model="${fn:escapeXml(part.model)}"
@@ -108,33 +108,33 @@
                       data-price="${part.unitPrice}">
                 ${fn:escapeXml(part.model)} - ${fn:escapeXml(part.serialNumber)} 
                 <c:if test="${part.location != null && !part.location.isEmpty()}">
-                  (Location: ${fn:escapeXml(part.location)})
+                  (Vị trí: ${fn:escapeXml(part.location)})
                 </c:if>
                 - $${part.unitPrice}
               </option>
             </c:forEach>
           </select>
-          <div class="invalid-feedback">Please select a part for repair.</div>
+          <div class="invalid-feedback">Vui lòng chọn linh kiện cần sửa.</div>
           <div class="form-text">
             <i class="bi bi-info-circle me-1"></i>
-            Only available parts from inventory are shown.
+            Chỉ hiển thị các linh kiện hiện có trong kho.
           </div>
         </div>
         
         <!-- Part Details Preview -->
         <div id="partPreview" class="card mt-3" style="display: none;">
           <div class="card-header">
-            <h6 class="mb-0"><i class="bi bi-gear me-1"></i>Selected Part Details</h6>
+            <h6 class="mb-0"><i class="bi bi-gear me-1"></i>Chi tiết linh kiện đã chọn</h6>
           </div>
           <div class="card-body">
             <div class="row">
               <div class="col-md-6">
-                <strong>Model:</strong> <span id="previewModel"></span><br>
-                <strong>Serial Number:</strong> <span id="previewSerial"></span>
+                <strong>Mẫu thiết bị:</strong> <span id="previewModel"></span><br>
+                <strong>Số seri:</strong> <span id="previewSerial"></span>
               </div>
               <div class="col-md-6">
-                <strong>Location:</strong> <span id="previewLocation"></span><br>
-                <strong>Unit Price:</strong> <span id="previewPrice"></span>
+                <strong>Vị trí:</strong> <span id="previewLocation"></span><br>
+                <strong>Đơn giá:</strong> <span id="previewPrice"></span>
               </div>
             </div>
           </div>
@@ -142,10 +142,10 @@
         
         <div class="d-flex justify-content-end gap-2">
           <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
-            Cancel
+            Hủy
           </a>
           <button type="submit" class="btn btn-success">
-            <i class="bi bi-check-circle me-1"></i>Create Contract
+            <i class="bi bi-check-circle me-1"></i>Tạo hợp đồng
           </button>
         </div>
       </form>
@@ -159,16 +159,16 @@
     <div class="modal-content">
       <div class="modal-header bg-danger text-white">
         <h5 class="modal-title" id="errorModalLabel">
-          <i class="bi bi-exclamation-triangle me-2"></i>Validation Error
+          <i class="bi bi-exclamation-triangle me-2"></i>Lỗi xác thực
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
       </div>
       <div class="modal-body">
         <div id="errorMessage"></div>
         <div id="errorExample" class="mt-2 text-muted"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
       </div>
     </div>
   </div>
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show preview
             document.getElementById('previewModel').textContent = selectedOption.dataset.model;
             document.getElementById('previewSerial').textContent = selectedOption.dataset.serial;
-            document.getElementById('previewLocation').textContent = selectedOption.dataset.location || 'Not specified';
+            document.getElementById('previewLocation').textContent = selectedOption.dataset.location || 'Không xác định';
             document.getElementById('previewPrice').textContent = '$' + parseFloat(selectedOption.dataset.price).toFixed(2);
             previewElement.style.display = 'block';
         } else {
@@ -226,44 +226,44 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validate customer selection
         const customerId = document.getElementById('customerId').value;
         if (!customerId) {
-            showFieldError('customerId', 'Please select a customer.');
-            errors.push('Customer selection is required');
+            showFieldError('customerId', 'Vui lòng chọn khách hàng.');
+            errors.push('Chưa chọn khách hàng');
             isValid = false;
         }
         
         // Validate contract type
         const contractType = document.getElementById('contractType').value;
         if (!contractType) {
-            showFieldError('contractType', 'Please select a contract type.');
-            errors.push('Contract type selection is required');
+            showFieldError('contractType', 'Vui lòng chọn loại hợp đồng.');
+            errors.push('Chưa chọn loại hợp đồng');
             isValid = false;
         }
         
         // Validate description
         const description = document.getElementById('description').value.trim();
         if (!description) {
-            showFieldError('description', 'Please provide a description.');
-            errors.push('Description is required');
+            showFieldError('description', 'Vui lòng nhập mô tả.');
+            errors.push('Mô tả là bắt buộc');
             isValid = false;
         } else if (description.length > 500) {
-            showFieldError('description', 'Description must be 500 characters or less.');
-            errors.push('Description is too long (max 500 characters)');
+            showFieldError('description', 'Mô tả phải tối đa 500 ký tự.');
+            errors.push('Mô tả quá dài (tối đa 500 ký tự)');
             isValid = false;
         }
         
         // Validate contract date
         const contractDate = document.getElementById('contractDate').value;
         if (!contractDate) {
-            showFieldError('contractDate', 'Please select a contract date.');
-            errors.push('Contract date is required');
+            showFieldError('contractDate', 'Vui lòng chọn ngày ký hợp đồng.');
+            errors.push('Ngày ký hợp đồng là bắt buộc');
             isValid = false;
         }
         
         // Validate status
         const status = document.getElementById('status').value;
         if (!status) {
-            showFieldError('status', 'Please select a status.');
-            errors.push('Status selection is required');
+            showFieldError('status', 'Vui lòng chọn trạng thái.');
+            errors.push('Chưa chọn trạng thái');
             isValid = false;
         }
         
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const errorExample = document.getElementById('errorExample');
         
         errorMessage.innerHTML = '<ul class="mb-0"><li>' + errors.join('</li><li>') + '</li></ul>';
-        errorExample.innerHTML = '<strong>Example:</strong> Select a customer, choose contract type, provide description, set contract date, and select status.';
+        errorExample.innerHTML = '<strong>Ví dụ:</strong> Chọn khách hàng, chọn loại hợp đồng, nhập mô tả, đặt ngày ký và chọn trạng thái.';
         
         const modalElement = document.getElementById('errorModal');
         const modal = new bootstrap.Modal(modalElement);
@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Additional event listener for Close button click
     document.getElementById('errorModal').addEventListener('click', function(e) {
-        if (e.target.classList.contains('btn-secondary') && e.target.textContent.trim() === 'Close') {
+        if (e.target.classList.contains('btn-secondary') && e.target.textContent.trim() === 'Đóng') {
             const modal = bootstrap.Modal.getInstance(this);
             if (modal) {
                 modal.hide();

@@ -4,18 +4,28 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class Contract {
+
     private int contractId;
     private int customerId;
     private LocalDate contractDate;
     private String contractType;
     private String status;
     private String details;
-    
+    private String fileAttachment;
+
     // ✅ Thêm các field mới
     private LocalDateTime createdDate;
-    private boolean canDelete; 
+    private boolean canDelete;
     private boolean canAddAppendix;
-    
+
+    public String getFileAttachment() {
+        return fileAttachment;
+    }
+
+    public void setFileAttachment(String fileAttachment) {
+        this.fileAttachment = fileAttachment;
+    }
+
     // ✅ Thông tin khách hàng (JOIN từ Account + AccountProfile)
     private String customerName;
 
@@ -118,12 +128,12 @@ public class Contract {
     private LocalDate endDate;
     private int daysUntilExpiry;
     private String documentUrl; // link PDF nếu có upload
-    
+
     public Contract() {
     }
-    
-    public Contract(int contractId, int customerId, LocalDate contractDate, 
-                   String contractType, String status, String details) {
+
+    public Contract(int contractId, int customerId, LocalDate contractDate,
+            String contractType, String status, String details) {
         this.contractId = contractId;
         this.customerId = customerId;
         this.contractDate = contractDate;
@@ -204,7 +214,4 @@ public class Contract {
         this.canAddAppendix = canAddAppendix;
     }
 
-   
-    
-    
 }

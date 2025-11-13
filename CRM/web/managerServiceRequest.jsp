@@ -2956,7 +2956,7 @@
                                                                                    console.log('📋 Total quotations:', data.quotations.length);
                                                                                    
                                                                                    data.quotations.forEach((quotation, index) => {
-                                                                                       const cost = parseFloat(quotation.estimatedCost) || 0;
+                                                                                       const cost = (parseFloat(quotation.estimatedCost) || 0) * 26000;
                                                                                        totalCost += cost;
                                                                                        const partsCount = quotation.parts ? quotation.parts.length : 0;
                                                                                        totalParts += partsCount;
@@ -3036,7 +3036,7 @@
                                                                                            console.log(`  📦 Rendering ${quotation.parts.length} parts for technician ${index + 1}`);
                                                                                            quotation.parts.forEach((part, partIndex) => {
                                                                                                console.log(`    - Part ${partIndex + 1}:`, part.partName);
-                                                                                               const partTotal = (parseFloat(part.unitPrice) || 0) * (parseInt(part.quantity) || 0);
+                                                                                               const partTotal = (parseFloat(part.unitPrice) || 0) * 26000 * (parseInt(part.quantity) || 0);
                                                                                                partsTotalCost += partTotal;
 
                                                                                                if (isWarranty) {
@@ -3052,7 +3052,7 @@
                                                                                                    html += '<div>' + (part.partName || 'N/A') + '</div>';
                                                                                                    html += '<div class="parts-serial">' + (part.serialNumber || 'N/A') + '</div>';
                                                                                                    html += '<div class="parts-quantity">' + (part.quantity || 0) + '</div>';
-                                                                                                   html += '<div class="parts-price">' + (parseFloat(part.unitPrice) || 0).toLocaleString('vi-VN') + ' đ</div>';
+                                                                                                   html += '<div class="parts-price">' + ((parseFloat(part.unitPrice) || 0) * 26000).toLocaleString('vi-VN') + ' đ</div>';
                                                                                                    html += '<div class="parts-total">' + partTotal.toLocaleString('vi-VN') + ' đ</div>';
                                                                                                    html += '</div>';
                                                                                                }
@@ -3110,7 +3110,7 @@
 
                                                                                                } else {
                                                                                                    // ✅ SERVICE - HIỂN THỊ NÚT THANH TOÁN NGAY Ở CẢ PENDING VÀ APPROVED
-                                                                                                   if ((isPending || isApproved) && hasUnpaidParts) {
+                                                                                                   if (isPending && hasUnpaidParts) {
                                                                                                        // Hiển thị nút "Thanh toán tất cả" + "Từ chối"
                                                                                                        html += '<button class="btn-pay-all" onclick="event.stopPropagation(); payForTechnician(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
                                                                                                        html += '<i class="fas fa-credit-card"></i> Thanh toán tất cả';
@@ -3762,7 +3762,7 @@
 
                                                                                    data.quotations.forEach((quotation, index) => {
                                                                                        const techInitial = quotation.technicianName ? quotation.technicianName.charAt(0).toUpperCase() : 'T';
-                                                                                       const cost = parseFloat(quotation.estimatedCost) || 0;
+                                                                                       const cost = (parseFloat(quotation.estimatedCost) || 0) * 26000;
                                                                                        const partsCount = quotation.parts ? quotation.parts.length : 0;
 
                                                                                        html += '<div class="technician-card">';
@@ -3797,7 +3797,7 @@
                                                                                            html += '</div>';
 
                                                                                            quotation.parts.forEach(part => {
-                                                                                               const unitPrice = parseFloat(part.unitPrice) || 0;
+                                                                                               const unitPrice = (parseFloat(part.unitPrice) || 0) * 26000;
                                                                                                const quantity = parseInt(part.quantity) || 0;
                                                                                                const totalPrice = unitPrice * quantity;
 
@@ -3820,13 +3820,6 @@
                                                                                                    html += '<span class="badge badge-cancelled" style="font-size: 0.7rem;">';
                                                                                                    html += '<i class="fas fa-times-circle"></i> Đã hủy';
                                                                                                    html += '</span>';
-                                                                                               } else {
-                                                                                                   html += '<button class="btn btn-sm btn-success" onclick="payForPart(' + requestId + ', ' + quotation.reportId + ', ' + part.partDetailId + ', \'' + part.partName + '\')" style="font-size: 0.75rem; padding: 4px 10px;">';
-                                                                                                   html += '<i class="fas fa-credit-card"></i> Thanh toán';
-                                                                                                   html += '</button>';
-                                                                                                   html += '<button class="btn btn-sm btn-danger" onclick="cancelPart(' + requestId + ', ' + quotation.reportId + ', ' + part.partDetailId + ', \'' + part.partName + '\')" style="font-size: 0.75rem; padding: 4px 10px;">';
-                                                                                                   html += '<i class="fas fa-times"></i> Hủy';
-                                                                                                   html += '</button>';
                                                                                                }
                                                                                                html += '</div>';
                                                                                               
@@ -3895,7 +3888,7 @@
 
                                                                                    data.quotations.forEach((quotation, index) => {
                                                                                        const techInitial = quotation.technicianName ? quotation.technicianName.charAt(0).toUpperCase() : 'T';
-                                                                                       const cost = parseFloat(quotation.estimatedCost) || 0;
+                                                                                       const cost = (parseFloat(quotation.estimatedCost) || 0) * 26000;
                                                                                        totalCost += cost;
                                                                                        const partsCount = quotation.parts ? quotation.parts.length : 0;
 
@@ -3933,7 +3926,7 @@
                                                                                            let partsTotalCost = 0;
 
                                                                                            quotation.parts.forEach(part => {
-                                                                                               const unitPrice = parseFloat(part.unitPrice) || 0;
+                                                                                               const unitPrice = (parseFloat(part.unitPrice) || 0) * 26000;
                                                                                                const quantity = parseInt(part.quantity) || 0;
                                                                                                const totalPrice = unitPrice * quantity;
                                                                                                partsTotalCost += totalPrice;

@@ -22,7 +22,7 @@
   <c:if test="${not empty validationErrors}">
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
       <i class="bi bi-exclamation-triangle me-2"></i>
-      <strong>Validation Errors:</strong><br>
+      <strong>Lỗi xác thực:</strong><br>
       <c:forEach var="error" items="${validationErrors}">
         • ${error}<br>
       </c:forEach>
@@ -34,25 +34,25 @@
     <div class="col">
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0">
-          <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/technician/reports">Reports</a></li>
+          <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/technician/reports">Báo cáo</a></li>
           <li class="breadcrumb-item active">
             <c:choose>
-              <c:when test="${not empty report}">Edit Report</c:when>
-              <c:otherwise>Create Report</c:otherwise>
+              <c:when test="${not empty report}">Chỉnh sửa báo cáo</c:when>
+              <c:otherwise>Tạo báo cáo</c:otherwise>
             </c:choose>
           </li>
         </ol>
       </nav>
       <h1 class="h4 crm-page-title mt-2">
         <c:choose>
-          <c:when test="${not empty report}">Edit Repair Report</c:when>
-          <c:otherwise>Create Repair Report</c:otherwise>
+          <c:when test="${not empty report}">Chỉnh sửa báo cáo sửa chữa</c:when>
+          <c:otherwise>Tạo báo cáo sửa chữa</c:otherwise>
         </c:choose>
       </h1>
     </div>
     <div class="col-auto">
       <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/reports">
-        <i class="bi bi-arrow-left me-1"></i>Back to Reports
+        <i class="bi bi-arrow-left me-1"></i>Quay lại báo cáo
       </a>
     </div>
   </div>
@@ -61,7 +61,7 @@
     <div class="col-lg-8">
       <div class="card crm-card-shadow">
         <div class="card-header">
-          <h5 class="mb-0">Report Information</h5>
+          <h5 class="mb-0">Thông tin báo cáo</h5>
         </div>
         <div class="card-body">
           <form id="reportForm" method="post" action="${pageContext.request.contextPath}/technician/reports" novalidate>
@@ -77,9 +77,9 @@
                 <div class="row">
                   <div class="col-md-6">
                     <div class="mb-3">
-                      <label for="requestIdDisplay" class="form-label fw-bold">Request ID</label>
+                      <label for="requestIdDisplay" class="form-label fw-bold">Mã yêu cầu</label>
                       <input type="text" class="form-control" id="requestIdDisplay" 
-                             value="<c:choose><c:when test='${report.requestId != null}'>#${report.requestId}</c:when><c:otherwise>General Report</c:otherwise></c:choose>" readonly>
+                             value="<c:choose><c:when test='${report.requestId != null}'>#${report.requestId}</c:when><c:otherwise>Báo cáo chung</c:otherwise></c:choose>" readonly>
                     </div>
                   </div>
               </c:when>
@@ -93,23 +93,23 @@
                         <div class="mb-3">
                           <c:choose>
                             <c:when test="${not empty requestId}">
-                              <label class="form-label fw-bold">Linked Request</label>
+                              <label class="form-label fw-bold">Yêu cầu liên kết</label>
                               <input type="text" class="form-control" value="#${requestId}" readonly/>
-                              <div class="form-text">This report originates from a scheduled task (Schedule ID #${scheduleId}).</div>
+                              <div class="form-text">Báo cáo này bắt nguồn từ một công việc đã lên lịch (Mã lịch trình #${scheduleId}).</div>
                             </c:when>
                             <c:otherwise>
-                              <label class="form-label fw-bold">Schedule Context</label>
+                              <label class="form-label fw-bold">Ngữ cảnh lịch trình</label>
                               <div class="form-control-plaintext">
                                 #${scheduleId}
                                 <c:if test="${not empty scheduleCustomerName}">
                                   - ${fn:escapeXml(scheduleCustomerName)} (ID: ${scheduleCustomerId})
                                 </c:if>
-                                - Scheduled Maintenance Task
+                                - Công việc bảo trì đã lên lịch
                                 <c:if test="${not empty scheduleTaskStatus}">
                                   (${scheduleTaskStatus})
                                 </c:if>
                               </div>
-                              <div class="form-text">This report originates from a scheduled maintenance task.</div>
+                              <div class="form-text">Báo cáo này bắt nguồn từ một công việc bảo trì đã lên lịch.</div>
                             </c:otherwise>
                           </c:choose>
                         </div>
@@ -120,9 +120,9 @@
                 <div class="row">
                   <div class="col-md-6">
                     <div class="mb-3">
-                      <label for="taskSelector" class="form-label fw-bold">Select Task <span class="text-danger">*</span></label>
+                      <label for="taskSelector" class="form-label fw-bold">Chọn công việc <span class="text-danger">*</span></label>
                       <select class="form-select" id="taskSelector" name="taskSelector" required>
-                        <option value="">-- Select a task to report on --</option>
+                        <option value="">-- Chọn một công việc để báo cáo --</option>
                         <c:forEach var="taskForReport" items="${assignedTasks}">
                           <c:choose>
                             <c:when test="${taskForReport.origin eq 'Schedule'}">
@@ -146,7 +146,7 @@
                       </select>
                       <input type="hidden" id="requestIdHidden" name="requestId" value="${requestId != null ? requestId : ''}">
                       <input type="hidden" id="scheduleIdHidden" name="scheduleId" value="${scheduleId != null ? scheduleId : ''}">
-                      <div class="form-text">Only tasks assigned to you and not completed are shown</div>
+                      <div class="form-text">Chỉ hiển thị các công việc được giao cho bạn và chưa hoàn thành</div>
                       <div class="invalid-feedback" id="requestIdError"></div>
                     </div>
                   </div>
@@ -166,34 +166,60 @@
               <div>
                 <strong id="requestTypeLabel">
                   <c:choose>
-                    <c:when test="${initialRequestType == 'Warranty'}">Warranty / Preventive Maintenance</c:when>
-                    <c:when test="${initialRequestType == 'Service'}">Service Request</c:when>
-                    <c:otherwise>Repair Request</c:otherwise>
+                    <c:when test="${initialRequestType == 'Warranty'}">Bảo hành / Bảo trì phòng ngừa</c:when>
+                    <c:when test="${initialRequestType == 'Service'}">Yêu cầu dịch vụ</c:when>
+                    <c:otherwise>Yêu cầu sửa chữa</c:otherwise>
                   </c:choose>
                 </strong>
                 <div class="small text-muted" id="requestTypeDescription">
                   <c:choose>
                     <c:when test="${initialRequestType == 'Warranty'}">
-                      Warranty visits are free for the customer. Parts are optional and costs are recorded as 0.
+                      Các lần thăm bảo hành miễn phí cho khách hàng. Linh kiện là tùy chọn và chi phí được ghi nhận là 0.
                     </c:when>
                     <c:otherwise>
-                      Standard repair workflow. Parts and estimated cost will be billed to the customer.
+                      Quy trình sửa chữa tiêu chuẩn. Linh kiện và chi phí ước tính sẽ được tính phí cho khách hàng.
                     </c:otherwise>
                   </c:choose>
                 </div>
               </div>
             </div>
+              
+              <!-- Warranty Eligibility Checkbox (Only for Warranty requests) -->
+            <div id="warrantyEligibilitySection" class="mb-3 d-none">
+                <div class="card border-warning">
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="notEligibleForWarranty" 
+                                   name="notEligibleForWarranty" 
+                                   value="true">
+                            <label class="form-check-label fw-bold text-danger" for="notEligibleForWarranty">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Thiết bị KHÔNG đủ điều kiện bảo hành (do lỗi người dùng/hư hỏng ngoài phạm vi)
+                            </label>
+                            <div class="form-text text-muted">
+                                <i class="bi bi-info-circle"></i> Đánh dấu nếu thiết bị bị hư hỏng do sử dụng sai, 
+                                va đập, hoặc các nguyên nhân nằm ngoài phạm vi bảo hành.
+                                <strong>Khi chọn, bạn không cần thêm linh kiện hay chi phí.</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <c:set var="initialRequestType" value="${not empty selectedRequestType ? selectedRequestType : (not empty customerRequestInfo ? customerRequestInfo.requestType : '')}" />
             </c:if>
             
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="quotationStatus" class="form-label fw-bold">Quotation Status</label>
+                  <label for="quotationStatus" class="form-label fw-bold">Trạng thái báo giá</label>
                   <input type="text" class="form-control" id="quotationStatus" 
                          value="${not empty report ? report.quotationStatus : 'Pending'}" readonly>
                   <c:if test="${not empty scheduleId}">
                     <div class="mt-2">
-                      <span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Covered by contract</span>
+                      <span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Được bảo hiểm bởi hợp đồng</span>
                     </div>
                   </c:if>
                 </div>
@@ -201,20 +227,20 @@
             </div>
             
             <div class="mb-3">
-              <label for="details" class="form-label fw-bold">Details <span class="text-danger">*</span></label>
+              <label for="details" class="form-label fw-bold">Chi tiết <span class="text-danger">*</span></label>
               <textarea class="form-control" id="details" name="details" rows="4" 
-                        placeholder="Describe the repair work performed..." 
+                        placeholder="Mô tả công việc sửa chữa đã thực hiện..." 
                         maxlength="255" required>${not empty report ? fn:escapeXml(report.details) : ''}</textarea>
               <div class="form-text">
-                <span id="detailsCount">0</span>/255 characters
+                <span id="detailsCount">0</span>/255 ký tự
               </div>
               <div class="invalid-feedback" id="detailsError"></div>
             </div>
             
             <!-- Parts Selection (Simple Search & Select) -->
             <div class="mb-3">
-              <label class="form-label fw-bold" id="partsLabel">Parts <span class="text-danger" id="partsRequiredIndicator">*</span></label>
-              <div id="partsOptionalNote" class="text-muted small d-none">Parts are optional for warranty maintenance visits.</div>
+              <label class="form-label fw-bold" id="partsLabel">Linh kiện <span class="text-danger" id="partsRequiredIndicator">*</span></label>
+              <div id="partsOptionalNote" class="text-muted small d-none">Linh kiện là tùy chọn cho các lần thăm bảo trì bảo hành.</div>
 
               <!-- Search Box -->
               <div class="mb-3">
@@ -222,38 +248,38 @@
                   <input type="text"
                          id="partSearchInput"
                          class="form-control"
-                         placeholder="Search parts by name or serial number..."
+                         placeholder="Tìm kiếm linh kiện theo tên hoặc số seri..."
                          autocomplete="off">
                   <span class="input-group-text">
                     <i class="bi bi-search" id="searchIcon"></i>
                     <span class="spinner-border spinner-border-sm d-none" id="searchSpinner"></span>
                   </span>
                 </div>
-                <div class="form-text">Type to filter parts - all available parts shown below</div>
+                <div class="form-text">Nhập để lọc linh kiện - tất cả linh kiện có sẵn hiển thị bên dưới</div>
               </div>
 
               <!-- Available Parts List -->
               <div class="card mb-3">
                 <div class="card-header bg-light">
-                  <h6 class="mb-0"><i class="bi bi-box-seam me-2"></i>Available Parts</h6>
+                  <h6 class="mb-0"><i class="bi bi-box-seam me-2"></i>Linh kiện có sẵn</h6>
                 </div>
                 <div class="card-body p-0">
                   <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                     <table class="table table-hover table-sm mb-0">
                       <thead class="table-light sticky-top">
                         <tr>
-                          <th>Part Name</th>
-                          <th class="text-center">Serial Number</th>
-                          <th class="text-center">Unit Price</th>
-                          <th class="text-center">Available</th>
-                          <th class="text-center">Quantity</th>
+                          <th>Tên linh kiện</th>
+                          <th class="text-center">Số seri</th>
+                          <th class="text-center">Đơn giá</th>
+                          <th class="text-center">Có sẵn</th>
+                          <th class="text-center">Số lượng</th>
                         </tr>
                       </thead>
                       <tbody id="partsListBody">
                         <!-- Will be populated by JavaScript -->
                         <tr>
                           <td colspan="5" class="text-center text-muted py-4">
-                            <i class="bi bi-search me-2"></i>Select a task first to load available parts
+                            <i class="bi bi-search me-2"></i>Chọn một công việc trước để tải linh kiện có sẵn
                           </td>
                         </tr>
                       </tbody>
@@ -267,32 +293,32 @@
                 <div class="card-header bg-success text-white">
                   <h6 class="mb-0">
                     <i class="bi bi-cart-check me-2"></i>
-                    Selected Parts 
+                    Linh kiện đã chọn 
                     <span class="badge bg-light text-dark ms-2" id="selectedPartsCount">0</span>
                   </h6>
                 </div>
                 <div class="card-body p-0">
                   <div id="selectedPartsList" class="list-group list-group-flush">
                     <div class="list-group-item text-center text-muted py-4" id="emptyCartMessage">
-                      <i class="bi bi-cart-x me-2"></i>No parts selected yet
+                      <i class="bi bi-cart-x me-2"></i>Chưa chọn linh kiện nào
                     </div>
                   </div>
                 </div>
                 <div class="card-footer bg-light">
                   <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-bold">Total Estimated Cost:</span>
+                    <span class="fw-bold">Tổng chi phí ước tính:</span>
                     <span id="totalCost" class="fw-bold text-success fs-4">₫0</span>
                   </div>
                 </div>
               </div>
 
-              <div class="invalid-feedback" id="partsError" data-default-message="Please add at least one part."></div>
+              <div class="invalid-feedback" id="partsError" data-default-message="Vui lòng thêm ít nhất một linh kiện."></div>
             </div>
             
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="estimatedCost" class="form-label fw-bold">Estimated Cost <span class="text-danger">*</span></label>
+                  <label for="estimatedCost" class="form-label fw-bold">Chi phí ước tính <span class="text-danger">*</span></label>
                   <div class="input-group">
                     <span class="input-group-text">₫</span>
                     <input type="number" class="form-control" id="estimatedCost" name="estimatedCost" 
@@ -303,41 +329,41 @@
                   <c:choose>
                     <c:when test="${isScheduleOrigin}">
                       <div class="form-text text-muted" id="estimatedCostHint">
-                        Covered by contract; customer billed ₫0. Internal unit prices are recorded in the appendix.
+                        Được bảo hiểm bởi hợp đồng; khách hàng được tính ₫0. Giá đơn vị nội bộ được ghi lại trong phụ lục.
                       </div>
                     </c:when>
                     <c:otherwise>
                       <div class="form-text" id="estimatedCostHint">
                         <c:choose>
                           <c:when test="${not empty subtotal && subtotal > 0}">
-                            Auto-calculated from parts: ₫<span id="autoCalculatedVnd"><fmt:formatNumber value="${subtotal * 26000}" type="number" maxFractionDigits="0"/></span>. You can override if needed.
+                            Tự động tính từ linh kiện: ₫<span id="autoCalculatedVnd"><fmt:formatNumber value="${subtotal * 26000}" type="number" maxFractionDigits="0"/></span>. Bạn có thể ghi đè nếu cần.
                           </c:when>
                           <c:otherwise>
-                            Enter cost in VND (Vietnamese Dong). Will be auto-filled when parts are selected.
+                            Nhập chi phí bằng VND (Đồng Việt Nam). Sẽ được tự động điền khi chọn linh kiện.
                           </c:otherwise>
                         </c:choose>
                       </div>
                     </c:otherwise>
                   </c:choose>
                   <div class="form-text text-warning d-none" id="warrantyCostNotice">
-                    Warranty jobs are recorded at ₫0 for the customer. Internal costs can still be tracked via parts.
+                    Công việc bảo hành được ghi nhận ở ₫0 cho khách hàng. Chi phí nội bộ vẫn có thể được theo dõi qua linh kiện.
                   </div>
                   <div class="invalid-feedback" id="estimatedCostError"></div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="repairDate" class="form-label fw-bold">Repair Date <span class="text-danger">*</span></label>
+                  <label for="repairDate" class="form-label fw-bold">Ngày sửa chữa <span class="text-danger">*</span></label>
                   <input type="date" class="form-control" id="repairDate" name="repairDate" 
                          required value="${not empty report ? report.repairDate : ''}"
                          ${not empty report ? 'disabled' : ''}>
                   <div class="form-text">
                     <c:choose>
                       <c:when test="${not empty report}">
-                        <span class="text-muted">Repair date cannot be changed for existing reports</span>
+                        <span class="text-muted">Ngày sửa chữa không thể thay đổi cho báo cáo hiện có</span>
                       </c:when>
                       <c:otherwise>
-                        Date when repair was completed
+                        Ngày hoàn thành sửa chữa
                       </c:otherwise>
                     </c:choose>
                   </div>
@@ -348,13 +374,13 @@
             
             <div class="d-flex justify-content-between">
               <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/reports">
-                <i class="bi bi-x-circle me-1"></i>Cancel
+                <i class="bi bi-x-circle me-1"></i>Hủy
               </a>
               <button type="submit" class="btn btn-primary">
                 <i class="bi bi-check-circle me-1"></i>
                 <c:choose>
-                  <c:when test="${not empty report}">Update Report</c:when>
-                  <c:otherwise>Create Report</c:otherwise>
+                  <c:when test="${not empty report}">Cập nhật báo cáo</c:when>
+                  <c:otherwise>Tạo báo cáo</c:otherwise>
                 </c:choose>
               </button>
             </div>
@@ -370,15 +396,15 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="validationModalLabel">Validation Error</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="validationModalLabel">Lỗi xác thực</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
       </div>
       <div class="modal-body">
         <div id="validationMessage"></div>
         <div id="validationExample" class="mt-2 text-muted"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đồng ý</button>
       </div>
     </div>
   </div>
@@ -470,14 +496,20 @@
 
     if (requestTypeLabel) {
       requestTypeLabel.textContent = isWarrantyMode
-        ? 'Warranty / Preventive Maintenance'
-        : 'Service Request';
+        ? 'Bảo hành / Bảo trì phòng ngừa'
+        : 'Yêu cầu dịch vụ';
     }
 
     if (requestTypeDescription) {
       requestTypeDescription.textContent = isWarrantyMode
-        ? 'Warranty visits are free for the customer. Parts are optional and costs are recorded as ₫0.'
-        : 'Standard repair workflow. Parts and estimated cost will be billed to the customer.';
+        ? 'Các lần thăm bảo hành miễn phí cho khách hàng. Linh kiện là tùy chọn và chi phí được ghi nhận là ₫0.'
+        : 'Quy trình sửa chữa tiêu chuẩn. Linh kiện và chi phí ước tính sẽ được tính phí cho khách hàng.';
+    }
+    
+    // ✅ THÊM: Hiển thị/ẩn warranty eligibility section
+    const warrantyEligibilitySection = document.getElementById('warrantyEligibilitySection');
+    if (warrantyEligibilitySection) {
+      warrantyEligibilitySection.classList.toggle('d-none', !isWarrantyMode);
     }
 
     if (partsRequiredIndicator) {
@@ -691,7 +723,7 @@
   function disablePartsSearch(message) {
     if (partSearchInput) {
       partSearchInput.disabled = true;
-      partSearchInput.placeholder = message || 'Parts search disabled';
+      partSearchInput.placeholder = message || 'Tìm kiếm linh kiện đã tắt';
       partSearchInput.value = '';
     }
     clearPartsList();
@@ -700,7 +732,7 @@
   function enablePartsSearch() {
     if (partSearchInput) {
       partSearchInput.disabled = false;
-      partSearchInput.placeholder = 'Search parts by name or serial number...';
+      partSearchInput.placeholder = 'Tìm kiếm linh kiện theo tên hoặc số seri...';
     }
   }
   
@@ -786,7 +818,7 @@
           // Check if response is an error object
           if (data && typeof data === 'object' && data.error) {
             console.error('Server error:', data.error);
-            alert('Error loading parts: ' + data.error);
+            alert('Lỗi khi tải linh kiện: ' + data.error);
             allParts = [];
             clearPartsList();
             if (callback) callback();
@@ -815,7 +847,7 @@
           showSearchLoading(false);
           allParts = [];
           clearPartsList();
-          alert('Error parsing server response. Check console for details.');
+          alert('Lỗi khi phân tích phản hồi từ máy chủ. Kiểm tra console để biết chi tiết.');
           if (callback) callback();
         }
       })
@@ -824,7 +856,7 @@
         console.error('Load parts fetch error:', error);
         allParts = [];
         clearPartsList();
-        alert('Network error loading parts: ' + error.message);
+        alert('Lỗi mạng khi tải linh kiện: ' + error.message);
         if (callback) callback();
       });
   }
@@ -854,7 +886,7 @@
     
     if (!parts || parts.length === 0) {
       console.log('No parts to render, showing empty message');
-      partsListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>No parts found. Please check if parts exist in the database.</td></tr>';
+      partsListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>Không tìm thấy linh kiện. Vui lòng kiểm tra xem linh kiện có tồn tại trong cơ sở dữ liệu không.</td></tr>';
       return;
     }
     
@@ -987,7 +1019,7 @@
   function clearPartsList() {
     allParts = [];
     if (partsListBody) {
-      partsListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-search me-2"></i>Select a task first to load available parts</td></tr>';
+      partsListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-search me-2"></i>Chọn một công việc trước để tải linh kiện có sẵn</td></tr>';
     }
   }
   
@@ -1016,7 +1048,7 @@
     const requestId = requestIdInput?.value || '';
     const scheduleId = scheduleIdInput?.value || '';
     if (!requestId && !scheduleId) {
-      alert('Please select a task before adding parts to cart.');
+      alert('Vui lòng chọn một công việc trước khi thêm linh kiện vào giỏ hàng.');
       return;
     }
     
@@ -1054,7 +1086,7 @@
           loadCartFromSession();
         } else {
           console.error('Add part failed:', data.error);
-          alert('Error: ' + (data.error || 'Failed to add part'));
+          alert('Lỗi: ' + (data.error || 'Không thể thêm linh kiện'));
           // Revert quantity in UI
           const row = partsListBody.querySelector('tr[data-part-id="' + partId + '"]');
           if (row) {
@@ -1068,7 +1100,7 @@
       })
       .catch(error => {
         console.error('Add part error:', error);
-        alert('Network error: Could not add part to cart. ' + error.message);
+        alert('Lỗi mạng: Không thể thêm linh kiện vào giỏ hàng. ' + error.message);
         // Revert quantity in UI
         const row = partsListBody.querySelector('tr[data-part-id="' + partId + '"]');
         if (row) {
@@ -1081,7 +1113,7 @@
   }
   
   function removePartFromCart(partId, showConfirm = true) {
-    if (showConfirm && !confirm('Remove this part from cart?')) {
+    if (showConfirm && !confirm('Xóa linh kiện này khỏi giỏ hàng?')) {
       return;
     }
     
@@ -1098,7 +1130,7 @@
     
     if (!requestId && !scheduleId) {
       console.error('Cannot remove part: No requestId selected');
-      alert('Please select a task first');
+      alert('Vui lòng chọn một công việc trước');
       return;
     }
     
@@ -1156,12 +1188,12 @@
             estimatedCostInput.value = (isScheduleOrigin || isWarrantyMode) ? 0 : vndAmount;
           }
         } else {
-          alert('Error: ' + (data.error || 'Failed to remove part'));
+          alert('Lỗi: ' + (data.error || 'Không thể xóa linh kiện'));
         }
       })
       .catch(error => {
         console.error('Remove part error:', error);
-        alert('Network error: Could not remove part. ' + error.message);
+        alert('Lỗi mạng: Không thể xóa linh kiện. ' + error.message);
       });
   }
   
@@ -1256,7 +1288,7 @@
     if (!selectedPartsList) return;
     
     if (parts.length === 0) {
-      selectedPartsList.innerHTML = '<div class="list-group-item text-center text-muted py-4" id="emptyCartMessage"><i class="bi bi-cart-x me-2"></i>No parts selected yet</div>';
+      selectedPartsList.innerHTML = '<div class="list-group-item text-center text-muted py-4" id="emptyCartMessage"><i class="bi bi-cart-x me-2"></i>Chưa chọn linh kiện nào</div>';
     } else {
       let html = '';
       parts.forEach(function(part) {
@@ -1297,7 +1329,7 @@
           console.log('Parsed partId:', partId, 'isNaN:', isNaN(partId));
           if (isNaN(partId) || partId <= 0) {
             console.error('Invalid partId:', partIdStr);
-            alert('Invalid part ID. Please refresh the page and try again.');
+            alert('Mã linh kiện không hợp lệ. Vui lòng làm mới trang và thử lại.');
             return false;
           }
           removePartFromCart(partId, true); // true = show confirm dialog
@@ -1375,22 +1407,78 @@
   // Ensure at least one part is selected before submit
   const reportForm = document.getElementById('reportForm');
   if (reportForm) {
-    reportForm.addEventListener('submit', function(e) {
+  reportForm.addEventListener('submit', function(e) {
+    const notEligibleCheckbox = document.getElementById('notEligibleForWarranty');
+    const isNotEligible = notEligibleCheckbox && notEligibleCheckbox.checked;
+    
+    // ✅ Skip parts validation if warranty not eligible
+    if (!isWarrantyMode || !isNotEligible) {
       const partsCount = selectedPartsCount ? parseInt(selectedPartsCount.textContent) || 0 : 0;
       if (!isWarrantyMode && partsCount <= 0) {
         e.preventDefault();
-        alert('Please select at least one part for the repair report.');
+        alert('Vui lòng chọn ít nhất một linh kiện cho báo cáo sửa chữa.');
         return false;
       }
-      if (isWarrantyMode && estimatedCostInput) {
-        estimatedCostInput.value = 0;
-      }
-      
-      // Server will handle VND to USD conversion
-      // The form submits VND value, server converts it to USD before saving
-      // Contract validation removed - contract is automatically determined from ServiceRequest
-    });
-  }
+    }
+    
+    if (isWarrantyMode && estimatedCostInput) {
+      estimatedCostInput.value = 0;
+    }
+  });
+}
   
 })();
+
+// ✅ Handle warranty not eligible checkbox
+window.addEventListener('DOMContentLoaded', function() {
+  const notEligibleCheckbox = document.getElementById('notEligibleForWarranty');
+  const partsSection = document.querySelector('.mb-3:has(#partSearchInput)');
+  const detailsTextarea = document.getElementById('details');
+  
+  if (notEligibleCheckbox) {
+    notEligibleCheckbox.addEventListener('change', function() {
+      const isNotEligible = this.checked;
+      
+      
+      // Disable/enable parts selection
+      if (partSearchInput) partSearchInput.disabled = isNotEligible;
+      
+      // Show/hide parts section
+      if (partsSection) {
+        if (isNotEligible) {
+          partsSection.style.opacity = '0.5';
+          partsSection.style.pointerEvents = 'none';
+        } else {
+          partsSection.style.opacity = '1';
+          partsSection.style.pointerEvents = 'auto';
+        }
+      }
+      
+      // Add note to details if checked
+      if (isNotEligible && detailsTextarea) {
+        const currentDetails = detailsTextarea.value.trim();
+        const warrantyNote = "\n\n[KHÔNG ĐỦ ĐIỀU KIỆN BẢO HÀNH] Thiết bị bị hư hỏng do sử dụng sai cách/va đập - nằm ngoài phạm vi bảo hành.";
+        
+        if (!currentDetails.includes('[KHÔNG ĐỦ ĐIỀU KIỆN BẢO HÀNH]')) {
+          detailsTextarea.value = currentDetails + warrantyNote;
+          
+          // Update character count
+          const event = new Event('input');
+          detailsTextarea.dispatchEvent(event);
+        }
+      }
+      
+      // Show alert
+      if (isNotEligible) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-warning alert-dismissible fade show mt-2';
+        alert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' +
+                         '<strong>Lưu ý:</strong> Báo cáo sẽ được đánh dấu là "Không đủ điều kiện" và tự động bị từ chối. ' +
+                         'Yêu cầu dịch vụ sẽ được đóng.' +
+                         '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        notEligibleCheckbox.closest('.card-body').appendChild(alert);
+      }
+    });
+  }
+});
 </script>

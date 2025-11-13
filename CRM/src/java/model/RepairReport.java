@@ -17,6 +17,8 @@ public class RepairReport {
     private String diagnosis;
     private BigDecimal estimatedCost;
     private String quotationStatus;
+
+    private String inspectionResult;
     private LocalDate repairDate;
     private Integer invoiceDetailId;
     private Integer targetContractId; // Which contract will receive the appendix
@@ -82,6 +84,13 @@ public class RepairReport {
     public String getTechnicianEmail() { return technicianEmail; }
     public void setTechnicianEmail(String technicianEmail) { this.technicianEmail = technicianEmail; }
     
+    public String getInspectionResult() {
+        return inspectionResult;
+    }
+
+    public void setInspectionResult(String inspectionResult) {
+        this.inspectionResult = inspectionResult;
+    }
 
     @Override
     public String toString() {

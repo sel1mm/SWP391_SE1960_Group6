@@ -306,7 +306,8 @@
                                         data-enddate="${contract.endDate}"
                                         data-status="${contract.status}"
                                         data-details="${contract.details}"
-                                        data-equipmentcount="${contract.equipmentCount}">
+                                        data-equipmentcount="${contract.equipmentCount}"
+                                        data-fileattachment="${contract.fileAttachment}">
 
                                         <td><strong>#${contract.contractId}</strong></td>
                                         
@@ -490,10 +491,14 @@
                 <h6 class="fw-bold mb-3"><i class="fas fa-info-circle"></i> Thông tin hợp đồng</h6>
                 <table class="table table-bordered">
                     <tr><th style="width:30%">Mã hợp đồng</th><td id="detail-contractId"></td></tr>
-                    <tr><th>Loại hợp đồng</th><td id="detail-contractType"></td></tr>
+                    <!--<tr><th>Loại hợp đồng</th><td id="detail-contractType"></td></tr>-->
                     <tr><th>Ngày ký</th><td id="detail-contractDate"></td></tr>
                     <tr><th>Trạng thái</th><td id="detail-status"></td></tr>
                     <tr><th>Chi tiết</th><td id="detail-details"></td></tr>
+                    <tr>
+                        <th><i class="fas fa-file-download"></i> File đính kèm</th>
+                        <td id="detail-fileAttachment"></td>
+                    </tr>
                 </table>
 
                 <h6 class="fw-bold mb-3 mt-4"><i class="fas fa-user"></i> Thông tin khách hàng</h6>
@@ -609,7 +614,7 @@
                                 <div class="invalid-feedback">Vui lòng chọn khách hàng</div>
                             </div>
 
-                            <div class="mb-3">
+                            <!--<div class="mb-3">
                                 <label class="form-label fw-bold">
                                     Loại hợp đồng <span class="text-danger">*</span>
                                 </label>
@@ -620,7 +625,10 @@
                                     <option value="Sales">Mua bán</option>
                                 </select>
                                 <div class="invalid-feedback">Vui lòng chọn loại hợp đồng</div>
-                            </div>
+                            </div> -->
+                            
+                            <!-- MỚI: Hidden input với giá trị mặc định Purchase -->
+                            <input type="hidden" name="contractType" value="Sales">
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">
@@ -665,6 +673,24 @@
                                     <span id="contract-detailsCount">0</span>/255 ký tự (tối thiểu 10)
                                 </small>
                                 <div class="invalid-feedback">Chi tiết phải từ 10-255 ký tự</div>
+                            </div>
+                                       
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-file-upload"></i> File đính kèm 
+                                    <span class="text-danger">*</span>
+                                    <small class="text-muted">(PDF, Word, Excel - Max 10MB)</small>
+                                </label>
+                                <input type="file" 
+                                       name="fileAttachment" 
+                                       id="contract-fileAttachment" 
+                                       class="form-control" 
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx"
+                                       required>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> Bắt buộc phải chọn file hợp đồng. Định dạng hỗ trợ: PDF, DOC, DOCX, XLS, XLSX
+                                </small>
+                                <div id="contract-filePreview" class="mt-2"></div>
                             </div>
                         </div>
 
@@ -1194,7 +1220,7 @@ function viewContractDetails(contractId) {
     const get = name => row.dataset[name] || "(Không có thông tin)";
 
     document.getElementById("detail-contractId").innerText = "#" + contractId;
-    document.getElementById("detail-contractType").innerText = get("contracttype");
+//    document.getElementById("detail-contractType").innerText = get("contracttype");
     document.getElementById("detail-contractDate").innerText = get("contractdate");
     document.getElementById("detail-status").innerText = get("status");
     document.getElementById("detail-details").innerText = get("details");
@@ -1202,6 +1228,20 @@ function viewContractDetails(contractId) {
     document.getElementById("detail-customerEmail").innerText = get("customeremail");
     document.getElementById("detail-customerPhone").innerText = get("customerphone");
     
+    const fileUrl = row.dataset.fileattachment;
+    const fileDisplay = document.getElementById('detail-fileAttachment');
+    
+    if (fileUrl && fileUrl.trim() !== '' && fileUrl !== 'null') {
+        const fileName = fileUrl.split('/').pop();
+        const fileIcon = getFileIcon(fileUrl);
+        fileDisplay.innerHTML = 
+            '<a href="' + fileUrl + '" target="_blank" class="btn btn-outline-success btn-sm">' +
+            '<i class="' + fileIcon + ' me-2"></i>' + fileName +
+            ' <i class="fas fa-download ms-2"></i>' +
+            '</a>';
+    } else {
+        fileDisplay.innerHTML = '<span class="text-muted">Chưa có file đính kèm</span>';
+    }
 
     new bootstrap.Modal(document.getElementById("contractDetailsModal")).show();
 }
@@ -3099,6 +3139,60 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // File preview for create contract
+    const contractFileInput = document.getElementById('contract-fileAttachment');
+    if (contractFileInput) {
+        contractFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('contract-filePreview');
+            
+            if (file) {
+                // Validate file type
+                const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+                const fileName = file.name.toLowerCase();
+                const isValidType = allowedExtensions.some(ext => fileName.endsWith(ext));
+                
+                if (!isValidType) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Loại file không hợp lệ',
+                        text: 'Chỉ chấp nhận file PDF, Word (DOC/DOCX) hoặc Excel (XLS/XLSX)',
+                        confirmButtonColor: '#000'
+                    });
+                    contractFileInput.value = '';
+                    preview.innerHTML = '';
+                    return;
+                }
+                
+                // Validate file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'File quá lớn',
+                        text: 'Vui lòng chọn file nhỏ hơn 10MB',
+                        confirmButtonColor: '#000'
+                    });
+                    contractFileInput.value = '';
+                    preview.innerHTML = '';
+                    return;
+                }
+                
+                // Show preview
+                const fileIcon = getFileIcon(file.name);
+                preview.innerHTML = '<div class="alert alert-success">' +
+                    '<i class="' + fileIcon + ' me-2"></i>' +
+                    '<strong>' + file.name + '</strong> ' +
+                    '<small>(' + formatFileSize(file.size) + ')</small>' +
+                    '<button type="button" class="btn btn-sm btn-link text-danger float-end" onclick="clearContractFileInput()">' +
+                    '<i class="fas fa-times"></i> Xóa' +
+                    '</button>' +
+                    '</div>';
+            } else {
+                preview.innerHTML = '';
+            }
+        });
+    }
 });
 
 // Khi chọn khách hàng, load thiết bị available
@@ -3330,6 +3424,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('contract-equipmentError').style.display = 'none';
             }
             
+            // 5. Validate File Upload
+            const fileInput = document.getElementById('contract-fileAttachment');
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                isValid = false;
+                errorMessages.push('Vui lòng chọn file đính kèm hợp đồng');
+                if (fileInput) {
+                    fileInput.classList.add('is-invalid');
+                }
+            } else {
+                const file = fileInput.files[0];
+
+                // Validate file type
+                const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+                const fileName = file.name.toLowerCase();
+                const isValidType = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+                if (!isValidType) {
+                    isValid = false;
+                    errorMessages.push('Loại file không hợp lệ (chỉ chấp nhận PDF, Word, Excel)');
+                    fileInput.classList.add('is-invalid');
+                } else if (file.size > 10 * 1024 * 1024) {
+                    isValid = false;
+                    errorMessages.push('File quá lớn (tối đa 10MB)');
+                    fileInput.classList.add('is-invalid');
+                } else {
+                    fileInput.classList.remove('is-invalid');
+                }
+            }
+            
             // 5. HTML5 validation
             if (!form.checkValidity()) {
                 isValid = false;
@@ -3412,6 +3535,10 @@ function openCreateContractModal() {
     
     contractSelectedEquipment = [];
     contractAllEquipment = [];
+    
+    // Clear file preview - THÊM DÒNG NÀY
+    const filePreview = document.getElementById('contract-filePreview');
+    if (filePreview) filePreview.innerHTML = '';
     
     const equipmentList = document.getElementById('contract-equipmentList');
     if (equipmentList) {
@@ -3843,6 +3970,13 @@ function viewRepairPartAppendixDetails(appendixId) {
                 confirmButtonColor: '#000'
             });
         });
+}
+
+function clearContractFileInput() {
+    const fileInput = document.getElementById('contract-fileAttachment');
+    const preview = document.getElementById('contract-filePreview');
+    if (fileInput) fileInput.value = '';
+    if (preview) preview.innerHTML = '';
 }
 
 </script>

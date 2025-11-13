@@ -70,7 +70,7 @@ public class TechnicianTaskServlet extends HttpServlet {
                     req.setAttribute("activePage", "tasks");
                     req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
                 } else {
-                    req.setAttribute("error", "Task not found or not assigned to you");
+                    req.setAttribute("error", "Không tìm thấy công việc hoặc công việc không được giao cho bạn");
                     doGetTaskList(req, resp, technicianId);
                 }
             } else {
@@ -81,7 +81,7 @@ public class TechnicianTaskServlet extends HttpServlet {
         } catch (SQLException e) {
             throw new ServletException("Database error: " + e.getMessage(), e);
         } catch (NumberFormatException e) {
-            req.setAttribute("error", "Invalid task ID");
+            req.setAttribute("error", "Mã công việc không hợp lệ");
             doGetTaskList(req, resp, technicianId);
         }
     }

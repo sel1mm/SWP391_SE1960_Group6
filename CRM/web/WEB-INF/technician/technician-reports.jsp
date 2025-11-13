@@ -26,15 +26,14 @@
 
   <div class="row mb-3 align-items-center">
     <div class="col">
-      <h1 class="h4 crm-page-title">Repair Reports</h1>
-      <p class="text-muted">Create and manage repair reports for service requests</p>
+      <h1 class="h4 crm-page-title">Báo cáo sửa chữa</h1>
+      <p class="text-muted">Tạo và quản lý báo cáo sửa chữa cho các yêu cầu dịch vụ</p>
     </div>
     <div class="col-auto">
       <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/tasks">
-        <i class="bi bi-list-task me-1"></i>View Tasks
-      </a>
+        <i class="bi bi-list-task me-1"></i>Xem công việc</a>
       <a class="btn btn-primary" href="${pageContext.request.contextPath}/technician/reports?action=create">
-        <i class="bi bi-clipboard-plus me-1"></i>New Report
+        <i class="bi bi-clipboard-plus me-1"></i>Báo cáo mới
       </a>
     </div>
   </div>
@@ -43,18 +42,18 @@
     <div class="card-body">
       <form id="reportSearchForm" class="row g-2 align-items-center" method="get" action="${pageContext.request.contextPath}/technician/reports">
         <div class="col-12 col-md-6">
-          <input type="text" name="q" value="${param.q}" class="form-control" placeholder="Search by details, diagnosis, or report ID"/>
+          <input type="text" name="q" value="${param.q}" class="form-control" placeholder="Tìm kiếm theo chi tiết, chẩn đoán hoặc mã báo cáo"/>
         </div>
         <div class="col-6 col-md-3">
           <select class="form-select" name="status">
-            <option value="">All Statuses</option>
-            <option value="Pending" ${param.status == 'Pending' ? 'selected' : ''}>Pending</option>
-            <option value="Approved" ${param.status == 'Approved' ? 'selected' : ''}>Approved</option>
-            <option value="Rejected" ${param.status == 'Rejected' ? 'selected' : ''}>Rejected</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="Pending" ${param.status == 'Pending' ? 'selected' : ''}>Đang chờ</option>
+            <option value="Approved" ${param.status == 'Approved' ? 'selected' : ''}>Đã phê duyệt</option>
+            <option value="Rejected" ${param.status == 'Rejected' ? 'selected' : ''}>Đã từ chối</option>
           </select>
         </div>
         <div class="col-6 col-md-3 text-end">
-          <button class="btn btn-secondary" type="submit"><i class="bi bi-search me-1"></i>Search</button>
+          <button class="btn btn-secondary" type="submit"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
         </div>
       </form>
     </div>
@@ -62,23 +61,23 @@
 
   <div class="card mt-3 crm-card-shadow">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Report List</h5>
-      <span class="badge bg-primary">${totalReports} reports</span>
+      <h5 class="mb-0">Danh sách báo cáo</h5>
+      <span class="badge bg-primary">${totalReports} báo cáo</span>
     </div>
     <div class="table-responsive">
       <table class="table align-middle mb-0">
         <thead class="table-light">
           <tr>
             <th>#</th>
-            <th>Report ID</th>
-            <th>Customer</th>
-            <th>Request ID</th>
-            <th class="d-none d-md-table-cell">Details</th>
-            <th>Diagnosis</th>
-            <th>Estimated Cost</th>
-            <th>Status</th>
-            <th>Repair Date</th>
-            <th>Actions</th>
+            <th>Mã báo cáo</th>
+            <th>Khách hàng</th>
+            <th>Mã yêu cầu</th>
+            <th class="d-none d-md-table-cell">Chi tiết</th>
+            <th>Chẩn đoán</th>
+            <th>Chi phí ước tính</th>
+            <th>Trạng thái</th>
+            <th>Ngày sửa chữa</th>
+            <th>Thao tác</th>
           </tr>
         </thead>
         <tbody id="reports-table-body">
@@ -98,7 +97,7 @@
                       <a href="#" class="text-decoration-none">#${reportWithCustomer.report.requestId}</a>
                     </c:when>
                     <c:otherwise>
-                      <span class="text-muted">General Report</span>
+                      <span class="text-muted">Báo cáo chung</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
@@ -119,16 +118,16 @@
                   <c:set var="status" value="${reportWithCustomer.report.quotationStatus}"/>
                   <c:choose>
                     <c:when test="${status == 'Pending'}">
-                      <span class="badge bg-warning">Pending</span>
+                      <span class="badge bg-warning">Đang chờ</span>
                     </c:when>
                     <c:when test="${status == 'Approved'}">
-                      <span class="badge bg-success">Approved</span>
+                      <span class="badge bg-success">Đã phê duyệt</span>
                     </c:when>
                     <c:when test="${status == 'Rejected'}">
-                      <span class="badge bg-danger">Rejected</span>
+                      <span class="badge bg-danger">Đã từ chối</span>
                     </c:when>
                     <c:when test="${status == 'In Review'}">
-                      <span class="badge bg-info">In Review</span>
+                      <span class="badge bg-info">Đang xem xét</span>
                     </c:when>
                     <c:otherwise>
                       <span class="badge bg-dark">${reportWithCustomer.report.quotationStatus}</span>
@@ -141,16 +140,16 @@
                       ${reportWithCustomer.report.repairDate}
                     </c:when>
                     <c:otherwise>
-                      <span class="text-muted">Not set</span>
+                      <span class="text-muted">Chưa đặt</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
                 <td class="text-end">
-                  <a class="btn btn-sm btn-outline-secondary" href="${pageContext.request.contextPath}/technician/reports?action=detail&reportId=${reportWithCustomer.report.reportId}" title="View Details">
+                  <a class="btn btn-sm btn-outline-secondary" href="${pageContext.request.contextPath}/technician/reports?action=detail&reportId=${reportWithCustomer.report.reportId}" title="Xem chi tiết">
                     <i class="bi bi-eye"></i>
                   </a>
                   <c:if test="${status == 'Pending'}">
-                    <a class="btn btn-sm btn-primary" href="${pageContext.request.contextPath}/technician/reports?action=edit&reportId=${reportWithCustomer.report.reportId}" title="Edit Report">
+                    <a class="btn btn-sm btn-primary" href="${pageContext.request.contextPath}/technician/reports?action=edit&reportId=${reportWithCustomer.report.reportId}" title="Chỉnh sửa báo cáo">
                       <i class="bi bi-pencil"></i>
                     </a>
                   </c:if>
@@ -163,8 +162,8 @@
               <td colspan="10" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-clipboard fs-1 d-block mb-2"></i>
-                  <p>No reports found</p>
-                  <small>Your repair reports will appear here</small>
+                  <p>Không tìm thấy báo cáo</p>
+                  <small>Các báo cáo sửa chữa của bạn sẽ hiển thị ở đây</small>
                 </div>
               </td>
             </tr>
@@ -177,11 +176,11 @@
     <!-- Pagination -->
     <c:if test="${totalPages > 1}">
       <div class="card-footer">
-        <nav aria-label="Report pagination">
+        <nav aria-label="Phân trang báo cáo">
           <ul class="pagination pagination-sm justify-content-center mb-0">
             <c:if test="${currentPage > 1}">
               <li class="page-item">
-                <a class="page-link" href="${pageContext.request.contextPath}/technician/reports?page=${currentPage - 1}&q=${param.q}&status=${param.status}">Previous</a>
+                <a class="page-link" href="${pageContext.request.contextPath}/technician/reports?page=${currentPage - 1}&q=${param.q}&status=${param.status}">Trước</a>
               </li>
             </c:if>
             
@@ -195,7 +194,7 @@
             
             <c:if test="${currentPage < totalPages}">
               <li class="page-item">
-                <a class="page-link" href="${pageContext.request.contextPath}/technician/reports?page=${currentPage + 1}&q=${param.q}&status=${param.status}">Next</a>
+                <a class="page-link" href="${pageContext.request.contextPath}/technician/reports?page=${currentPage + 1}&q=${param.q}&status=${param.status}">Sau</a>
               </li>
             </c:if>
           </ul>

@@ -21,18 +21,18 @@
     <div class="col">
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0">
-          <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/technician/tasks">Tasks</a></li>
-          <li class="breadcrumb-item active">Task #${task.taskId}</li>
+          <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/technician/tasks">Công việc</a></li>
+          <li class="breadcrumb-item active">Công việc #${task.taskId}</li>
         </ol>
       </nav>
-      <h1 class="h4 crm-page-title mt-2">Task Details</h1>
+      <h1 class="h4 crm-page-title mt-2">Chi tiết công việc</h1>
     </div>
     <div class="col-auto">
       <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/tasks">
-        <i class="bi bi-arrow-left me-1"></i>Back to Tasks
+        <i class="bi bi-arrow-left me-1"></i>Quay lại công việc
       </a>
       <button class="btn btn-primary" onclick="showStatusUpdateModal(${task.taskId}, '${task.status}')">
-        <i class="bi bi-pencil me-1"></i>Update Status
+        <i class="bi bi-pencil me-1"></i>Cập nhật trạng thái
       </button>
     </div>
   </div>
@@ -41,41 +41,41 @@
     <div class="col-lg-8">
       <div class="card crm-card-shadow">
         <div class="card-header">
-          <h5 class="mb-0">Task Information</h5>
+          <h5 class="mb-0">Thông tin công việc</h5>
         </div>
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label class="form-label fw-bold">Task ID</label>
+                <label class="form-label fw-bold">Mã công việc</label>
                 <p class="form-control-plaintext">#${task.taskId}</p>
               </div>
               <div class="mb-3">
-                <label class="form-label fw-bold">Task Type</label>
+                <label class="form-label fw-bold">Loại công việc</label>
                 <p class="form-control-plaintext">${fn:escapeXml(task.taskType)}</p>
               </div>
               <div class="mb-3">
-                <label class="form-label fw-bold">Status</label>
+                <label class="form-label fw-bold">Trạng thái</label>
                 <p class="form-control-plaintext">
                   <c:set var="status" value="${task.status}"/>
                   <c:choose>
                     <c:when test="${status == 'Pending'}">
-                      <span class="badge bg-warning">Pending</span>
+                      <span class="badge bg-warning">Đang chờ</span>
                     </c:when>
                     <c:when test="${status == 'Assigned'}">
-                      <span class="badge bg-info">Assigned</span>
+                      <span class="badge bg-info">Đã giao</span>
                     </c:when>
                     <c:when test="${status == 'In Progress'}">
-                      <span class="badge bg-primary">In Progress</span>
+                      <span class="badge bg-primary">Đang thực hiện</span>
                     </c:when>
                     <c:when test="${status == 'Completed'}">
-                      <span class="badge bg-success">Completed</span>
+                      <span class="badge bg-success">Hoàn thành</span>
                     </c:when>
                     <c:when test="${status == 'On Hold'}">
-                      <span class="badge bg-secondary">On Hold</span>
+                      <span class="badge bg-secondary">Tạm hoãn</span>
                     </c:when>
                     <c:when test="${status == 'Cancelled'}">
-                      <span class="badge bg-danger">Cancelled</span>
+                      <span class="badge bg-danger">Đã hủy</span>
                     </c:when>
                     <c:otherwise>
                       <span class="badge bg-dark">${task.status}</span>
@@ -86,50 +86,50 @@
             </div>
             <div class="col-md-6">
               <div class="mb-3">
-                <label class="form-label fw-bold">Request ID</label>
+                <label class="form-label fw-bold">Mã yêu cầu</label>
                 <p class="form-control-plaintext">
                   <c:choose>
                     <c:when test="${task.requestId != null}">
                       <a href="#" class="text-decoration-none">#${task.requestId}</a>
                       <c:if test="${task.scheduleId != null}">
-                        <div class="text-muted small">Linked from schedule #${task.scheduleId}</div>
+                        <div class="text-muted small">Liên kết từ lịch trình #${task.scheduleId}</div>
                       </c:if>
                     </c:when>
                     <c:otherwise>
-                      <span class="text-muted">Not linked</span>
+                      <span class="text-muted">Chưa liên kết</span>
                     </c:otherwise>
                   </c:choose>
                 </p>
               </div>
               <div class="mb-3">
-                <label class="form-label fw-bold">Schedule ID</label>
+                <label class="form-label fw-bold">Mã lịch trình</label>
                 <p class="form-control-plaintext">
                   <c:choose>
                     <c:when test="${task.scheduleId != null}">
                       <a href="#" class="text-decoration-none">#${task.scheduleId}</a>
                     </c:when>
                     <c:otherwise>
-                      <span class="text-muted">Not scheduled</span>
+                      <span class="text-muted">Chưa lên lịch</span>
                     </c:otherwise>
                   </c:choose>
                 </p>
               </div>
               <div class="mb-3">
-                <label class="form-label fw-bold">Technician ID</label>
+                <label class="form-label fw-bold">Mã kỹ thuật viên</label>
                 <p class="form-control-plaintext">#${task.technicianId}</p>
               </div>
             </div>
           </div>
           
           <div class="mb-3">
-            <label class="form-label fw-bold">Task Details</label>
+            <label class="form-label fw-bold">Chi tiết công việc</label>
             <div class="border rounded p-3 bg-light">
               <c:choose>
                 <c:when test="${task.taskDetails != null && !task.taskDetails.isEmpty()}">
                   <p class="mb-0">${fn:escapeXml(task.taskDetails)}</p>
                 </c:when>
                 <c:otherwise>
-                  <p class="mb-0 text-muted">No details provided</p>
+                  <p class="mb-0 text-muted">Không có chi tiết</p>
                 </c:otherwise>
               </c:choose>
             </div>
@@ -145,27 +145,27 @@
         </div>
         <div class="card-body">
           <div class="mb-3">
-            <label class="form-label fw-bold">Start Date</label>
+            <label class="form-label fw-bold">Ngày bắt đầu</label>
             <p class="form-control-plaintext">
               <c:choose>
                 <c:when test="${task.startDate != null}">
                   <i class="bi bi-calendar-event me-1"></i>${task.startDate}
                 </c:when>
                 <c:otherwise>
-                  <span class="text-muted">Not set</span>
+                  <span class="text-muted">Chưa đặt</span>
                 </c:otherwise>
               </c:choose>
             </p>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-bold">End Date</label>
+            <label class="form-label fw-bold">Ngày kết thúc</label>
             <p class="form-control-plaintext">
               <c:choose>
                 <c:when test="${task.endDate != null}">
                   <i class="bi bi-calendar-event me-1"></i>${task.endDate}
                 </c:when>
                 <c:otherwise>
-                  <span class="text-muted">Not set</span>
+                  <span class="text-muted">Chưa đặt</span>
                 </c:otherwise>
               </c:choose>
             </p>
@@ -175,24 +175,24 @@
       
       <div class="card crm-card-shadow mt-3">
         <div class="card-header">
-          <h5 class="mb-0">Quick Actions</h5>
+          <h5 class="mb-0">Thao tác nhanh</h5>
         </div>
         <div class="card-body">
           <div class="d-grid gap-2">
             <button class="btn btn-primary" onclick="showStatusUpdateModal(${task.taskId}, '${task.status}')">
-              <i class="bi bi-pencil me-1"></i>Update Status
+              <i class="bi bi-pencil me-1"></i>Cập nhật trạng thái
             </button>
             <c:choose>
               <c:when test="${task.requestId != null}">
                 <c:choose>
                   <c:when test="${not empty existingReport}">
                     <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=edit&reportId=${existingReport.reportId}">
-                      <i class="bi bi-clipboard-check me-1"></i>Edit Report
+                      <i class="bi bi-clipboard-check me-1"></i>Chỉnh sửa báo cáo
                     </a>
                   </c:when>
                   <c:otherwise>
                     <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=create&requestId=${task.requestId}">
-                      <i class="bi bi-clipboard-plus me-1"></i>Create Report
+                      <i class="bi bi-clipboard-plus me-1"></i>Tạo báo cáo
                     </a>
                   </c:otherwise>
                 </c:choose>
@@ -203,26 +203,26 @@
                     <c:choose>
                       <c:when test="${not empty existingReport}">
                         <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=edit&reportId=${existingReport.reportId}">
-                          <i class="bi bi-clipboard-check me-1"></i>Edit Report
+                          <i class="bi bi-clipboard-check me-1"></i>Chỉnh sửa báo cáo
                         </a>
                       </c:when>
                       <c:otherwise>
                         <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=create&scheduleId=${task.scheduleId}">
-                          <i class="bi bi-clipboard-plus me-1"></i>Create Report
+                          <i class="bi bi-clipboard-plus me-1"></i>Tạo báo cáo
                         </a>
                       </c:otherwise>
                     </c:choose>
                   </c:when>
                   <c:otherwise>
-                    <button class="btn btn-outline-secondary" type="button" disabled title="This task is not linked to any service request or schedule">
-                      <i class="bi bi-clipboard-x me-1"></i>Report Unavailable
+                    <button class="btn btn-outline-secondary" type="button" disabled title="Công việc này không được liên kết với bất kỳ yêu cầu dịch vụ hoặc lịch trình nào">
+                      <i class="bi bi-clipboard-x me-1"></i>Báo cáo không khả dụng
                     </button>
                   </c:otherwise>
                 </c:choose>
               </c:otherwise>
             </c:choose>
             <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
-              <i class="bi bi-file-earmark-text me-1"></i>View Contracts
+              <i class="bi bi-file-earmark-text me-1"></i>Xem hợp đồng
             </a>
           </div>
         </div>
@@ -236,8 +236,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="statusUpdateModalLabel">Update Task Status</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="statusUpdateModalLabel">Cập nhật trạng thái công việc</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
       </div>
       <form method="post" action="${pageContext.request.contextPath}/technician/tasks">
         <div class="modal-body">
@@ -248,21 +248,21 @@
           <input type="hidden" name="status" id="preserveStatus" value="">
           <input type="hidden" name="page" id="preservePage" value="">
           <div class="mb-3">
-            <label for="statusSelect" class="form-label">New Status</label>
+            <label for="statusSelect" class="form-label">Trạng thái mới</label>
             <select class="form-select" name="newStatus" id="statusSelect" required>
-              <option value="">Select Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Assigned">Assigned</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="On Hold">On Hold</option>
-              <option value="Cancelled">Cancelled</option>
+              <option value="">Chọn trạng thái</option>
+              <option value="Pending">Đang chờ</option>
+              <option value="Assigned">Đã giao</option>
+              <option value="In Progress">Đang thực hiện</option>
+              <option value="Completed">Hoàn thành</option>
+              <option value="On Hold">Tạm hoãn</option>
+              <option value="Cancelled">Đã hủy</option>
             </select>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Update Status</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Cập nhật trạng thái</button>
         </div>
       </form>
     </div>

@@ -4,6 +4,7 @@ import model.Equipment;
 import model.EquipmentWithStatus;
 
 import java.sql.*;
+import java.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,6 +12,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import model.MaintenanceHistory;
+
 public class EquipmentDAO extends DBContext {
 
     // ==================== BASIC CRUD OPERATIONS ====================
@@ -632,57 +635,82 @@ public class EquipmentDAO extends DBContext {
     }
 
     /**
-     * Lấy thông tin hợp đồng cho thiết bị (bao gồm cả phụ lục)
-     *
-     * @param equipmentId ID thiết bị
-     * @param customerId ID khách hàng
-     * @return EquipmentContractInfo chứa thông tin hợp đồng và nguồn
+     * Lấy thông tin hợp đồng cho thiết bị (bao gồm cả phụ lục và dates)
      */
     public EquipmentContractInfo getEquipmentContractInfo(int equipmentId, int customerId) {
-        // Kiểm tra trong ContractEquipment trước
-        String sql1 = "SELECT c.contractId, 'Contract' as source FROM Contract c "
-                + "JOIN ContractEquipment ce ON c.contractId = ce.contractId "
-                + "WHERE ce.equipmentId = ? AND c.customerId = ? "
-                + "ORDER BY c.contractDate DESC LIMIT 1";
+    // ✅ MySQL-compatible query, KHÔNG còn lỗi
+    String sql =
+        "(" +
+        "SELECT " +
+        "    ce.contractId, " +
+        "    ce.startDate, " +
+        "    ce.endDate, " +
+        "    'Contract' AS source " +
+        "FROM ContractEquipment ce " +
+        "INNER JOIN Contract c ON ce.contractId = c.contractId " +
+        "WHERE ce.equipmentId = ? AND c.customerId = ? " +
+        "ORDER BY ce.contractId DESC " +
+        "LIMIT 1" +
+        ") " +
+        "UNION ALL " +
+        "(" +
+        "SELECT " +
+        "    ca.contractId, " +
+        "    ca.effectiveDate AS startDate, " + // phụ lục có ngày hiệu lực riêng
+        "    NULL AS endDate, " +               // phụ lục không có endDate
+        "    'Appendix' AS source " +
+        "FROM ContractAppendix ca " +
+        "INNER JOIN ContractAppendixEquipment cae ON ca.appendixId = cae.appendixId " +
+        "INNER JOIN Contract c ON ca.contractId = c.contractId " +
+        "WHERE cae.equipmentId = ? AND c.customerId = ? " +
+        "ORDER BY ca.contractId DESC " +
+        "LIMIT 1" +
+        ") " +
+        "ORDER BY contractId DESC " +
+        "LIMIT 1";
 
-        try (PreparedStatement ps = connection.prepareStatement(sql1)) {
-            ps.setInt(1, equipmentId);
-            ps.setInt(2, customerId);
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setInt(1, equipmentId);
+        ps.setInt(2, customerId);
+        ps.setInt(3, equipmentId);
+        ps.setInt(4, customerId);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int contractId = rs.getInt("contractId");
-                    return new EquipmentContractInfo(contractId, "Contract", "HD" + String.format("%03d", contractId));
-                }
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                int contractId = rs.getInt("contractId");
+                String source = rs.getString("source");
+                String formattedId = "HD" + String.format("%03d", contractId);
+
+                EquipmentContractInfo info = new EquipmentContractInfo(contractId, source, formattedId);
+
+                Date startDateSQL = rs.getDate("startDate");
+                Date endDateSQL = rs.getDate("endDate");
+
+                info.setStartDate(startDateSQL != null ? startDateSQL.toLocalDate() : null);
+                info.setEndDate(endDateSQL != null ? endDateSQL.toLocalDate() : null);
+
+                // ✅ DEBUG LOG
+                System.out.println("========================================");
+                System.out.println("✅ [DAO] Equipment " + equipmentId);
+                System.out.println("   - Source: " + source);
+                System.out.println("   - Contract ID: " + contractId);
+                System.out.println("   - StartDate (SQL): " + startDateSQL);
+                System.out.println("   - EndDate (SQL): " + endDateSQL);
+                System.out.println("========================================");
+
+                return info;
             }
-        } catch (SQLException e) {
-            System.out.println("❌ Error checking contract equipment: " + e.getMessage());
         }
 
-        // Kiểm tra trong ContractAppendixEquipment
-        String sql2 = "SELECT c.contractId, 'Appendix' as source FROM Contract c "
-                + "JOIN ContractAppendix ca ON c.contractId = ca.contractId "
-                + "JOIN ContractAppendixEquipment cae ON ca.appendixId = cae.appendixId "
-                + "WHERE cae.equipmentId = ? AND c.customerId = ? "
-                + "ORDER BY ca.effectiveDate DESC LIMIT 1";
-
-        try (PreparedStatement ps = connection.prepareStatement(sql2)) {
-            ps.setInt(1, equipmentId);
-            ps.setInt(2, customerId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int contractId = rs.getInt("contractId");
-                    return new EquipmentContractInfo(contractId, "Appendix", "HD" + String.format("%03d", contractId));
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("❌ Error checking appendix equipment: " + e.getMessage());
-        }
-
-        // Không tìm thấy hợp đồng nào
-        return new EquipmentContractInfo(0, "None", "N/A");
+    } catch (SQLException e) {
+        System.err.println("❌ [DAO ERROR] getEquipmentContractInfo for equipment " + equipmentId);
+        System.err.println("   Message: " + e.getMessage());
+        e.printStackTrace();
     }
+
+    return null;
+}
+
 
     /**
      * Class chứa thông tin hợp đồng của thiết bị
@@ -692,6 +720,8 @@ public class EquipmentDAO extends DBContext {
         private int contractId;
         private String source; // "Contract", "Appendix", "None"
         private String formattedContractId; // "HD001", "N/A"
+        private LocalDate startDate;  // ✅ THÊM MỚI
+        private LocalDate endDate;
 
         public EquipmentContractInfo(int contractId, String source, String formattedContractId) {
             this.contractId = contractId;
@@ -713,6 +743,22 @@ public class EquipmentDAO extends DBContext {
 
         public boolean hasContract() {
             return contractId > 0;
+        }
+
+        public LocalDate getStartDate() {
+            return startDate;
+        }
+
+        public void setStartDate(LocalDate startDate) {
+            this.startDate = startDate;
+        }
+
+        public LocalDate getEndDate() {
+            return endDate;
+        }
+
+        public void setEndDate(LocalDate endDate) {
+            this.endDate = endDate;
         }
     }
 
@@ -1557,31 +1603,208 @@ public class EquipmentDAO extends DBContext {
         System.out.println("✅ DAO: Returning " + list.size() + " equipment");
         return list;
     }
+
     /**
- * Lấy danh sách equipmentId đã được sử dụng trong ContractEquipment hoặc ContractAppendixEquipment
- * @return Set<Integer> chứa các equipmentId đã dùng
- */
-public Set<Integer> getUsedEquipmentIds() {
-    Set<Integer> usedIds = new HashSet<>();
-    
-    String sql = "SELECT DISTINCT equipmentId FROM ContractEquipment WHERE equipmentId IS NOT NULL "
-               + "UNION "
-               + "SELECT DISTINCT equipmentId FROM ContractAppendixEquipment WHERE equipmentId IS NOT NULL";
-    
-    try (PreparedStatement ps = connection.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        while (rs.next()) {
-            usedIds.add(rs.getInt("equipmentId"));
+     * Lấy danh sách equipmentId đã được sử dụng trong ContractEquipment hoặc
+     * ContractAppendixEquipment
+     *
+     * @return Set<Integer> chứa các equipmentId đã dùng
+     */
+    public Set<Integer> getUsedEquipmentIds() {
+        Set<Integer> usedIds = new HashSet<>();
+
+        String sql = "SELECT DISTINCT equipmentId FROM ContractEquipment WHERE equipmentId IS NOT NULL "
+                + "UNION "
+                + "SELECT DISTINCT equipmentId FROM ContractAppendixEquipment WHERE equipmentId IS NOT NULL";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                usedIds.add(rs.getInt("equipmentId"));
+            }
+
+            System.out.println("✅ Found " + usedIds.size() + " used equipment IDs");
+
+        } catch (SQLException e) {
+            System.out.println("❌ Error getting used equipment IDs: " + e.getMessage());
+            e.printStackTrace();
         }
-        
-        System.out.println("✅ Found " + usedIds.size() + " used equipment IDs");
-        
-    } catch (SQLException e) {
-        System.out.println("❌ Error getting used equipment IDs: " + e.getMessage());
-        e.printStackTrace();
+
+        return usedIds;
     }
-    
-    return usedIds;
-}
+
+    public List<MaintenanceHistory> getEquipmentMaintenanceHistory(int equipmentId) {
+        List<MaintenanceHistory> historyList = new ArrayList<>();
+
+        // ✅ Query đầy đủ tất cả columns cần thiết
+        String sql = "SELECT "
+                // Account (Technician)
+                + "a.accountId, "
+                + "a.fullName AS technicianName, "
+                + "a.email AS technicianEmail, "
+                + "a.phone AS technicianPhone, "
+                // MaintenanceSchedule
+                + "ms.scheduleId, "
+                + "ms.scheduledDate, "
+                + "ms.scheduleType, "
+                + "ms.status AS scheduleStatus, "
+                + "ms.recurrenceRule, "
+                // Priority
+                + "p.priorityName, "
+                // Equipment
+                + "e.equipmentId, "
+                + "e.serialNumber, "
+                + "e.model, "
+                + "e.description AS equipmentDescription, "
+                + "e.installDate, "
+                // Category (nếu cần)
+                + "cat.categoryName AS equipmentCategory, "
+                // WorkTask
+                + "wt.taskId, "
+                + "wt.status AS taskStatus, "
+                + "wt.taskDetails, "
+                + "wt.taskType, "
+                + "wt.startDate, "
+                + "wt.endDate, "
+                // Contract (nếu cần)
+                + "c.contractId, "
+                + "c.contractType, "
+                + "cust.fullName AS customerName "
+                + "FROM MaintenanceSchedule ms "
+                + "INNER JOIN Equipment e ON ms.equipmentId = e.equipmentId "
+                + "LEFT JOIN Account a ON ms.assignedTo = a.accountId "
+                + "LEFT JOIN Category cat ON e.categoryId = cat.categoryId "
+                + "LEFT JOIN Priority p ON ms.priorityId = p.priorityId "
+                + "LEFT JOIN WorkTask wt ON ms.scheduleId = wt.scheduleId "
+                + "LEFT JOIN Contract c ON ms.contractId = c.contractId "
+                + "LEFT JOIN Account cust ON c.customerId = cust.accountId "
+                + "WHERE ms.equipmentId = ? "
+                + "ORDER BY ms.scheduledDate DESC";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, equipmentId);
+
+            System.out.println("========================================");
+            System.out.println("🔍 [DAO] Getting maintenance history for equipment ID: " + equipmentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                int count = 0;
+
+                while (rs.next()) {
+                    MaintenanceHistory history = new MaintenanceHistory();
+
+                    // ✅ Technician info (có thể NULL)
+                    int technicianId = rs.getInt("accountId");
+                    String technicianName = rs.getString("technicianName");
+
+                    if (!rs.wasNull() && technicianId > 0 && technicianName != null && !technicianName.trim().isEmpty()) {
+                        history.setTechnicianId(technicianId);
+                        history.setTechnicianName(technicianName);
+                        history.setTechnicianEmail(rs.getString("technicianEmail"));
+                        history.setTechnicianPhone(rs.getString("technicianPhone"));
+                    } else {
+                        history.setTechnicianId(0);
+                        history.setTechnicianName(null); // ✅ SET NULL thay vì "Chưa phân công"
+                    }
+
+                    // ✅ Schedule info
+                    history.setScheduleId(rs.getInt("scheduleId"));
+
+                    java.sql.Timestamp scheduledTimestamp = rs.getTimestamp("scheduledDate");
+                    if (scheduledTimestamp != null) {
+                        history.setScheduledDate(scheduledTimestamp.toLocalDateTime());
+                    }
+
+                    history.setScheduleType(rs.getString("scheduleType"));
+                    history.setScheduleStatus(rs.getString("scheduleStatus"));
+                    history.setRecurrenceRule(rs.getString("recurrenceRule"));
+                    history.setPriorityLevel(rs.getString("priorityName"));
+
+                    // ✅ Equipment info
+                    history.setEquipmentId(rs.getInt("equipmentId"));
+                    history.setSerialNumber(rs.getString("serialNumber"));
+                    history.setModel(rs.getString("model"));
+                    history.setEquipmentDescription(rs.getString("equipmentDescription"));
+
+                    java.sql.Date installDate = rs.getDate("installDate");
+                    if (installDate != null) {
+                        history.setInstallDate(installDate.toLocalDate());
+                    }
+
+                    history.setEquipmentCategory(rs.getString("equipmentCategory"));
+
+                    // ✅ WorkTask info (có thể NULL)
+                    int taskId = rs.getInt("taskId");
+                    if (!rs.wasNull() && taskId > 0) {
+                        history.setId(taskId);
+                        history.setStatus(rs.getString("taskStatus"));
+                        history.setTaskDetails(rs.getString("taskDetails"));
+                        history.setTaskType(rs.getString("taskType"));
+
+                        java.sql.Timestamp startTimestamp = rs.getTimestamp("startDate");
+                        if (startTimestamp != null) {
+                            history.setStartDate(startTimestamp.toLocalDateTime());
+                        }
+
+                        java.sql.Timestamp endTimestamp = rs.getTimestamp("endDate");
+                        if (endTimestamp != null) {
+                            history.setEndDate(endTimestamp.toLocalDateTime());
+                        }
+                    } else {
+                        // ✅ Chưa có WorkTask - Lấy thông tin từ MaintenanceSchedule
+                        history.setId(rs.getInt("scheduleId")); // ✅ Dùng scheduleId thay vì 0
+                        history.setStatus(rs.getString("scheduleStatus")); // ✅ Dùng scheduleStatus
+
+                        // ✅ TaskDetails: Ưu tiên recurrenceRule, nếu không có thì dùng scheduleType
+                        String recurrenceRule = rs.getString("recurrenceRule");
+                        if (recurrenceRule != null && !recurrenceRule.trim().isEmpty()) {
+                            history.setTaskDetails(recurrenceRule);
+                        } else {
+                            history.setTaskDetails("Lịch " + rs.getString("scheduleType"));
+                        }
+
+                        history.setTaskType("Scheduled");
+                    }
+
+                    // ✅ Contract info (có thể NULL)
+                    int contractId = rs.getInt("contractId");
+                    if (!rs.wasNull()) {
+                        history.setContractId(contractId);
+                        history.setContractType(rs.getString("contractType"));
+                        history.setCustomerName(rs.getString("customerName"));
+                    }
+
+                    // ✅ Legacy fields
+                    history.setMaintenanceDateTime(
+                            history.getStartDate() != null ? history.getStartDate() : history.getScheduledDate()
+                    );
+                    history.setMaintenanceType(history.getScheduleType());
+
+                    historyList.add(history);
+                    count++;
+
+                    System.out.println("✅ [DAO] Record " + count + ": "
+                            + "TaskID=" + history.getId()
+                            + ", Technician=" + history.getTechnicianName()
+                            + ", Date=" + history.getMaintenanceDateTime()
+                            + ", Type=" + history.getScheduleType()
+                            + ", Status=" + history.getStatus()
+                            + ", Category=" + history.getEquipmentCategory());
+                }
+
+                System.out.println("========================================");
+                System.out.println("📊 [DAO] Total maintenance records found: " + historyList.size());
+                System.out.println("========================================");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("========================================");
+            System.out.println("❌ [DAO ERROR] Error getting maintenance history");
+            System.out.println("💥 [DAO ERROR] Message: " + e.getMessage());
+            System.out.println("========================================");
+            e.printStackTrace();
+        }
+
+        return historyList;
+    }
 }
