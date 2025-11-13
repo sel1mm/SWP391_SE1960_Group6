@@ -1,11 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Manage User Roles</title>
+        <title>Quản Lý Vai Trò Người Dùng</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     </head>
@@ -16,26 +16,26 @@
                 <div class="col-md-2 min-vh-100 d-flex flex-column justify-content-between" style="background-color: #000000;">
                     <!-- Phần trên của sidebar -->
                     <div class="p-3">
-                        <h4 class="text-white">CRM System</h4>
+                        <h4 class="text-white">Hệ Thống CRM</h4>
                         <ul class="nav flex-column">
                             <li class="nav-item">
                                 <a class="nav-link text-white" href="${pageContext.request.contextPath}/home.jsp">
-                                    <i class="fas fa-home"></i> Home
+                                    <i class="fas fa-home"></i> Trang chủ
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-white active" href="${pageContext.request.contextPath}/admin.jsp">
-                                    <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                                    <i class="fas fa-tachometer-alt"></i> Bảng điều khiển
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-white" href="${pageContext.request.contextPath}/user/list">
-                                    <i class="fas fa-users"></i> Users
+                                    <i class="fas fa-users"></i> Người dùng
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-white" href="${pageContext.request.contextPath}/role/list">
-                                    <i class="fas fa-user-tag"></i> Roles
+                                    <i class="fas fa-user-tag"></i> Vai trò
                                 </a>
                             </li>
                         </ul>
@@ -50,17 +50,17 @@
                     </div>
                 </div>
 
-                <!-- Main Content -->
+                <!-- Nội dung chính -->
                 <div class="col-md-10">
                     <div class="p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2><i class="fas fa-user-tag"></i> Manage User Roles</h2>
+                            <h2><i class="fas fa-user-tag"></i> Quản Lý Vai Trò Người Dùng</h2>
                             <a href="${pageContext.request.contextPath}/user/edit?id=${user.accountId}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Back to User
+                                <i class="fas fa-arrow-left"></i> Quay lại Người Dùng
                             </a>
                         </div>
 
-                        <!-- Messages -->
+                        <!-- Thông báo -->
                         <c:if test="${not empty message}">
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
                                 ${message}
@@ -76,28 +76,28 @@
                         </c:if>
 
                         <c:if test="${not empty user}">
-                            <!-- User Info -->
+                            <!-- Thông tin người dùng -->
                             <div class="card mb-4">
                                 <div class="card-body">
-                                    <h5><i class="fas fa-user"></i> User Information</h5>
+                                    <h5><i class="fas fa-user"></i> Thông Tin Người Dùng</h5>
                                     <div class="row">
                                         <div class="col-md-3">
-                                            <strong>Username:</strong> ${user.username}
+                                            <strong>Tên đăng nhập:</strong> ${user.username}
                                         </div>
                                         <div class="col-md-3">
-                                            <strong>Full Name:</strong> ${user.fullName}
+                                            <strong>Họ và tên:</strong> ${user.fullName}
                                         </div>
                                         <div class="col-md-3">
                                             <strong>Email:</strong> ${user.email}
                                         </div>
                                         <div class="col-md-3">
-                                            <strong>Status:</strong> 
+                                            <strong>Trạng thái:</strong> 
                                             <c:choose>
                                                 <c:when test="${user.status == 'Active'}">
-                                                    <span class="badge bg-success">Active</span>
+                                                    <span class="badge bg-success">Đang hoạt động</span>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <span class="badge bg-secondary">Inactive</span>
+                                                    <span class="badge bg-secondary">Ngưng hoạt động</span>
                                                 </c:otherwise>
                                             </c:choose>
                                         </div>
@@ -105,10 +105,10 @@
                                 </div>
                             </div>
 
-                            <!-- Current Roles -->
+                            <!-- Vai trò hiện tại -->
                             <div class="card mb-4">
                                 <div class="card-header">
-                                    <h5><i class="fas fa-check-circle"></i> Current Roles</h5>
+                                    <h5><i class="fas fa-check-circle"></i> Vai Trò Hiện Tại</h5>
                                 </div>
                                 <div class="card-body">
                                     <c:choose>
@@ -121,10 +121,10 @@
                                                                 <div class="d-flex justify-content-between align-items-center p-2 border rounded">
                                                                     <span class="badge bg-primary">${role.roleName}</span>
                                                                     <form action="${pageContext.request.contextPath}/user/removeRole" method="POST" 
-                                                                          style="display: inline;" onsubmit="return confirm('Remove this role?')">
+                                                                          style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa vai trò này không?')">
                                                                         <input type="hidden" name="userId" value="${user.accountId}">
                                                                         <input type="hidden" name="roleId" value="${role.roleId}">
-                                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa vai trò">
                                                                             <i class="fas fa-times"></i>
                                                                         </button>
                                                                     </form>
@@ -138,17 +138,17 @@
                                         <c:otherwise>
                                             <div class="text-center py-3">
                                                 <i class="fas fa-user-tag fa-2x text-muted mb-2"></i>
-                                                <p class="text-muted">No roles assigned</p>
+                                                <p class="text-muted">Chưa được gán vai trò nào</p>
                                             </div>
                                         </c:otherwise>
                                     </c:choose>
                                 </div>
                             </div>
 
-                            <!-- Available Roles -->
+                            <!-- Vai trò khả dụng -->
                             <div class="card">
                                 <div class="card-header">
-                                    <h5><i class="fas fa-plus-circle"></i> Available Roles</h5>
+                                    <h5><i class="fas fa-plus-circle"></i> Vai Trò Có Thể Thêm</h5>
                                 </div>
                                 <div class="card-body">
                                     <c:choose>
@@ -170,8 +170,8 @@
                                                                       style="display: inline;">
                                                                     <input type="hidden" name="userId" value="${user.accountId}">
                                                                     <input type="hidden" name="roleId" value="${role.roleId}">
-                                                                    <button type="submit" class="btn btn-sm btn-outline-success">
-                                                                        <i class="fas fa-plus"></i> Assign
+                                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Thêm vai trò">
+                                                                        <i class="fas fa-plus"></i> Thêm
                                                                     </button>
                                                                 </form>
                                                             </div>
@@ -183,7 +183,7 @@
                                         <c:otherwise>
                                             <div class="text-center py-3">
                                                 <i class="fas fa-exclamation-triangle fa-2x text-muted mb-2"></i>
-                                                <p class="text-muted">No roles available</p>
+                                                <p class="text-muted">Không có vai trò nào khả dụng</p>
                                             </div>
                                         </c:otherwise>
                                     </c:choose>
