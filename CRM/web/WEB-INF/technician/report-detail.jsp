@@ -138,6 +138,20 @@
             </div>
           </div>
           
+          <div class="mb-3">
+            <label class="form-label fw-bold">Chẩn đoán</label>
+            <div class="border rounded p-3 bg-light">
+              <c:choose>
+                <c:when test="${report.diagnosis != null && !report.diagnosis.isEmpty()}">
+                  <p class="mb-0">${fn:escapeXml(report.diagnosis)}</p>
+                </c:when>
+                <c:otherwise>
+                  <p class="mb-0 text-muted">Không có chẩn đoán</p>
+                </c:otherwise>
+              </c:choose>
+            </div>
+          </div>
+          
           <!-- Parts List (replaces Diagnosis) -->
           <div class="mb-3">
             <label class="form-label fw-bold">Linh kiện</label>
