@@ -8,8 +8,8 @@ window.TechnicianValidation = {
     
     // Patterns for validation
     patterns: {
-        safeText: /^[a-zA-Z0-9\s.,!?()-]+$/,
-        dangerous: /.*(<script|<\/script|'|"|;|--|\/\*|\*\/).*/i,
+        safeText: /^[\p{L}\p{N}\s,.()!?;:'"-]*$/u,
+        dangerous: /.*(<script|<\/script|'|"|;|--|\/\*|\*\/).*/iu,
         decimal: /^\d+(\.\d{1,2})?$/
     },
     
@@ -18,28 +18,28 @@ window.TechnicianValidation = {
         details: {
             required: true,
             maxLength: 255,
-            message: 'Details are required and must not exceed 255 characters'
+            message: 'Chi tiết là bắt buộc và không được vượt quá 255 ký tự'
         },
         diagnosis: {
             required: true,
             maxLength: 255,
-            message: 'Diagnosis is required and must not exceed 255 characters'
+            message: 'Chẩn đoán là bắt buộc và không được vượt quá 255 ký tự'
         },
         estimatedCost: {
             required: true,
             min: 0.01,
-            max: 999999.99,
-            message: 'Estimated cost must be between $0.01 and $999,999.99'
+            max: 99999999999,
+            message: 'Chi phí ước tính phải nằm trong khoảng 0,01 đến 99.999.999.999 VND'
         },
         repairDate: {
             required: true,
             notPast: true,
-            message: 'Repair date is required and cannot be in the past'
+            message: 'Ngày sửa chữa là bắt buộc và không được ở trong quá khứ'
         },
         taskStatus: {
             required: true,
             validValues: ['Pending', 'In Progress', 'Completed', 'On Hold', 'Cancelled'],
-            message: 'Please select a valid task status'
+            message: 'Vui lòng chọn một trạng thái hợp lệ'
         }
     },
     
@@ -53,46 +53,46 @@ window.TechnicianValidation = {
         
         // Validate details
         if (!formData.details || !formData.details.trim()) {
-            errors.details = 'Details are required';
+            errors.details = 'Chi tiết là bắt buộc';
         } else if (formData.details.length > 255) {
-            errors.details = 'Details must not exceed 255 characters';
+            errors.details = 'Chi tiết không được vượt quá 255 ký tự';
         } else if (this.containsDangerousChars(formData.details)) {
-            errors.details = 'Details contain invalid characters';
+            errors.details = 'Chi tiết chứa ký tự không hợp lệ';
         }
         
         // Validate diagnosis
         if (!formData.diagnosis || !formData.diagnosis.trim()) {
-            errors.diagnosis = 'Diagnosis is required';
+            errors.diagnosis = 'Chẩn đoán là bắt buộc';
         } else if (formData.diagnosis.length > 255) {
-            errors.diagnosis = 'Diagnosis must not exceed 255 characters';
+            errors.diagnosis = 'Chẩn đoán không được vượt quá 255 ký tự';
         } else if (this.containsDangerousChars(formData.diagnosis)) {
-            errors.diagnosis = 'Diagnosis contain invalid characters';
+            errors.diagnosis = 'Chẩn đoán chứa ký tự không hợp lệ';
         }
         
         // Validate estimated cost (input is in VND)
         if (!isWarranty) {
             if (!formData.estimatedCost || !formData.estimatedCost.trim()) {
-                errors.estimatedCost = 'Estimated cost is required';
+                errors.estimatedCost = 'Chi phí ước tính là bắt buộc';
             } else {
                 const cost = parseFloat(formData.estimatedCost);
                 if (isNaN(cost) || cost <= 0) {
-                    errors.estimatedCost = 'Estimated cost must be greater than 0';
+                    errors.estimatedCost = 'Chi phí ước tính phải lớn hơn 0';
                 } else if (cost > 99999999999) {
-                    errors.estimatedCost = 'Estimated cost cannot exceed 99,999,999,999 VND';
+                    errors.estimatedCost = 'Chi phí ước tính không được vượt quá 99.999.999.999 VND';
                 }
             }
         }
         
         // Validate repair date
         if (!formData.repairDate || !formData.repairDate.trim()) {
-            errors.repairDate = 'Repair date is required';
+            errors.repairDate = 'Ngày sửa chữa là bắt buộc';
         } else {
             const repairDate = new Date(formData.repairDate);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
             if (repairDate < today) {
-                errors.repairDate = 'Repair date cannot be in the past';
+                errors.repairDate = 'Ngày sửa chữa không được ở trong quá khứ';
             }
         }
         
@@ -111,14 +111,14 @@ window.TechnicianValidation = {
         if (!status || !status.trim()) {
             return {
                 isValid: false,
-                error: 'Status is required'
+                error: 'Vui lòng chọn trạng thái'
             };
         }
         
         if (!validStatuses.includes(status.trim())) {
             return {
                 isValid: false,
-                error: 'Invalid status. Valid options: ' + validStatuses.join(', ')
+                error: 'Trạng thái không hợp lệ. Các giá trị hợp lệ: ' + validStatuses.join(', ')
             };
         }
         

@@ -56,7 +56,7 @@ public class TechnicianContractServlet extends HttpServlet {
                 
                 req.setAttribute("customers", customers);
                 req.setAttribute("availableParts", availableParts);
-                req.setAttribute("pageTitle", "Create Contract");
+                req.setAttribute("pageTitle", "Tạo hợp đồng");
                 req.setAttribute("contentView", "/WEB-INF/technician/contract-form.jsp");
                 req.setAttribute("activePage", "contracts");
                 req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
@@ -72,12 +72,12 @@ public class TechnicianContractServlet extends HttpServlet {
                 
                 if (contractWithEquipment != null) {
                     req.setAttribute("contractWithEquipment", contractWithEquipment);
-                    req.setAttribute("pageTitle", "Contract Detail");
+                    req.setAttribute("pageTitle", "Chi tiết hợp đồng");
                     req.setAttribute("contentView", "/WEB-INF/technician/contract-detail.jsp");
                     req.setAttribute("activePage", "contracts");
                     req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
                 } else {
-                    req.setAttribute("error", "Contract not found");
+                    req.setAttribute("error", "Không tìm thấy hợp đồng");
                     doGetContracts(req, resp);
                 }
                 
@@ -92,12 +92,12 @@ public class TechnicianContractServlet extends HttpServlet {
                 
                 if (equipment != null) {
                     req.setAttribute("equipment", equipment);
-                    req.setAttribute("pageTitle", "Equipment Detail");
+                    req.setAttribute("pageTitle", "Chi tiết thiết bị");
                     req.setAttribute("contentView", "/WEB-INF/technician/equipment-detail.jsp");
                     req.setAttribute("activePage", "equipment");
                     req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
                 } else {
-                    req.setAttribute("error", "Equipment not found");
+                    req.setAttribute("error", "Không tìm thấy thiết bị");
                     doGetEquipment(req, resp);
                 }
                 
@@ -109,7 +109,7 @@ public class TechnicianContractServlet extends HttpServlet {
         } catch (SQLException e) {
             throw new ServletException("Database error: " + e.getMessage(), e);
         } catch (NumberFormatException e) {
-            req.setAttribute("error", "Invalid ID parameter");
+            req.setAttribute("error", "Tham số ID không hợp lệ");
             doGetContracts(req, resp);
         }
     }
@@ -147,7 +147,7 @@ public class TechnicianContractServlet extends HttpServlet {
             req.setAttribute("totalPages", (int) Math.ceil((double) totalContracts / pageSize));
             req.setAttribute("searchQuery", searchQuery);
             req.setAttribute("statusFilter", statusFilter);
-            req.setAttribute("pageTitle", "Contracts");
+            req.setAttribute("pageTitle", "Danh sách hợp đồng");
             req.setAttribute("contentView", "/WEB-INF/technician/contracts.jsp");
             req.setAttribute("activePage", "contracts");
             req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
@@ -191,7 +191,7 @@ public class TechnicianContractServlet extends HttpServlet {
             req.setAttribute("pageSize", pageSize);
             req.setAttribute("totalPages", (int) Math.ceil((double) totalEquipment / pageSize));
             req.setAttribute("searchQuery", searchQuery);
-            req.setAttribute("pageTitle", "Equipment Inventory");
+            req.setAttribute("pageTitle", "Kho thiết bị");
             req.setAttribute("contentView", "/WEB-INF/technician/equipment.jsp");
             req.setAttribute("activePage", "equipment");
             req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
@@ -258,13 +258,13 @@ public class TechnicianContractServlet extends HttpServlet {
                 
                 // Part is mandatory
                 if (partIdParam == null || partIdParam.trim().isEmpty()) {
-                    req.getSession().setAttribute("errorMessage", "Part for repair is required.");
+                    req.getSession().setAttribute("errorMessage", "Vui lòng chọn linh kiện sửa chữa.");
                     resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
                     return;
                 }
                 int partId = Integer.parseInt(partIdParam.trim());
                 if (!contractDAO.isPartAvailable(partId)) {
-                    req.getSession().setAttribute("errorMessage", "Selected part is not available. Please choose another part or contact storekeeper.");
+                    req.getSession().setAttribute("errorMessage", "Linh kiện đã chọn không còn sẵn. Vui lòng chọn linh kiện khác hoặc liên hệ thủ kho.");
                     resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
                     return;
                 }
@@ -280,13 +280,13 @@ public class TechnicianContractServlet extends HttpServlet {
                 );
                 
                 if (contractId > 0) {
-                    req.getSession().setAttribute("successMessage", "Contract created successfully with part assignment ✅");
+                    req.getSession().setAttribute("successMessage", "Tạo hợp đồng thành công với linh kiện đính kèm ✅");
                 } else {
-                    req.getSession().setAttribute("errorMessage", "Failed to create contract. Please try again.");
+                    req.getSession().setAttribute("errorMessage", "Tạo hợp đồng thất bại, vui lòng thử lại.");
                 }
                 
             } catch (Exception e) {
-                req.getSession().setAttribute("errorMessage", "Error creating contract: " + e.getMessage());
+                req.getSession().setAttribute("errorMessage", "Lỗi tạo hợp đồng: " + e.getMessage());
             }
         }
         

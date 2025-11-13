@@ -159,7 +159,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                             }
                             // Check if this technician's task is completed
                             if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
-                                req.setAttribute("error", "Cannot create report for completed task");
+                                req.setAttribute("error", "Không thể tạo báo cáo cho công việc đã hoàn thành");
                                 doGetReportList(req, resp, technicianId);
                                 return;
                             }
@@ -339,7 +339,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 req.setAttribute("selectedParts", reportDetails);
                 req.setAttribute("subtotal", subtotal);
                 req.setAttribute("customerRequestInfo", customerRequestInfo);
-                req.setAttribute("pageTitle", "Edit Repair Report");
+                req.setAttribute("pageTitle", "Chỉnh sửa báo cáo sửa chữa");
                 req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
                 req.setAttribute("activePage", "reports");
                 req.setAttribute("selectedRequestType", selectedRequestType);
@@ -375,7 +375,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     req.setAttribute("selectedRequestType", detailRequestType);
                     req.setAttribute("isWarrantyRequest", detailIsWarranty);
                     req.setAttribute("subtotal", detailSubtotal);
-                    req.setAttribute("pageTitle", "Repair Report Detail");
+                    req.setAttribute("pageTitle", "Chi tiết báo cáo sửa chữa");
                     req.setAttribute("contentView", "/WEB-INF/technician/report-detail.jsp");
                     req.setAttribute("activePage", "reports");
                     req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
@@ -413,7 +413,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             req.setAttribute("currentPage", page);
             req.setAttribute("pageSize", pageSize);
             req.setAttribute("totalPages", (int) Math.ceil((double) totalReports / pageSize));
-            req.setAttribute("pageTitle", "My Repair Reports");
+            req.setAttribute("pageTitle", "Báo cáo sửa chữa của tôi");
             req.setAttribute("contentView", "/WEB-INF/technician/technician-reports.jsp");
             req.setAttribute("activePage", "reports");
             req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
@@ -520,13 +520,13 @@ public class TechnicianRepairReportServlet extends HttpServlet {
 
                     // Validate technician assignment and task status
                     if (!workTaskDAO.isTechnicianAssignedToRequest(technicianId, requestId)) {
-                        req.setAttribute("error", "You are not assigned to this request");
+                        req.setAttribute("error", "Bạn không được giao yêu cầu này");
                         doGet(req, resp);
                         return;
                     }
 
                     if (workTaskDAO.isTechnicianTaskCompleted(technicianId, requestId)) {
-                        req.setAttribute("error", "Cannot create report for completed task");
+                        req.setAttribute("error", "Không thể tạo báo cáo cho công việc đã hoàn thành");
                         doGet(req, resp);
                         return;
                     }
@@ -613,7 +613,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                                 BigDecimal usdValue = vndValue.divide(new BigDecimal("26000"), 2, java.math.RoundingMode.HALF_UP);
                                 estimatedCost = usdValue;
                             } catch (NumberFormatException e) {
-                                validationErrors.add("Invalid estimated cost format");
+                                validationErrors.add("Định dạng chi phí ước tính không hợp lệ");
                                 estimatedCost = calculateTotalFromParts(parts);
                             }
                         } else {
@@ -680,7 +680,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                         req.setAttribute("partsSearchResults", req.getSession().getAttribute("partsSearchResults"));
                         List<WorkTaskDAO.WorkTaskForReport> assignedTasks = workTaskDAO.getAssignedTasksForReport(technicianId);
                         req.setAttribute("assignedTasks", assignedTasks);
-                        req.setAttribute("pageTitle", "Create Repair Report");
+                        req.setAttribute("pageTitle", "Tạo báo cáo sửa chữa");
                         req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
                         req.setAttribute("activePage", "reports");
                         req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
@@ -706,7 +706,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                             }
                         }
                         req.getSession().removeAttribute(cartKey);
-                        req.getSession().setAttribute("successMessage", "Repair Report has been submitted successfully ✅");
+                        req.getSession().setAttribute("successMessage", "Báo cáo sửa chữa đã được gửi thành công ✅");
                         resp.sendRedirect(req.getContextPath() + "/technician/reports");
                     } else {
                         req.setAttribute("error", "Không thể tạo báo cáo sửa chữa");
@@ -854,17 +854,17 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 }
 
             } else {
-                req.setAttribute("error", "Invalid action");
+                req.setAttribute("error", "Hành động không hợp lệ");
                 doGet(req, resp);
             }
 
         } catch (SQLException e) {
             throw new ServletException("Database error: " + e.getMessage(), e);
         } catch (NumberFormatException e) {
-            req.setAttribute("error", "Invalid numeric input");
+            req.setAttribute("error", "Giá trị số không hợp lệ");
             doGet(req, resp);
         } catch (DateTimeParseException e) {
-            req.setAttribute("error", "Invalid date format");
+            req.setAttribute("error", "Định dạng ngày không hợp lệ");
             doGet(req, resp);
         }
     }
@@ -933,45 +933,45 @@ public class TechnicianRepairReportServlet extends HttpServlet {
 
         // Validate parts (replaces diagnosis validation)
         if ((parts == null || parts.isEmpty()) && !isWarranty) {
-            errors.add("At least one part must be selected");
+            errors.add("Vui lòng chọn ít nhất một linh kiện");
         } else if (parts != null && !parts.isEmpty()) {
             try (PartDetailDAO partDetailDAO = new PartDetailDAO()) {
                 for (RepairReportDetail part : parts) {
                     // Validate partId exists
                     if (part.getPartId() <= 0) {
-                        errors.add("Invalid part ID");
+                        errors.add("Mã linh kiện không hợp lệ");
                         continue;
                     }
 
                     // Validate quantity
                     if (part.getQuantity() <= 0) {
-                        errors.add("Quantity must be greater than 0 for part ID " + part.getPartId());
+                        errors.add("Số lượng phải lớn hơn 0 cho linh kiện có ID " + part.getPartId());
                     }
 
                     // Validate unit price
                     if (part.getUnitPrice() == null || part.getUnitPrice().compareTo(BigDecimal.ZERO) < 0) {
-                        errors.add("Unit price must be >= 0 for part ID " + part.getPartId());
+                        errors.add("Đơn giá phải lớn hơn hoặc bằng 0 cho linh kiện có ID " + part.getPartId());
                     }
 
                     // Validate available quantity
                     int availableQty = partDetailDAO.getAvailableQuantityForPart(part.getPartId());
                     if (part.getQuantity() > availableQty) {
-                        errors.add("Insufficient quantity for part ID " + part.getPartId()
-                                + ". Required: " + part.getQuantity() + ", Available: " + availableQty);
+                        errors.add("Không đủ số lượng cho linh kiện ID " + part.getPartId()
+                                + ". Yêu cầu: " + part.getQuantity() + ", Có sẵn: " + availableQty);
                     }
 
                     // Validate partDetailId if specified
                     if (part.getPartDetailId() != null) {
                         var partDetail = partDetailDAO.lockAndValidatePartDetail(part.getPartDetailId());
                         if (partDetail == null) {
-                            errors.add("PartDetail ID " + part.getPartDetailId() + " is not available");
+                            errors.add("Mã chi tiết linh kiện " + part.getPartDetailId() + " không khả dụng");
                         } else if (partDetail.getPartId() != part.getPartId()) {
-                            errors.add("PartDetail ID " + part.getPartDetailId() + " does not belong to part ID " + part.getPartId());
+                            errors.add("Mã chi tiết linh kiện " + part.getPartDetailId() + " không thuộc về linh kiện ID " + part.getPartId());
                         }
                     }
                 }
             } catch (SQLException e) {
-                errors.add("Database error while validating parts: " + e.getMessage());
+                errors.add("Lỗi cơ sở dữ liệu khi kiểm tra linh kiện: " + e.getMessage());
             }
         }
 
@@ -1090,7 +1090,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             String requestIdStr = req.getParameter("requestId");
 
             if (partIdStr == null || quantityStr == null) {
-                req.setAttribute("error", "Missing part ID or quantity");
+                req.setAttribute("error", "Thiếu mã linh kiện hoặc số lượng");
                 resp.sendRedirect(req.getContextPath() + "/technician/reports?action=create&requestId=" + requestIdStr);
                 return;
             }
@@ -1127,7 +1127,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             }
 
             if (part == null) {
-                req.setAttribute("error", "Part not found or not available");
+                req.setAttribute("error", "Không tìm thấy linh kiện hoặc linh kiện không còn sẵn");
                 resp.sendRedirect(req.getContextPath() + "/technician/reports?action=create&requestId=" + requestIdStr);
                 return;
             }
@@ -1135,7 +1135,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             // Validate quantity
             int availableQty = ((Number) part.get("availableQuantity")).intValue();
             if (quantity > availableQty) {
-                req.setAttribute("error", "Insufficient quantity. Available: " + availableQty);
+                req.setAttribute("error", "Không đủ số lượng. Có sẵn: " + availableQty);
                 resp.sendRedirect(req.getContextPath() + "/technician/reports?action=create&requestId=" + requestIdStr);
                 return;
             }
@@ -1154,7 +1154,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 if (detail.getPartId() == partId) {
                     int newQty = detail.getQuantity() + quantity;
                     if (newQty > availableQty) {
-                        req.setAttribute("error", "Total quantity exceeds available. Available: " + availableQty);
+                        req.setAttribute("error", "Tổng số lượng vượt quá số lượng có sẵn. Có sẵn: " + availableQty);
                         resp.sendRedirect(req.getContextPath() + "/technician/reports?action=create&requestId=" + requestIdStr);
                         return;
                     }
@@ -1183,7 +1183,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/technician/reports?action=create&requestId=" + requestIdStr);
 
         } catch (Exception e) {
-            req.setAttribute("error", "Error adding part: " + e.getMessage());
+            req.setAttribute("error", "Lỗi thêm linh kiện: " + e.getMessage());
             resp.sendRedirect(req.getContextPath() + "/technician/reports?action=create&requestId=" + req.getParameter("requestId"));
         }
     }
@@ -1645,12 +1645,12 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             e.printStackTrace();
             System.err.println("SQLException in handleSearchPartsAjax: " + e.getMessage());
             resp.setStatus(500);
-            resp.getWriter().write("{\"error\":\"Database error: " + escapeJsonString(e.getMessage()) + "\"}");
+            resp.getWriter().write("{\"error\":\"Lỗi cơ sở dữ liệu: " + escapeJsonString(e.getMessage()) + "\"}");
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Exception in handleSearchPartsAjax: " + e.getMessage());
             resp.setStatus(500);
-            resp.getWriter().write("{\"error\":\"Error: " + escapeJsonString(e.getMessage()) + "\"}");
+            resp.getWriter().write("{\"error\":\"Lỗi: " + escapeJsonString(e.getMessage()) + "\"}");
         }
     }
 
@@ -1668,7 +1668,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             String scheduleIdParam = req.getParameter("scheduleId");
 
             if (partIdStr == null || quantityStr == null) {
-                resp.getWriter().write("{\"success\":false,\"error\":\"Missing parameters\"}");
+                resp.getWriter().write("{\"success\":false,\"error\":\"Thiếu tham số\"}");
                 return;
             }
 
@@ -1686,7 +1686,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 scheduleIdForContext = Integer.parseInt(scheduleIdParam.trim());
                 cartKey = "selectedParts_schedule_" + scheduleIdForContext;
             } else {
-                resp.getWriter().write("{\"success\":false,\"error\":\"Missing requestId or scheduleId\"}");
+                resp.getWriter().write("{\"success\":false,\"error\":\"Thiếu requestId hoặc scheduleId\"}");
                 return;
             }
 
@@ -1699,18 +1699,18 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     Map<String, Object> customerInfo = getCustomerRequestInfo(requestIdForContext);
 
                     if (customerInfo == null) {
-                        resp.getWriter().write("{\"success\":false,\"error\":\"Invalid request or no contract found\"}");
+                        resp.getWriter().write("{\"success\":false,\"error\":\"Yêu cầu không hợp lệ hoặc không tìm thấy hợp đồng\"}");
                         return;
                     }
 
                     // Check if contract exists
                     Object contractId = customerInfo.get("contractId");
                     if (contractId == null) {
-                        resp.getWriter().write("{\"success\":false,\"error\":\"This service request has no contract. Parts cannot be added.\"}");
+                        resp.getWriter().write("{\"success\":false,\"error\":\"Yêu cầu dịch vụ này không có hợp đồng. Không thể thêm linh kiện.\"}");
                         return;
                     }
                 } catch (SQLException e) {
-                    resp.getWriter().write("{\"success\":false,\"error\":\"Database error: \" + e.getMessage()}");
+                    resp.getWriter().write("{\"success\":false,\"error\":\"Lỗi cơ sở dữ liệu: " + escapeJsonString(e.getMessage()) + "\"}");
                     return;
                 }
             }
@@ -1750,13 +1750,13 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             }
 
             if (part == null) {
-                resp.getWriter().write("{\"success\":false,\"error\":\"Part not found\"}");
+                resp.getWriter().write("{\"success\":false,\"error\":\"Không tìm thấy linh kiện\"}");
                 return;
             }
 
             int availableQty = ((Number) part.get("availableQuantity")).intValue();
             if (quantity > availableQty) {
-                resp.getWriter().write("{\"success\":false,\"error\":\"Insufficient quantity. Available: " + availableQty + "\"}");
+                resp.getWriter().write("{\"success\":false,\"error\":\"Không đủ số lượng. Có sẵn: " + availableQty + "\"}");
                 return;
             }
 
@@ -1766,7 +1766,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 if (detail.getPartId() == partId) {
                     // Replace quantity (JavaScript sends the total quantity, not delta)
                     if (quantity > availableQty) {
-                        resp.getWriter().write("{\"success\":false,\"error\":\"Quantity exceeds available. Available: " + availableQty + "\"}");
+                        resp.getWriter().write("{\"success\":false,\"error\":\"Số lượng vượt quá số lượng có sẵn. Có sẵn: " + availableQty + "\"}");
                         return;
                     }
                     detail.setQuantity(quantity); // Replace, don't add
@@ -1795,10 +1795,10 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             resp.getWriter().write("{\"success\":true,\"subtotal\":" + subtotal + ",\"partsCount\":" + selectedParts.size() + "}");
 
         } catch (NumberFormatException e) {
-            resp.getWriter().write("{\"success\":false,\"error\":\"Invalid partId, quantity, or requestId format\"}");
+            resp.getWriter().write("{\"success\":false,\"error\":\"Định dạng partId, quantity hoặc requestId không hợp lệ\"}");
         } catch (Exception e) {
             e.printStackTrace();
-            resp.getWriter().write("{\"success\":false,\"error\":\"" + escapeJsonString(e.getMessage()) + "\"}");
+            resp.getWriter().write("{\"success\":false,\"error\":\"Lỗi: " + escapeJsonString(e.getMessage()) + "\"}");
         }
     }
 
@@ -1821,13 +1821,13 @@ public class TechnicianRepairReportServlet extends HttpServlet {
 
             if (partIdStr == null || partIdStr.trim().isEmpty()) {
                 System.out.println("ERROR: Missing partId");
-                resp.getWriter().write("{\"success\":false,\"error\":\"Missing partId\"}");
+                resp.getWriter().write("{\"success\":false,\"error\":\"Thiếu partId\"}");
                 return;
             }
 
             if ((requestIdStr == null || requestIdStr.trim().isEmpty()) && (scheduleIdStr == null || scheduleIdStr.trim().isEmpty())) {
                 System.out.println("ERROR: Missing requestId/scheduleId");
-                resp.getWriter().write("{\"success\":false,\"error\":\"Missing requestId or scheduleId\"}");
+                resp.getWriter().write("{\"success\":false,\"error\":\"Thiếu requestId hoặc scheduleId\"}");
                 return;
             }
 
@@ -1837,7 +1837,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 System.out.println("Parsed partId: " + partId);
             } catch (NumberFormatException e) {
                 System.out.println("ERROR: Cannot parse partId '" + partIdStr + "': " + e.getMessage());
-                resp.getWriter().write("{\"success\":false,\"error\":\"Invalid partId format: '" + escapeJsonString(partIdStr) + "'\"}");
+                resp.getWriter().write("{\"success\":false,\"error\":\"Định dạng partId không hợp lệ: '" + escapeJsonString(partIdStr) + "'\"}");
                 return;
             }
 
@@ -1879,11 +1879,11 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             System.out.println("NumberFormatException: " + e.getMessage());
             e.printStackTrace();
-            resp.getWriter().write("{\"success\":false,\"error\":\"Invalid partId or requestId format: " + escapeJsonString(e.getMessage()) + "\"}");
+            resp.getWriter().write("{\"success\":false,\"error\":\"Định dạng partId hoặc requestId không hợp lệ: " + escapeJsonString(e.getMessage()) + "\"}");
         } catch (Exception e) {
             System.out.println("Exception: " + e.getMessage());
             e.printStackTrace();
-            resp.getWriter().write("{\"success\":false,\"error\":\"" + escapeJsonString(e.getMessage()) + "\"}");
+            resp.getWriter().write("{\"success\":false,\"error\":\"Lỗi: " + escapeJsonString(e.getMessage()) + "\"}");
         }
     }
 
@@ -1904,7 +1904,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             } else if (scheduleIdStr != null && !scheduleIdStr.trim().isEmpty()) {
                 scheduleId = Integer.parseInt(scheduleIdStr);
             } else {
-                resp.getWriter().write("{\"success\":false,\"error\":\"Missing requestId or scheduleId\"}");
+            resp.getWriter().write("{\"success\":false,\"error\":\"Thiếu requestId hoặc scheduleId\"}");
                 return;
             }
 
@@ -2006,7 +2006,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         try {
             String requestIdStr = req.getParameter("requestId");
             if (requestIdStr == null || requestIdStr.trim().isEmpty()) {
-                resp.getWriter().write("{\"success\":false,\"error\":\"Missing requestId\"}");
+            resp.getWriter().write("{\"success\":false,\"error\":\"Thiếu requestId\"}");
                 return;
             }
 
@@ -2015,7 +2015,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             // Get customer info from request
             Map<String, Object> customerInfo = getCustomerRequestInfo(requestId);
             if (customerInfo == null) {
-                resp.getWriter().write("{\"success\":false,\"error\":\"Request not found\"}");
+                resp.getWriter().write("{\"success\":false,\"error\":\"Không tìm thấy yêu cầu\"}");
                 return;
             }
 
@@ -2046,7 +2046,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             resp.getWriter().write(json.toString());
 
         } catch (SQLException e) {
-            resp.getWriter().write("{\"success\":false,\"error\":\"Database error: " + escapeJsonString(e.getMessage()) + "\"}");
+            resp.getWriter().write("{\"success\":false,\"error\":\"Lỗi cơ sở dữ liệu: " + escapeJsonString(e.getMessage()) + "\"}");
         } catch (Exception e) {
             resp.getWriter().write("{\"success\":false,\"error\":\"" + escapeJsonString(e.getMessage()) + "\"}");
         }
@@ -2072,7 +2072,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 int requestId = Integer.parseInt(requestIdStr.trim());
                 existingReport = reportDAO.findByRequestIdAndTechnician(requestId, technicianId);
             } else {
-                resp.getWriter().write("{\"exists\":false,\"error\":\"Missing identifier\"}");
+            resp.getWriter().write("{\"exists\":false,\"error\":\"Thiếu định danh\"}");
                 return;
             }
 
@@ -2082,17 +2082,17 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 resp.getWriter().write("{\"exists\":false}");
             }
         } catch (NumberFormatException e) {
-            resp.getWriter().write("{\"exists\":false,\"error\":\"Invalid identifier format\"}");
+            resp.getWriter().write("{\"exists\":false,\"error\":\"Định dạng định danh không hợp lệ\"}");
         } catch (SQLException e) {
             e.printStackTrace();
             System.err.println("SQLException in handleCheckExistingReportAjax: " + e.getMessage());
             resp.setStatus(500);
-            resp.getWriter().write("{\"exists\":false,\"error\":\"Database error: " + escapeJsonString(e.getMessage()) + "\"}");
+            resp.getWriter().write("{\"exists\":false,\"error\":\"Lỗi cơ sở dữ liệu: " + escapeJsonString(e.getMessage()) + "\"}");
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Exception in handleCheckExistingReportAjax: " + e.getMessage());
             resp.setStatus(500);
-            resp.getWriter().write("{\"exists\":false,\"error\":\"Error: " + escapeJsonString(e.getMessage()) + "\"}");
+            resp.getWriter().write("{\"exists\":false,\"error\":\"Lỗi: " + escapeJsonString(e.getMessage()) + "\"}");
         }
     }
 
