@@ -86,8 +86,8 @@ public class invoicesServlet extends HttpServlet {
             }
         }
 
-        // Lấy danh sách hóa đơn - tạm thời dùng getAllInvoicesForTest để test
-        List<Invoice> invoices = invoiceDAO.getAllInvoicesForTest();
+        // ✅ Lấy danh sách hóa đơn theo customer
+        List<Invoice> invoices = invoiceDAO.getInvoicesByCustomerId(customerId);
 
         // Tạo danh sách InvoiceItem với formatted contract ID
         List<InvoiceItem> fullList = new ArrayList<>();
@@ -127,11 +127,11 @@ public class invoicesServlet extends HttpServlet {
         System.out.println("   - End index: " + endIndex);
         System.out.println("   - Items on this page: " + paginatedList.size());
 
-        // Lấy thống kê - tạm thời dùng phương thức test
-        int totalInvoices = invoiceDAO.countTotalInvoicesForTest();
-        int paidCount = invoiceDAO.countPaidInvoicesForTest();
-        int pendingCount = invoiceDAO.countPendingInvoicesForTest();
-        double totalAmount = invoiceDAO.calculateTotalAmountForTest();
+        // ✅ Lấy thống kê theo customer
+        int totalInvoices = invoiceDAO.countTotalInvoices(customerId);
+        int paidCount = invoiceDAO.countPaidInvoices(customerId);
+        int pendingCount = invoiceDAO.countPendingInvoices(customerId);
+        double totalAmount = invoiceDAO.calculateTotalAmount(customerId);
 
         // Debug info
         System.out.println("DEBUG: Customer ID = " + customerId);
@@ -194,7 +194,7 @@ public class invoicesServlet extends HttpServlet {
             invoices = invoiceDAO.searchInvoicesAdvanced(customerId, keyword, status,
                     paymentMethod, sortBy, fromDate, toDate, fromDueDate, toDueDate);
         } else {
-            // Không có tiêu chí tìm kiếm, hiển thị tất cả với sắp xếp
+            // ✅ Không có tiêu chí tìm kiếm, hiển thị tất cả theo customer
             invoices = invoiceDAO.getInvoicesByCustomerId(customerId);
             // Áp dụng sắp xếp nếu có
             if (sortBy != null && !sortBy.trim().isEmpty()) {
@@ -250,11 +250,11 @@ public class invoicesServlet extends HttpServlet {
         System.out.println("   - Current page: " + currentPage);
         System.out.println("   - Items on this page: " + paginatedList.size());
 
-        // Lấy thống kê - tạm thời dùng phương thức test
-        int totalInvoices = invoiceDAO.countTotalInvoicesForTest();
-        int paidCount = invoiceDAO.countPaidInvoicesForTest();
-        int pendingCount = invoiceDAO.countPendingInvoicesForTest();
-        double totalAmount = invoiceDAO.calculateTotalAmountForTest();
+        // ✅ Lấy thống kê theo customer
+        int totalInvoices = invoiceDAO.countTotalInvoices(customerId);
+        int paidCount = invoiceDAO.countPaidInvoices(customerId);
+        int pendingCount = invoiceDAO.countPendingInvoices(customerId);
+        double totalAmount = invoiceDAO.calculateTotalAmount(customerId);
 
         // Set attributes
         request.setAttribute("invoiceList", paginatedList);
@@ -356,7 +356,7 @@ public class invoicesServlet extends HttpServlet {
             }
 
             // ✅ Vẫn lấy danh sách và thống kê để hiển thị bên dưới
-            List<Invoice> invoices = invoiceDAO.getAllInvoicesForTest();
+            List<Invoice> invoices = invoiceDAO.getInvoicesByCustomerId(customerId);
             List<InvoiceItem> invoiceList = new ArrayList<>();
             for (Invoice inv : invoices) {
                 InvoiceItem item = new InvoiceItem();
@@ -365,11 +365,11 @@ public class invoicesServlet extends HttpServlet {
                 invoiceList.add(item);
             }
 
-            // Lấy thống kê - dùng phương thức test
-            int totalInvoices = invoiceDAO.countTotalInvoicesForTest();
-            int paidCount = invoiceDAO.countPaidInvoicesForTest();
-            int pendingCount = invoiceDAO.countPendingInvoicesForTest();
-            double totalAmount = invoiceDAO.calculateTotalAmountForTest();
+            // ✅ Lấy thống kê - theo customer
+            int totalInvoices = invoiceDAO.countTotalInvoices(customerId);
+            int paidCount = invoiceDAO.countPaidInvoices(customerId);
+            int pendingCount = invoiceDAO.countPendingInvoices(customerId);
+            double totalAmount = invoiceDAO.calculateTotalAmount(customerId);
 
             // ✅ Set attributes cho danh sách (hiển thị ở cuối trang)
             request.setAttribute("invoiceList", invoiceList);

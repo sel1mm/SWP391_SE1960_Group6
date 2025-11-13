@@ -1361,8 +1361,7 @@
                                                             data-serial="${item.equipment.serialNumber}"
                                                             data-contract="${item.contractId}"
                                                             data-description="${item.equipment.description}"
-                                                            data-install-date="${item.equipment.installDate}"
-                                                            data-last-update="${item.equipment.lastUpdatedDate}"
+                                                            data-install-date="${item.equipment.installDate}"                                                            
                                                             data-status="${item.status}"
                                                             data-technician-name="${item.technicianName}"
                                                             data-repair-date="${item.repairDate}"
@@ -1574,10 +1573,7 @@
                                     </div>
 
                                     <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <strong>Cập Nhật Lần Cuối:</strong>
-                                            <p class="fw-normal" id="viewLastUpdate"></p>
-                                        </div>
+
                                         <div class="col-md-6">
                                             <strong>Trạng Thái:</strong>
                                             <span class="badge" id="viewStatus"></span>
@@ -1949,7 +1945,7 @@
                                 document.getElementById('viewSerialNumber').textContent = serial || 'N/A';
                                 document.getElementById('viewContractId').textContent = contract || 'N/A';
                                 document.getElementById('viewInstallDate').textContent = installDate || 'N/A';
-                                document.getElementById('viewLastUpdate').textContent = lastUpdate || 'N/A';
+
                                 document.getElementById('viewDescription').textContent = description || 'Không có mô tả';
 
                                 const statusBadge = document.getElementById('viewStatus');
