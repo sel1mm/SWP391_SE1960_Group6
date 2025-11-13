@@ -15,12 +15,24 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import model.MaintenanceHistory;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import dal.AccountDAO;
+import java.lang.reflect.Type;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import model.Account;
 
 @WebServlet(name = "EquipmentServlet", urlPatterns = {"/equipment"})
 public class EquipmentServlet extends HttpServlet {
 
     private EquipmentDAO equipmentDAO;
-    
+
     private static final int PAGE_SIZE = 10;
 
     @Override
@@ -53,6 +65,8 @@ public class EquipmentServlet extends HttpServlet {
             handleGetRepairInfo(request, response);
         } else if ("search".equals(action) || "filter".equals(action)) {
             handleSearchAndFilter(request, response, customerId);
+        } else if ("getMaintenanceHistory".equals(action)) {
+            handleGetMaintenanceHistory(request, response);
         } else {
             displayAllEquipment(request, response, customerId);
         }
@@ -63,29 +77,29 @@ public class EquipmentServlet extends HttpServlet {
      */
     private void handleGetRepairInfo(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         String equipmentIdStr = request.getParameter("equipmentId");
-        
+
         try (PrintWriter out = response.getWriter()) {
             if (equipmentIdStr == null || equipmentIdStr.isEmpty()) {
                 out.print("{\"success\": false, \"message\": \"Equipment ID is required\"}");
                 return;
             }
-            
+
             int equipmentId = Integer.parseInt(equipmentIdStr);
             System.out.println("🔍 Getting repair info for equipment: " + equipmentId);
-            
+
             // Lấy thông tin sửa chữa từ DAO
             Map<String, Object> repairInfo = equipmentDAO.getEquipmentRepairInfo(equipmentId);
-            
+
             if (repairInfo != null && !repairInfo.isEmpty()) {
                 // Tạo JSON string thủ công thay vì dùng JSONObject
                 StringBuilder json = new StringBuilder();
                 json.append("{\"success\": true, \"repairInfo\": {");
-                
+
                 // Escape và format các giá trị
                 String technicianName = escapeJsonString((String) repairInfo.get("technicianName"));
                 String repairDate = escapeJsonString(String.valueOf(repairInfo.get("repairDate")));
@@ -93,7 +107,7 @@ public class EquipmentServlet extends HttpServlet {
                 String repairDetails = escapeJsonString((String) repairInfo.get("repairDetails"));
                 String estimatedCost = escapeJsonString(String.valueOf(repairInfo.get("estimatedCost")));
                 String quotationStatus = escapeJsonString((String) repairInfo.get("quotationStatus"));
-                
+
                 json.append("\"technicianName\": \"").append(technicianName).append("\",");
                 json.append("\"repairDate\": \"").append(repairDate).append("\",");
                 json.append("\"diagnosis\": \"").append(diagnosis).append("\",");
@@ -101,14 +115,14 @@ public class EquipmentServlet extends HttpServlet {
                 json.append("\"estimatedCost\": \"").append(estimatedCost).append("\",");
                 json.append("\"quotationStatus\": \"").append(quotationStatus).append("\"");
                 json.append("}}");
-                
+
                 System.out.println("✅ Repair info found: " + repairInfo.get("technicianName"));
                 out.print(json.toString());
             } else {
                 System.out.println("⚠️ No repair info found for equipment: " + equipmentId);
                 out.print("{\"success\": false, \"message\": \"No repair information found\"}");
             }
-            
+
         } catch (NumberFormatException e) {
             System.out.println("❌ Invalid equipment ID: " + equipmentIdStr);
             response.getWriter().print("{\"success\": false, \"message\": \"Invalid equipment ID\"}");
@@ -119,7 +133,115 @@ public class EquipmentServlet extends HttpServlet {
             response.getWriter().print("{\"success\": false, \"message\": \"" + errorMsg + "\"}");
         }
     }
-    
+
+    private void handleGetMaintenanceHistory(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        String equipmentIdStr = request.getParameter("equipmentId");
+
+        try (PrintWriter out = response.getWriter()) {
+
+            if (equipmentIdStr == null || equipmentIdStr.isEmpty()) {
+                out.print("{\"success\": false, \"message\": \"Equipment ID is required\"}");
+                return;
+            }
+
+            int equipmentId = Integer.parseInt(equipmentIdStr);
+
+            System.out.println("========================================");
+            System.out.println("🔍 [CUSTOMER] Getting maintenance history for equipment: " + equipmentId);
+
+            // ✅ LẤY LỊCH SỬ BẢO TRÌ
+            List<MaintenanceHistory> historyList = equipmentDAO.getEquipmentMaintenanceHistory(equipmentId);
+
+            if (historyList != null && !historyList.isEmpty()) {
+
+                System.out.println("✅ [CUSTOMER] Found " + historyList.size() + " maintenance records");
+
+                // ✅ ENRICH DATA: Thêm tên kỹ thuật viên nếu chưa có
+                AccountDAO accountDAO = new AccountDAO();
+
+                for (MaintenanceHistory history : historyList) {
+                    try {
+                        // ✅ SỬA: Dùng getTechnicianId() thay vì getAssignedTo()
+                        int technicianId = history.getTechnicianId();
+
+                        // ✅ CHỈ LOAD NẾU CHƯA CÓ TECHNICIAN NAME
+                        if ((history.getTechnicianName() == null || history.getTechnicianName().trim().isEmpty())
+                                && technicianId > 0) {
+
+                            Account technician = accountDAO.getAccountById(technicianId);
+
+                            if (technician != null) {
+                                history.setTechnicianName(technician.getFullName());
+                                System.out.println("  ✅ Loaded technician: " + technician.getFullName()
+                                        + " for schedule " + history.getScheduleId());
+                            } else {
+                                history.setTechnicianName("N/A");
+                                System.out.println("  ⚠️ Technician ID " + technicianId + " not found");
+                            }
+                        } else if (technicianId == 0) {
+                            history.setTechnicianName("Chưa phân công");
+                            System.out.println("  ⚠️ No technician assigned for schedule " + history.getScheduleId());
+                        } else {
+                            System.out.println("  ℹ️ Technician name already set: " + history.getTechnicianName());
+                        }
+
+                    } catch (Exception e) {
+                        System.err.println("  ❌ Error loading technician for schedule "
+                                + history.getScheduleId() + ": " + e.getMessage());
+                        if (history.getTechnicianName() == null || history.getTechnicianName().trim().isEmpty()) {
+                            history.setTechnicianName("Lỗi tải dữ liệu");
+                        }
+                    }
+                }
+
+                // ✅ CUSTOM GSON
+                Gson gson = new GsonBuilder()
+                        .registerTypeAdapter(LocalDateTime.class, new JsonSerializer<LocalDateTime>() {
+                            @Override
+                            public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+                                return new JsonPrimitive(src.toString());
+                            }
+                        })
+                        .registerTypeAdapter(LocalDate.class, new JsonSerializer<LocalDate>() {
+                            @Override
+                            public JsonElement serialize(LocalDate src, Type typeOfSrc, JsonSerializationContext context) {
+                                return new JsonPrimitive(src.toString());
+                            }
+                        })
+                        .serializeNulls()
+                        .create();
+
+                String jsonResponse = gson.toJson(historyList);
+
+                System.out.println("✅ [CUSTOMER] Serialized " + historyList.size() + " records to JSON");
+                System.out.println("📦 [CUSTOMER] JSON Sample (first 500 chars):");
+                System.out.println(jsonResponse.substring(0, Math.min(500, jsonResponse.length())));
+                System.out.println("========================================");
+
+                out.print("{\"success\": true, \"data\": " + jsonResponse + "}");
+
+            } else {
+                System.out.println("⚠️ [CUSTOMER] No maintenance history found for equipment " + equipmentId);
+                System.out.println("========================================");
+                out.print("{\"success\": true, \"data\": [], \"message\": \"Chưa có lịch sử bảo trì\"}");
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("❌ [CUSTOMER] Invalid equipment ID format: " + equipmentIdStr);
+            response.getWriter().print("{\"success\": false, \"message\": \"Invalid equipment ID\"}");
+        } catch (Exception e) {
+            System.out.println("💥 [CUSTOMER ERROR] " + e.getMessage());
+            e.printStackTrace();
+            String errorMsg = e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Unknown error";
+            response.getWriter().print("{\"success\": false, \"message\": \"" + errorMsg + "\"}");
+        }
+    }
+
     /**
      * Escape JSON string để tránh lỗi format
      */
@@ -128,10 +250,10 @@ public class EquipmentServlet extends HttpServlet {
             return "";
         }
         return input.replace("\\", "\\\\")
-                   .replace("\"", "\\\"")
-                   .replace("\n", "\\n")
-                   .replace("\r", "\\r")
-                   .replace("\t", "\\t");
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     /**
@@ -149,7 +271,9 @@ public class EquipmentServlet extends HttpServlet {
             if (pageParam != null && !pageParam.isEmpty()) {
                 try {
                     currentPage = Integer.parseInt(pageParam);
-                    if (currentPage < 1) currentPage = 1;
+                    if (currentPage < 1) {
+                        currentPage = 1;
+                    }
                 } catch (NumberFormatException e) {
                     currentPage = 1;
                 }
@@ -167,22 +291,38 @@ public class EquipmentServlet extends HttpServlet {
             for (Equipment equipment : allEquipment) {
                 EquipmentWithContract ewc = new EquipmentWithContract();
                 ewc.setEquipment(equipment);
-                
+
                 // Sử dụng method mới để lấy thông tin hợp đồng và loại
                 EquipmentDAO.EquipmentContractInfo contractInfo = equipmentDAO.getEquipmentContractInfo(
                         equipment.getEquipmentId(), customerId);
                 
+                // ✅ THÊM LOG NÀY
+System.out.println("📝 [SERVLET] Equipment " + equipment.getEquipmentId() + 
+                   " | Contract: " + contractInfo.getFormattedContractId() +
+                   " | StartDate: " + contractInfo.getStartDate() +
+                   " | EndDate: " + contractInfo.getEndDate());
+
                 if (contractInfo.hasContract()) {
                     ewc.setContractId(contractInfo.getFormattedContractId());
                     ewc.setSourceType(contractInfo.getSource().equals("Contract") ? "Hợp Đồng" : "Phụ Lục");
+                    
+                    // ✅ THÊM LOGIC LẤY NGÀY BẮT ĐẦU VÀ KẾT THÚC
+                    ewc.setStartDate(contractInfo.getStartDate() != null ? contractInfo.getStartDate().toString() : null);
+                    ewc.setEndDate(contractInfo.getEndDate() != null ? contractInfo.getEndDate().toString() : null);
                 } else {
                     ewc.setContractId("N/A");
                     ewc.setSourceType("Không xác định");
+                    ewc.setStartDate(null);
+                    ewc.setEndDate(null);
+                    
+                     // ✅ THÊM LOG NÀY NỮA
+    System.out.println("   → EWC StartDate: " + ewc.getStartDate());
+    System.out.println("   → EWC EndDate: " + ewc.getEndDate());
                 }
-                
+
                 String status = equipmentDAO.getEquipmentStatus(equipment.getEquipmentId());
                 ewc.setStatus(status);
-                
+
                 // ✅ NẾU THIẾT BỊ ĐANG SỬA CHỮA → LẤY THÔNG TIN SỬA CHỮA
                 if ("Repair".equals(status)) {
                     try {
@@ -194,9 +334,9 @@ public class EquipmentServlet extends HttpServlet {
                             ewc.setRepairDetails((String) repairInfo.get("repairDetails"));
                             ewc.setEstimatedCost(String.valueOf(repairInfo.get("estimatedCost")));
                             ewc.setQuotationStatus((String) repairInfo.get("quotationStatus"));
-                            
-                            System.out.println("✅ Loaded repair info for equipment " + equipment.getEquipmentId() + 
-                                             " - Technician: " + ewc.getTechnicianName());
+
+                            System.out.println("✅ Loaded repair info for equipment " + equipment.getEquipmentId()
+                                    + " - Technician: " + ewc.getTechnicianName());
                         } else {
                             System.out.println("⚠️ No repair info found for equipment " + equipment.getEquipmentId());
                         }
@@ -204,14 +344,14 @@ public class EquipmentServlet extends HttpServlet {
                         System.out.println("❌ Error loading repair info for equipment " + equipment.getEquipmentId() + ": " + e.getMessage());
                     }
                 }
-                
+
                 fullList.add(ewc);
             }
 
             // ============ PHÂN TRANG ============
             int totalItems = fullList.size();
             int totalPages = (totalItems > 0) ? (int) Math.ceil((double) totalItems / PAGE_SIZE) : 0;
-            
+
             // Đảm bảo currentPage hợp lệ
             if (currentPage < 1) {
                 currentPage = 1;
@@ -222,7 +362,7 @@ public class EquipmentServlet extends HttpServlet {
 
             int startIndex = (currentPage - 1) * PAGE_SIZE;
             int endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
-            
+
             List<EquipmentWithContract> paginatedList = new ArrayList<>();
             if (startIndex < totalItems && startIndex >= 0) {
                 paginatedList = fullList.subList(startIndex, endIndex);
@@ -248,7 +388,7 @@ public class EquipmentServlet extends HttpServlet {
             request.setAttribute("totalPages", totalPages);
             request.setAttribute("totalItems", totalItems);
             request.setAttribute("searchMode", false);
-            
+
             System.out.println("✅ Attributes set for JSP:");
             System.out.println("   - equipmentList size: " + paginatedList.size());
             System.out.println("   - currentPage: " + currentPage);
@@ -276,7 +416,7 @@ public class EquipmentServlet extends HttpServlet {
         String fromDate = request.getParameter("fromDate");
         String toDate = request.getParameter("toDate");
         String sortBy = request.getParameter("sortBy");
-        
+
         System.out.println("🔍 Search - Keyword: " + keyword + ", Status: " + statusFilter + ", SourceType: " + sourceTypeFilter + ", FromDate: " + fromDate + ", ToDate: " + toDate + ", Sort: " + sortBy);
 
         try {
@@ -287,22 +427,27 @@ public class EquipmentServlet extends HttpServlet {
             for (Equipment equipment : allEquipment) {
                 EquipmentWithContract ewc = new EquipmentWithContract();
                 ewc.setEquipment(equipment);
-                
+
                 // Sử dụng method mới để lấy thông tin hợp đồng và loại
                 EquipmentDAO.EquipmentContractInfo contractInfo = equipmentDAO.getEquipmentContractInfo(
                         equipment.getEquipmentId(), customerId);
-                
+
                 if (contractInfo.hasContract()) {
                     ewc.setContractId(contractInfo.getFormattedContractId());
                     ewc.setSourceType(contractInfo.getSource().equals("Contract") ? "Hợp Đồng" : "Phụ Lục");
+                    
+                    ewc.setStartDate(contractInfo.getStartDate() != null ? contractInfo.getStartDate().toString() : null);
+                    ewc.setEndDate(contractInfo.getEndDate() != null ? contractInfo.getEndDate().toString() : null);
                 } else {
                     ewc.setContractId("N/A");
                     ewc.setSourceType("Không xác định");
+                    ewc.setStartDate(null);
+                    ewc.setEndDate(null);
                 }
-                
+
                 String status = equipmentDAO.getEquipmentStatus(equipment.getEquipmentId());
                 ewc.setStatus(status);
-                
+
                 // ✅ NẾU THIẾT BỊ ĐANG SỬA CHỮA → LẤY THÔNG TIN SỬA CHỮA
                 if ("Repair".equals(status)) {
                     try {
@@ -319,7 +464,7 @@ public class EquipmentServlet extends HttpServlet {
                         System.out.println("❌ Error loading repair info for equipment " + equipment.getEquipmentId() + ": " + e.getMessage());
                     }
                 }
-                
+
                 filteredList.add(ewc);
             }
 
@@ -327,28 +472,28 @@ public class EquipmentServlet extends HttpServlet {
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String lowerKeyword = keyword.toLowerCase().trim();
                 filteredList = filteredList.stream()
-                    .filter(ewc -> {
-                        Equipment eq = ewc.getEquipment();
-                        return (eq.getModel() != null && eq.getModel().toLowerCase().contains(lowerKeyword))
-                            || (eq.getSerialNumber() != null && eq.getSerialNumber().toLowerCase().contains(lowerKeyword))
-                            || (eq.getDescription() != null && eq.getDescription().toLowerCase().contains(lowerKeyword))
-                            || (ewc.getContractId() != null && ewc.getContractId().toLowerCase().contains(lowerKeyword));
-                    })
-                    .collect(Collectors.toList());
+                        .filter(ewc -> {
+                            Equipment eq = ewc.getEquipment();
+                            return (eq.getModel() != null && eq.getModel().toLowerCase().contains(lowerKeyword))
+                                    || (eq.getSerialNumber() != null && eq.getSerialNumber().toLowerCase().contains(lowerKeyword))
+                                    || (eq.getDescription() != null && eq.getDescription().toLowerCase().contains(lowerKeyword))
+                                    || (ewc.getContractId() != null && ewc.getContractId().toLowerCase().contains(lowerKeyword));
+                        })
+                        .collect(Collectors.toList());
             }
 
             // ============ LỌC TRẠNG THÁI ============
             if (statusFilter != null && !statusFilter.trim().isEmpty()) {
                 filteredList = filteredList.stream()
-                    .filter(ewc -> statusFilter.equals(ewc.getStatus()))
-                    .collect(Collectors.toList());
+                        .filter(ewc -> statusFilter.equals(ewc.getStatus()))
+                        .collect(Collectors.toList());
             }
 
             // ============ LỌC LOẠI (HỢP ĐỒNG/PHỤ LỤC) ============
             if (sourceTypeFilter != null && !sourceTypeFilter.trim().isEmpty()) {
                 filteredList = filteredList.stream()
-                    .filter(ewc -> sourceTypeFilter.equals(ewc.getSourceType()))
-                    .collect(Collectors.toList());
+                        .filter(ewc -> sourceTypeFilter.equals(ewc.getSourceType()))
+                        .collect(Collectors.toList());
             }
 
             // ============ LỌC THEO NGÀY LẮP ĐẶT ============
@@ -356,11 +501,11 @@ public class EquipmentServlet extends HttpServlet {
                 try {
                     java.time.LocalDate fromLocalDate = java.time.LocalDate.parse(fromDate);
                     filteredList = filteredList.stream()
-                        .filter(ewc -> {
-                            java.time.LocalDate installDate = ewc.getEquipment().getInstallDate();
-                            return installDate != null && !installDate.isBefore(fromLocalDate);
-                        })
-                        .collect(Collectors.toList());
+                            .filter(ewc -> {
+                                java.time.LocalDate installDate = ewc.getEquipment().getInstallDate();
+                                return installDate != null && !installDate.isBefore(fromLocalDate);
+                            })
+                            .collect(Collectors.toList());
                 } catch (Exception e) {
                     System.out.println("❌ Error parsing fromDate: " + fromDate);
                 }
@@ -370,11 +515,11 @@ public class EquipmentServlet extends HttpServlet {
                 try {
                     java.time.LocalDate toLocalDate = java.time.LocalDate.parse(toDate);
                     filteredList = filteredList.stream()
-                        .filter(ewc -> {
-                            java.time.LocalDate installDate = ewc.getEquipment().getInstallDate();
-                            return installDate != null && !installDate.isAfter(toLocalDate);
-                        })
-                        .collect(Collectors.toList());
+                            .filter(ewc -> {
+                                java.time.LocalDate installDate = ewc.getEquipment().getInstallDate();
+                                return installDate != null && !installDate.isAfter(toLocalDate);
+                            })
+                            .collect(Collectors.toList());
                 } catch (Exception e) {
                     System.out.println("❌ Error parsing toDate: " + toDate);
                 }
@@ -387,32 +532,32 @@ public class EquipmentServlet extends HttpServlet {
 
             switch (sortBy) {
                 case "oldest":
-                    filteredList.sort(Comparator.comparing(ewc -> 
-                        ewc.getEquipment().getInstallDate() != null 
-                        ? ewc.getEquipment().getInstallDate() 
-                        : java.time.LocalDate.MIN));
+                    filteredList.sort(Comparator.comparing(ewc
+                            -> ewc.getEquipment().getInstallDate() != null
+                            ? ewc.getEquipment().getInstallDate()
+                            : java.time.LocalDate.MIN));
                     break;
-                    
+
                 case "name_asc":
-                    filteredList.sort(Comparator.comparing(ewc -> 
-                        ewc.getEquipment().getModel() != null 
-                        ? ewc.getEquipment().getModel() 
-                        : ""));
+                    filteredList.sort(Comparator.comparing(ewc
+                            -> ewc.getEquipment().getModel() != null
+                            ? ewc.getEquipment().getModel()
+                            : ""));
                     break;
-                    
+
                 case "name_desc":
-                    filteredList.sort(Comparator.comparing(ewc -> 
-                        ewc.getEquipment().getModel() != null 
-                        ? ewc.getEquipment().getModel() 
-                        : "", Comparator.reverseOrder()));
+                    filteredList.sort(Comparator.comparing(ewc
+                            -> ewc.getEquipment().getModel() != null
+                            ? ewc.getEquipment().getModel()
+                            : "", Comparator.reverseOrder()));
                     break;
-                    
+
                 case "newest":
                 default:
-                    filteredList.sort(Comparator.comparing(ewc -> 
-                        ewc.getEquipment().getInstallDate() != null 
-                        ? ewc.getEquipment().getInstallDate() 
-                        : java.time.LocalDate.MIN, Comparator.reverseOrder()));
+                    filteredList.sort(Comparator.comparing(ewc
+                            -> ewc.getEquipment().getInstallDate() != null
+                            ? ewc.getEquipment().getInstallDate()
+                            : java.time.LocalDate.MIN, Comparator.reverseOrder()));
                     break;
             }
 
@@ -422,7 +567,9 @@ public class EquipmentServlet extends HttpServlet {
             if (pageParam != null && !pageParam.isEmpty()) {
                 try {
                     currentPage = Integer.parseInt(pageParam);
-                    if (currentPage < 1) currentPage = 1;
+                    if (currentPage < 1) {
+                        currentPage = 1;
+                    }
                 } catch (NumberFormatException e) {
                     currentPage = 1;
                 }
@@ -430,7 +577,7 @@ public class EquipmentServlet extends HttpServlet {
 
             int totalItems = filteredList.size();
             int totalPages = (totalItems > 0) ? (int) Math.ceil((double) totalItems / PAGE_SIZE) : 0;
-            
+
             // Đảm bảo currentPage hợp lệ
             if (currentPage < 1) {
                 currentPage = 1;
@@ -441,7 +588,7 @@ public class EquipmentServlet extends HttpServlet {
 
             int startIndex = (currentPage - 1) * PAGE_SIZE;
             int endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
-            
+
             List<EquipmentWithContract> paginatedList = new ArrayList<>();
             if (startIndex < totalItems && startIndex >= 0) {
                 paginatedList = filteredList.subList(startIndex, endIndex);
@@ -471,14 +618,14 @@ public class EquipmentServlet extends HttpServlet {
             request.setAttribute("totalItems", totalItems);
             request.setAttribute("keyword", keyword);
             request.setAttribute("searchMode", true);
-            
+
             // Set filter parameters để JSP giữ giá trị đã chọn
             request.setAttribute("statusFilter", statusFilter);
             request.setAttribute("sourceTypeFilter", sourceTypeFilter);
             request.setAttribute("fromDate", fromDate);
             request.setAttribute("toDate", toDate);
             request.setAttribute("sortBy", sortBy);
-            
+
             System.out.println("✅ Search/Filter Attributes set for JSP:");
             System.out.println("   - equipmentList size: " + paginatedList.size());
             System.out.println("   - currentPage: " + currentPage);
@@ -496,7 +643,7 @@ public class EquipmentServlet extends HttpServlet {
 
     private void handleError(HttpServletRequest request, HttpServletResponse response, String errorMessage)
             throws ServletException, IOException {
-        
+
         request.setAttribute("error", errorMessage);
         request.setAttribute("totalEquipment", 0);
         request.setAttribute("activeCount", 0);
@@ -505,7 +652,7 @@ public class EquipmentServlet extends HttpServlet {
         request.setAttribute("equipmentList", new ArrayList<>());
         request.setAttribute("currentPage", 1);
         request.setAttribute("totalPages", 0);
-        
+
         request.getRequestDispatcher("/equipment.jsp").forward(request, response);
     }
 
@@ -513,11 +660,12 @@ public class EquipmentServlet extends HttpServlet {
      * Inner class để kết hợp Equipment với Contract và Status
      */
     public static class EquipmentWithContract {
+
         private Equipment equipment;
         private String contractId;
         private String sourceType; // "Hợp Đồng" hoặc "Phụ Lục"
         private String status;
-        
+
         // ✅ THÊM THÔNG TIN SỬA CHỮA
         private String technicianName;
         private String repairDate;
@@ -525,6 +673,26 @@ public class EquipmentServlet extends HttpServlet {
         private String repairDetails;
         private String estimatedCost;
         private String quotationStatus;
+        
+        // ✅ THÊM NGÀY BẮT ĐẦU VÀ KẾT THÚC
+        private String startDate;
+        private String endDate;
+        
+        public String getStartDate() {
+            return startDate;
+        }
+
+        public void setStartDate(String startDate) {
+            this.startDate = startDate;
+        }
+
+        public String getEndDate() {
+            return endDate;
+        }
+
+        public void setEndDate(String endDate) {
+            this.endDate = endDate;
+        }
 
         public Equipment getEquipment() {
             return equipment;
