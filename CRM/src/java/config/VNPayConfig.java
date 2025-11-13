@@ -22,7 +22,7 @@ public class VNPayConfig {
     
     // VNPay Sandbox Configuration
     public static String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
- public static String vnp_ReturnUrl = "http://localhost:8080/CRM/vnpayCallback";
+    public static String vnp_ReturnUrl = "http://localhost:8080/CRM/vnpayCallback";
 
     
     // VNPay Sandbox Test Credentials (từ APP XEM PHIM - đã test thành công)
