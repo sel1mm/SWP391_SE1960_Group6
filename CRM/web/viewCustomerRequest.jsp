@@ -51,6 +51,186 @@
             color: red;
             font-size: 0.9em;
         }
+        
+        /* Statistics Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--card-gradient-start), var(--card-gradient-end));
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer; 
+            user-select: none;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card.blue {
+            --card-gradient-start: #2196F3;
+            --card-gradient-end: #1976D2;
+        }
+
+        .stat-card.orange {
+            --card-gradient-start: #FF9800;
+            --card-gradient-end: #F57C00;
+        }
+
+        .stat-card.cyan {
+            --card-gradient-start: #00BCD4;
+            --card-gradient-end: #0097A7;
+        }
+
+        .stat-card.green {
+            --card-gradient-start: #4CAF50;
+            --card-gradient-end: #388E3C;
+        }
+
+        .stat-card .stat-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 50px;
+            opacity: 0.3;
+        }
+
+        .stat-card .stat-label {
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        @media (max-width: 992px) {
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .stat-card.active-filter {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .stat-card.active-filter::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .stat-card:active {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .stat-card:hover::before {
+        opacity: 1;
+    }
+
+    /* ✅ Active state with check mark */
+    .stat-card.active-filter {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        transform: translateY(-3px);
+    }
+
+    .stat-card.active-filter::after {
+        content: '✓';
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.3);
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    /* ✅ Tooltip hint on hover */
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card.active-filter:hover::before {
+        content: 'Click để bỏ lọc';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 10;
+        opacity: 1;
+    }
+
+    .stat-card:not(.active-filter):hover::after {
+        content: 'Click để lọc';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 10;
+    }
+        
     </style>
 </head>
 
@@ -116,6 +296,45 @@
                     <span>Xin chào, <strong>${sessionScope.session_login.username}</strong></span>
                 </div>
             </div>
+                
+ <!-- Statistics Cards -->
+<div class="stats-container">
+    <!-- Tổng Yêu Cầu -->
+    <div class="stat-card blue" data-filter="all" onclick="filterByCard(this)">
+        <div class="stat-icon">
+            <i class="fas fa-list"></i>
+        </div>
+        <div class="stat-label">Tổng Yêu Cầu</div>
+        <h2 class="stat-value">${totalRequestsCount}</h2>
+    </div>
+
+    <!-- Chờ Xử Lý -->
+    <div class="stat-card orange" data-filter="status" data-value="Pending" onclick="filterByCard(this)">
+        <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-label">Chờ Xử Lý</div>
+        <h2 class="stat-value">${pendingCount}</h2>
+    </div>
+
+    <!-- Dịch Vụ -->
+    <div class="stat-card cyan" data-filter="requestType" data-value="Service" onclick="filterByCard(this)">
+        <div class="stat-icon">
+            <i class="fas fa-tools"></i>
+        </div>
+        <div class="stat-label">Dịch Vụ</div>
+        <h2 class="stat-value">${serviceCount}</h2>
+    </div>
+
+    <!-- Bảo Hành -->
+    <div class="stat-card green" data-filter="requestType" data-value="Warranty" onclick="filterByCard(this)">
+        <div class="stat-icon">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="stat-label">Bảo Hành</div>
+        <h2 class="stat-value">${warrantyCount}</h2>
+    </div>
+</div>
 
            <!-- Search & Filter -->
 <div class="card mb-4">
@@ -1380,6 +1599,72 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
     });
+});
+
+/**
+ * Filter requests when clicking on statistics cards
+ */
+/**
+ * Filter requests when clicking on statistics cards
+ * Click again to unselect and show all
+ */
+function filterByCard(card) {
+    const filterType = card.getAttribute('data-filter');
+    const filterValue = card.getAttribute('data-value');
+    
+    // Check if this card is currently active
+    const isActive = card.classList.contains('active-filter');
+    
+    // If clicking on active card, unselect and show all
+    if (isActive) {
+        window.location.href = 'viewCustomerRequest';
+        return;
+    }
+    
+    // Build URL with filter parameters
+    let url = 'viewCustomerRequest?action=search';
+    
+    if (filterType === 'all') {
+        // Show all - no filter
+        window.location.href = 'viewCustomerRequest';
+        return;
+    }
+    
+    if (filterType === 'status') {
+        url += '&status=' + encodeURIComponent(filterValue);
+    } else if (filterType === 'requestType') {
+        url += '&requestType=' + encodeURIComponent(filterValue);
+    }
+    
+    // Redirect to filtered view
+    window.location.href = url;
+}
+
+// ✅ Highlight active filter card
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    const requestType = urlParams.get('requestType');
+    
+    // Remove all active classes
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.classList.remove('active-filter');
+    });
+    
+    // Add active class to matching card
+    if (status === 'Pending') {
+        const card = document.querySelector('[data-filter="status"][data-value="Pending"]');
+        if (card) card.classList.add('active-filter');
+    } else if (requestType === 'Service') {
+        const card = document.querySelector('[data-filter="requestType"][data-value="Service"]');
+        if (card) card.classList.add('active-filter');
+    } else if (requestType === 'Warranty') {
+        const card = document.querySelector('[data-filter="requestType"][data-value="Warranty"]');
+        if (card) card.classList.add('active-filter');
+    } else if (!status && !requestType && window.location.search === '') {
+        const card = document.querySelector('[data-filter="all"]');
+        if (card) card.classList.add('active-filter');
+    }
 });
 </script>
 </body>

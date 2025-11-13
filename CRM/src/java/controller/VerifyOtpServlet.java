@@ -1,5 +1,6 @@
 package controller;
 
+import dal.AccountProfileDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -9,6 +10,7 @@ import dto.RegisterRequest;
 import dto.Response;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
+import model.AccountProfile;
 import service.AccountService;
 
 /**
@@ -89,10 +91,17 @@ public class VerifyOtpServlet extends HttpServlet {
                     Response<Account> createResult = accountService.createAccount(pendingUser);
 
                     if (createResult.isSuccess()) {
+                        
+                        int accountId = createResult.getData().getAccountId();
+
+                        // ⭐ Tạo profile và verified = true
+                        AccountProfile profile = new AccountProfile();
+                        profile.setAccountId(accountId);
+                        profile.setVerified(true);
+                        new AccountProfileDAO().createProfile(profile);
                         // Assign roles if provided
                         if (roleIds != null && roleIds.length > 0) {
                             service.AccountRoleService accountRoleService = new service.AccountRoleService();
-                            int accountId = createResult.getData().getAccountId();
                             for (String roleIdStr : roleIds) {
                                 try {
                                     int roleId = Integer.parseInt(roleIdStr);

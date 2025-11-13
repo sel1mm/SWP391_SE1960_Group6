@@ -2981,4 +2981,36 @@ public class ServiceRequestDAO extends MyDAO {
         }
     }
 
+    /**
+     * Count requests by status
+     */
+    public int countByStatus(String status) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM ServiceRequest WHERE Status = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, status);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Count requests by request type
+     */
+    public int countByRequestType(String requestType) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM ServiceRequest WHERE RequestType = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, requestType);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
 }
