@@ -65,7 +65,7 @@ public class TechnicianTaskServlet extends HttpServlet {
                     if (task.getScheduleId() != null && task.getRequestId() == null) {
                         req.setAttribute("effectiveScheduleId", task.getScheduleId());
                     }
-                    req.setAttribute("pageTitle", "Task Detail");
+                    req.setAttribute("pageTitle", "Chi tiết công việc");
                     req.setAttribute("contentView", "/WEB-INF/technician/task-detail.jsp");
                     req.setAttribute("activePage", "tasks");
                     req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
@@ -113,7 +113,7 @@ public class TechnicianTaskServlet extends HttpServlet {
             req.setAttribute("currentPage", page);
             req.setAttribute("pageSize", pageSize);
             req.setAttribute("totalPages", (int) Math.ceil((double) totalTasks / pageSize));
-            req.setAttribute("pageTitle", "My Tasks");
+            req.setAttribute("pageTitle", "Công việc của tôi");
             req.setAttribute("contentView", "/WEB-INF/technician/technician-tasks.jsp");
             req.setAttribute("activePage", "tasks");
             req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
@@ -152,7 +152,7 @@ public class TechnicianTaskServlet extends HttpServlet {
                     String preservedQ = sanitize(req.getParameter("q"));
                     String preservedStatus = sanitize(req.getParameter("status"));
                     String preservedPage = req.getParameter("page");
-                    String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Status is required");
+                    String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Vui lòng chọn trạng thái");
                     resp.sendRedirect(redirectUrl);
                     return;
                 }
@@ -183,7 +183,7 @@ public class TechnicianTaskServlet extends HttpServlet {
                             if (report != null) {
                                 String quotationStatus = report.getQuotationStatus();
                                 if (quotationStatus != null && "Pending".equals(quotationStatus)) {
-                                    String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Cannot complete task: Customer has not yet responded to the repair report quotation. Please wait for customer approval or rejection.");
+                                    String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Không thể hoàn tất công việc: Khách hàng chưa phản hồi báo giá. Vui lòng chờ họ chấp thuận hoặc từ chối.");
                                     resp.sendRedirect(redirectUrl);
                                     return;
                                 }
@@ -191,7 +191,7 @@ public class TechnicianTaskServlet extends HttpServlet {
                         } catch (SQLException e) {
                             System.err.println("Error checking repair report status: " + e.getMessage());
                             e.printStackTrace();
-                            String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Error validating repair report status: " + e.getMessage());
+                            String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Lỗi kiểm tra trạng thái báo cáo: " + e.getMessage());
                             resp.sendRedirect(redirectUrl);
                             return;
                         }
@@ -202,14 +202,14 @@ public class TechnicianTaskServlet extends HttpServlet {
                     
                     // Redirect with preserved filter parameters
                     if (updated) {
-                        String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "success", "Task status updated successfully");
+                        String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "success", "Cập nhật trạng thái công việc thành công");
                         resp.sendRedirect(redirectUrl);
                     } else {
-                        String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Failed to update task status");
+                        String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Không thể cập nhật trạng thái công việc");
                         resp.sendRedirect(redirectUrl);
                     }
                 } else {
-                    String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Task not found or not assigned to you");
+                    String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Không tìm thấy công việc hoặc công việc không được giao cho bạn");
                     resp.sendRedirect(redirectUrl);
                 }
                 
@@ -219,7 +219,7 @@ public class TechnicianTaskServlet extends HttpServlet {
                 String preservedQ = sanitize(req.getParameter("q"));
                 String preservedStatus = sanitize(req.getParameter("status"));
                 String preservedPage = req.getParameter("page");
-                String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Invalid task ID");
+                String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Mã công việc không hợp lệ");
                 resp.sendRedirect(redirectUrl);
             } catch (IOException e) {
                 throw new ServletException("Redirect error: " + e.getMessage(), e);
@@ -228,7 +228,7 @@ public class TechnicianTaskServlet extends HttpServlet {
             String preservedQ = sanitize(req.getParameter("q"));
             String preservedStatus = sanitize(req.getParameter("status"));
             String preservedPage = req.getParameter("page");
-            String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Invalid action");
+            String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Thao tác không hợp lệ");
             try {
                 resp.sendRedirect(redirectUrl);
             } catch (IOException e) {

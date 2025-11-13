@@ -985,157 +985,6 @@
             #maintenanceHistoryModal .badge {
                 color: inherit !important;
             }
-              /* CHATBOT RECOMMENDATIONS - Moved to bottom */
-        .chatbot-recommendations {
-            padding: 12px 15px;
-            background: #f8f9fa;
-            border-top: 1px solid #e0e0e0;
-            max-height: 140px;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-        }
-
-        .chatbot-recommendations.hidden {
-            max-height: 0;
-            padding: 0;
-            border: none;
-            overflow: hidden;
-        }
-
-        .recommendations-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .recommendations-title {
-            font-size: 0.75rem;
-            color: #667eea;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .recommendations-toggle {
-            background: none;
-            border: none;
-            color: #667eea;
-            cursor: pointer;
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 10px;
-            transition: all 0.2s;
-        }
-
-        .recommendations-toggle:hover {
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .recommendation-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .recommendation-chip {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 15px;
-            padding: 5px 10px;
-            font-size: 0.7rem;
-            color: #333;
-            cursor: pointer;
-            transition: all 0.3s;
-            white-space: nowrap;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .recommendation-chip:hover {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
-        }
-
-        .recommendation-category {
-            width: 100%;
-            font-size: 0.65rem;
-            color: #888;
-            margin-top: 6px;
-            margin-bottom: 3px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .chatbot-recommendations::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .chatbot-recommendations::-webkit-scrollbar-thumb {
-            background: #ddd;
-            border-radius: 10px;
-        }
-
-        .chatbot-input {
-            padding: 15px;
-            background: white;
-            border-top: 1px solid #eee;
-            display: flex;
-            gap: 10px;
-        }
-
-        .chatbot-input input {
-            flex: 1;
-            border: 1px solid #ddd;
-            border-radius: 25px;
-            padding: 12px 20px;
-            font-size: 0.9rem;
-            outline: none;
-            transition: all 0.3s;
-        }
-
-        .chatbot-input input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .chatbot-send {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .chatbot-send:hover:not(:disabled) {
-            transform: scale(1.1);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .chatbot-send:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        @media (max-width: 768px) {
-            .chatbot-window {
-                width: calc(100vw - 30px);
-                right: 15px;
-            }
-        }
         </style>
     </head>
     <body>
@@ -1512,8 +1361,7 @@
                                                             data-serial="${item.equipment.serialNumber}"
                                                             data-contract="${item.contractId}"
                                                             data-description="${item.equipment.description}"
-                                                            data-install-date="${item.equipment.installDate}"
-                                                            data-last-update="${item.equipment.lastUpdatedDate}"
+                                                            data-install-date="${item.equipment.installDate}"                                                            
                                                             data-status="${item.status}"
                                                             data-technician-name="${item.technicianName}"
                                                             data-repair-date="${item.repairDate}"
@@ -1725,10 +1573,7 @@
                                     </div>
 
                                     <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <strong>Cập Nhật Lần Cuối:</strong>
-                                            <p class="fw-normal" id="viewLastUpdate"></p>
-                                        </div>
+
                                         <div class="col-md-6">
                                             <strong>Trạng Thái:</strong>
                                             <span class="badge" id="viewStatus"></span>
@@ -1949,318 +1794,703 @@
                 </div>
             </div>
 
+
+
+            <div class="chatbot-container">
+                <button class="chatbot-button" onclick="toggleChatbotWidget()">
+                    <i class="fas fa-comment-dots"></i>
+                    <span class="chatbot-badge">AI</span>
+                </button>
+
+                <div class="chatbot-window" id="chatbotWindowWidget">
+                    <div class="chatbot-header">
+                        <h4>
+                            <i class="fas fa-robot"></i>
+                            Trợ lý AI
+                        </h4>
+                        <button class="chatbot-close" onclick="toggleChatbotWidget()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <!-- PHẦN RECOMMENDATIONS -->
+                    <div class="chatbot-recommendations" id="chatbotRecommendationsWidget">
+                        <div class="recommendations-title">
+                            <i class="fas fa-lightbulb"></i>
+                            Câu hỏi thường gặp
+                        </div>
+                        <div class="recommendation-chips" id="recommendationChipsWidget">
+                            <!-- Recommendations sẽ được thêm bằng JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="chatbot-messages" id="chatMessagesWidget">
+                        <div class="message bot">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                Xin chào! Tôi là trợ lý AI của hệ thống. Tôi có thể giúp bạn trả lời các câu hỏi về dịch vụ, hợp đồng, thiết bị và hóa đơn. Bạn cần hỗ trợ gì?
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chatbot-input">
+                        <input type="text" id="chatInputWidget" placeholder="Nhập câu hỏi của bạn..." onkeypress="handleKeyPressWidget(event)">
+                        <button class="chatbot-send" id="sendBtnWidget" onclick="sendMessageWidget()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
             <script>
-    // FAQ Data
-    const FAQ_DATA = [
-        {
-            "category": "Giới thiệu chung",
-            "questions": [
-                {
-                    "question": "Hệ thống của bạn cung cấp dịch vụ gì?",
-                    "answer": "Hệ thống của chúng tôi cung cấp dịch vụ bảo hành và bảo trì thiết bị cho khách hàng. Khi quý khách mua thiết bị, chúng tôi sẽ tạo hợp đồng và lưu thông tin vào hệ thống. Khi thiết bị cần sửa chữa, quý khách chỉ cần tạo yêu cầu trực tuyến, chúng tôi sẽ xử lý và thực hiện sửa chữa theo quy trình chuyên nghiệp."
-                },
-                {
-                    "question": "Làm thế nào để liên hệ bộ phận hỗ trợ khách hàng?",
-                    "answer": "Quý khách có thể liên hệ với bộ phận hỗ trợ khách hàng qua:\n- Hotline: [Số điện thoại]\n- Email: [Địa chỉ email]\n- Chat trực tuyến trên website\n- Hoặc tạo yêu cầu hỗ trợ trực tiếp trên hệ thống"
-                }
-            ]
-        },
-        {
-            "category": "Yêu cầu dịch vụ",
-            "questions": [
-                {
-                    "question": "Làm thế nào để tạo yêu cầu bảo hành/bảo trì?",
-                    "answer": "Để tạo yêu cầu, quý khách thực hiện theo các bước sau:\n\n1. Truy cập trang \"Yêu cầu dịch vụ\"\n2. Nhấn nút \"Tạo yêu cầu mới\" ở góc trên màn hình\n3. Chọn \"Hỗ trợ thiết bị\"\n4. Chọn thiết bị cần bảo hành từ danh sách (chỉ hiển thị thiết bị trong hợp đồng và chưa đang bảo hành)\n5. Chọn mức độ ưu tiên cho yêu cầu\n6. Mô tả chi tiết vấn đề của thiết bị\n7. Kiểm tra lại thông tin và nhấn \"Gửi yêu cầu\"\n\nSau khi gửi yêu cầu, chúng tôi sẽ xử lý và gửi báo giá. Khi quý khách thanh toán, chúng tôi sẽ tiến hành sửa chữa ngay."
-                },
-                {
-                    "question": "Thời gian xử lý yêu cầu mất bao lâu?",
-                    "answer": "Thời gian tạo yêu cầu trên hệ thống rất nhanh (chỉ vài phút). Tuy nhiên, thời gian xử lý yêu cầu phụ thuộc vào:\n\n- Mức độ ưu tiên của yêu cầu\n- Tình trạng và mức độ hỏng hóc của thiết bị\n- Khả năng sẵn có của phụ tùng thay thế\n\nThông thường:\n- Yêu cầu khẩn cấp: 24-48 giờ\n- Yêu cầu thường: 3-5 ngày làm việc\n- Yêu cầu không khẩn: 5-7 ngày làm việc"
-                },
-                {
-                    "question": "Các trạng thái của yêu cầu dịch vụ có ý nghĩa gì?",
-                    "answer": "Yêu cầu của quý khách sẽ đi qua các trạng thái sau:\n\n1. **Chờ xác nhận**: Yêu cầu vừa được tạo và đang chờ bộ phận hỗ trợ khách hàng xác nhận\n\n2. **Chờ xử lý**: Bộ phận hỗ trợ đã chuyển yêu cầu cho trưởng bộ phận kỹ thuật để phân công\n\n3. **Đang xử lý**: Trưởng bộ phận kỹ thuật đã giao việc cho kỹ thuật viên. Quý khách sẽ nhận được báo giá chi tiết. Quý khách có thể chấp nhận hoặc từ chối từng hạng mục trong báo giá\n\n4. **Đang sửa chữa**: Kỹ thuật viên đang thực hiện sửa chữa các hạng mục đã được thanh toán\n\n5. **Hoàn thành**: Thiết bị đã được sửa chữa xong và sẵn sàng giao lại cho quý khách\n\n6. **Đã hủy**: Yêu cầu đã bị hủy bởi quý khách hoặc hệ thống"
-                },
-                {
-                    "question": "Tôi có thể hủy yêu cầu đã tạo không?",
-                    "answer": "Có, quý khách có thể hủy yêu cầu khi:\n- Yêu cầu đang ở trạng thái \"Chờ xác nhận\" hoặc \"Chờ xử lý\"\n- Chưa thanh toán báo giá\n\nĐể hủy yêu cầu:\n1. Vào trang \"Yêu cầu dịch vụ\"\n2. Chọn yêu cầu cần hủy\n3. Nhấn nút \"Hủy yêu cầu\"\n4. Xác nhận hủy\n\nLưu ý: Sau khi đã thanh toán và kỹ thuật viên bắt đầu sửa chữa, quý khách không thể hủy yêu cầu."
-                }
-            ]
-        },
-        {
-            "category": "Hợp đồng",
-            "questions": [
-                {
-                    "question": "Làm thế nào để xem thông tin hợp đồng?",
-                    "answer": "Để xem thông tin hợp đồng:\n\n1. Truy cập trang \"Hợp đồng\"\n2. Xem danh sách tất cả các hợp đồng của quý khách\n3. Nhấn vào nút \"Danh sách thiết bị\" để xem chi tiết các thiết bị trong từng hợp đồng\n\nTại đây, quý khách có thể xem:\n- Mã hợp đồng\n- Loại hợp đồng (mua bán, bảo hành, bảo trì)\n- Ngày bắt đầu và ngày kết thúc\n- Trạng thái hợp đồng\n- Danh sách thiết bị được bảo hành/bảo trì"
-                },
-                {
-                    "question": "Làm thế nào để tạo hợp đồng mới?",
-                    "answer": "Để tạo hợp đồng mới, quý khách vui lòng liên hệ trực tiếp với bộ phận hỗ trợ khách hàng qua:\n\n- Hotline: [Số điện thoại]\n- Email: [Địa chỉ email]\n- Đến trực tiếp văn phòng\n\nCác loại hợp đồng chúng tôi cung cấp:\n- Hợp đồng mua bán thiết bị\n- Hợp đồng bảo hành\n- Hợp đồng bảo trì định kỳ\n\nNhân viên hỗ trợ sẽ tư vấn và hướng dẫn quý khách hoàn tất thủ tục ký kết hợp đồng."
-                },
-                {
-                    "question": "Chính sách bảo hành như thế nào?",
-                    "answer": "Chính sách bảo hành của chúng tôi bao gồm:\n\n**Thời gian bảo hành:**\n- Theo thỏa thuận trong hợp đồng (thường từ 12-36 tháng)\n\n**Phạm vi bảo hành:**\n- Lỗi do nhà sản xuất\n- Hỏng hóc trong quá trình sử dụng bình thường\n- Bảo hành miễn phí phụ tùng và chi phí sửa chữa\n\n**Không bảo hành:**\n- Hư hỏng do sử dụng sai cách\n- Thiết bị bị va đập, rơi vỡ\n- Can thiệp sửa chữa bởi bên thứ ba\n- Thiết bị hết hạn bảo hành\n\nVui lòng tham khảo chi tiết trong hợp đồng của quý khách."
-                }
-            ]
-        },
-        {
-            "category": "Hóa đơn & Thanh toán",
-            "questions": [
-                {
-                    "question": "Làm thế nào để xem hóa đơn?",
-                    "answer": "Để xem hóa đơn:\n\n1. Truy cập trang \"Hóa đơn\"\n2. Xem danh sách tất cả các hóa đơn\n\nThông tin hiển thị bao gồm:\n- Mã hóa đơn\n- Số tiền cần thanh toán\n- Ngày phát hành hóa đơn\n- Hạn thanh toán\n- Trạng thái (Chờ thanh toán, Đã thanh toán, Quá hạn)\n- Chi tiết các hạng mục trong hóa đơn"
-                },
-                {
-                    "question": "Làm thế nào để thanh toán hóa đơn?",
-                    "answer": "Quý khách có thể thanh toán hóa đơn qua các phương thức sau:\n\n**1. Thanh toán trực tuyến:**\n- Chuyển khoản ngân hàng\n- Ví điện tử (Momo, ZaloPay, VNPay)\n- Thẻ ATM/Thẻ tín dụng\n\n**2. Thanh toán trực tiếp:**\n- Tại văn phòng công ty\n- Thu tiền tận nơi (với một số trường hợp)\n\n**Cách thanh toán:**\n1. Vào trang \"Hóa đơn\"\n2. Chọn hóa đơn cần thanh toán\n3. Nhấn \"Thanh toán\"\n4. Chọn phương thức thanh toán\n5. Làm theo hướng dẫn\n\nSau khi thanh toán thành công, hệ thống sẽ cập nhật trạng thái hóa đơn và gửi biên lai qua email."
-                },
-                {
-                    "question": "Điều gì xảy ra nếu tôi không thanh toán đúng hạn?",
-                    "answer": "Nếu hóa đơn không được thanh toán đúng hạn:\n\n- Yêu cầu sửa chữa sẽ bị tạm dừng\n- Hóa đơn chuyển sang trạng thái \"Quá hạn\"\n- Có thể phát sinh phí phạt chậm thanh toán (theo hợp đồng)\n- Ảnh hưởng đến các yêu cầu dịch vụ tiếp theo\n\nVui lòng liên hệ bộ phận hỗ trợ nếu quý khách gặp khó khăn trong việc thanh toán để được tư vấn và hỗ trợ."
-                }
-            ]
-        },
-        {
-            "category": "Thiết bị",
-            "questions": [
-                {
-                    "question": "Làm thế nào để xem thông tin thiết bị?",
-                    "answer": "Để xem thông tin thiết bị:\n\n1. Truy cập trang \"Thiết bị\"\n2. Xem danh sách tất cả thiết bị từ các hợp đồng của quý khách\n3. Nhấn vào \"Chi tiết\" để xem thông tin chi tiết\n\n**Thông tin hiển thị:**\n- Tên thiết bị\n- Mã thiết bị / Serial number\n- Hợp đồng liên quan\n- Trạng thái thiết bị (Đang hoạt động, Đang bảo hành, Đã hỏng)\n- Ngày mua / Ngày kích hoạt bảo hành\n- Thời hạn bảo hành còn lại\n\n**Nếu thiết bị đang được sửa chữa:**\n- Ngày bắt đầu sửa chữa\n- Kỹ thuật viên phụ trách\n- Dự kiến hoàn thành\n- Vấn đề đang được xử lý"
-                },
-                {
-                    "question": "Tại sao một số thiết bị không hiển thị khi tạo yêu cầu?",
-                    "answer": "Thiết bị sẽ không hiển thị trong danh sách tạo yêu cầu khi:\n\n- Thiết bị đang trong quá trình bảo hành/sửa chữa\n- Thiết bị không thuộc hợp đồng còn hiệu lực\n- Thiết bị đã hết hạn bảo hành và chưa gia hạn\n- Hợp đồng liên quan đã hết hạn hoặc bị hủy\n\nNếu quý khách cần sửa chữa thiết bị không có trong danh sách, vui lòng liên hệ bộ phận hỗ trợ để được tư vấn về việc gia hạn hợp đồng hoặc tạo hợp đồng mới."
-                }
-            ]
-        },
-        {
-            "category": "Tài khoản & Bảo mật",
-            "questions": [
-                {
-                    "question": "Làm thế nào để thay đổi thông tin cá nhân?",
-                    "answer": "Để thay đổi thông tin cá nhân:\n\n1. Truy cập trang \"Hồ sơ\"\n2. Xem thông tin hiện tại của quý khách\n3. Nhấn nút \"Chỉnh sửa thông tin\"\n4. Cập nhật các thông tin cần thay đổi\n5. Nhấn \"Lưu thay đổi\"\n\n**Thông tin có thể chỉnh sửa:**\n- Họ và tên\n- Số điện thoại\n- Địa chỉ\n- Số CMND/CCCD\n- Ngày sinh\n\n**Lưu ý về email:**\n- Để thay đổi email, hệ thống sẽ gửi mã OTP đến email mới\n- Quý khách cần xác thực mã OTP để hoàn tất thay đổi\n- Việc này đảm bảo email mới thuộc quyền sở hữu của quý khách"
-                },
-                {
-                    "question": "Làm thế nào để đổi mật khẩu?",
-                    "answer": "Để đổi mật khẩu:\n\n1. Truy cập trang \"Hồ sơ\"\n2. Nhấn nút \"Đổi mật khẩu\"\n3. Nhập mật khẩu cũ\n4. Nhập mật khẩu mới (tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số)\n5. Xác nhận mật khẩu mới\n6. Nhấn \"Cập nhật\"\n\n**Lưu ý bảo mật:**\n- Không chia sẻ mật khẩu với người khác\n- Thay đổi mật khẩu định kỳ (3-6 tháng)\n- Sử dụng mật khẩu mạnh và khác biệt với các tài khoản khác\n- Nếu quên mật khẩu, sử dụng chức năng \"Quên mật khẩu\" ở trang đăng nhập"
-                },
-                {
-                    "question": "Tôi quên mật khẩu, phải làm sao?",
-                    "answer": "Nếu quên mật khẩu:\n\n1. Tại trang đăng nhập, nhấn \"Quên mật khẩu?\"\n2. Nhập email đã đăng ký\n3. Hệ thống sẽ gửi mã OTP đến email\n4. Nhập mã OTP để xác thực\n5. Tạo mật khẩu mới\n6. Đăng nhập lại với mật khẩu mới\n\nNếu không nhận được email:\n- Kiểm tra hộp thư spam/junk\n- Đợi 1-2 phút và thử lại\n- Liên hệ bộ phận hỗ trợ nếu vẫn không nhận được"
-                }
-            ]
-        }
-    ];
 
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        showNewRecommendations();
-    });
+                            // ========== TOAST NOTIFICATION ==========
+                            let currentToastTimeout = null;
 
-    function showNewRecommendations() {
-        const container = document.getElementById('recommendationChips');
-        if (!container) return;
+                            function showToast(message, type) {
+                                const container = document.getElementById('toastContainer');
+                                if (currentToastTimeout) {
+                                    clearTimeout(currentToastTimeout);
+                                }
 
-        container.innerHTML = '';
+                                let iconClass = 'fa-check-circle';
+                                if (type === 'error')
+                                    iconClass = 'fa-exclamation-circle';
 
-        const allQuestions = FAQ_DATA.flatMap(category => 
-            category.questions.map(q => ({
-                question: q.question,
-                category: category.category
-            }))
-        );
+                                const toastDiv = document.createElement('div');
+                                toastDiv.className = 'toast-notification ' + type;
 
-        const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
-        const selectedQuestions = shuffled.slice(0, 6);
+                                const iconDiv = document.createElement('div');
+                                iconDiv.className = 'toast-icon ' + type;
+                                iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
 
-        const questionsByCategory = {};
-        selectedQuestions.forEach(item => {
-            if (!questionsByCategory[item.category]) {
-                questionsByCategory[item.category] = [];
-            }
-            questionsByCategory[item.category].push(item.question);
-        });
+                                const contentDiv = document.createElement('div');
+                                contentDiv.className = 'toast-content';
+                                contentDiv.textContent = message;
 
-        Object.entries(questionsByCategory).forEach(([category, questions]) => {
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'recommendation-category';
-            categoryDiv.textContent = category;
-            container.appendChild(categoryDiv);
+                                const closeBtn = document.createElement('button');
+                                closeBtn.className = 'toast-close';
+                                closeBtn.type = 'button';
+                                closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                                closeBtn.onclick = hideToast;
 
-            questions.forEach(question => {
-                const chip = document.createElement('div');
-                chip.className = 'recommendation-chip';
-                chip.textContent = question;
-                chip.title = question;
-                chip.onclick = () => sendRecommendedQuestion(question);
-                container.appendChild(chip);
-            });
-        });
-    }
+                                toastDiv.appendChild(iconDiv);
+                                toastDiv.appendChild(contentDiv);
+                                toastDiv.appendChild(closeBtn);
 
-    function sendRecommendedQuestion(question) {
-        const input = document.getElementById('chatInput');
-        input.value = question;
-        sendMessage();
-    }
+                                container.innerHTML = '';
+                                container.appendChild(toastDiv);
 
-    function toggleRecommendations() {
-        showNewRecommendations();
-    }
+                                currentToastTimeout = setTimeout(hideToast, 5000);
+                            }
 
-    function hideRecommendations() {
-        const recommendations = document.getElementById('chatbotRecommendations');
-        if (recommendations) {
-            recommendations.classList.add('hidden');
-        }
-    }
+                            function hideToast() {
+                                const container = document.getElementById('toastContainer');
+                                const toast = container.querySelector('.toast-notification');
+                                if (toast) {
+                                    toast.classList.add('hiding');
+                                    setTimeout(() => {
+                                        container.innerHTML = '';
+                                    }, 400);
+                                }
+                                if (currentToastTimeout) {
+                                    clearTimeout(currentToastTimeout);
+                                    currentToastTimeout = null;
+                                }
+                            }
 
-    function showRecommendations() {
-        const recommendations = document.getElementById('chatbotRecommendations');
-        if (recommendations) {
-            recommendations.classList.remove('hidden');
-            showNewRecommendations();
-        }
-    }
+                            // ========== CHARACTER COUNT ==========
+                            function updateCharCount() {
+                                const textarea = document.getElementById('requestDescription');
+                                const charCount = document.getElementById('charCount');
+                                if (!textarea || !charCount)
+                                    return;
 
-    function toggleChatbot() {
-        const chatWindow = document.getElementById('chatbotWindow');
-        chatWindow.classList.toggle('active');
-        
-        if (chatWindow.classList.contains('active')) {
-            showRecommendations();
-            setTimeout(() => {
-                document.getElementById('chatInput').focus();
-            }, 300);
-        }
-    }
+                                const currentLength = textarea.value.length;
+                                charCount.textContent = currentLength + '/1000';
 
-    function handleKeyPress(event) {
-        if (event.key === 'Enter') {
-            sendMessage();
-        }
-    }
+                                if (currentLength > 900) {
+                                    charCount.className = 'text-danger';
+                                } else if (currentLength > 700) {
+                                    charCount.className = 'text-warning';
+                                } else {
+                                    charCount.className = 'text-muted';
+                                }
+                            }
 
-    function addMessage(content, isUser = false) {
-        const messagesDiv = document.getElementById('chatMessages');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-        
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
-        
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
-        
-        if (isUser) {
-            contentDiv.textContent = content;
-            messageDiv.appendChild(contentDiv);
-            messageDiv.appendChild(avatar);
-        } else {
-            contentDiv.innerHTML = formatMessage(content);
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(contentDiv);
-        }
-        
-        messagesDiv.appendChild(messageDiv);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
+                            // ========== ✅ VIEW EQUIPMENT DETAIL - SỬ DỤNG DATA TỪ SERVLET ==========
+                            function viewEquipmentDetail(button) {
+                                const equipmentId = button.getAttribute('data-id');
+                                const model = button.getAttribute('data-model');
+                                const serial = button.getAttribute('data-serial');
+                                const contract = button.getAttribute('data-contract');
+                                const description = button.getAttribute('data-description');
+                                const installDate = button.getAttribute('data-install-date');
+                                const lastUpdate = button.getAttribute('data-last-update');
+                                const status = button.getAttribute('data-status');
 
-    function showTyping() {
-        const messagesDiv = document.getElementById('chatMessages');
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'message bot';
-        typingDiv.id = 'typingIndicator';
-        
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.innerHTML = '<i class="fas fa-robot"></i>';
-        
-        const typing = document.createElement('div');
-        typing.className = 'typing-indicator';
-        typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-        
-        typingDiv.appendChild(avatar);
-        typingDiv.appendChild(typing);
-        messagesDiv.appendChild(typingDiv);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
+                                // ✅ LẤY THÔNG TIN SỬA CHỮA TỪ DATA ATTRIBUTES
+                                const technicianName = button.getAttribute('data-technician-name');
+                                const repairDate = button.getAttribute('data-repair-date');
+                                const diagnosis = button.getAttribute('data-diagnosis');
+                                const repairDetails = button.getAttribute('data-repair-details');
+                                const estimatedCost = button.getAttribute('data-estimated-cost');
+                                const quotationStatus = button.getAttribute('data-quotation-status');
 
-    function hideTyping() {
-        const typing = document.getElementById('typingIndicator');
-        if (typing) {
-            typing.remove();
-        }
-    }
+                                // Điền thông tin cơ bản
+                                document.getElementById('viewEquipmentName').textContent = model || 'N/A';
+                                document.getElementById('viewSerialNumber').textContent = serial || 'N/A';
+                                document.getElementById('viewContractId').textContent = contract || 'N/A';
+                                document.getElementById('viewInstallDate').textContent = installDate || 'N/A';
 
-    async function sendMessage() {
-        const input = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const question = input.value.trim();
-        
-        if (!question) return;
-        
-        hideRecommendations();
-        
-        addMessage(question, true);
-        input.value = '';
-        
-        input.disabled = true;
-        sendBtn.disabled = true;
-        
-        showTyping();
-        
-        try {
-            const response = await fetch('${pageContext.request.contextPath}/askGemini', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ q: question })
-            });
-            
-            const data = await response.json();
-            hideTyping();
-            
-            if (data.success && data.answer) {
-                addMessage(data.answer, false);
-            } else {
-                addMessage(data.error || 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.', false);
-            }
-            
-            setTimeout(() => {
-                showRecommendations();
-            }, 500);
-            
-        } catch (error) {
-            hideTyping();
-            addMessage('Xin lỗi, không thể kết nối đến server. Vui lòng thử lại sau.', false);
-            console.error('Error:', error);
-            
-            setTimeout(() => {
-                showRecommendations();
-            }, 500);
-        } finally {
-            input.disabled = false;
-            sendBtn.disabled = false;
-            input.focus();
-        }
-    }
+                                document.getElementById('viewDescription').textContent = description || 'Không có mô tả';
 
-    function formatMessage(text) {
-        if (!text) return '';
-        
-        let formatted = text.replace(/\n/g, '<br>');
-        formatted = formatted.replace(/(\d+\.)\s/g, '<br>$1 ');
-        formatted = formatted.replace(/^- /gm, '<br>• ');
-        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        formatted = formatted.replace(/([A-Z][^.!?]*:\s*)/g, '<strong>$1</strong>');
-        
-        return formatted;
-    }
-</script>
+                                const statusBadge = document.getElementById('viewStatus');
+                                if (status === 'Active') {
+                                    statusBadge.className = 'badge badge-active';
+                                    statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Đang hoạt động';
+                                } else if (status === 'Repair') {
+                                    statusBadge.className = 'badge badge-repair';
+                                    statusBadge.innerHTML = '<i class="fas fa-wrench"></i> Đang sửa chữa';
+                                } else if (status === 'Maintenance') {
+                                    statusBadge.className = 'badge badge-maintenance';
+                                    statusBadge.innerHTML = '<i class="fas fa-cog"></i> Đang bảo trì';
+                                }
+
+                                // ✅ NẾU THIẾT BỊ ĐANG SỬA CHỮA → HIỂN THỊ THÔNG TIN SỬA CHỮA
+                                const repairSection = document.getElementById('repairInfoSection');
+                                if (status === 'Repair') {
+                                    repairSection.style.display = 'block';
+
+                                    // Hiển thị thông tin sửa chữa từ data attributes
+                                    document.getElementById('viewTechnicianName').innerHTML =
+                                            '<i class="fas fa-user-check"></i> ' + (technicianName && technicianName !== 'null' ? technicianName : 'Chưa phân công');
+                                    document.getElementById('viewRepairDate').textContent =
+                                            (repairDate && repairDate !== 'null' ? repairDate : 'N/A');
+                                } else {
+                                    repairSection.style.display = 'none';
+                                }
+
+                                new bootstrap.Modal(document.getElementById('viewModal')).show();
+                            }
+
+                            // ========== CREATE REQUEST ==========
+                            function createRequest(button) {
+                                const equipmentId = button.getAttribute('data-id');
+                                const contractId = button.getAttribute('data-contract');
+                                const serialNumber = button.getAttribute('data-serial');
+                                const equipmentName = button.getAttribute('data-model');
+
+                                // Xử lý contractId - cho phép cả thiết bị có và không có hợp đồng
+                                let cleanContractId = '';
+                                if (contractId && contractId !== 'N/A') {
+                                    cleanContractId = contractId.replace('HD', '').replace('#', '');
+                                }
+
+                                document.getElementById('requestEquipmentId').value = equipmentId;
+                                document.getElementById('requestContractIdValue').value = cleanContractId;
+                                document.getElementById('requestEquipmentName').value = equipmentName;
+                                document.getElementById('requestContractId').value = contractId || 'N/A';
+                                document.getElementById('requestSerialNumber').value = serialNumber;
+
+                                new bootstrap.Modal(document.getElementById('createRequestModal')).show();
+                            }
+
+                            function toggleSidebar() {
+                                const sidebar = document.getElementById('sidebar');
+                                const toggleIcon = document.getElementById('toggleIcon');
+                                sidebar.classList.toggle('collapsed');
+
+                                if (sidebar.classList.contains('collapsed')) {
+                                    toggleIcon.classList.remove('fa-chevron-left');
+                                    toggleIcon.classList.add('fa-chevron-right');
+                                } else {
+                                    toggleIcon.classList.remove('fa-chevron-right');
+                                    toggleIcon.classList.add('fa-chevron-left');
+                                }
+                            }
+
+                            function refreshPage() {
+                                window.location.href = '${pageContext.request.contextPath}/equipment';
+                            }
+
+                            function scrollToTop() {
+                                window.scrollTo({
+                                    top: 0,
+                                    behavior: 'smooth'
+                                });
+                            }
+
+                            // ========== PAGINATION ==========
+                            function goToPage(pageNumber) {
+                                const form = document.querySelector('form[action*="/equipment"]');
+                                if (form) {
+                                    // Tạo hidden input cho page number
+                                    let pageInput = form.querySelector('input[name="page"]');
+                                    if (!pageInput) {
+                                        pageInput = document.createElement('input');
+                                        pageInput.type = 'hidden';
+                                        pageInput.name = 'page';
+                                        form.appendChild(pageInput);
+                                    }
+                                    pageInput.value = pageNumber;
+
+                                    // Submit form
+                                    form.submit();
+                                }
+                            }
+                            // ========== CHARACTER COUNT FOR EQUIPMENT REQUEST ==========
+                            function updateEquipmentCharCount() {
+                                const textarea = document.getElementById('equipmentRequestDescription');
+                                const charCount = document.getElementById('equipmentCharCount');
+                                if (!textarea || !charCount)
+                                    return;
+
+                                const currentLength = textarea.value.length;
+                                charCount.textContent = currentLength + '/1000';
+
+                                if (currentLength > 900) {
+                                    charCount.className = 'text-danger';
+                                } else if (currentLength > 700) {
+                                    charCount.className = 'text-warning';
+                                } else {
+                                    charCount.className = 'text-muted';
+                                }
+                            }
+
+                            // ========== VALIDATE EQUIPMENT REQUEST FORM ==========
+                            function validateEquipmentRequestForm(event) {
+                                const description = document.getElementById('equipmentRequestDescription').value.trim();
+                                const priorityLevel = document.getElementById('equipmentPriorityLevel').value;
+                                const requestType = document.getElementById('equipmentRequestType').value;
+
+                                if (!requestType) {
+                                    event.preventDefault();
+                                    showToast('Vui lòng chọn loại yêu cầu!', 'error');
+                                    return false;
+                                }
+
+                                if (!priorityLevel) {
+                                    event.preventDefault();
+                                    showToast('Vui lòng chọn mức độ ưu tiên!', 'error');
+                                    return false;
+                                }
+
+                                if (description.length < 10) {
+                                    event.preventDefault();
+                                    showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
+                                    document.getElementById('equipmentRequestDescription').focus();
+                                    return false;
+                                }
+
+                                if (description.length > 1000) {
+                                    event.preventDefault();
+                                    showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
+                                    document.getElementById('equipmentRequestDescription').focus();
+                                    return false;
+                                }
+
+                                return true;
+                            }
+
+                            // ========== CẬP NHẬT HÀM createRequest ==========
+                            function createRequest(button) {
+                                const equipmentId = button.getAttribute('data-id');
+                                const contractId = button.getAttribute('data-contract');
+                                const serialNumber = button.getAttribute('data-serial');
+                                const equipmentName = button.getAttribute('data-model');
+
+                                // Xử lý contractId - cho phép cả thiết bị có và không có hợp đồng
+                                let cleanContractId = '';
+                                if (contractId && contractId !== 'N/A') {
+                                    cleanContractId = contractId.replace('HD', '').replace('#', '');
+                                }
+
+                                document.getElementById('requestEquipmentId').value = equipmentId;
+                                document.getElementById('requestContractIdValue').value = cleanContractId;
+                                document.getElementById('requestEquipmentName').value = equipmentName;
+                                document.getElementById('requestContractId').value = contractId || 'N/A';
+                                document.getElementById('requestSerialNumber').value = serialNumber;
+
+                                // Reset form về giá trị mặc định
+                                document.getElementById('equipmentRequestType').value = 'Service';
+                                document.getElementById('equipmentPriorityLevel').value = '';
+                                document.getElementById('equipmentRequestDescription').value = '';
+                                updateEquipmentCharCount();
+
+                                new bootstrap.Modal(document.getElementById('createRequestModal')).show();
+                            }
+
+                            // ========== DATE RANGE VALIDATION ==========
+                            function validateDateRange() {
+                                const fromDate = document.querySelector('input[name="fromDate"]');
+                                const toDate = document.querySelector('input[name="toDate"]');
+
+                                if (fromDate && toDate && fromDate.value && toDate.value) {
+                                    if (fromDate.value > toDate.value) {
+                                        showToast('Từ ngày không thể lớn hơn đến ngày!', 'error');
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            }
+
+                            // ========== EVENT LISTENERS ==========
+                            document.addEventListener('DOMContentLoaded', function () {
+                                // ✅ Event cho textarea trong equipment request modal
+                                const equipmentDescriptionTextarea = document.getElementById('equipmentRequestDescription');
+                                if (equipmentDescriptionTextarea) {
+                                    equipmentDescriptionTextarea.addEventListener('input', updateEquipmentCharCount);
+                                }
+
+                                // ✅ Reset form khi đóng modal tạo đơn thiết bị
+                                const createRequestModal = document.getElementById('createRequestModal');
+                                if (createRequestModal) {
+                                    createRequestModal.addEventListener('hidden.bs.modal', function () {
+                                        document.getElementById('createRequestForm').reset();
+                                        updateEquipmentCharCount();
+                                    });
+
+                                    createRequestModal.addEventListener('shown.bs.modal', function () {
+                                        updateEquipmentCharCount();
+                                    });
+                                }
+
+                                // ✅ Add date range validation to search form
+                                const searchForm = document.querySelector('form[action*="/equipment"]');
+                                if (searchForm) {
+                                    searchForm.addEventListener('submit', function (e) {
+                                        if (!validateDateRange()) {
+                                            e.preventDefault();
+                                        }
+                                    });
+                                }
+                            });
+
+
+                            window.addEventListener('scroll', function () {
+                                const scrollBtn = document.getElementById('scrollToTop');
+                                if (window.pageYOffset > 300) {
+                                    scrollBtn.classList.add('show');
+                                } else {
+                                    scrollBtn.classList.remove('show');
+                                }
+                            });
+
+                            window.addEventListener('scroll', function () {
+                                const scrollBtn = document.getElementById('scrollToTop');
+                                if (window.pageYOffset > 300) {
+                                    scrollBtn.classList.add('show');
+                                } else {
+                                    scrollBtn.classList.remove('show');
+                                }
+                            });
+
+
+
+
+
+                            let maintenanceHistoryData = [];
+                            const HISTORY_PAGE_SIZE = 10;
+                            let currentHistoryPage = 1;
+
+                            function viewMaintenanceHistory(button) {
+                                const equipmentId = button.getAttribute('data-id');
+                                const equipmentName = button.getAttribute('data-model');
+
+                                console.log('========================================');
+                                console.log('🔍 [JS] viewMaintenanceHistory CALLED');
+                                console.log('🔍 [JS] Equipment ID:', equipmentId, 'Name:', equipmentName);
+
+                                // ✅ SET EQUIPMENT NAME
+                                document.getElementById('historyEquipmentName').textContent = equipmentName;
+
+                                // ✅ RESET STATES TRƯỚC KHI MỞ MODAL
+                                document.getElementById('historyLoading').style.display = 'block';
+                                document.getElementById('historyEmpty').style.display = 'none';
+                                document.getElementById('historyContent').style.display = 'none';
+
+                                // ✅ MỞ MODAL (CHỈ MỘT LẦN)
+                                const modalElement = document.getElementById('maintenanceHistoryModal');
+                                const modal = new bootstrap.Modal(modalElement);
+                                modal.show();
+
+                                console.log('✅ [JS] Modal opened');
+
+                                // ✅ ĐỢI MODAL MỞ XONG RỒI MỚI FETCH DATA
+                                setTimeout(() => {
+                                    const url = '${pageContext.request.contextPath}/equipment?action=getMaintenanceHistory&equipmentId=' + equipmentId;
+                                    console.log('📡 [JS] Fetching from:', url);
+
+                                    fetch(url)
+                                            .then(response => {
+                                                console.log('📡 [JS] Response status:', response.status);
+                                                if (!response.ok) {
+                                                    throw new Error('HTTP ' + response.status);
+                                                }
+                                                return response.text();
+                                            })
+                                            .then(text => {
+                                                console.log('========================================');
+                                                console.log('📦 [JS] RAW RESPONSE:');
+                                                console.log(text);
+                                                console.log('========================================');
+
+                                                // Parse JSON
+                                                const data = JSON.parse(text);
+                                                console.log('📦 [JS] PARSED DATA:', data);
+
+                                                // ✅ ẨN LOADING
+                                                document.getElementById('historyLoading').style.display = 'none';
+
+                                                if (data.success && data.data && data.data.length > 0) {
+                                                    console.log('✅ [JS] Found', data.data.length, 'maintenance records');
+
+                                                    // ✅ IN RA TỪNG RECORD
+                                                    data.data.forEach((record, index) => {
+                                                        console.log('----------------------------');
+                                                        console.log('📝 Record ' + (index + 1) + ':');
+                                                        console.log('  scheduleId:', record.scheduleId);
+                                                        console.log('  technicianName:', record.technicianName, typeof record.technicianName);
+                                                        console.log('  scheduledDate:', record.scheduledDate);
+                                                        console.log('  maintenanceDateTime:', record.maintenanceDateTime);
+                                                        console.log('  scheduleType:', record.scheduleType);
+                                                        console.log('  priorityLevel:', record.priorityLevel);
+                                                        console.log('  status:', record.status);
+                                                        console.log('  taskDetails:', record.taskDetails);
+                                                        console.log('  Full object:', record);
+                                                        console.log('----------------------------');
+                                                    });
+
+                                                    maintenanceHistoryData = data.data;
+                                                    currentHistoryPage = 1;
+
+                                                    // ✅ GỌI displayMaintenanceHistory() VỚI TIMEOUT ĐỂ ĐẢM BẢO MODAL ĐÃ RENDER XONG
+                                                    setTimeout(() => {
+                                                        displayMaintenanceHistory();
+                                                    }, 100);
+
+                                                } else {
+                                                    console.log('⚠️ [JS] No maintenance history found');
+                                                    document.getElementById('historyEmpty').style.display = 'block';
+                                                }
+                                            })
+                                            .catch(error => {
+                                                console.error('❌ [JS] Error:', error);
+                                                document.getElementById('historyLoading').style.display = 'none';
+                                                document.getElementById('historyEmpty').style.display = 'block';
+                                            });
+                                }, 300); // ✅ ĐỢI 300MS CHO MODAL MỞ XONG
+
+                                console.log('========================================');
+                            }
+
+                            function displayMaintenanceHistory() {
+                                console.log('🎬 [JS] displayMaintenanceHistory() STARTED');
+
+                                const tbody = document.getElementById('historyTableBody');
+                                tbody.innerHTML = '';
+
+                                const totalPages = Math.ceil(maintenanceHistoryData.length / HISTORY_PAGE_SIZE);
+                                const startIndex = (currentHistoryPage - 1) * HISTORY_PAGE_SIZE;
+                                const endIndex = Math.min(startIndex + HISTORY_PAGE_SIZE, maintenanceHistoryData.length);
+                                const pageData = maintenanceHistoryData.slice(startIndex, endIndex);
+
+                                console.log('📊 Total records:', maintenanceHistoryData.length);
+                                console.log('📊 Current page:', currentHistoryPage, 'of', totalPages);
+
+                                pageData.forEach((history, index) => {
+                                    const row = document.createElement('tr');
+
+                                    // 1. STT
+                                    const sttCell = document.createElement('td');
+                                    sttCell.className = 'text-center';
+                                    sttCell.textContent = startIndex + index + 1;
+                                    row.appendChild(sttCell);
+
+                                    // 2. KỸ THUẬT VIÊN
+                                    const techCell = document.createElement('td');
+                                    const techIcon = document.createElement('i');
+                                    techIcon.className = 'fas fa-user-cog text-primary';
+                                    const techText = document.createElement('strong');
+                                    techText.textContent = history.technicianName || 'Chưa phân công';
+                                    techText.style.marginLeft = '8px';
+                                    techCell.appendChild(techIcon);
+                                    techCell.appendChild(techText);
+                                    row.appendChild(techCell);
+
+                                    // 3. NGÀY GIỜ BẢO TRÌ
+                                    const dateCell = document.createElement('td');
+                                    const dateIcon = document.createElement('i');
+                                    dateIcon.className = 'fas fa-calendar-alt text-info';
+                                    dateIcon.style.marginRight = '8px';
+
+                                    let formattedDateTime = 'N/A';
+                                    let scheduledDateStr = history.scheduledDate || history.maintenanceDateTime;
+                                    if (scheduledDateStr) {
+                                        try {
+                                            const date = new Date(scheduledDateStr.replace(' ', 'T'));
+                                            if (!isNaN(date.getTime())) {
+                                                formattedDateTime = date.toLocaleDateString('vi-VN') + ' ' +
+                                                        date.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'});
+                                            }
+                                        } catch (e) {
+                                            console.error('Date parse error:', e);
+                                        }
+                                    }
+
+                                    const dateText = document.createTextNode(formattedDateTime);
+                                    dateCell.appendChild(dateIcon);
+                                    dateCell.appendChild(dateText);
+                                    row.appendChild(dateCell);
+
+                                    // 4. LOẠI BẢO TRÌ
+                                    const typeCell = document.createElement('td');
+                                    const maintenanceType = history.scheduleType || history.maintenanceType || 'N/A';
+                                    const typeBadge = document.createElement('span');
+                                    typeBadge.className = 'badge';
+
+                                    if (maintenanceType === 'Corrective') {
+                                        typeBadge.className += ' bg-warning text-dark';
+                                        typeBadge.innerHTML = '<i class="fas fa-wrench me-1"></i>Sửa Chữa';
+                                    } else if (maintenanceType === 'Preventive' || maintenanceType === 'Periodic') {
+                                        typeBadge.className += ' bg-info';
+                                        typeBadge.innerHTML = '<i class="fas fa-calendar-check me-1"></i>Định Kỳ';
+                                    } else if (maintenanceType === 'Emergency') {
+                                        typeBadge.className += ' bg-danger';
+                                        typeBadge.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Khẩn Cấp';
+                                    } else {
+                                        typeBadge.className += ' bg-secondary';
+                                        typeBadge.textContent = 'N/A';
+                                    }
+
+                                    typeCell.appendChild(typeBadge);
+                                    row.appendChild(typeCell);
+
+                                    // 6. LOẠI TASK
+                                    const taskTypeCell = document.createElement('td');
+                                    const taskType = history.taskType || 'Scheduled';
+                                    const taskBadge = document.createElement('span');
+                                    taskBadge.className = 'badge';
+
+                                    if (taskType === 'Request') {
+                                        taskBadge.className += ' bg-primary';
+                                        taskBadge.innerHTML = '<i class="fas fa-tasks me-1"></i>Request';
+                                    } else {
+                                        taskBadge.className += ' bg-success';
+                                        taskBadge.innerHTML = '<i class="fas fa-clock me-1"></i>Scheduled';
+                                    }
+
+                                    taskTypeCell.appendChild(taskBadge);
+                                    row.appendChild(taskTypeCell);
+
+                                    // 7. TRẠNG THÁI
+                                    const statusCell = document.createElement('td');
+                                    const status = history.scheduleStatus || history.status || 'Scheduled';
+                                    const statusBadge = document.createElement('span');
+                                    statusBadge.className = 'badge';
+
+                                    if (status === 'Completed') {
+                                        statusBadge.className += ' bg-success';
+                                        statusBadge.innerHTML = '<i class="fas fa-check-circle me-1"></i>Hoàn Thành';
+                                    } else if (status === 'In Progress') {
+                                        statusBadge.className += ' bg-warning text-dark';
+                                        statusBadge.innerHTML = '<i class="fas fa-spinner me-1"></i>Đang Thực Hiện';
+                                    } else if (status === 'Assigned') {
+                                        statusBadge.className += ' bg-info';
+                                        statusBadge.innerHTML = '<i class="fas fa-user-check me-1"></i>Đã Phân Công';
+                                    } else if (status === 'Scheduled') {
+                                        statusBadge.className += ' bg-primary';
+                                        statusBadge.innerHTML = '<i class="fas fa-calendar me-1"></i>Đã Lên Lịch';
+                                    } else {
+                                        statusBadge.className += ' bg-secondary';
+                                        statusBadge.innerHTML = '<i class="fas fa-clock me-1"></i>Chờ Xử Lý';
+                                    }
+
+                                    statusCell.appendChild(statusBadge);
+                                    row.appendChild(statusCell);
+
+                                    // 8. CHI TIẾT
+                                    //                                const detailsCell = document.createElement('td');
+                                    //                                detailsCell.style.maxWidth = '200px';
+                                    //                                detailsCell.style.wordWrap = 'break-word';
+                                    //
+                                    //                                const details = history.taskDetails || history.recurrenceRule || '';
+                                    //                                if (details && details !== 'null' && details !== 'false' && details.trim() !== '') {
+                                    //                                    detailsCell.textContent = details;
+                                    //                                } else {
+                                    //                                    const emptyText = document.createElement('span');
+                                    //                                    emptyText.className = 'text-muted';
+                                    //                                    emptyText.textContent = 'Không có mô tả';
+                                    //                                    detailsCell.appendChild(emptyText);
+                                    //                                }
+                                    //
+                                    //                                row.appendChild(detailsCell);
+                                    tbody.appendChild(row);
+                                });
+
+                                // HIỂN THỊ TABLE
+                                document.getElementById('historyLoading').style.display = 'none';
+                                document.getElementById('historyEmpty').style.display = 'none';
+                                document.getElementById('historyContent').style.display = 'block';
+
+                                // PAGINATION
+                                if (totalPages > 1) {
+                                    displayHistoryPagination(totalPages);
+                                } else {
+                                    document.getElementById('historyPagination').style.display = 'none';
+                                }
+
+                                console.log('✅ [JS] displayMaintenanceHistory() COMPLETED. Rows:', tbody.children.length);
+                            }
+                            function displayHistoryPagination(totalPages) {
+                                const paginationList = document.getElementById('historyPaginationList');
+                                paginationList.innerHTML = '';
+
+                                // Previous button
+                                const prevLi = document.createElement('li');
+                                prevLi.className = 'page-item' + (currentHistoryPage <= 1 ? ' disabled' : '');
+                                prevLi.innerHTML = `
+                        <a class="page-link" href="javascript:void(0)" onclick="${currentHistoryPage > 1 ? 'goToHistoryPage(' + (currentHistoryPage - 1) + ')' : ''}">
+                            <i class="fas fa-chevron-left"></i> Trước
+                        </a>
+                    `;
+                                paginationList.appendChild(prevLi);
+
+                                // Page numbers
+                                for (let i = 1; i <= totalPages; i++) {
+                                    const li = document.createElement('li');
+                                    li.className = 'page-item' + (i === currentHistoryPage ? ' active' : '');
+                                    li.innerHTML = `
+                            <a class="page-link" href="javascript:void(0)" onclick="goToHistoryPage(${i})">
+                ${i}
+                            </a>
+                        `;
+                                    paginationList.appendChild(li);
+                                }
+
+                                // Next button
+                                const nextLi = document.createElement('li');
+                                nextLi.className = 'page-item' + (currentHistoryPage >= totalPages ? ' disabled' : '');
+                                nextLi.innerHTML = `
+                        <a class="page-link" href="javascript:void(0)" onclick="${currentHistoryPage < totalPages ? 'goToHistoryPage(' + (currentHistoryPage + 1) + ')' : ''}">
+                            Tiếp <i class="fas fa-chevron-right"></i>
+                        </a>
+                    `;
+                                paginationList.appendChild(nextLi);
+
+                                document.getElementById('historyPagination').style.display = 'block';
+                            }
+
+                            function goToHistoryPage(pageNumber) {
+                                currentHistoryPage = pageNumber;
+                                displayMaintenanceHistory();
+                            }
+            </script>
+
 
     </body>
 </html>

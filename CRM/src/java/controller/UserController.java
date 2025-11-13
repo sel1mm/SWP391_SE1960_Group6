@@ -207,95 +207,140 @@ public class UserController extends HttpServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
         }
     }
+private void createUser(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    String username = request.getParameter("username");
+    String password = request.getParameter("password");
+    String confirmPassword = request.getParameter("confirmPassword"); // ✅ MỚI
+    String fullName = request.getParameter("fullName");
+    String email = request.getParameter("email");
+    String phone = request.getParameter("phone");
+    String status = request.getParameter("status");
+    String[] roleIds = request.getParameterValues("roleIds");
 
-    private void createUser(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    Account account = new Account();
+    account.setUsername(username);
+    account.setFullName(fullName);
+    account.setEmail(email);
+    account.setPhone(phone);
+    account.setStatus(status != null ? status : "Active");
 
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
-        String fullName = request.getParameter("fullName");
-        String email = request.getParameter("email");
-        String phone = request.getParameter("phone");
-        String status = request.getParameter("status");
-        String[] roleIds = request.getParameterValues("roleIds");
+    // ================= VALIDATION =================
+    String error = null;
 
-        Account account = new Account();
-        account.setUsername(username);
-        account.setFullName(fullName);
-        account.setEmail(email);
-        account.setPhone(phone);
-        account.setStatus(status != null ? status : "Active");
+    // Validate username
+    if (username == null || username.trim().isEmpty()) {
+        error = "Username is required.";
+    } else if (!username.matches("^[A-Za-z][A-Za-z0-9._-]{3,19}$")) {
+        error = "Username must start with a letter, be 4–20 characters long, and can include letters, numbers, '.', '_', or '-'.";
+    } else if (username.matches(".*[._-]{2,}.*")) {
+        error = "Username cannot contain consecutive special characters (like '..' or '__').";
+    } else if (username.endsWith(".") || username.endsWith("_") || username.endsWith("-")) {
+        error = "Username cannot end with '.', '_' or '-'.";
+    }
 
-        // ================= VALIDATION =================
-        String error = null;
-        //Validate username chuẩn thực tế (giống Google/GitHub)
-        if (username == null || username.trim().isEmpty()) {
-            error = "Username is required.";
-        } else if (!username.matches("^[A-Za-z][A-Za-z0-9._-]{3,19}$")) {
-            error = "Username must start with a letter, be 4–20 characters long, and can include letters, numbers, '.', '_', or '-'.";
-        } else if (username.matches(".*[._-]{2,}.*")) {
-            error = "Username cannot contain consecutive special characters (like '..' or '__').";
-        } else if (username.endsWith(".") || username.endsWith("_") || username.endsWith("-")) {
-            error = "Username cannot end with '.', '_' or '-'.";
+    // Validate full name
+    if (error == null && (fullName == null || fullName.trim().isEmpty())) {
+        error = "Full name is required.";
+    } else if (error == null && !fullName.matches("^[a-zA-ZÀ-ỹ\\s]+$")) {
+        error = "Full name must not contain numbers or special characters.";
+    }
+
+    // Validate phone
+    if (error == null && (phone == null || phone.trim().isEmpty())) {
+        error = "Phone is required.";
+    } else if (error == null && !phone.matches("^\\d{9,11}$")) {
+        error = "Phone number must contain only digits (9–11 digits).";
+    }
+
+    // Validate password
+    if (error == null && (password == null || password.trim().isEmpty())) {
+        error = "Password is required.";
+    } else if (error == null && !password.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
+        error = "Password must be 6–30 characters and may include letters, numbers, or special characters (!@#$%^&*()_+=-).";
+    }
+
+    // ✅ VALIDATE CONFIRM PASSWORD
+    if (error == null && (confirmPassword == null || confirmPassword.trim().isEmpty())) {
+        error = "Confirm password is required.";
+    } else if (error == null && !password.equals(confirmPassword)) {
+        error = "Passwords do not match.";
+    }
+
+    // Check email exists
+    if (error == null) {
+        Response<Boolean> emailExists = accountService.isEmailExists(email);
+        if (emailExists.isSuccess() && emailExists.getData()) {
+            error = "Email already exists.";
         }
-        // 1️⃣ Full name không được chứa số
-        if (fullName == null || fullName.trim().isEmpty()) {
-            error = "Full name is required.";
-        } else if (!fullName.matches("^[a-zA-ZÀ-ỹ\\s]+$")) {
-            error = "Full name must not contain numbers or special characters.";
-        } else if (phone == null || phone.trim().isEmpty()) {
-            error = "Phone is required.";
-        } else if (phone != null && !phone.trim().isEmpty() && !phone.matches("^\\d{9,11}$")) {
-            // 2️⃣ Số điện thoại chỉ được chứa số (9–11 chữ số)
-            error = "Phone number must contain only digits (9–11 digits).";
-        } else if (password == null || password.trim().isEmpty()) {
-            // 3️⃣ Password không được để trống
-            error = "Password is required.";
-        } else if (!password.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
-            error = "Password must be 6–30 characters and may include letters, numbers, or special characters (!@#$%^&*()_+=-).";
+    }
+
+    // Check phone exists
+    if (error == null && phone != null && !phone.trim().isEmpty()) {
+        Response<Boolean> phoneExists = accountService.isPhoneExists(phone);
+        if (phoneExists.isSuccess() && phoneExists.getData()) {
+            error = "Phone number already exists.";
+        }
+    }
+    
+
+    // Nếu có lỗi → quay lại form
+    if (error != null) {
+        request.setAttribute("error", error);
+        request.setAttribute("user", account);
+        Response<List<model.Role>> rolesResult = roleService.getAllRoles();
+        if (rolesResult.isSuccess()) {
+            request.setAttribute("roles", rolesResult.getData());
+        }
+        request.getRequestDispatcher("/WEB-INF/views/user/create.jsp").forward(request, response);
+        return;
+    }
+
+    // Hash password
+    account.setPasswordHash(passwordHasher.hashPassword(password));
+
+    // ✅ XỬ LÝ THEO TRẠNG THÁI
+    if ("Inactive".equalsIgnoreCase(status)) {
+        // 🔹 TRẠNG THÁI KHÔNG HOẠT ĐỘNG → LƯU TRỰC TIẾP
+        Response<Account> createResult = accountService.createAccount(account);
+        
+        if (createResult.isSuccess()) {
+            // Assign roles if provided
+            if (roleIds != null && roleIds.length > 0) {
+                service.AccountRoleService accountRoleService = new service.AccountRoleService();
+                int accountId = createResult.getData().getAccountId();
+                for (String roleIdStr : roleIds) {
+                    try {
+                        int roleId = Integer.parseInt(roleIdStr);
+                        accountRoleService.assignRoleToAccount(accountId, roleId);
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            
+            response.sendRedirect(request.getContextPath() + "/user/list?message="
+                    + java.net.URLEncoder.encode("User created successfully (Inactive status)", "UTF-8"));
         } else {
-            // 5️⃣ Email không trùng
-            Response<Boolean> emailExists = accountService.isEmailExists(email);
-            if (emailExists.isSuccess() && emailExists.getData()) {
-                error = "Email already exists.";
-            }
-        }
-
-        // 6️⃣ Số điện thoại không trùng
-        if (error == null && phone != null && !phone.trim().isEmpty()) {
-            Response<Boolean> phoneExists = accountService.isPhoneExists(phone);
-            if (phoneExists.isSuccess() && phoneExists.getData()) {
-                error = "Phone number already exists.";
-            }
-        }
-
-        // Nếu có lỗi → quay lại form
-        if (error != null) {
-            request.setAttribute("error", error);
+            request.setAttribute("error", createResult.getMessage());
             request.setAttribute("user", account);
-
             Response<List<model.Role>> rolesResult = roleService.getAllRoles();
             if (rolesResult.isSuccess()) {
                 request.setAttribute("roles", rolesResult.getData());
             }
-
             request.getRequestDispatcher("/WEB-INF/views/user/create.jsp").forward(request, response);
-            return;
         }
-
-// Hash password trước khi lưu vào session để khi xác minh tạo luôn được
-        account.setPasswordHash(passwordHasher.hashPassword(password));
-
-// Lưu user tạm và gửi OTP
+    } else {
+        // 🔹 TRẠNG THÁI HOẠT ĐỘNG → GỬI OTP
         HttpSession session = request.getSession();
         session.setAttribute("pendingUser", account);
-        session.setAttribute("pendingUserRoleIds", roleIds); // Save roleIds for later
+        session.setAttribute("pendingUserRoleIds", roleIds);
         utils.OtpHelper.sendOtpToEmail(session, email, "createUser");
         request.getRequestDispatcher("/verifyOtp.jsp").forward(request, response);
-        return;
-
     }
-
+    
+}
+   
     private void updateUser(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String idParam = request.getParameter("id");
@@ -396,60 +441,75 @@ public class UserController extends HttpServlet {
         }
         request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
     }
+private void updatePassword(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    String idParam = request.getParameter("id");
+    String newPassword = request.getParameter("newPassword");
+    String confirmPassword = request.getParameter("confirmPassword"); // ✅ THÊM MỚI
 
-    private void updatePassword(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        String idParam = request.getParameter("id");
-        String newPassword = request.getParameter("newPassword");
-        String confirmPassword = request.getParameter("confirmPassword");
-
-        if (idParam == null || idParam.trim().isEmpty()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID is required");
-            return;
-        }
-
-        int userId;
-        try {
-            userId = Integer.parseInt(idParam);
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
-            return;
-        }
-
-        // ===== VALIDATION =====
-        String error = null;
-        if (newPassword == null || newPassword.trim().isEmpty()) {
-            error = "New password is required.";
-        } else if (!newPassword.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
-            error = "Password must be 6–30 characters and may include letters, numbers, or special characters (!@#$%^&*()_+=-).";
-        } else if (!newPassword.equals(confirmPassword)) {
-            error = "Passwords do not match.";
-        }
-
-        // Lấy user để hiển thị lại form
-        Response<Account> userResult = accountService.getAccountById(userId);
-        if (userResult.isSuccess() && userResult.getData() != null) {
-            request.setAttribute("user", userResult.getData());
-        }
-
-        if (error != null) {
-            request.setAttribute("error", error);
-            request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
-            return;
-        }
-
-        // ===== CẬP NHẬT PASSWORD =====
-        Response<Account> result = accountService.updatePassword(userId, newPassword);
-
-        if (result.isSuccess()) {
-            request.setAttribute("message", "Password updated successfully!");
-            request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
-        } else {
-            request.setAttribute("error", result.getMessage());
-            request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
-        }
+    if (idParam == null || idParam.trim().isEmpty()) {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID is required");
+        return;
     }
+
+    int userId;
+    try {
+        userId = Integer.parseInt(idParam);
+    } catch (NumberFormatException e) {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
+        return;
+    }
+
+    // ===== VALIDATION =====
+    String error = null;
+    
+    if (newPassword == null || newPassword.trim().isEmpty()) {
+        error = "New password is required.";
+    } else if (!newPassword.matches("^(?=.*[A-Za-z0-9])[A-Za-z0-9!@#$%^&*()_+=-]{6,30}$")) {
+        error = "Password must be 6–30 characters and may include letters, numbers, or special characters (!@#$%^&*()_+=-).";
+    } 
+    // ✅ VALIDATE CONFIRM PASSWORD
+    else if (confirmPassword == null || confirmPassword.trim().isEmpty()) {
+        error = "Confirm password is required.";
+    } else if (!newPassword.equals(confirmPassword)) {
+        error = "Passwords do not match.";
+    }
+
+    // Lấy user để hiển thị lại form
+    Response<Account> userResult = accountService.getAccountById(userId);
+    if (userResult.isSuccess() && userResult.getData() != null) {
+        request.setAttribute("user", userResult.getData());
+    }
+
+    // Load roles cho form edit
+    Response<List<model.Role>> rolesResult = roleService.getAllRoles();
+    if (rolesResult.isSuccess()) {
+        request.setAttribute("roles", rolesResult.getData());
+    }
+
+    // Get user's current roles
+    Response<List<model.AccountRole>> userRolesResult = accountRoleService.getRolesByAccountId(userId);
+    if (userRolesResult.isSuccess()) {
+        request.setAttribute("userRoles", userRolesResult.getData());
+    }
+
+    if (error != null) {
+        request.setAttribute("error", error);
+        request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+        return;
+    }
+
+    // ===== CẬP NHẬT PASSWORD =====
+    Response<Account> result = accountService.updatePassword(userId, newPassword);
+    if (result.isSuccess()) {
+        request.setAttribute("message", "Password updated successfully!");
+        request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+    } else {
+        request.setAttribute("error", result.getMessage());
+        request.getRequestDispatcher("/WEB-INF/views/user/edit.jsp").forward(request, response);
+    }
+}
+    
 
     private void deleteUser(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -542,63 +602,50 @@ public class UserController extends HttpServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID");
         }
     }
+private void assignRole(HttpServletRequest request, HttpServletResponse response)
+        throws IOException {
+    response.setContentType("application/json;charset=UTF-8");
+    String userIdParam = request.getParameter("userId");
+    String roleIdParam = request.getParameter("roleId");
 
-    private void assignRole(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String userIdParam = request.getParameter("userId");
-        String roleIdParam = request.getParameter("roleId");
-
+    try (PrintWriter out = response.getWriter()) {
         if (userIdParam == null || roleIdParam == null) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID and Role ID are required");
+            out.write("{\"success\":false,\"message\":\"Thiếu thông tin người dùng hoặc vai trò.\"}");
             return;
         }
 
-        try {
-            int userId = Integer.parseInt(userIdParam);
-            int roleId = Integer.parseInt(roleIdParam);
+        int userId = Integer.parseInt(userIdParam);
+        int roleId = Integer.parseInt(roleIdParam);
+        Response<model.AccountRole> result = accountRoleService.assignRoleToAccount(userId, roleId);
 
-            Response<model.AccountRole> result = accountRoleService.assignRoleToAccount(userId, roleId);
-
-            String message = result.isSuccess()
-                    ? "Role assigned successfully"
-                    : result.getMessage();
-
-            // ✅ Redirect về đúng màn hình Manage User Roles
-            response.sendRedirect(request.getContextPath()
-                    + "/user/roles?id=" + userId
-                    + "&message=" + java.net.URLEncoder.encode(message, "UTF-8"));
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID or role ID");
-        }
+        out.write("{\"success\":" + result.isSuccess() + ",\"message\":\"" + result.getMessage() + "\"}");
+    } catch (Exception e) {
+        e.printStackTrace();
+        response.getWriter().write("{\"success\":false,\"message\":\"Lỗi máy chủ: " + e.getMessage() + "\"}");
     }
+}
 
-// ✅ Xóa vai trò khỏi người dùng
-    private void removeRole(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String userIdParam = request.getParameter("userId");
-        String roleIdParam = request.getParameter("roleId");
+private void removeRole(HttpServletRequest request, HttpServletResponse response)
+        throws IOException {
+    response.setContentType("application/json;charset=UTF-8");
+    String userIdParam = request.getParameter("userId");
+    String roleIdParam = request.getParameter("roleId");
 
+    try (PrintWriter out = response.getWriter()) {
         if (userIdParam == null || roleIdParam == null) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User ID and Role ID are required");
+            out.write("{\"success\":false,\"message\":\"Thiếu thông tin người dùng hoặc vai trò.\"}");
             return;
         }
 
-        try {
-            int userId = Integer.parseInt(userIdParam);
-            int roleId = Integer.parseInt(roleIdParam);
+        int userId = Integer.parseInt(userIdParam);
+        int roleId = Integer.parseInt(roleIdParam);
+        Response<Boolean> result = accountRoleService.removeRoleFromAccount(userId, roleId);
 
-            Response<Boolean> result = accountRoleService.removeRoleFromAccount(userId, roleId);
-
-            String message = result.isSuccess()
-                    ? "Role removed successfully"
-                    : result.getMessage();
-
-            // ✅ Redirect về lại trang Manage User Roles
-            response.sendRedirect(request.getContextPath()
-                    + "/user/roles?id=" + userId
-                    + "&message=" + java.net.URLEncoder.encode(message, "UTF-8"));
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid user ID or role ID");
-        }
+        out.write("{\"success\":" + result.isSuccess() + ",\"message\":\"" + result.getMessage() + "\"}");
+    } catch (Exception e) {
+        e.printStackTrace();
+        response.getWriter().write("{\"success\":false,\"message\":\"Lỗi máy chủ: " + e.getMessage() + "\"}");
     }
+}
+    
 }

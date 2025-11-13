@@ -12,7 +12,7 @@ import model.NewPartDetail;
  * PartDetailDAO - Data Access Object cho PartDetail với Category support
  * @author Admin
  */
-public class PartDetailDAO extends DBContext {
+public class PartDetailDAO extends MyDAO {
 
     /**
      * GET ALL với JOIN để lấy username và category

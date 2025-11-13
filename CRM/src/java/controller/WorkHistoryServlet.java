@@ -63,7 +63,7 @@ public class WorkHistoryServlet extends HttpServlet {
             req.setAttribute("totalPages", (int) Math.ceil((double) Math.max(totalTasks, totalSubmittedReports) / pageSize));
             req.setAttribute("searchQuery", searchQuery);
             req.setAttribute("statusFilter", statusFilter);
-            req.setAttribute("pageTitle", "Work History");
+            req.setAttribute("pageTitle", "Lịch sử công việc");
             req.setAttribute("contentView", "/WEB-INF/technician/work-history.jsp");
             req.setAttribute("activePage", "work");
             

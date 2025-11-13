@@ -639,7 +639,7 @@ public class EquipmentDAO extends DBContext {
      */
     public EquipmentContractInfo getEquipmentContractInfo(int equipmentId, int customerId) {
     // ✅ MySQL-compatible query, KHÔNG còn lỗi
-    String sql =
+   String sql =
         "(" +
         "SELECT " +
         "    ce.contractId, " +
@@ -656,8 +656,8 @@ public class EquipmentDAO extends DBContext {
         "(" +
         "SELECT " +
         "    ca.contractId, " +
-        "    ca.effectiveDate AS startDate, " + // phụ lục có ngày hiệu lực riêng
-        "    NULL AS endDate, " +               // phụ lục không có endDate
+        "    cae.startDate, " +
+        "    cae.endDate, " +
         "    'Appendix' AS source " +
         "FROM ContractAppendix ca " +
         "INNER JOIN ContractAppendixEquipment cae ON ca.appendixId = cae.appendixId " +
