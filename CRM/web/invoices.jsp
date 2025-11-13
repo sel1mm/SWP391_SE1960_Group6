@@ -699,6 +699,52 @@
                 border-left: 4px solid #007bff !important;
             }
 
+     /* ✅✅✅ PAGINATION STYLES - MÀU XANH DƯƠNG ✅✅✅ */
+            .pagination .page-item .page-link {
+                border-radius: 8px;
+                border: 1px solid #dee2e6;
+                color: #495057;
+                padding: 8px 15px;
+                font-weight: 500;
+                transition: all 0.3s;
+                margin: 0 2px;
+                background: white;
+            }
+
+            .pagination .page-item.active .page-link {
+                background: #007bff;
+                border-color: #007bff;
+                color: white;
+            }
+
+            .pagination .page-item:not(.disabled) .page-link:hover {
+                background: #0056b3;
+                border-color: #0056b3;
+                color: white;
+            }
+
+            .pagination .page-item.disabled .page-link {
+                background: #f8f9fa;
+                border-color: #dee2e6;
+                color: #6c757d;
+                cursor: not-allowed;
+            }
+
+            .pagination {
+                margin: 0;
+            }
+
+            .pagination .page-item {
+                margin: 0 2px;
+            }
+            /* ✅✅✅ KẾT THÚC PAGINATION STYLES ✅✅✅ */
+
+            @media (max-width: 576px) {
+                .pagination .page-item:not(.active):not(:first-child):not(:last-child):not(:nth-child(2)):not(:nth-last-child(2)) {
+                    display: none;
+                }
+            }
+
             .card-body .text-xs {
                 font-size: 0.75rem;
             }
@@ -768,8 +814,12 @@
             }
 
             @keyframes pulseBadge {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.1); }
+                0%, 100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.1);
+                }
             }
 
             .chatbot-window {
@@ -924,8 +974,14 @@
             }
 
             @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             .message.bot {
@@ -1002,12 +1058,20 @@
                 animation: typing 1.4s infinite;
             }
 
-            .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-            .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+            .typing-dot:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .typing-dot:nth-child(3) {
+                animation-delay: 0.4s;
+            }
 
             @keyframes typing {
-                0%, 60%, 100% { transform: translateY(0); }
-                30% { transform: translateY(-10px); }
+                0%, 60%, 100% {
+                    transform: translateY(0);
+                }
+                30% {
+                    transform: translateY(-10px);
+                }
             }
 
             .chatbot-input {
@@ -1110,6 +1174,41 @@
                     width: calc(100vw - 30px);
                     right: 15px;
                 }
+            }
+            
+            
+            /* XÓA HORIZONTAL SCROLLBAR */
+            .table-responsive {
+                overflow-x: hidden !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Nếu muốn cho phép scroll dọc nhưng ẩn thanh scroll */
+            .table-responsive::-webkit-scrollbar {
+                display: none;
+            }
+
+            .table-responsive {
+                -ms-overflow-style: none;  /* IE and Edge */
+                scrollbar-width: none;  /* Firefox */
+            }
+
+            /* Đảm bảo table không bị overflow */
+            .table-container {
+                overflow: visible;
+            }
+
+            .table {
+                width: 100%;
+                margin-bottom: 0;
+                table-layout: auto;
+            }
+
+            .table th,
+            .table td {
+                white-space: normal;
+                word-wrap: break-word;
+                vertical-align: middle;
             }
         </style>
     </head>
@@ -1588,7 +1687,7 @@
                                             <th><i class="fas fa-money-bill-wave me-2"></i>Tổng Tiền</th>
                                             <th><i class="fas fa-credit-card me-2"></i>Phương Thức</th>
                                             <th><i class="fas fa-info-circle me-2"></i>Trạng Thái</th>
-                                            <th class="text-center"><i class="fas fa-cog me-2"></i>Thao Tác</th>
+                                            <!-- <th class="text-center"><i class="fas fa-cog me-2"></i>Thao Tác</th> -->
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1675,13 +1774,7 @@
                                                             </span>
                                                         </c:otherwise>
                                                     </c:choose>
-                                                </td>
-                                                <td class="text-center">
-                                                    <a href="${pageContext.request.contextPath}/invoices?action=view&id=${item.invoice.invoiceId}" 
-                                                       class="btn btn-sm btn-info btn-action" title="Xem chi tiết hóa đơn">
-                                                        <i class="fas fa-eye"></i> Chi Tiết
-                                                    </a>
-                                                </td>
+                                                </td>                                              
                                             </tr>
                                         </c:forEach>
                                     </tbody>
@@ -1711,6 +1804,53 @@
                         </c:choose>
                     </div>
                 </div>
+
+
+
+
+                <c:if test="${totalPages >= 1}">
+                    <c:url var="baseUrl" value="invoices">
+                        <c:param name="keyword" value="${param.keyword}" />
+                        <c:param name="status" value="${param.status}" />
+                        <c:param name="paymentMethod" value="${param.paymentMethod}" />
+                        <c:param name="sortBy" value="${param.sortBy}" />
+                        <c:param name="fromDate" value="${param.fromDate}" />
+                        <c:param name="toDate" value="${param.toDate}" />
+                        <c:param name="fromDueDate" value="${param.fromDueDate}" />
+                        <c:param name="toDueDate" value="${param.toDueDate}" />
+                    </c:url>
+
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
+                                <a class="page-link" href="${baseUrl}&page=${currentPage - 1}">
+                                    <i class="fas fa-chevron-left"></i> Trước
+                                </a>
+                            </li>
+
+                            <c:forEach var="i" begin="1" end="${totalPages}">
+                                <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                    <a class="page-link" href="${baseUrl}&page=${i}">${i}</a>
+                                </li>
+                            </c:forEach>
+
+                            <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                                <a class="page-link" href="${baseUrl}&page=${currentPage + 1}">
+                                    Tiếp <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <div class="text-center text-muted mb-3">
+                        <small>
+                            Trang <strong>${currentPage}</strong> / <strong>${totalPages}</strong> |
+                            Hiển thị <strong>${fn:length(invoiceList)}</strong> hóa đơn
+                        </small>
+                    </div>
+                </c:if>
+                <!-- ✅✅✅ KẾT THÚC PAGINATION ✅✅✅ -->
+
             </div>
         </div>
 
@@ -1835,417 +1975,420 @@
         <!-- SCRIPTS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-            // Toggle Sidebar
-            function toggleSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                const toggleIcon = document.getElementById('toggleIcon');
-                sidebar.classList.toggle('collapsed');
+                        // Toggle Sidebar
+                        function toggleSidebar() {
+                            const sidebar = document.getElementById('sidebar');
+                            const toggleIcon = document.getElementById('toggleIcon');
+                            sidebar.classList.toggle('collapsed');
 
-                if (sidebar.classList.contains('collapsed')) {
-                    toggleIcon.classList.remove('fa-chevron-left');
-                    toggleIcon.classList.add('fa-chevron-right');
-                } else {
-                    toggleIcon.classList.remove('fa-chevron-right');
-                    toggleIcon.classList.add('fa-chevron-left');
-                }
-            }
-
-            // Refresh Page
-            function refreshPage() {
-                location.reload();
-            }
-
-            // Toast Notification Function
-            function showToast(message, type = 'success') {
-                const container = document.getElementById('toastContainer');
-                const toast = document.createElement('div');
-                toast.className = 'toast-notification ' + type;
-
-                const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-
-                toast.innerHTML =
-                    '<div class="toast-icon ' + type + '">' +
-                    '<i class="fas ' + icon + '"></i>' +
-                    '</div>' +
-                    '<div class="toast-content">' +
-                    '<strong>' + (type === 'success' ? 'Thành công!' : 'Lỗi!') + '</strong>' +
-                    '<p style="margin: 0; font-size: 0.9rem;">' + message + '</p>' +
-                    '</div>' +
-                    '<button class="toast-close" onclick="closeToast(this)">' +
-                    '<i class="fas fa-times"></i>' +
-                    '</button>';
-
-                container.appendChild(toast);
-
-                setTimeout(function () {
-                    toast.classList.add('hiding');
-                    setTimeout(function () {
-                        toast.remove();
-                    }, 400);
-                }, 5000);
-            }
-
-            function closeToast(btn) {
-                const toast = btn.closest('.toast-notification');
-                toast.classList.add('hiding');
-                setTimeout(() => toast.remove(), 400);
-            }
-
-            // Scroll to Top
-            const scrollToTopBtn = document.getElementById('scrollToTop');
-
-            window.addEventListener('scroll', () => {
-                if (window.pageYOffset > 300) {
-                    scrollToTopBtn.classList.add('show');
-                } else {
-                    scrollToTopBtn.classList.remove('show');
-                }
-            });
-
-            scrollToTopBtn.addEventListener('click', () => {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });
-
-            // Check for URL parameters to show toast
-            window.addEventListener('DOMContentLoaded', () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const success = urlParams.get('success');
-                const error = urlParams.get('error');
-
-                if (success) {
-                    showToast(decodeURIComponent(success), 'success');
-                }
-                if (error) {
-                    showToast(decodeURIComponent(error), 'error');
-                }
-            });
-
-            // Mobile Sidebar Toggle
-            if (window.innerWidth <= 768) {
-                const sidebar = document.getElementById('sidebar');
-                document.addEventListener('click', (e) => {
-                    if (!sidebar.contains(e.target) && sidebar.classList.contains('show')) {
-                        sidebar.classList.remove('show');
-                    }
-                });
-            }
-
-            // Add animation to stats cards on page load
-            window.addEventListener('load', () => {
-                const statsCards = document.querySelectorAll('.stats-card');
-                statsCards.forEach((card, index) => {
-                    setTimeout(() => {
-                        card.style.opacity = '0';
-                        card.style.transform = 'translateY(20px)';
-                        card.style.transition = 'all 0.5s ease';
-
-                        setTimeout(() => {
-                            card.style.opacity = '1';
-                            card.style.transform = 'translateY(0)';
-                        }, 50);
-                    }, index * 100);
-                });
-            });
-
-            // Xuất hóa đơn PDF
-            function exportInvoicePDF(invoiceId) {
-                window.open('${pageContext.request.contextPath}/invoices?action=exportPDF&id=' + invoiceId, '_blank');
-            }
-
-            // In hóa đơn
-            function printInvoice(invoiceId) {
-                window.open('${pageContext.request.contextPath}/invoices?action=print&id=' + invoiceId, '_blank');
-            }
-
-            // Làm nổi bật hóa đơn quá hạn
-            document.addEventListener('DOMContentLoaded', function () {
-                const overdueRows = document.querySelectorAll('tr:has(.badge-overdue)');
-                overdueRows.forEach(row => {
-                    row.style.backgroundColor = 'rgba(220, 53, 69, 0.05)';
-                    row.style.borderLeft = '4px solid #dc3545';
-                });
-            });
-
-            // ========== CHATBOT FUNCTIONS ==========
-            
-            // FAQ DATA
-            const FAQ_DATA_WIDGET = [
-                {
-                    "category": "Giới thiệu chung",
-                    "questions": [
-                        {
-                            "question": "Hệ thống của bạn cung cấp dịch vụ gì?",
-                            "answer": "Hệ thống của chúng tôi cung cấp dịch vụ bảo hành và bảo trì thiết bị cho khách hàng. Khi quý khách mua thiết bị, chúng tôi sẽ tạo hợp đồng và lưu thông tin vào hệ thống. Khi thiết bị cần sửa chữa, quý khách chỉ cần tạo yêu cầu trực tuyến, chúng tôi sẽ xử lý và thực hiện sửa chữa theo quy trình chuyên nghiệp."
-                        },
-                        {
-                            "question": "Làm thế nào để liên hệ bộ phận hỗ trợ khách hàng?",
-                            "answer": "Quý khách có thể liên hệ với bộ phận hỗ trợ khách hàng qua:\n- Hotline: [Số điện thoại]\n- Email: [Địa chỉ email]\n- Chat trực tuyến trên website\n- Hoặc tạo yêu cầu hỗ trợ trực tiếp trên hệ thống"
+                            if (sidebar.classList.contains('collapsed')) {
+                                toggleIcon.classList.remove('fa-chevron-left');
+                                toggleIcon.classList.add('fa-chevron-right');
+                            } else {
+                                toggleIcon.classList.remove('fa-chevron-right');
+                                toggleIcon.classList.add('fa-chevron-left');
+                            }
                         }
-                    ]
-                },
-                {
-                    "category": "Yêu cầu dịch vụ",
-                    "questions": [
-                        {
-                            "question": "Làm thế nào để tạo yêu cầu bảo hành/bảo trì?",
-                            "answer": "Để tạo yêu cầu, quý khách thực hiện theo các bước sau:\n\n1. Truy cập trang \"Yêu cầu dịch vụ\"\n2. Nhấn nút \"Tạo yêu cầu mới\" ở góc trên màn hình\n3. Chọn \"Hỗ trợ thiết bị\"\n4. Chọn thiết bị cần bảo hành từ danh sách\n5. Chọn mức độ ưu tiên cho yêu cầu\n6. Mô tả chi tiết vấn đề của thiết bị\n7. Kiểm tra lại thông tin và nhấn \"Gửi yêu cầu\""
-                        },
-                        {
-                            "question": "Thời gian xử lý yêu cầu mất bao lâu?",
-                            "answer": "Thời gian xử lý yêu cầu phụ thuộc vào:\n- Mức độ ưu tiên của yêu cầu\n- Tình trạng thiết bị\n- Khả năng sẵn có của phụ tùng\n\nThông thường:\n- Yêu cầu khẩn cấp: 24-48 giờ\n- Yêu cầu thường: 3-5 ngày làm việc"
-                        },
-                        {
-                            "question": "Các trạng thái của yêu cầu dịch vụ có ý nghĩa gì?",
-                            "answer": "Yêu cầu sẽ đi qua các trạng thái:\n\n1. Chờ xác nhận: Yêu cầu vừa được tạo\n2. Chờ xử lý: Đã được xác nhận, chờ phân công\n3. Đang xử lý: Kỹ thuật viên đang xử lý\n4. Hoàn thành: Đã sửa chữa xong\n5. Đã hủy: Yêu cầu bị hủy"
+
+                        // Refresh Page
+                        function refreshPage() {
+                            location.reload();
                         }
-                    ]
-                },
-                {
-                    "category": "Hợp đồng",
-                    "questions": [
-                        {
-                            "question": "Làm thế nào để xem thông tin hợp đồng?",
-                            "answer": "Để xem thông tin hợp đồng:\n\n1. Truy cập trang \"Hợp đồng\"\n2. Xem danh sách tất cả các hợp đồng\n3. Nhấn \"Danh sách thiết bị\" để xem chi tiết\n\nThông tin bao gồm:\n- Mã hợp đồng\n- Loại hợp đồng\n- Ngày hiệu lực\n- Trạng thái"
-                        },
-                        {
-                            "question": "Chính sách bảo hành như thế nào?",
-                            "answer": "Chính sách bảo hành:\n\n- Thời gian: Theo hợp đồng (12-36 tháng)\n- Phạm vi: Lỗi nhà sản xuất, hỏng hóc bình thường\n- Miễn phí phụ tùng và sửa chữa\n\nKhông bảo hành:\n- Sử dụng sai cách\n- Va đập, rơi vỡ\n- Can thiệp bởi bên thứ ba"
+
+                        // Toast Notification Function
+                        function showToast(message, type = 'success') {
+                            const container = document.getElementById('toastContainer');
+                            const toast = document.createElement('div');
+                            toast.className = 'toast-notification ' + type;
+
+                            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+                            toast.innerHTML =
+                                    '<div class="toast-icon ' + type + '">' +
+                                    '<i class="fas ' + icon + '"></i>' +
+                                    '</div>' +
+                                    '<div class="toast-content">' +
+                                    '<strong>' + (type === 'success' ? 'Thành công!' : 'Lỗi!') + '</strong>' +
+                                    '<p style="margin: 0; font-size: 0.9rem;">' + message + '</p>' +
+                                    '</div>' +
+                                    '<button class="toast-close" onclick="closeToast(this)">' +
+                                    '<i class="fas fa-times"></i>' +
+                                    '</button>';
+
+                            container.appendChild(toast);
+
+                            setTimeout(function () {
+                                toast.classList.add('hiding');
+                                setTimeout(function () {
+                                    toast.remove();
+                                }, 400);
+                            }, 5000);
                         }
-                    ]
-                },
-                {
-                    "category": "Hóa đơn & Thanh toán",
-                    "questions": [
-                        {
-                            "question": "Làm thế nào để xem hóa đơn?",
-                            "answer": "Để xem hóa đơn:\n\n1. Truy cập trang \"Hóa đơn\"\n2. Xem danh sách hóa đơn\n\nThông tin gồm:\n- Mã hóa đơn\n- Số tiền\n- Ngày phát hành\n- Hạn thanh toán\n- Trạng thái"
-                        },
-                        {
-                            "question": "Làm thế nào để thanh toán hóa đơn?",
-                            "answer": "Các phương thức thanh toán:\n\n1. Thanh toán trực tuyến:\n- Chuyển khoản ngân hàng\n- Ví điện tử (Momo, ZaloPay)\n- Thẻ ATM/Tín dụng\n\n2. Thanh toán trực tiếp:\n- Tại văn phòng\n- Thu tiền tận nơi"
+
+                        function closeToast(btn) {
+                            const toast = btn.closest('.toast-notification');
+                            toast.classList.add('hiding');
+                            setTimeout(() => toast.remove(), 400);
                         }
-                    ]
-                },
-                {
-                    "category": "Thiết bị",
-                    "questions": [
-                        {
-                            "question": "Làm thế nào để xem thông tin thiết bị?",
-                            "answer": "Để xem thiết bị:\n\n1. Truy cập trang \"Thiết bị\"\n2. Xem danh sách thiết bị\n3. Nhấn \"Chi tiết\" để xem thêm\n\nThông tin:\n- Tên thiết bị\n- Mã/Serial number\n- Hợp đồng liên quan\n- Trạng thái\n- Thời hạn bảo hành"
+
+                        // Scroll to Top
+                        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+                        window.addEventListener('scroll', () => {
+                            if (window.pageYOffset > 300) {
+                                scrollToTopBtn.classList.add('show');
+                            } else {
+                                scrollToTopBtn.classList.remove('show');
+                            }
+                        });
+
+                        scrollToTopBtn.addEventListener('click', () => {
+                            window.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
+                            });
+                        });
+
+                        // Check for URL parameters to show toast
+                        window.addEventListener('DOMContentLoaded', () => {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const success = urlParams.get('success');
+                            const error = urlParams.get('error');
+
+                            if (success) {
+                                showToast(decodeURIComponent(success), 'success');
+                            }
+                            if (error) {
+                                showToast(decodeURIComponent(error), 'error');
+                            }
+                        });
+
+                        // Mobile Sidebar Toggle
+                        if (window.innerWidth <= 768) {
+                            const sidebar = document.getElementById('sidebar');
+                            document.addEventListener('click', (e) => {
+                                if (!sidebar.contains(e.target) && sidebar.classList.contains('show')) {
+                                    sidebar.classList.remove('show');
+                                }
+                            });
                         }
-                    ]
-                }
-            ];
 
-            // Initialize recommendations when page loads
-            document.addEventListener('DOMContentLoaded', function() {
-                showNewRecommendationsWidget();
-            });
+                        // Add animation to stats cards on page load
+                        window.addEventListener('load', () => {
+                            const statsCards = document.querySelectorAll('.stats-card');
+                            statsCards.forEach((card, index) => {
+                                setTimeout(() => {
+                                    card.style.opacity = '0';
+                                    card.style.transform = 'translateY(20px)';
+                                    card.style.transition = 'all 0.5s ease';
 
-            function showNewRecommendationsWidget() {
-                const container = document.getElementById('recommendationChipsWidget');
-                if (!container) return;
+                                    setTimeout(() => {
+                                        card.style.opacity = '1';
+                                        card.style.transform = 'translateY(0)';
+                                    }, 50);
+                                }, index * 100);
+                            });
+                        });
 
-                container.innerHTML = '';
+                        // Xuất hóa đơn PDF
+                        function exportInvoicePDF(invoiceId) {
+                            window.open('${pageContext.request.contextPath}/invoices?action=exportPDF&id=' + invoiceId, '_blank');
+                        }
 
-                // Get all questions
-                const allQuestions = FAQ_DATA_WIDGET.flatMap(category => 
-                    category.questions.map(q => ({
-                        question: q.question,
-                        category: category.category
-                    }))
-                );
+                        // In hóa đơn
+                        function printInvoice(invoiceId) {
+                            window.open('${pageContext.request.contextPath}/invoices?action=print&id=' + invoiceId, '_blank');
+                        }
 
-                // Random 6 questions
-                const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
-                const selectedQuestions = shuffled.slice(0, 6);
+                        // Làm nổi bật hóa đơn quá hạn
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const overdueRows = document.querySelectorAll('tr:has(.badge-overdue)');
+                            overdueRows.forEach(row => {
+                                row.style.backgroundColor = 'rgba(220, 53, 69, 0.05)';
+                                row.style.borderLeft = '4px solid #dc3545';
+                            });
+                        });
 
-                // Group by category
-                const questionsByCategory = {};
-                selectedQuestions.forEach(item => {
-                    if (!questionsByCategory[item.category]) {
-                        questionsByCategory[item.category] = [];
-                    }
-                    questionsByCategory[item.category].push(item.question);
-                });
+                        // ========== CHATBOT FUNCTIONS ==========
 
-                // Render chips
-                Object.entries(questionsByCategory).forEach(([category, questions]) => {
-                    const categoryDiv = document.createElement('div');
-                    categoryDiv.className = 'recommendation-category';
-                    categoryDiv.textContent = category;
-                    container.appendChild(categoryDiv);
+                        // FAQ DATA
+                        const FAQ_DATA_WIDGET = [
+                            {
+                                "category": "Giới thiệu chung",
+                                "questions": [
+                                    {
+                                        "question": "Hệ thống của bạn cung cấp dịch vụ gì?",
+                                        "answer": "Hệ thống của chúng tôi cung cấp dịch vụ bảo hành và bảo trì thiết bị cho khách hàng. Khi quý khách mua thiết bị, chúng tôi sẽ tạo hợp đồng và lưu thông tin vào hệ thống. Khi thiết bị cần sửa chữa, quý khách chỉ cần tạo yêu cầu trực tuyến, chúng tôi sẽ xử lý và thực hiện sửa chữa theo quy trình chuyên nghiệp."
+                                    },
+                                    {
+                                        "question": "Làm thế nào để liên hệ bộ phận hỗ trợ khách hàng?",
+                                        "answer": "Quý khách có thể liên hệ với bộ phận hỗ trợ khách hàng qua:\n- Hotline: [Số điện thoại]\n- Email: [Địa chỉ email]\n- Chat trực tuyến trên website\n- Hoặc tạo yêu cầu hỗ trợ trực tiếp trên hệ thống"
+                                    }
+                                ]
+                            },
+                            {
+                                "category": "Yêu cầu dịch vụ",
+                                "questions": [
+                                    {
+                                        "question": "Làm thế nào để tạo yêu cầu bảo hành/bảo trì?",
+                                        "answer": "Để tạo yêu cầu, quý khách thực hiện theo các bước sau:\n\n1. Truy cập trang \"Yêu cầu dịch vụ\"\n2. Nhấn nút \"Tạo yêu cầu mới\" ở góc trên màn hình\n3. Chọn \"Hỗ trợ thiết bị\"\n4. Chọn thiết bị cần bảo hành từ danh sách\n5. Chọn mức độ ưu tiên cho yêu cầu\n6. Mô tả chi tiết vấn đề của thiết bị\n7. Kiểm tra lại thông tin và nhấn \"Gửi yêu cầu\""
+                                    },
+                                    {
+                                        "question": "Thời gian xử lý yêu cầu mất bao lâu?",
+                                        "answer": "Thời gian xử lý yêu cầu phụ thuộc vào:\n- Mức độ ưu tiên của yêu cầu\n- Tình trạng thiết bị\n- Khả năng sẵn có của phụ tùng\n\nThông thường:\n- Yêu cầu khẩn cấp: 24-48 giờ\n- Yêu cầu thường: 3-5 ngày làm việc"
+                                    },
+                                    {
+                                        "question": "Các trạng thái của yêu cầu dịch vụ có ý nghĩa gì?",
+                                        "answer": "Yêu cầu sẽ đi qua các trạng thái:\n\n1. Chờ xác nhận: Yêu cầu vừa được tạo\n2. Chờ xử lý: Đã được xác nhận, chờ phân công\n3. Đang xử lý: Kỹ thuật viên đang xử lý\n4. Hoàn thành: Đã sửa chữa xong\n5. Đã hủy: Yêu cầu bị hủy"
+                                    }
+                                ]
+                            },
+                            {
+                                "category": "Hợp đồng",
+                                "questions": [
+                                    {
+                                        "question": "Làm thế nào để xem thông tin hợp đồng?",
+                                        "answer": "Để xem thông tin hợp đồng:\n\n1. Truy cập trang \"Hợp đồng\"\n2. Xem danh sách tất cả các hợp đồng\n3. Nhấn \"Danh sách thiết bị\" để xem chi tiết\n\nThông tin bao gồm:\n- Mã hợp đồng\n- Loại hợp đồng\n- Ngày hiệu lực\n- Trạng thái"
+                                    },
+                                    {
+                                        "question": "Chính sách bảo hành như thế nào?",
+                                        "answer": "Chính sách bảo hành:\n\n- Thời gian: Theo hợp đồng (12-36 tháng)\n- Phạm vi: Lỗi nhà sản xuất, hỏng hóc bình thường\n- Miễn phí phụ tùng và sửa chữa\n\nKhông bảo hành:\n- Sử dụng sai cách\n- Va đập, rơi vỡ\n- Can thiệp bởi bên thứ ba"
+                                    }
+                                ]
+                            },
+                            {
+                                "category": "Hóa đơn & Thanh toán",
+                                "questions": [
+                                    {
+                                        "question": "Làm thế nào để xem hóa đơn?",
+                                        "answer": "Để xem hóa đơn:\n\n1. Truy cập trang \"Hóa đơn\"\n2. Xem danh sách hóa đơn\n\nThông tin gồm:\n- Mã hóa đơn\n- Số tiền\n- Ngày phát hành\n- Hạn thanh toán\n- Trạng thái"
+                                    },
+                                    {
+                                        "question": "Làm thế nào để thanh toán hóa đơn?",
+                                        "answer": "Các phương thức thanh toán:\n\n1. Thanh toán trực tuyến:\n- Chuyển khoản ngân hàng\n- Ví điện tử (Momo, ZaloPay)\n- Thẻ ATM/Tín dụng\n\n2. Thanh toán trực tiếp:\n- Tại văn phòng\n- Thu tiền tận nơi"
+                                    }
+                                ]
+                            },
+                            {
+                                "category": "Thiết bị",
+                                "questions": [
+                                    {
+                                        "question": "Làm thế nào để xem thông tin thiết bị?",
+                                        "answer": "Để xem thiết bị:\n\n1. Truy cập trang \"Thiết bị\"\n2. Xem danh sách thiết bị\n3. Nhấn \"Chi tiết\" để xem thêm\n\nThông tin:\n- Tên thiết bị\n- Mã/Serial number\n- Hợp đồng liên quan\n- Trạng thái\n- Thời hạn bảo hành"
+                                    }
+                                ]
+                            }
+                        ];
 
-                    questions.forEach(question => {
-                        const chip = document.createElement('div');
-                        chip.className = 'recommendation-chip';
-                        chip.textContent = question;
-                        chip.title = question;
-                        chip.onclick = () => sendRecommendedQuestionWidget(question);
-                        container.appendChild(chip);
-                    });
-                });
-            }
+                        // Initialize recommendations when page loads
+                        document.addEventListener('DOMContentLoaded', function () {
+                            showNewRecommendationsWidget();
+                        });
 
-            function sendRecommendedQuestionWidget(question) {
-                const input = document.getElementById('chatInputWidget');
-                input.value = question;
-                sendMessageWidget();
-            }
+                        function showNewRecommendationsWidget() {
+                            const container = document.getElementById('recommendationChipsWidget');
+                            if (!container)
+                                return;
 
-            function hideRecommendationsWidget() {
-                const recommendations = document.getElementById('chatbotRecommendationsWidget');
-                if (recommendations) {
-                    recommendations.style.display = 'none';
-                }
-            }
+                            container.innerHTML = '';
 
-            function showRecommendationsWidget() {
-                const recommendations = document.getElementById('chatbotRecommendationsWidget');
-                if (recommendations) {
-                    recommendations.style.display = 'block';
-                    showNewRecommendationsWidget();
-                }
-            }
+                            // Get all questions
+                            const allQuestions = FAQ_DATA_WIDGET.flatMap(category =>
+                                category.questions.map(q => ({
+                                        question: q.question,
+                                        category: category.category
+                                    }))
+                            );
 
-            function toggleChatbotWidget() {
-                const chatWindow = document.getElementById('chatbotWindowWidget');
-                chatWindow.classList.toggle('active');
-                
-                if (chatWindow.classList.contains('active')) {
-                    showRecommendationsWidget();
-                    setTimeout(() => {
-                        document.getElementById('chatInputWidget').focus();
-                    }, 300);
-                }
-            }
+                            // Random 6 questions
+                            const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+                            const selectedQuestions = shuffled.slice(0, 6);
 
-            function handleKeyPressWidget(event) {
-                if (event.key === 'Enter') {
-                    sendMessageWidget();
-                }
-            }
+                            // Group by category
+                            const questionsByCategory = {};
+                            selectedQuestions.forEach(item => {
+                                if (!questionsByCategory[item.category]) {
+                                    questionsByCategory[item.category] = [];
+                                }
+                                questionsByCategory[item.category].push(item.question);
+                            });
 
-            function addMessageWidget(content, isUser = false) {
-                const messagesDiv = document.getElementById('chatMessagesWidget');
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-                
-                const avatar = document.createElement('div');
-                avatar.className = 'message-avatar';
-                avatar.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'message-content';
-                
-                if (isUser) {
-                    contentDiv.textContent = content;
-                    messageDiv.appendChild(contentDiv);
-                    messageDiv.appendChild(avatar);
-                } else {
-                    contentDiv.innerHTML = formatMessageWidget(content);
-                    messageDiv.appendChild(avatar);
-                    messageDiv.appendChild(contentDiv);
-                }
-                
-                messagesDiv.appendChild(messageDiv);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }
+                            // Render chips
+                            Object.entries(questionsByCategory).forEach(([category, questions]) => {
+                                const categoryDiv = document.createElement('div');
+                                categoryDiv.className = 'recommendation-category';
+                                categoryDiv.textContent = category;
+                                container.appendChild(categoryDiv);
 
-            function showTypingWidget() {
-                const messagesDiv = document.getElementById('chatMessagesWidget');
-                const typingDiv = document.createElement('div');
-                typingDiv.className = 'message bot';
-                typingDiv.id = 'typingIndicatorWidget';
-                
-                const avatar = document.createElement('div');
-                avatar.className = 'message-avatar';
-                avatar.innerHTML = '<i class="fas fa-robot"></i>';
-                
-                const typing = document.createElement('div');
-                typing.className = 'typing-indicator';
-                typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-                
-                typingDiv.appendChild(avatar);
-                typingDiv.appendChild(typing);
-                messagesDiv.appendChild(typingDiv);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }
+                                questions.forEach(question => {
+                                    const chip = document.createElement('div');
+                                    chip.className = 'recommendation-chip';
+                                    chip.textContent = question;
+                                    chip.title = question;
+                                    chip.onclick = () => sendRecommendedQuestionWidget(question);
+                                    container.appendChild(chip);
+                                });
+                            });
+                        }
 
-            function hideTypingWidget() {
-                const typing = document.getElementById('typingIndicatorWidget');
-                if (typing) {
-                    typing.remove();
-                }
-            }
+                        function sendRecommendedQuestionWidget(question) {
+                            const input = document.getElementById('chatInputWidget');
+                            input.value = question;
+                            sendMessageWidget();
+                        }
 
-            async function sendMessageWidget() {
-                const input = document.getElementById('chatInputWidget');
-                const sendBtn = document.getElementById('sendBtnWidget');
-                const question = input.value.trim();
-                
-                if (!question) return;
-                
-                hideRecommendationsWidget();
-                addMessageWidget(question, true);
-                input.value = '';
-                
-                input.disabled = true;
-                sendBtn.disabled = true;
-                
-                showTypingWidget();
-                
-                try {
-                    const response = await fetch('${pageContext.request.contextPath}/askGemini', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ q: question })
-                    });
-                    
-                    const data = await response.json();
-                    hideTypingWidget();
-                    
-                    if (data.success && data.answer) {
-                        addMessageWidget(data.answer, false);
-                    } else {
-                        addMessageWidget(data.error || 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.', false);
-                    }
-                    
-                    setTimeout(() => {
-                        showRecommendationsWidget();
-                    }, 500);
-                    
-                } catch (error) {
-                    hideTypingWidget();
-                    addMessageWidget('Xin lỗi, không thể kết nối đến server. Vui lòng thử lại sau.', false);
-                    console.error('Error:', error);
-                    
-                    setTimeout(() => {
-                        showRecommendationsWidget();
-                    }, 500);
-                } finally {
-                    input.disabled = false;
-                    sendBtn.disabled = false;
-                    input.focus();
-                }
-            }
+                        function hideRecommendationsWidget() {
+                            const recommendations = document.getElementById('chatbotRecommendationsWidget');
+                            if (recommendations) {
+                                recommendations.style.display = 'none';
+                            }
+                        }
 
-            function formatMessageWidget(text) {
-                if (!text) return '';
-                
-                let formatted = text.replace(/\n/g, '<br>');
-                formatted = formatted.replace(/(\d+\.)\s/g, '<br>$1 ');
-                formatted = formatted.replace(/^- /gm, '<br>• ');
-                formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                formatted = formatted.replace(/([A-Z][^.!?]*:\s*)/g, '<strong>$1</strong>');
-                
-                return formatted;
-            }
+                        function showRecommendationsWidget() {
+                            const recommendations = document.getElementById('chatbotRecommendationsWidget');
+                            if (recommendations) {
+                                recommendations.style.display = 'block';
+                                showNewRecommendationsWidget();
+                            }
+                        }
+
+                        function toggleChatbotWidget() {
+                            const chatWindow = document.getElementById('chatbotWindowWidget');
+                            chatWindow.classList.toggle('active');
+
+                            if (chatWindow.classList.contains('active')) {
+                                showRecommendationsWidget();
+                                setTimeout(() => {
+                                    document.getElementById('chatInputWidget').focus();
+                                }, 300);
+                            }
+                        }
+
+                        function handleKeyPressWidget(event) {
+                            if (event.key === 'Enter') {
+                                sendMessageWidget();
+                            }
+                        }
+
+                        function addMessageWidget(content, isUser = false) {
+                            const messagesDiv = document.getElementById('chatMessagesWidget');
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+
+                            const avatar = document.createElement('div');
+                            avatar.className = 'message-avatar';
+                            avatar.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+
+                            const contentDiv = document.createElement('div');
+                            contentDiv.className = 'message-content';
+
+                            if (isUser) {
+                                contentDiv.textContent = content;
+                                messageDiv.appendChild(contentDiv);
+                                messageDiv.appendChild(avatar);
+                            } else {
+                                contentDiv.innerHTML = formatMessageWidget(content);
+                                messageDiv.appendChild(avatar);
+                                messageDiv.appendChild(contentDiv);
+                            }
+
+                            messagesDiv.appendChild(messageDiv);
+                            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        }
+
+                        function showTypingWidget() {
+                            const messagesDiv = document.getElementById('chatMessagesWidget');
+                            const typingDiv = document.createElement('div');
+                            typingDiv.className = 'message bot';
+                            typingDiv.id = 'typingIndicatorWidget';
+
+                            const avatar = document.createElement('div');
+                            avatar.className = 'message-avatar';
+                            avatar.innerHTML = '<i class="fas fa-robot"></i>';
+
+                            const typing = document.createElement('div');
+                            typing.className = 'typing-indicator';
+                            typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+                            typingDiv.appendChild(avatar);
+                            typingDiv.appendChild(typing);
+                            messagesDiv.appendChild(typingDiv);
+                            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        }
+
+                        function hideTypingWidget() {
+                            const typing = document.getElementById('typingIndicatorWidget');
+                            if (typing) {
+                                typing.remove();
+                            }
+                        }
+
+                        async function sendMessageWidget() {
+                            const input = document.getElementById('chatInputWidget');
+                            const sendBtn = document.getElementById('sendBtnWidget');
+                            const question = input.value.trim();
+
+                            if (!question)
+                                return;
+
+                            hideRecommendationsWidget();
+                            addMessageWidget(question, true);
+                            input.value = '';
+
+                            input.disabled = true;
+                            sendBtn.disabled = true;
+
+                            showTypingWidget();
+
+                            try {
+                                const response = await fetch('${pageContext.request.contextPath}/askGemini', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({q: question})
+                                });
+
+                                const data = await response.json();
+                                hideTypingWidget();
+
+                                if (data.success && data.answer) {
+                                    addMessageWidget(data.answer, false);
+                                } else {
+                                    addMessageWidget(data.error || 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.', false);
+                                }
+
+                                setTimeout(() => {
+                                    showRecommendationsWidget();
+                                }, 500);
+
+                            } catch (error) {
+                                hideTypingWidget();
+                                addMessageWidget('Xin lỗi, không thể kết nối đến server. Vui lòng thử lại sau.', false);
+                                console.error('Error:', error);
+
+                                setTimeout(() => {
+                                    showRecommendationsWidget();
+                                }, 500);
+                            } finally {
+                                input.disabled = false;
+                                sendBtn.disabled = false;
+                                input.focus();
+                            }
+                        }
+
+                        function formatMessageWidget(text) {
+                            if (!text)
+                                return '';
+
+                            let formatted = text.replace(/\n/g, '<br>');
+                            formatted = formatted.replace(/(\d+\.)\s/g, '<br>$1 ');
+                            formatted = formatted.replace(/^- /gm, '<br>• ');
+                            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                            formatted = formatted.replace(/([A-Z][^.!?]*:\s*)/g, '<strong>$1</strong>');
+
+                            return formatted;
+                        }
         </script>
     </body>
 </html>
