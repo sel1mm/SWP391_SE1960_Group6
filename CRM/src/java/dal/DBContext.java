@@ -16,9 +16,9 @@ public class DBContext {
 
 
 
-            String password = "sa12345";
+            String password = "sa123456";
 
-            String url = "jdbc:mysql://localhost:3306/giap?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
+            String url = "jdbc:mysql://localhost:3306/final?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
 
 
 
@@ -34,7 +34,7 @@ public class DBContext {
 
     public static void main(String[] args) throws ClassNotFoundException {
          String username = "root";
-            String password = "sa12345";
+            String password = "sa123456";
             String url = "jdbc:mysql://localhost:3306/final?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
             Class.forName("com.mysql.cj.jdbc.Driver");
 

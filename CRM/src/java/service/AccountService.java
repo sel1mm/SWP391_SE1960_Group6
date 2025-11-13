@@ -26,32 +26,31 @@ public class AccountService {
         accountProfileDAO = new AccountProfileDAO();
 
     }
-
-    public Response<Account> checkLogin(String username, String password) {
-        Account account = accountDAO.getAccountByUserName(username);
-
-        if (account != null
-                && "Active".equalsIgnoreCase(account.getStatus())
-                && account.getProfile() != null
-                && account.getProfile().isVerified()
-                && passwordHasher.checkPassword(password, account.getPasswordHash())) {
-
-            return new Response<>(account, true, MessageConstant.LOGIN_SUCCESS);
-
-        } else if (account != null && account.getProfile() != null && !account.getProfile().isVerified()) {
-            return new Response<>(null, false, "Tài khoản chưa được xác thực. Vui lòng xác thực trước khi đăng nhập.");
-        } else {
-            return new Response<>(null, false, MessageConstant.LOGIN_FAILED);
-        }
+public Response<Account> checkLogin(String username, String password) {
+    Account account = accountDAO.getAccountByUserName(username);
+    
+    if (account == null) {
+        return new Response<>(null, false, MessageConstant.LOGIN_FAILED);
     }
-
-    public boolean compareUsernameWithId(String username, int id) {
-        Account account = accountDAO.getAccountByUserName(username);
-        if (account != null && account.getAccountId() == id) {
-            return true;
-        }
-        return false;
+    
+    // ✅ Kiểm tra trạng thái Inactive
+    if ("Inactive".equalsIgnoreCase(account.getStatus())) {
+        return new Response<>(null, false, "Tài khoản chưa được kích hoạt. Vui lòng liên hệ quản trị viên.");
     }
+    
+    // Kiểm tra verified
+    if (account.getProfile() != null && !account.getProfile().isVerified()) {
+        return new Response<>(null, false, "Tài khoản chưa được xác thực. Vui lòng xác thực trước khi đăng nhập.");
+    }
+    
+    // Kiểm tra password
+    if (passwordHasher.checkPassword(password, account.getPasswordHash())) {
+        return new Response<>(account, true, MessageConstant.LOGIN_SUCCESS);
+    } else {
+        return new Response<>(null, false, MessageConstant.LOGIN_FAILED);
+    }
+}
+    
 
     public Response<Boolean> register(RegisterRequest request) {
         if (accountDAO.checkExistUserName(request.getUsername())) {
@@ -271,64 +270,65 @@ public class AccountService {
 
         return accountDAO.createAccount(account);
     }
+public Response<Account> updateAccount(Account account) {
+    // Validate required fields
+    if (account.getUsername() == null || account.getUsername().trim().isEmpty()) {
+        return new Response<>(null, false, "Username is required");
+    }
+    if (account.getEmail() == null || account.getEmail().trim().isEmpty()) {
+        return new Response<>(null, false, "Email is required");
+    }
 
-    public Response<Account> updateAccount(Account account) {
-        // Validate required fields
-        if (account.getUsername() == null || account.getUsername().trim().isEmpty()) {
-            return new Response<>(null, false, "Username is required");
-        }
-        if (account.getEmail() == null || account.getEmail().trim().isEmpty()) {
-            return new Response<>(null, false, "Email is required");
-        }
+    // Check if account exists
+    Response<Account> existingAccountRes = accountDAO.getAccountById2(account.getAccountId());
+    if (!existingAccountRes.isSuccess() || existingAccountRes.getData() == null) {
+        return new Response<>(null, false, "Account not found");
+    }
 
-        // Check if account exists
-        Response<Account> existingAccount = accountDAO.getAccountById2(account.getAccountId());
-        if (!existingAccount.isSuccess() || existingAccount.getData() == null) {
-            return new Response<>(null, false, "Account not found");
-        }
+    Account oldAccount = existingAccountRes.getData();
 
-        // Check if new username already exists (excluding current account)
+    // Check username change
+    if (!account.getUsername().trim().equalsIgnoreCase(oldAccount.getUsername())) {
         Response<Boolean> usernameExists = accountDAO.isUsernameExists(account.getUsername().trim());
         if (usernameExists.isSuccess() && usernameExists.getData()) {
-            // Check if it's the same account
-            if (!compareUsernameWithId(account.getUsername().trim(), account.getAccountId())) {
+            // Double check if it's not the same account
+            Account checkAccount = accountDAO.getAccountByUserName(account.getUsername().trim());
+            if (checkAccount != null && checkAccount.getAccountId() != account.getAccountId()) {
                 return new Response<>(null, false, "Username already exists");
             }
         }
-
-        // Check if new email already exists (excluding current account)
-        Response<Boolean> emailExists = accountDAO.isEmailExists(account.getEmail().trim());
-        if (emailExists.isSuccess() && emailExists.getData()) {
-            // Check if it's the same account
-            Account existing = existingAccount.getData();
-            if (!account.getEmail().trim().equals(existing.getEmail())) {
-                return new Response<>(null, false, "Email already exists");
-            }
-        }
-
-        // Check if new phone already exists (if provided and different from current)
-        if (account.getPhone() != null && !account.getPhone().trim().isEmpty()) {
-            Response<Boolean> phoneExists = accountDAO.isPhoneExists(account.getPhone().trim());
-            if (phoneExists.isSuccess() && phoneExists.getData()) {
-                Account existing = existingAccount.getData();
-                if (!account.getPhone().trim().equals(existing.getPhone())) {
-                    return new Response<>(null, false, "Phone number already exists");
-                }
-            }
-        }
-
-        // Clean up data
-        account.setUsername(account.getUsername().trim());
-        account.setEmail(account.getEmail().trim());
-        if (account.getPhone() != null) {
-            account.setPhone(account.getPhone().trim());
-        }
-        if (account.getFullName() != null) {
-            account.setFullName(account.getFullName().trim());
-        }
-
-        return accountDAO.updateAccount(account);
     }
+
+    // Check email change
+    if (!account.getEmail().trim().equalsIgnoreCase(oldAccount.getEmail())) {
+        Response<Boolean> emailExists = accountDAO.isEmailExistsExcludingId(account.getEmail().trim(), account.getAccountId());
+        if (emailExists.isSuccess() && emailExists.getData()) {
+            return new Response<>(null, false, "Email already exists");
+        }
+    }
+
+    // Check phone change (if provided)
+    if (account.getPhone() != null && !account.getPhone().trim().isEmpty()) {
+        if (oldAccount.getPhone() == null || !account.getPhone().trim().equalsIgnoreCase(oldAccount.getPhone())) {
+            Response<Boolean> phoneExists = accountDAO.isPhoneExistsExcludingId(account.getPhone().trim(), account.getAccountId());
+            if (phoneExists.isSuccess() && phoneExists.getData()) {
+                return new Response<>(null, false, "Phone number already exists");
+            }
+        }
+    }
+
+    // Clean up data
+    account.setUsername(account.getUsername().trim());
+    account.setEmail(account.getEmail().trim());
+    if (account.getPhone() != null) {
+        account.setPhone(account.getPhone().trim());
+    }
+    if (account.getFullName() != null) {
+        account.setFullName(account.getFullName().trim());
+    }
+
+    return accountDAO.updateAccount(account);
+}
 
     public Response<Account> updateCustomerAccount(Account account, AccountProfile profile) {
         try {

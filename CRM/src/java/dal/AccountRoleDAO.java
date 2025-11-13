@@ -106,53 +106,68 @@ public class AccountRoleDAO extends MyDAO {
         }
     }
 
-    public Response<AccountRole> assignRoleToAccount(int accountId, int roleId) {
-        String sql = "INSERT INTO AccountRole (accountId, roleId) VALUES (?, ?)";
-        try {
-            ps = con.prepareStatement(sql);
-            ps.setInt(1, accountId);
-            ps.setInt(2, roleId);
-            int affectedRows = ps.executeUpdate();
-            
-            if (affectedRows > 0) {
-                AccountRole accountRole = new AccountRole(accountId, roleId);
-                return new Response<>(accountRole, true, "Role assigned successfully");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (ps != null) ps.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        }
-        return new Response<>(null, false, "Failed to assign role");
-    }
+public Response<AccountRole> assignRoleToAccount(int accountId, int roleId) {
+    String sql = "INSERT INTO AccountRole (accountId, roleId) VALUES (?, ?)";
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setInt(1, accountId);
+        ps.setInt(2, roleId);
+        int affectedRows = ps.executeUpdate();
 
-    public Response<Boolean> removeRoleFromAccount(int accountId, int roleId) {
-        String sql = "DELETE FROM AccountRole WHERE accountId = ? AND roleId = ?";
-        try {
-            ps = con.prepareStatement(sql);
-            ps.setInt(1, accountId);
-            ps.setInt(2, roleId);
-            int affectedRows = ps.executeUpdate();
-            
-            if (affectedRows > 0) {
-                return new Response<>(true, true, "Role removed successfully");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (ps != null) ps.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+        if (affectedRows > 0) {
+            AccountRole accountRole = new AccountRole(accountId, roleId);
+            return new Response<>(accountRole, true, "✅ Cập nhật vai trò thành công.");
+        } else {
+            return new Response<>(null, false, "Không có dòng nào được thêm.");
         }
-        return new Response<>(false, false, "Failed to remove role");
-    }
 
+    } catch (SQLException e) {
+        e.printStackTrace();
+
+        // ✅ Phân biệt rõ lỗi trùng và lỗi khác
+        if (e.getMessage().contains("Duplicate entry")) {
+            return new Response<>(null, false, "Người dùng này đã có vai trò này rồi.");
+        } else if (e.getMessage().contains("foreign key")) {
+            return new Response<>(null, false, "Vai trò hoặc người dùng không tồn tại trong hệ thống.");
+        } else {
+            return new Response<>(null, false, "Không thể cập nhật vai trò: " + e.getMessage());
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return new Response<>(null, false, "Lỗi không xác định: " + e.getMessage());
+    } finally {
+        try {
+            if (ps != null) ps.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
+  public Response<Boolean> removeRoleFromAccount(int accountId, int roleId) {
+    String sql = "DELETE FROM AccountRole WHERE accountId = ? AND roleId = ?";
+    try {
+        ps = con.prepareStatement(sql);
+        ps.setInt(1, accountId);
+        ps.setInt(2, roleId);
+        int affectedRows = ps.executeUpdate();
+
+        if (affectedRows > 0) {
+            return new Response<>(true, true, "✅ Xóa vai trò thành công.");
+        } else {
+            return new Response<>(false, false, "Người dùng không có vai trò này.");
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return new Response<>(false, false, "Không thể xóa vai trò: " + e.getMessage());
+    } finally {
+        try {
+            if (ps != null) ps.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
     public Response<Boolean> hasRole(int accountId, int roleId) {
         String sql = "SELECT COUNT(*) as count FROM AccountRole WHERE accountId = ? AND roleId = ?";
         try {
