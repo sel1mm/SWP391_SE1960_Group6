@@ -1180,43 +1180,9 @@
             </form>
         </div>
     </div>
-<!-- Floating Chat Button -->
-<button class="chat-button" id="chatButton">
-    <i class="fas fa-robot"></i>
-</button>
 
-<!-- Chat Widget -->
-<div class="chat-widget" id="chatWidget">
-    <div class="chat-widget-header">
-        🤖 ChatGPT Assistant
-    </div>
-    
-    <div class="chat-widget-messages" id="chatWidgetMessages">
-        <div class="chat-widget-message ai">
-            <div class="chat-widget-message-content">
-                Xin chào! Tôi là trợ lý AI. Tôi có thể giúp gì cho bạn?
-            </div>
-        </div>
-    </div>
 
-    <div class="typing-indicator" id="chatTypingIndicator">
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-    </div>
-    
-    <div class="chat-widget-input-area">
-        <div class="chat-widget-input-wrapper">
-            <input 
-                type="text" 
-                id="chatMessageInput" 
-                placeholder="Nhập tin nhắn của bạn..."
-                autocomplete="off"
-            >
-            <button id="chatSendButton">Gửi</button>
-        </div>
-    </div>
-</div>
+
     <script>
         let deleteCategoryId = null;
         let deleteCategoryName = '';

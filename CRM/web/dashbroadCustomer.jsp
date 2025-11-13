@@ -354,72 +354,6 @@
             background: rgba(255,255,255,0.3);
         }
 
-        /* CHATBOT RECOMMENDATIONS */
-        .chatbot-recommendations {
-            padding: 15px 20px;
-            background: white;
-            border-bottom: 1px solid #eee;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        .recommendations-title {
-            font-size: 0.8rem;
-            color: #667eea;
-            font-weight: 600;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .recommendation-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .recommendation-chip {
-            background: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 20px;
-            padding: 6px 12px;
-            font-size: 0.75rem;
-            color: #333;
-            cursor: pointer;
-            transition: all 0.3s;
-            white-space: nowrap;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .recommendation-chip:hover {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-            transform: translateY(-2px);
-        }
-
-        .recommendation-category {
-            width: 100%;
-            font-size: 0.7rem;
-            color: #888;
-            margin-top: 5px;
-            margin-bottom: 3px;
-            font-weight: 500;
-        }
-
-        /* Scrollbar for recommendations */
-        .chatbot-recommendations::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .chatbot-recommendations::-webkit-scrollbar-thumb {
-            background: #ddd;
-            border-radius: 10px;
-        }
-
         .chatbot-messages {
             flex: 1;
             padding: 20px;
@@ -483,12 +417,20 @@
             border-radius: 18px;
             line-height: 1.5;
             font-size: 0.9rem;
+            white-space: pre-line;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .message.bot .message-content {
             background: white;
             color: #333;
             border-bottom-left-radius: 4px;
+        }
+
+        .message.bot .message-content strong {
+            color: #1e3c72;
+            font-weight: 600;
         }
 
         .message.user .message-content {
@@ -522,8 +464,106 @@
             30% { transform: translateY(-10px); }
         }
 
+        /* CHATBOT RECOMMENDATIONS - Moved to bottom */
+        .chatbot-recommendations {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            max-height: 140px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-recommendations.hidden {
+            max-height: 0;
+            padding: 0;
+            border: none;
+            overflow: hidden;
+        }
+
+        .recommendations-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .recommendations-title {
+            font-size: 0.75rem;
+            color: #667eea;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .recommendations-toggle {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .recommendations-toggle:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .recommendation-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .recommendation-chip {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 5px 10px;
+            font-size: 0.7rem;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .recommendation-chip:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .recommendation-category {
+            width: 100%;
+            font-size: 0.65rem;
+            color: #888;
+            margin-top: 6px;
+            margin-bottom: 3px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chatbot-recommendations::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chatbot-recommendations::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 10px;
+        }
+
         .chatbot-input {
-            padding: 20px;
+            padding: 15px;
             background: white;
             border-top: 1px solid #eee;
             display: flex;
@@ -575,38 +615,6 @@
                 right: 15px;
             }
         }
-        .message.bot .message-content {
-    background: white;
-    color: #333;
-    border-bottom-left-radius: 4px;
-    white-space: pre-line; /* QUAN TRỌNG: giữ nguyên xuống dòng */
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    line-height: 1.5;
-}
-
-.message.bot .message-content strong {
-    color: #1e3c72;
-    font-weight: 600;
-}
-
-.message.bot .message-content br {
-    display: block;
-    content: "";
-    margin-bottom: 8px;
-}
-
-/* Đảm bảo danh sách hiển thị đẹp */
-.message.bot .message-content ul,
-.message.bot .message-content ol {
-    margin: 8px 0;
-    padding-left: 20px;
-}
-
-.message.bot .message-content li {
-    margin-bottom: 4px;
-    line-height: 1.4;
-}
     </style>
 </head>
 <body>
@@ -728,17 +736,6 @@
                 </button>
             </div>
 
-            <!-- PHẦN RECOMMENDATIONS -->
-            <div class="chatbot-recommendations" id="chatbotRecommendations">
-                <div class="recommendations-title">
-                    <i class="fas fa-lightbulb"></i>
-                    Câu hỏi thường gặp
-                </div>
-                <div class="recommendation-chips" id="recommendationChips">
-                    <!-- Recommendations sẽ được thêm bằng JavaScript -->
-                </div>
-            </div>
-
             <div class="chatbot-messages" id="chatMessages">
                 <div class="message bot">
                     <div class="message-avatar">
@@ -747,6 +744,22 @@
                     <div class="message-content">
                         Xin chào! Tôi là trợ lý AI của hệ thống. Tôi có thể giúp bạn trả lời các câu hỏi về dịch vụ, hợp đồng, thiết bị và hóa đơn. Bạn cần hỗ trợ gì?
                     </div>
+                </div>
+            </div>
+
+            <!-- PHẦN RECOMMENDATIONS - Moved to bottom -->
+            <div class="chatbot-recommendations" id="chatbotRecommendations">
+                <div class="recommendations-header">
+                    <div class="recommendations-title">
+                        <i class="fas fa-lightbulb"></i>
+                        Câu hỏi gợi ý
+                    </div>
+                    <button class="recommendations-toggle" onclick="toggleRecommendations()">
+                        <i class="fas fa-sync-alt"></i> Đổi câu hỏi
+                    </button>
+                </div>
+                <div class="recommendation-chips" id="recommendationChips">
+                    <!-- Recommendations sẽ được thêm bằng JavaScript -->
                 </div>
             </div>
 
@@ -871,10 +884,8 @@
         const container = document.getElementById('recommendationChips');
         if (!container) return;
 
-        // Clear existing content
         container.innerHTML = '';
 
-        // Get all questions from all categories
         const allQuestions = FAQ_DATA.flatMap(category => 
             category.questions.map(q => ({
                 question: q.question,
@@ -882,11 +893,9 @@
             }))
         );
 
-        // Shuffle and take 6 questions (random mỗi lần)
         const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
         const selectedQuestions = shuffled.slice(0, 6);
 
-        // Group by category for better organization
         const questionsByCategory = {};
         selectedQuestions.forEach(item => {
             if (!questionsByCategory[item.category]) {
@@ -895,15 +904,12 @@
             questionsByCategory[item.category].push(item.question);
         });
 
-        // Render chips by category
         Object.entries(questionsByCategory).forEach(([category, questions]) => {
-            // Add category label
             const categoryDiv = document.createElement('div');
             categoryDiv.className = 'recommendation-category';
             categoryDiv.textContent = category;
             container.appendChild(categoryDiv);
 
-            // Add question chips
             questions.forEach(question => {
                 const chip = document.createElement('div');
                 chip.className = 'recommendation-chip';
@@ -921,18 +927,21 @@
         sendMessage();
     }
 
+    function toggleRecommendations() {
+        showNewRecommendations();
+    }
+
     function hideRecommendations() {
         const recommendations = document.getElementById('chatbotRecommendations');
         if (recommendations) {
-            recommendations.style.display = 'none';
+            recommendations.classList.add('hidden');
         }
     }
 
     function showRecommendations() {
         const recommendations = document.getElementById('chatbotRecommendations');
         if (recommendations) {
-            recommendations.style.display = 'block';
-            // Hiển thị recommendations mới mỗi lần mở chat
+            recommendations.classList.remove('hidden');
             showNewRecommendations();
         }
     }
@@ -969,33 +978,31 @@
         }
     }
 
-  function addMessage(content, isUser = false) {
-    const messagesDiv = document.getElementById('chatMessages');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    avatar.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    
-    if (isUser) {
-        // Tin nhắn user - chỉ text bình thường
-        contentDiv.textContent = content;
-        messageDiv.appendChild(contentDiv);
-        messageDiv.appendChild(avatar);
-    } else {
-        // Tin nhắn bot - có format HTML
-        contentDiv.innerHTML = formatMessage(content);
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(contentDiv);
+    function addMessage(content, isUser = false) {
+        const messagesDiv = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        
+        if (isUser) {
+            contentDiv.textContent = content;
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(avatar);
+        } else {
+            contentDiv.innerHTML = formatMessage(content);
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+        }
+        
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
-    
-    messagesDiv.appendChild(messageDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
 
     function showTyping() {
         const messagesDiv = document.getElementById('chatMessages');
@@ -1031,18 +1038,14 @@
         
         if (!question) return;
         
-        // Ẩn recommendations khi gửi tin nhắn
         hideRecommendations();
         
-        // Thêm tin nhắn của user
         addMessage(question, true);
         input.value = '';
         
-        // Disable input
         input.disabled = true;
         sendBtn.disabled = true;
         
-        // Show typing
         showTyping();
         
         try {
@@ -1063,7 +1066,6 @@
                 addMessage(data.error || 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.', false);
             }
             
-            // QUAN TRỌNG: Hiển thị recommendations mới SAU KHI trả lời xong
             setTimeout(() => {
                 showRecommendations();
             }, 500);
@@ -1073,7 +1075,6 @@
             addMessage('Xin lỗi, không thể kết nối đến server. Vui lòng thử lại sau.', false);
             console.error('Error:', error);
             
-            // Vẫn hiển thị recommendations mới dù có lỗi
             setTimeout(() => {
                 showRecommendations();
             }, 500);
@@ -1083,26 +1084,18 @@
             input.focus();
         }
     }
+
     function formatMessage(text) {
-    if (!text) return '';
-    
-    // 1. Thay thế xuống dòng bằng <br>
-    let formatted = text.replace(/\n/g, '<br>');
-    
-    // 2. Format danh sách có số thứ tự
-    formatted = formatted.replace(/(\d+\.)\s/g, '<br>$1 ');
-    
-    // 3. Format danh sách có dấu gạch đầu dòng
-    formatted = formatted.replace(/^- /gm, '<br>• ');
-    
-    // 4. Format chữ in đậm
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // 5. Format tiêu đề
-    formatted = formatted.replace(/([A-Z][^.!?]*:\s*)/g, '<strong>$1</strong>');
-    
-    return formatted;
-}
+        if (!text) return '';
+        
+        let formatted = text.replace(/\n/g, '<br>');
+        formatted = formatted.replace(/(\d+\.)\s/g, '<br>$1 ');
+        formatted = formatted.replace(/^- /gm, '<br>• ');
+        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/([A-Z][^.!?]*:\s*)/g, '<strong>$1</strong>');
+        
+        return formatted;
+    }
 </script>
 </body>
 </html>
