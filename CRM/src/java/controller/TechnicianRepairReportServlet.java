@@ -859,7 +859,8 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                         return;
                     }
 
-                    boolean updated = reportDAO.updateRepairReport(report);
+                    // Use updateReportWithDetails to update both header AND parts
+                    boolean updated = reportDAO.updateReportWithDetails(report, parts);
                     if (updated) {
                         req.getSession().removeAttribute(cartKey);
                         req.setAttribute("success", "Báo cáo sửa chữa đã được cập nhật thành công");
