@@ -232,6 +232,9 @@ public class ViewContractsCustomer extends HttpServlet {
         List<Contract> filteredList = new ArrayList<>();
 
         for (Contract contract : allContracts) {
+            if ("Appendix".equals(contract.getContractType())) {
+                continue;
+            }
             // Apply filters
             if (status != null && !status.isEmpty() && !contract.getStatus().equals(status)) {
                 continue;
@@ -337,6 +340,10 @@ public class ViewContractsCustomer extends HttpServlet {
         int count = 0;
 
         for (Contract contract : allContracts) {
+            
+            if ("Appendix".equals(contract.getContractType())) {
+            continue;
+        }
             // Apply same filters as getFilteredContracts
             if (status != null && !status.isEmpty() && !contract.getStatus().equals(status)) {
                 continue;
@@ -393,6 +400,9 @@ public class ViewContractsCustomer extends HttpServlet {
         int count = 0;
 
         for (Contract contract : allContracts) {
+            if ("Appendix".equals(contract.getContractType())) {
+            continue;
+        }
             if (contract.getStatus().equals(status)) {
                 count++;
             }
