@@ -674,6 +674,7 @@ public class WorkTaskDAO extends MyDAO {
             LEFT JOIN Account a_sched ON c.customerId = a_sched.accountId
             WHERE wt.technicianId = ?
               AND wt.status NOT IN ('Completed', 'Cancelled')
+              AND wt.scheduleId IS NULL
             ORDER BY sortKey ASC, wt.taskId ASC
         """;
 
