@@ -83,10 +83,18 @@ public class TechnicianTaskServlet extends HttpServlet {
                         }
                     }
                     
+                    String customerAddress = taskWithCustomer.customerAddress;
+                    String encodedAddress = null;
+                    if (customerAddress != null && !customerAddress.trim().isEmpty()) {
+                        encodedAddress = java.net.URLEncoder.encode(customerAddress.trim(), java.nio.charset.StandardCharsets.UTF_8);
+                    }
+
                     req.setAttribute("task", task);
                     req.setAttribute("assignmentDate", taskWithCustomer.assignmentDate);
                     req.setAttribute("existingReport", existingReport);
                     req.setAttribute("contractId", contractId); // Pass contractId to JSP
+                    req.setAttribute("customerAddress", customerAddress);
+                    req.setAttribute("encodedCustomerAddress", encodedAddress);
                     // Also expose scheduleId so JSP can render Create Report for schedules
                     if (task.getScheduleId() != null && task.getRequestId() == null) {
                         req.setAttribute("effectiveScheduleId", task.getScheduleId());

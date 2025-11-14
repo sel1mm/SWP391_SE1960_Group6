@@ -139,6 +139,36 @@
           </div>
         </div>
       </div>
+      
+      <c:if test="${not empty customerAddress}">
+        <div class="card crm-card-shadow mt-3">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Vị trí khách hàng</h5>
+            <span class="badge bg-light text-dark">
+              <i class="bi bi-geo-alt me-1"></i>${fn:escapeXml(customerAddress)}
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="ratio ratio-4x3 mb-3">
+              <iframe
+                src="https://www.google.com/maps?q=${encodedCustomerAddress}&output=embed"
+                width="100%"
+                height="100%"
+                style="border:0;"
+                allowfullscreen
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+              </iframe>
+            </div>
+            <a class="btn btn-outline-primary w-100"
+               target="_blank"
+               rel="noopener noreferrer"
+               href="https://www.google.com/maps/dir/?api=1&destination=${encodedCustomerAddress}">
+              <i class="bi bi-geo-fill me-1"></i>Mở Google Maps (Chỉ đường)
+            </a>
+          </div>
+        </div>
+      </c:if>
     </div>
     
     <div class="col-lg-4">
@@ -188,6 +218,7 @@
           </div>
         </div>
       </div>
+      
       
       <div class="card crm-card-shadow mt-3">
         <div class="card-header">

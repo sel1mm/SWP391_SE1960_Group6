@@ -175,6 +175,7 @@ public class WorkTaskDAO extends MyDAO {
         public String customerName;
         public String customerEmail;
         public java.sql.Date assignmentDate;
+        public String customerAddress;
 
         public WorkTask getTask() {
             return task;
@@ -198,6 +199,10 @@ public class WorkTaskDAO extends MyDAO {
 
         public void setAssignmentDate(java.sql.Date assignmentDate) {
             this.assignmentDate = assignmentDate;
+        }
+
+        public String getCustomerAddress() {
+            return customerAddress;
         }
     }
 
@@ -235,7 +240,8 @@ public class WorkTaskDAO extends MyDAO {
         String sql = "SELECT wt.taskId, wt.requestId, wt.scheduleId, wt.technicianId, "
                 + "wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status, "
                 + "COALESCE(wt.requestId, ms.requestId) AS effectiveRequestId, "
-                + "COALESCE(DATE(wa_max.assignmentDate), ms.scheduledDate) AS assignmentDate "
+                + "COALESCE(DATE(wa_max.assignmentDate), ms.scheduledDate) AS assignmentDate, "
+                + "ap.address AS customerAddress "
                 + "FROM WorkTask wt "
                 + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
                 + "LEFT JOIN ( "
@@ -243,6 +249,8 @@ public class WorkTaskDAO extends MyDAO {
                 + "  FROM WorkAssignment "
                 + "  GROUP BY taskId "
                 + ") wa_max ON wa_max.taskId = wt.taskId "
+                + "LEFT JOIN ServiceRequest sr ON sr.requestId = COALESCE(wt.requestId, ms.requestId) "
+                + "LEFT JOIN AccountProfile ap ON sr.createdBy = ap.accountId "
                 + "WHERE wt.taskId = ?";
 
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
@@ -257,6 +265,7 @@ public class WorkTaskDAO extends MyDAO {
                         taskWithCustomer.task.setRequestId(effectiveRequestId);
                     }
                     taskWithCustomer.assignmentDate = rs.getDate("assignmentDate");
+                    taskWithCustomer.customerAddress = rs.getString("customerAddress");
                     return taskWithCustomer;
                 }
             }
