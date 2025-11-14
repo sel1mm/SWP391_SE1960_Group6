@@ -207,6 +207,38 @@ public class WorkTaskDAO extends MyDAO {
     }
 
     /**
+     * Simple stats holder for technician dashboard.
+     */
+    public static class TaskStats {
+
+        private int total;
+        private int assigned;
+        private int inProgress;
+        private int completed;
+        private int failed;
+
+        public int getTotal() {
+            return total;
+        }
+
+        public int getAssigned() {
+            return assigned;
+        }
+
+        public int getInProgress() {
+            return inProgress;
+        }
+
+        public int getCompleted() {
+            return completed;
+        }
+
+        public int getFailed() {
+            return failed;
+        }
+    }
+
+    /**
      * Find a specific task by ID
      */
     public WorkTask findById(int taskId) throws SQLException {
@@ -271,6 +303,34 @@ public class WorkTaskDAO extends MyDAO {
             }
         }
         return null;
+    }
+
+    /**
+     * Get aggregated task counts for a technician.
+     */
+    public TaskStats getTaskStatsForTechnician(int technicianId) throws SQLException {
+        String sql = "SELECT "
+                + "COUNT(*) AS total, "
+                + "SUM(CASE WHEN status = 'Assigned' THEN 1 ELSE 0 END) AS assigned, "
+                + "SUM(CASE WHEN status = 'In Progress' THEN 1 ELSE 0 END) AS inProgress, "
+                + "SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) AS completed, "
+                + "SUM(CASE WHEN status = 'Failed' THEN 1 ELSE 0 END) AS failed "
+                + "FROM WorkTask WHERE technicianId = ?";
+
+        TaskStats stats = new TaskStats();
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, technicianId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    stats.total = rs.getInt("total");
+                    stats.assigned = rs.getInt("assigned");
+                    stats.inProgress = rs.getInt("inProgress");
+                    stats.completed = rs.getInt("completed");
+                    stats.failed = rs.getInt("failed");
+                }
+            }
+        }
+        return stats;
     }
 
     /**

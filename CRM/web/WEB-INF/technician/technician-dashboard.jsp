@@ -15,6 +15,70 @@
     </div>
   </div>
 
+  <c:set var="stats" value="${taskStats}" />
+  <c:set var="totalTasks" value="${empty stats ? 0 : stats.total}" />
+  <c:set var="assignedTasks" value="${empty stats ? 0 : stats.assigned}" />
+  <c:set var="inProgressTasks" value="${empty stats ? 0 : stats.inProgress}" />
+  <c:set var="completedTasks" value="${empty stats ? 0 : stats.completed}" />
+  <c:set var="failedTasks" value="${empty stats ? 0 : stats.failed}" />
+
+  <div class="card crm-card-shadow mb-4">
+    <div class="card-body">
+      <div class="row gy-3 align-items-center">
+        <div class="col-lg-4">
+          <p class="mb-1 text-muted">Xin chào, 
+            <a href="${pageContext.request.contextPath}/manageProfile" class="fw-bold text-decoration-none">
+              ${fn:escapeXml(technicianName)}
+            </a>
+          </p>
+          <p class="mb-1">
+            TechnicianID: 
+            <a href="${pageContext.request.contextPath}/manageProfile" class="text-decoration-none">
+              #${technicianId}
+            </a>
+          </p>
+          <p class="mb-0 text-muted">
+            Thời gian: ${currentDateTime}
+          </p>
+        </div>
+        <div class="col-lg-8">
+          <div class="row text-center gy-3">
+            <div class="col-6 col-md-4 col-lg">
+              <a class="text-decoration-none" href="${pageContext.request.contextPath}/technician/work-history">
+                <div class="fw-bold fs-4 text-primary">${totalTasks}</div>
+                <div class="text-muted small">Tổng số công việc</div>
+              </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg">
+              <a class="text-decoration-none" href="${pageContext.request.contextPath}/technician/tasks?q=&status=Assigned">
+                <div class="fw-bold fs-4 text-info">${assignedTasks}</div>
+                <div class="text-muted small">Đã được giao</div>
+              </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg">
+              <a class="text-decoration-none" href="${pageContext.request.contextPath}/technician/tasks?q=&status=In+Progress">
+                <div class="fw-bold fs-4 text-warning">${inProgressTasks}</div>
+                <div class="text-muted small">Đang thực hiện</div>
+              </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg">
+              <a class="text-decoration-none" href="${pageContext.request.contextPath}/technician/tasks?q=&status=Completed">
+                <div class="fw-bold fs-4 text-success">${completedTasks}</div>
+                <div class="text-muted small">Hoàn thành</div>
+              </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg">
+              <a class="text-decoration-none" href="${pageContext.request.contextPath}/technician/tasks?q=&status=Failed">
+                <div class="fw-bold fs-4 text-danger">${failedTasks}</div>
+                <div class="text-muted small">Thất bại</div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Quick Stats Cards -->
   <div class="row mb-4">
     <div class="col-md-3">
