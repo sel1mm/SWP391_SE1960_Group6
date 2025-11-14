@@ -793,11 +793,13 @@ public class ContractDAO extends MyDAO {
         String sql = "SELECT "
                 + "    c.contractId, c.customerId, c.contractDate, c.contractType, c.status, c.details, "
                 + "    a.fullName as customerName, "
+                + "    ap.address as customerAddress, "
                 + "    ce.contractEquipmentId, ce.equipmentId, ce.startDate, ce.endDate, ce.quantity, ce.price, "
                 + "    e.serialNumber, e.model as equipmentModel, e.description as equipmentDescription, "
                 + "    e.installDate "
                 + "FROM Contract c "
                 + "JOIN Account a ON c.customerId = a.accountId "
+                + "LEFT JOIN AccountProfile ap ON a.accountId = ap.accountId "
                 + "LEFT JOIN ContractEquipment ce ON c.contractId = ce.contractId "
                 + "LEFT JOIN Equipment e ON ce.equipmentId = e.equipmentId "
                 + "WHERE c.contractId = ?";
@@ -818,7 +820,14 @@ public class ContractDAO extends MyDAO {
                         equipment.setModel(rs.getString("equipmentModel"));
                         equipment.setDescription(rs.getString("equipmentDescription"));
                         equipment.setStatus("InUse"); // Equipment in contracts is always InUse
-                        equipment.setLocation("Contract Assignment"); // Default location
+                        
+                        // Set location from customer's address (where equipment is being used)
+                        String customerAddress = rs.getString("customerAddress");
+                        if (customerAddress != null && !customerAddress.trim().isEmpty()) {
+                            equipment.setLocation(customerAddress.trim());
+                        } else {
+                            equipment.setLocation(null); // Will show "Không xác định" in JSP
+                        }
 
                         Date installDate = rs.getDate("installDate");
                         if (installDate != null) {

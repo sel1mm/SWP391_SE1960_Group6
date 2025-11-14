@@ -242,9 +242,18 @@
                 </c:choose>
               </c:otherwise>
             </c:choose>
-            <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
-              <i class="bi bi-file-earmark-text me-1"></i>Xem hợp đồng
-            </a>
+            <c:choose>
+              <c:when test="${contractId != null}">
+                <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts?action=contractDetail&contractId=${contractId}">
+                  <i class="bi bi-file-earmark-text me-1"></i>Xem hợp đồng
+                </a>
+              </c:when>
+              <c:otherwise>
+                <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts">
+                  <i class="bi bi-file-earmark-text me-1"></i>Xem hợp đồng
+                </a>
+              </c:otherwise>
+            </c:choose>
           </div>
         </div>
       </div>

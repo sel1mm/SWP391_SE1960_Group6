@@ -344,7 +344,7 @@ public class ScheduleMaintenanceServlet extends HttpServlet {
                 task.setTaskType("Scheduled");
                 task.setTaskDetails("Bảo trì " + scheduleType + " cho khách hàng #" + (customerId != null ? customerId : "N/A"));
                 task.setStartDate(null); // Will be auto-set on first status update by technician
-                task.setEndDate(scheduledDate);
+                task.setEndDate(null); // Will be auto-set when technician marks task as Completed
                 task.setStatus("Assigned");
 
                 int taskId = workTaskDAO.createWorkTask(task);

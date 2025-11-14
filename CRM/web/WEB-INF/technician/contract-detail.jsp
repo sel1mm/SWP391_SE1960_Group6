@@ -174,10 +174,6 @@
                       </c:choose>
                     </p>
                   </div>
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Đơn giá</label>
-                    <p class="form-control-plaintext">$${contractWithEquipment.equipment.unitPrice}</p>
-                  </div>
                 </div>
               </div>
               
@@ -228,12 +224,6 @@
                   <small>Thiết bị #${contractWithEquipment.equipment.equipmentId}</small>
                   <small class="text-muted">SL: ${contractWithEquipment.quantity}</small>
                 </div>
-                <c:if test="${contractWithEquipment.price != null}">
-                  <div class="d-flex justify-content-between">
-                    <small>Giá:</small>
-                    <small class="fw-bold">$${contractWithEquipment.price}</small>
-                  </div>
-                </c:if>
               </div>
             </div>
           </c:if>

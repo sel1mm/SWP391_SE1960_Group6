@@ -128,8 +128,8 @@ public class WorkTaskDAO extends MyDAO {
             params.add(statusFilter.trim());
         }
 
-        // Technician Tasks list: closest date first using endDate, then startDate (DESC)
-        sql.append(" ORDER BY COALESCE(wt.endDate, wt.startDate, ms.scheduledDate) DESC LIMIT ? OFFSET ?");
+        // Technician Tasks list: order by assignment date (Ngày giao việc) DESC, then taskId (Mã công việc) DESC
+        sql.append(" ORDER BY COALESCE(DATE(wa_max.assignmentDate), ms.scheduledDate) DESC, wt.taskId DESC LIMIT ? OFFSET ?");
         params.add(pageSize);
         params.add((page - 1) * pageSize);
 

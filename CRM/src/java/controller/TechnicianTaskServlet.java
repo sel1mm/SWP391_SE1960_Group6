@@ -2,8 +2,12 @@ package controller;
 
 import dal.WorkTaskDAO;
 import dal.RepairReportDAO;
+import dal.ServiceRequestDAO;
+import dal.MaintenanceScheduleDAO;
 import model.WorkTask;
 import model.RepairReport;
+import model.ServiceRequest;
+import model.MaintenanceSchedule;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,9 +64,29 @@ public class TechnicianTaskServlet extends HttpServlet {
                     } catch (SQLException e) {
                         System.err.println("Error loading existing report: " + e.getMessage());
                     }
+                    
+                    // Fetch contractId for "Xem Hợp Đồng" button
+                    Integer contractId = null;
+                    if (task.getRequestId() != null) {
+                        // Get contractId from ServiceRequest
+                        ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO();
+                        ServiceRequest serviceRequest = serviceRequestDAO.getRequestById(task.getRequestId());
+                        if (serviceRequest != null) {
+                            contractId = serviceRequest.getContractId();
+                        }
+                    } else if (task.getScheduleId() != null) {
+                        // Get contractId from MaintenanceSchedule
+                        MaintenanceScheduleDAO maintenanceScheduleDAO = new MaintenanceScheduleDAO();
+                        MaintenanceSchedule schedule = maintenanceScheduleDAO.getScheduleById(task.getScheduleId());
+                        if (schedule != null) {
+                            contractId = schedule.getContractId();
+                        }
+                    }
+                    
                     req.setAttribute("task", task);
                     req.setAttribute("assignmentDate", taskWithCustomer.assignmentDate);
                     req.setAttribute("existingReport", existingReport);
+                    req.setAttribute("contractId", contractId); // Pass contractId to JSP
                     // Also expose scheduleId so JSP can render Create Report for schedules
                     if (task.getScheduleId() != null && task.getRequestId() == null) {
                         req.setAttribute("effectiveScheduleId", task.getScheduleId());
