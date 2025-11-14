@@ -87,8 +87,8 @@ public class WorkTaskDAO extends MyDAO {
         sql.append("COALESCE(a_ms.fullName, a_sr.fullName, a_c.fullName) AS customerName, ");
         sql.append("COALESCE(a_ms.email, a_sr.email, a_c.email) AS customerEmail, ");
         sql.append("COALESCE(wt.requestId, ms.requestId) AS effectiveRequestId, ");
-        // Assignment date from latest WorkAssignment
-        sql.append("wa.assignmentDate AS assignmentDate ");
+        // Assignment date: from WorkAssignment for request-based tasks, or MaintenanceSchedule.scheduledDate for scheduled tasks
+        sql.append("COALESCE(DATE(wa_max.assignmentDate), ms.scheduledDate) AS assignmentDate ");
         sql.append("FROM WorkTask wt ");
         // Join MaintenanceSchedule first, then ServiceRequest can reference ms.requestId
         sql.append("LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId ");
@@ -99,12 +99,12 @@ public class WorkTaskDAO extends MyDAO {
         sql.append("LEFT JOIN Account a_ms ON ms.customerId = a_ms.accountId ");
         sql.append("LEFT JOIN Contract c ON ms.contractId = c.contractId ");
         sql.append("LEFT JOIN Account a_c ON c.customerId = a_c.accountId ");
-        // Join latest assignment per task (most recent assignmentDate)
+        // Join latest assignment per task (most recent assignmentDate) - simplified approach
         sql.append("LEFT JOIN ( ");
-        sql.append("  SELECT wa1.* FROM WorkAssignment wa1 ");
-        sql.append("  JOIN (SELECT taskId, MAX(assignmentDate) AS maxDate FROM WorkAssignment GROUP BY taskId) wa_last ");
-        sql.append("    ON wa1.taskId = wa_last.taskId AND wa1.assignmentDate = wa_last.maxDate ");
-        sql.append(") wa ON wa.taskId = wt.taskId ");
+        sql.append("  SELECT taskId, MAX(assignmentDate) AS assignmentDate ");
+        sql.append("  FROM WorkAssignment ");
+        sql.append("  GROUP BY taskId ");
+        sql.append(") wa_max ON wa_max.taskId = wt.taskId ");
         // Remove other fallbacks; only WorkAssignment defines planning for this view
         sql.append("WHERE wt.technicianId = ?");
 
@@ -149,7 +149,14 @@ public class WorkTaskDAO extends MyDAO {
                     taskWithCustomer.customerId = rs.getObject("customerId", Integer.class);
                     taskWithCustomer.customerName = rs.getString("customerName");
                     taskWithCustomer.customerEmail = rs.getString("customerEmail");
-                    taskWithCustomer.assignmentDate = rs.getTimestamp("assignmentDate");
+                    java.sql.Date assignmentDateValue = rs.getDate("assignmentDate");
+                    // Debug: Log assignmentDate retrieval
+                    if (assignmentDateValue == null) {
+                        System.out.println("DEBUG: assignmentDate is NULL for taskId: " + taskWithCustomer.task.getTaskId());
+                    } else {
+                        System.out.println("DEBUG: assignmentDate found for taskId: " + taskWithCustomer.task.getTaskId() + " = " + assignmentDateValue);
+                    }
+                    taskWithCustomer.assignmentDate = assignmentDateValue;
                     tasks.add(taskWithCustomer);
                 }
             }
@@ -167,7 +174,7 @@ public class WorkTaskDAO extends MyDAO {
         public Integer customerId;
         public String customerName;
         public String customerEmail;
-        public java.sql.Timestamp assignmentDate;
+        public java.sql.Date assignmentDate;
 
         public WorkTask getTask() {
             return task;
@@ -185,11 +192,11 @@ public class WorkTaskDAO extends MyDAO {
             return customerEmail;
         }
 
-        public java.sql.Timestamp getAssignmentDate() {
+        public java.sql.Date getAssignmentDate() {
             return assignmentDate;
         }
 
-        public void setAssignmentDate(java.sql.Timestamp assignmentDate) {
+        public void setAssignmentDate(java.sql.Date assignmentDate) {
             this.assignmentDate = assignmentDate;
         }
     }
