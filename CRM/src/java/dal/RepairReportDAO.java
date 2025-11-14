@@ -302,7 +302,24 @@ public class RepairReportDAO extends MyDAO {
                             }
                         }
                     }
-
+                    // ✅✅✅ THÊM CODE TẠI ĐÂY ✅✅✅
+// GHI LỊCH SỬ: Available → InUse
+PartDetailHistoryDAO historyDAO = new PartDetailHistoryDAO();
+for (Integer partDetailId : reservedPartDetailIds) {
+    boolean historyAdded = historyDAO.addHistoryWithTransaction(
+        connection,
+        partDetailId,
+        "Available",
+        "InUse",
+        report.getTechnicianId(),
+        "Technician reserved part for repair report #" + report.getReportId()
+    );
+    
+    if (!historyAdded) {
+        System.err.println("⚠️ Failed to log history for partDetailId: " + partDetailId);
+    }
+}
+// ✅✅✅ KẾT THÚC CODE THÊM ✅✅✅
                     // Insert RepairReportDetail - for quantity > 1, we need to insert multiple rows
                     // Each row represents one PartDetail instance
                     for (int i = 0; i < reservedPartDetailIds.size(); i++) {
@@ -475,6 +492,24 @@ public class RepairReportDAO extends MyDAO {
                             updatePs.executeUpdate();
                         }
                     }
+// ✅✅✅ THÊM CODE TẠI ĐÂY ✅✅✅
+// GHI LỊCH SỬ: Available → InUse
+PartDetailHistoryDAO historyDAO = new PartDetailHistoryDAO();
+for (Integer partDetailId : reservedPartDetailIds) {
+    boolean historyAdded = historyDAO.addHistoryWithTransaction(
+        connection,
+        partDetailId,
+        "Available",
+        "InUse",
+        report.getTechnicianId(),
+        "Technician updated part reservation for repair report #" + report.getReportId()
+    );
+    
+    if (!historyAdded) {
+        System.err.println("⚠️ Failed to log history for partDetailId: " + partDetailId);
+    }
+}
+// ✅✅✅ KẾT THÚC CODE THÊM ✅✅✅
 
                     // Insert RepairReportDetail rows
                     for (int i = 0; i < reservedPartDetailIds.size(); i++) {

@@ -2783,54 +2783,9 @@
                 </div>
             </div>
         </div>
-        <!-- HTML Structure -->
-        <div class="chatbot-container">
-            <button class="chatbot-button" onclick="toggleChatbotWidget()">
-                <i class="fas fa-comment-dots"></i>
-                <span class="chatbot-badge">AI</span>
-            </button>
+     
 
-            <div class="chatbot-window" id="chatbotWindowWidget">
-                <div class="chatbot-header">
-                    <h4>
-                        <i class="fas fa-robot"></i>
-                        Trợ lý AI
-                    </h4>
-                    <button class="chatbot-close" onclick="toggleChatbotWidget()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-
-                <!-- PHẦN RECOMMENDATIONS -->
-                <div class="chatbot-recommendations" id="chatbotRecommendationsWidget">
-                    <div class="recommendations-title">
-                        <i class="fas fa-lightbulb"></i>
-                        Câu hỏi thường gặp
-                    </div>
-                    <div class="recommendation-chips" id="recommendationChipsWidget">
-                        <!-- Recommendations sẽ được thêm bằng JavaScript -->
-                    </div>
-                </div>
-
-                <div class="chatbot-messages" id="chatMessagesWidget">
-                    <div class="message bot">
-                        <div class="message-avatar">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <div class="message-content">
-                            Xin chào! Tôi là trợ lý AI của hệ thống. Tôi có thể giúp bạn trả lời các câu hỏi về dịch vụ, hợp đồng, thiết bị và hóa đơn. Bạn cần hỗ trợ gì?
-                        </div>
-                    </div>
-                </div>
-
-                <div class="chatbot-input">
-                    <input type="text" id="chatInputWidget" placeholder="Nhập câu hỏi của bạn..." onkeypress="handleKeyPressWidget(event)">
-                    <button class="chatbot-send" id="sendBtnWidget" onclick="sendMessageWidget()">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
+           
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>

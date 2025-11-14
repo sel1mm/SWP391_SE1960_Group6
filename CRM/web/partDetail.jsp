@@ -979,7 +979,15 @@
                                 <td>${ls.partId}</td>
                                 <td>${ls.categoryName != null ? ls.categoryName : 'N/A'}</td>
                                 <td>${ls.serialNumber}</td>
-                                <td>${ls.status}</td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${ls.status == 'Available'}">Sẵn sàng</c:when>
+                                        <c:when test="${ls.status == 'Faulty'}">Lỗi</c:when>
+                                        <c:when test="${ls.status == 'InUse'}">Đang dùng</c:when>
+                                        <c:when test="${ls.status == 'Retired'}">Ngừng dùng</c:when>
+                                        <c:otherwise>${ls.status}</c:otherwise>
+                                    </c:choose>
+                                </td>
                                 <td title="${ls.location}">${ls.location}</td>
                                 <td>${ls.username}</td>
                                 <td>${ls.lastUpdatedDate}</td>
@@ -1046,12 +1054,12 @@
 
                         <label>Status *</label>
                         <select name="status" id="status" required>
-                            <option value="Available">Available</option>
-                            <option value="Faulty">Faulty</option>
-                            <option value="Retired">Retired</option>
+                            <option value="Available">Sẵn sàng</option>
+                            <option value="Faulty">Lỗi</option>
+                            <option value="Retired">Ngừng dùng</option>
                         </select>
                         <small id="statusWarning" style="color: #dc3545; font-size: 12px; display: none;">
-                            ⚠️ Lưu ý: Sau khi chuyển sang InUse, không thể thay đổi trạng thái nữa!
+                            ⚠️ Lưu ý: Sau khi chuyển sang Đang dùng, không thể thay đổi trạng thái nữa!
                         </small>
 
                         <label>Location * (Tối thiểu 5 ký tự)</label>
@@ -1071,43 +1079,11 @@
                     </form>
                 </div>
             </div>
-<!-- Floating Chat Button -->
-<button class="chat-button" id="chatButton">
-    <i class="fas fa-robot"></i>
-</button>
 
-<!-- Chat Widget -->
-<div class="chat-widget" id="chatWidget">
-    <div class="chat-widget-header">
-        🤖 ChatGPT Assistant
-    </div>
-    
-    <div class="chat-widget-messages" id="chatWidgetMessages">
-        <div class="chat-widget-message ai">
-            <div class="chat-widget-message-content">
-                Xin chào! Tôi là trợ lý AI. Tôi có thể giúp gì cho bạn?
-            </div>
-        </div>
-    </div>
 
-    <div class="typing-indicator" id="chatTypingIndicator">
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-    </div>
-    
-    <div class="chat-widget-input-area">
-        <div class="chat-widget-input-wrapper">
-            <input 
-                type="text" 
-                id="chatMessageInput" 
-                placeholder="Nhập tin nhắn của bạn..."
-                autocomplete="off"
-            >
-            <button id="chatSendButton">Gửi</button>
-        </div>
-    </div>
-</div>
+
+
+
             <!-- Pagination -->
             <div class="pagination">
                 <a href="#">« First</a>
@@ -1163,7 +1139,7 @@
             }
         }
 
-        // ✅ OPEN FORM (ADD/EDIT) - FIXED STATUS LOGIC
+        // ✅ OPEN FORM (ADD/EDIT) - FIXED STATUS LOGIC WITH VIETNAMESE
         function openPartDetailForm(mode, partDetailId = '', partId = '', serialNumber = '', status = '', location = '') {
             const overlay = document.getElementById("partDetailFormOverlay");
             const title = document.getElementById("partDetailFormTitle");
@@ -1192,11 +1168,11 @@
                 document.getElementById("location").value = "";
                 document.getElementById("oldStatus").value = "";
 
-                // ✅ KHI ADD: KHÔNG CHO CHỌN INUSE
+                // ✅ KHI ADD: KHÔNG CHO CHỌN ĐANG DÙNG
                 statusSelect.innerHTML = `
-                    <option value="Available">Available</option>
-                    <option value="Faulty">Faulty</option>
-                    <option value="Retired">Retired</option>
+                    <option value="Available">Sẵn sàng</option>
+                    <option value="Faulty">Lỗi</option>
+                    <option value="Retired">Ngừng dùng</option>
                 `;
                 statusSelect.value = "Available";
 
@@ -1212,7 +1188,7 @@
 
                 // ✅ NẾU ĐANG LÀ INUSE → KHÓA TẤT CẢ
                 if (status === 'InUse') {
-                    statusSelect.innerHTML = `<option value="InUse">InUse (Locked)</option>`;
+                    statusSelect.innerHTML = `<option value="InUse">Đang dùng (Locked)</option>`;
                     statusSelect.value = "InUse";
                     statusSelect.disabled = true;
 
@@ -1220,16 +1196,15 @@
                     document.getElementById("serialNumber").disabled = true;
                     document.getElementById("location").disabled = true;
 
-                    formMessage.textContent = "⚠️ Trạng thái InUse không thể chỉnh sửa!";
+                    formMessage.textContent = "⚠️ Trạng thái Đang dùng không thể chỉnh sửa!";
                     formMessage.style.color = "#dc3545";
 
                 } else {
-                    // ✅ NẾU CHƯA PHẢI INUSE → CHO PHÉP CHỌN TẤT CẢ (BAO GỒM INUSE)
+                    // ✅ NẾU CHƯA PHẢI INUSE → CHO PHÉP CHỌN TẤT CẢ
                     statusSelect.innerHTML = `
-                        <option value="Available">Available</option>
-                       
-                        <option value="Faulty">Faulty</option>
-                        <option value="Retired">Retired</option>
+                        <option value="Available">Sẵn sàng</option>
+                        <option value="Faulty">Lỗi</option>
+                        <option value="Retired">Ngừng dùng</option>
                     `;
                     statusSelect.value = status;
                 }
@@ -1282,13 +1257,13 @@
 
             // ✅ KHÔNG CHO PHÉP EDIT NẾU ĐANG LÀ INUSE
             if (oldStatus === 'InUse') {
-                formMessage.textContent = "❌ Không thể chỉnh sửa Part Detail có trạng thái InUse!";
+                formMessage.textContent = "❌ Không thể chỉnh sửa Part Detail có trạng thái Đang dùng!";
                 return false;
             }
 
             // ✅ CẢNH BÁO KHI CHUYỂN SANG INUSE
             if (status === 'InUse' && oldStatus !== 'InUse') {
-                const confirmed = confirm("⚠️ CẢNH BÁO: Sau khi chuyển sang trạng thái InUse, bạn sẽ KHÔNG thể thay đổi lại!\n\nBạn có chắc chắn muốn tiếp tục?");
+                const confirmed = confirm("⚠️ CẢNH BÁO: Sau khi chuyển sang trạng thái Đang dùng, bạn sẽ KHÔNG thể thay đổi lại!\n\nBạn có chắc chắn muốn tiếp tục?");
                 if (!confirmed) {
                     return false;
                 }
@@ -1468,112 +1443,114 @@
                     }
                 });
             }
-// ========== CHATBOT FUNCTIONALITY ==========
-const chatButton = document.getElementById('chatButton');
-const chatWidget = document.getElementById('chatWidget');
-const chatMessageInput = document.getElementById('chatMessageInput');
-const chatSendButton = document.getElementById('chatSendButton');
-const chatWidgetMessages = document.getElementById('chatWidgetMessages');
-const chatTypingIndicator = document.getElementById('chatTypingIndicator');
 
-// Toggle chat widget
-chatButton.addEventListener('click', function() {
-    chatWidget.classList.toggle('active');
-    chatButton.classList.toggle('active');
-    
-    if (chatWidget.classList.contains('active')) {
-        chatMessageInput.focus();
-        chatButton.innerHTML = '<i class="fas fa-times"></i>';
-    } else {
-        chatButton.innerHTML = '<i class="fas fa-robot"></i>';
-    }
-});
+            // ========== CHATBOT FUNCTIONALITY ==========
+            const chatButton = document.getElementById('chatButton');
+            const chatWidget = document.getElementById('chatWidget');
+            const chatMessageInput = document.getElementById('chatMessageInput');
+            const chatSendButton = document.getElementById('chatSendButton');
+            const chatWidgetMessages = document.getElementById('chatWidgetMessages');
+            const chatTypingIndicator = document.getElementById('chatTypingIndicator');
 
-// Send message on Enter
-chatMessageInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter' && !chatSendButton.disabled) {
-        sendChatMessage();
-    }
-});
+            // Toggle chat widget
+            chatButton.addEventListener('click', function() {
+                chatWidget.classList.toggle('active');
+                chatButton.classList.toggle('active');
+                
+                if (chatWidget.classList.contains('active')) {
+                    chatMessageInput.focus();
+                    chatButton.innerHTML = '<i class="fas fa-times"></i>';
+                } else {
+                    chatButton.innerHTML = '<i class="fas fa-robot"></i>';
+                }
+            });
 
-// Send message on button click
-chatSendButton.addEventListener('click', sendChatMessage);
+            // Send message on Enter
+            chatMessageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !chatSendButton.disabled) {
+                    sendChatMessage();
+                }
+            });
 
-function sendChatMessage() {
-    const message = chatMessageInput.value.trim();
-    
-    if (!message) {
-        return;
-    }
+            // Send message on button click
+            chatSendButton.addEventListener('click', sendChatMessage);
 
-    // Display user message
-    addChatMessage('user', message);
-    
-    // Clear input
-    chatMessageInput.value = '';
-    
-    // Disable input
-    chatSendButton.disabled = true;
-    chatMessageInput.disabled = true;
-    
-    // Show typing indicator
-    chatTypingIndicator.classList.add('show');
-    scrollChatToBottom();
+            function sendChatMessage() {
+                const message = chatMessageInput.value.trim();
+                
+                if (!message) {
+                    return;
+                }
 
-    // Send request to servlet
-    fetch('AskGeminiServlet', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'q=' + encodeURIComponent(message)
-    })
-    .then(response => response.json())
-    .then(data => {
-        chatTypingIndicator.classList.remove('show');
+                // Display user message
+                addChatMessage('user', message);
+                
+                // Clear input
+                chatMessageInput.value = '';
+                
+                // Disable input
+                chatSendButton.disabled = true;
+                chatMessageInput.disabled = true;
+                
+                // Show typing indicator
+                chatTypingIndicator.classList.add('show');
+                scrollChatToBottom();
 
-        // If server returns error
-        if (data.error) {
-            addChatMessage('error', data.error);
-            return;
-        }
+                // Send request to servlet
+                fetch('AskGeminiServlet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'q=' + encodeURIComponent(message)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    chatTypingIndicator.classList.remove('show');
 
-        // ONLY display natural language answer (no table, no SQL)
-        if (data.ai_answer) {
-            addChatMessage('ai', data.ai_answer);
-        } else {
-            addChatMessage('ai', 'Xin lỗi, tôi không thể trả lời câu hỏi này.');
-        }
-    })
-    .catch(error => {
-        chatTypingIndicator.classList.remove('show');
-        addChatMessage('error', 'Không thể kết nối đến server');
-        console.error('Error:', error);
-    })
-    .finally(() => {
-        chatSendButton.disabled = false;
-        chatMessageInput.disabled = false;
-        chatMessageInput.focus();
-    });
-}
+                    // If server returns error
+                    if (data.error) {
+                        addChatMessage('error', data.error);
+                        return;
+                    }
 
-function addChatMessage(type, content) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'chat-widget-message ' + type;
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'chat-widget-message-content';
-    contentDiv.textContent = content;
-    
-    messageDiv.appendChild(contentDiv);
-    chatWidgetMessages.appendChild(messageDiv);
-    
-    scrollChatToBottom();
-}
+                    // ONLY display natural language answer (no table, no SQL)
+                    if (data.ai_answer) {
+                        addChatMessage('ai', data.ai_answer);
+                    } else {
+                        addChatMessage('ai', 'Xin lỗi, tôi không thể trả lời câu hỏi này.');
+                    }
+                })
+                .catch(error => {
+                    chatTypingIndicator.classList.remove('show');
+                    addChatMessage('error', 'Không thể kết nối đến server');
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    chatSendButton.disabled = false;
+                    chatMessageInput.disabled = false;
+                    chatMessageInput.focus();
+                });
+            }
 
-function scrollChatToBottom() {
-    chatWidgetMessages.scrollTop = chatWidgetMessages.scrollHeight;
-}
+            function addChatMessage(type, content) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'chat-widget-message ' + type;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'chat-widget-message-content';
+                contentDiv.textContent = content;
+                
+                messageDiv.appendChild(contentDiv);
+                chatWidgetMessages.appendChild(messageDiv);
+                
+                scrollChatToBottom();
+            }
+
+            function scrollChatToBottom() {
+                chatWidgetMessages.scrollTop = chatWidgetMessages.scrollHeight;
+            }
+
             // ✅ AUTO HIDE ALERTS AFTER 5 SECONDS
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {

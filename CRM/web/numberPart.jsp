@@ -1172,7 +1172,7 @@
                         <label>Unit Price *</label>
                         <input type="number" name="unitPrice" id="partPrice" 
                                step="0.01" required min="0.01" max="9999999.99"
-                               placeholder="Nhập giá (0 < giá < 10,000,000)">
+                               placeholder="Giá trị hiển thị = giá trị nhập x26000">
 
                         <p id="formMessage"></p>
 
@@ -1187,43 +1187,7 @@
                     </form>
                 </div>
             </div>
-<!-- Floating Chat Button -->
-<button class="chat-button" id="chatButton">
-    <i class="fas fa-robot"></i>
-</button>
 
-<!-- Chat Widget -->
-<div class="chat-widget" id="chatWidget">
-    <div class="chat-widget-header">
-        🤖 ChatGPT Assistant
-    </div>
-    
-    <div class="chat-widget-messages" id="chatWidgetMessages">
-        <div class="chat-widget-message ai">
-            <div class="chat-widget-message-content">
-                Xin chào! Tôi là trợ lý AI. Tôi có thể giúp gì cho bạn?
-            </div>
-        </div>
-    </div>
-
-    <div class="typing-indicator" id="chatTypingIndicator">
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-    </div>
-    
-    <div class="chat-widget-input-area">
-        <div class="chat-widget-input-wrapper">
-            <input 
-                type="text" 
-                id="chatMessageInput" 
-                placeholder="Nhập tin nhắn của bạn..."
-                autocomplete="off"
-            >
-            <button id="chatSendButton">Gửi</button>
-        </div>
-    </div>
-</div>
             <!-- Pagination -->
             <div class="pagination">
                 <a href="#">« First</a>
@@ -1351,7 +1315,7 @@
             }
             
             if (isNaN(unitPrice) || unitPrice <= 0 || unitPrice >= 10000000) {
-                formMessage.textContent = "❌ Giá phải lớn hơn 0 và nhỏ hơn 10,000,000!";
+                formMessage.textContent = "Vui lòng nhập số hợp lệ,❌Giá trị hiển thị = giá trị nhập x26000";
                 return false;
             }
             
