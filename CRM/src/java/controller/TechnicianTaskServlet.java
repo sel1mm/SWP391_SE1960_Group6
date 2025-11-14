@@ -170,7 +170,10 @@ public class TechnicianTaskServlet extends HttpServlet {
                     String trimmedStatus = newStatus.trim();
                     
                     // ✅ VALIDATION: Check if trying to complete task without valid repair report
-                    if ("Completed".equals(trimmedStatus)) {
+                    // ⚠️ EXCEPTION: Scheduled Tasks (scheduleId != null && requestId == null) can be completed without repair report
+                    boolean isScheduledTask = (task.getScheduleId() != null && task.getRequestId() == null);
+                    
+                    if ("Completed".equals(trimmedStatus) && !isScheduledTask) {
                         try (RepairReportDAO reportDAO = new RepairReportDAO()) {
                             RepairReport report = null;
                             if (task.getRequestId() != null) {

@@ -71,6 +71,9 @@
                     <c:when test="${status == 'Completed'}">
                       <span class="badge bg-success">Hoàn thành</span>
                     </c:when>
+                    <c:when test="${status == 'Failed'}">
+                      <span class="badge bg-danger">Thất bại</span>
+                    </c:when>
                     <c:when test="${status == 'On Hold'}">
                       <span class="badge bg-secondary">Tạm hoãn</span>
                     </c:when>
@@ -198,8 +201,13 @@
                 </c:choose>
               </c:when>
               <c:otherwise>
+                <%-- Scheduled Tasks (scheduleId != null && requestId == null): Hide Create Repair Report button --%>
                 <c:choose>
+                  <c:when test="${task.scheduleId != null && task.requestId == null}">
+                    <%-- Scheduled Task: No repair report button shown --%>
+                  </c:when>
                   <c:when test="${task.scheduleId != null}">
+                    <%-- Schedule linked to request: Show report button --%>
                     <c:choose>
                       <c:when test="${not empty existingReport}">
                         <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=edit&reportId=${existingReport.reportId}">
@@ -255,6 +263,7 @@
               <option value="Assigned">Đã giao</option>
               <option value="In Progress">Đang thực hiện</option>
               <option value="Completed">Hoàn thành</option>
+              <option value="Failed">Thất bại</option>
               <option value="On Hold">Tạm hoãn</option>
               <option value="Cancelled">Đã hủy</option>
             </select>

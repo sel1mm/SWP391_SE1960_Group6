@@ -87,11 +87,8 @@ public class WorkTaskDAO extends MyDAO {
         sql.append("COALESCE(a_ms.fullName, a_sr.fullName, a_c.fullName) AS customerName, ");
         sql.append("COALESCE(a_ms.email, a_sr.email, a_c.email) AS customerEmail, ");
         sql.append("COALESCE(wt.requestId, ms.requestId) AS effectiveRequestId, ");
-        // Plan dates from latest WorkAssignment only
-        sql.append("wa.assignmentDate AS planStart, ");
-        sql.append("CASE WHEN wa.assignmentDate IS NOT NULL AND wa.estimatedDuration IS NOT NULL ");
-        sql.append("THEN DATE_ADD(wa.assignmentDate, INTERVAL ROUND(wa.estimatedDuration * 60) MINUTE) ");
-        sql.append("ELSE NULL END AS planDone ");
+        // Assignment date from latest WorkAssignment
+        sql.append("wa.assignmentDate AS assignmentDate ");
         sql.append("FROM WorkTask wt ");
         // Join MaintenanceSchedule first, then ServiceRequest can reference ms.requestId
         sql.append("LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId ");
@@ -152,8 +149,7 @@ public class WorkTaskDAO extends MyDAO {
                     taskWithCustomer.customerId = rs.getObject("customerId", Integer.class);
                     taskWithCustomer.customerName = rs.getString("customerName");
                     taskWithCustomer.customerEmail = rs.getString("customerEmail");
-                    taskWithCustomer.planStart = rs.getTimestamp("planStart");
-                    taskWithCustomer.planDone = rs.getTimestamp("planDone");
+                    taskWithCustomer.assignmentDate = rs.getTimestamp("assignmentDate");
                     tasks.add(taskWithCustomer);
                 }
             }
@@ -171,8 +167,7 @@ public class WorkTaskDAO extends MyDAO {
         public Integer customerId;
         public String customerName;
         public String customerEmail;
-        public java.sql.Timestamp planStart;
-        public java.sql.Timestamp planDone;
+        public java.sql.Timestamp assignmentDate;
 
         public WorkTask getTask() {
             return task;
@@ -190,12 +185,12 @@ public class WorkTaskDAO extends MyDAO {
             return customerEmail;
         }
 
-        public java.sql.Timestamp getPlanStart() {
-            return planStart;
+        public java.sql.Timestamp getAssignmentDate() {
+            return assignmentDate;
         }
 
-        public java.sql.Timestamp getPlanDone() {
-            return planDone;
+        public void setAssignmentDate(java.sql.Timestamp assignmentDate) {
+            this.assignmentDate = assignmentDate;
         }
     }
 

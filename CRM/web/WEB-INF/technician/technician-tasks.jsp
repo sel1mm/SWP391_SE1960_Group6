@@ -66,9 +66,7 @@
             <th>Loại công việc</th>
             <th class="d-none d-md-table-cell">Chi tiết</th>
             <th>Trạng thái</th>
-            <th>Kế hoạch bắt đầu</th>
-            <th>Kế hoạch hoàn thành</th>
-            <th>Ngày bắt đầu</th>
+            <th>Ngày giao việc</th>
             <th>Ngày kết thúc</th>
             <th>Thao tác</th>
           </tr>
@@ -119,31 +117,11 @@
                 </td>
                 <td>
                   <c:choose>
-                    <c:when test="${taskWithCustomer.planStart != null}">
-                      <fmt:formatDate value="${taskWithCustomer.planStart}" pattern="yyyy-MM-dd"/>
+                    <c:when test="${taskWithCustomer.assignmentDate != null}">
+                      <fmt:formatDate value="${taskWithCustomer.assignmentDate}" pattern="yyyy-MM-dd"/>
                     </c:when>
                     <c:otherwise>
                       <span class="text-muted">Chưa đặt</span>
-                    </c:otherwise>
-                  </c:choose>
-                </td>
-                <td>
-                  <c:choose>
-                    <c:when test="${taskWithCustomer.planDone != null}">
-                      <fmt:formatDate value="${taskWithCustomer.planDone}" pattern="yyyy-MM-dd"/>
-                    </c:when>
-                    <c:otherwise>
-                      <span class="text-muted">Chưa đặt</span>
-                    </c:otherwise>
-                  </c:choose>
-                </td>
-                <td>
-                  <c:choose>
-                    <c:when test="${taskWithCustomer.task.startDate != null}">
-                      ${taskWithCustomer.task.startDate}
-                    </c:when>
-                    <c:otherwise>
-                      <span class="text-muted">Chưa có</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
@@ -170,7 +148,7 @@
           </c:when>
           <c:otherwise>
             <tr>
-              <td colspan="11" class="text-center py-4">
+              <td colspan="9" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                   <p>Không tìm thấy công việc</p>
