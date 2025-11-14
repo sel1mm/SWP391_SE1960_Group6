@@ -1172,7 +1172,7 @@
                         <label>Unit Price *</label>
                         <input type="number" name="unitPrice" id="partPrice" 
                                step="0.01" required min="0.01" max="9999999.99"
-                               placeholder="Nhập giá (0 < giá < 10,000,000)">
+                               placeholder="Giá trị hiển thị = giá trị nhập x26000">
 
                         <p id="formMessage"></p>
 
@@ -1315,7 +1315,7 @@
             }
             
             if (isNaN(unitPrice) || unitPrice <= 0 || unitPrice >= 10000000) {
-                formMessage.textContent = "❌ Giá phải lớn hơn 0 và nhỏ hơn 10,000,000!";
+                formMessage.textContent = "Vui lòng nhập số hợp lệ,❌Giá trị hiển thị = giá trị nhập x26000";
                 return false;
             }
             
