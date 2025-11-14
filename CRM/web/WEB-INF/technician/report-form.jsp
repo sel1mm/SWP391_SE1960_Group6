@@ -210,6 +210,31 @@
 
             <c:set var="initialRequestType" value="${not empty selectedRequestType ? selectedRequestType : (not empty customerRequestInfo ? customerRequestInfo.requestType : '')}" />
             </c:if>
+
+            <c:set var="shouldShowNoPartsOverride"
+                   value="${not isScheduleOrigin and not empty initialRequestType and fn:toLowerCase(initialRequestType) ne 'warranty'}" />
+            <c:set var="noPartsOverrideChecked"
+                   value="${requestScope.noPartsOverride ne null ? requestScope.noPartsOverride : (param.noPartsOverride eq 'true' or param.noPartsOverride eq 'on')}" />
+            <div class="mb-3${shouldShowNoPartsOverride ? '' : ' d-none'}" id="noPartsOverrideSection">
+              <div class="card border-info">
+                <div class="card-body">
+                  <div class="form-check">
+                    <input class="form-check-input" 
+                           type="checkbox" 
+                           id="noPartsOverride" 
+                           name="noPartsOverride" 
+                           value="true"
+                           ${noPartsOverrideChecked ? 'checked' : ''}>
+                    <label class="form-check-label fw-bold text-info" for="noPartsOverride">
+                      <i class="bi bi-tools me-2"></i>Bỏ qua lựa chọn linh kiện cho báo cáo này
+                    </label>
+                    <div class="form-text text-muted">
+                      <i class="bi bi-info-circle"></i> Chỉ dùng cho yêu cầu dịch vụ thông thường. Khi chọn, bạn có thể bỏ qua việc chọn linh kiện và tự nhập chi phí ước tính.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             
             <div class="row">
               <div class="col-md-6">
@@ -226,15 +251,28 @@
               </div>
             </div>
             
+            <c:set var="detailsValue" value="${not empty report ? report.details : param.details}" />
+            <c:set var="diagnosisValue" value="${not empty report ? report.diagnosis : param.diagnosis}" />
             <div class="mb-3">
               <label for="details" class="form-label fw-bold">Chi tiết <span class="text-danger">*</span></label>
               <textarea class="form-control" id="details" name="details" rows="4" 
                         placeholder="Mô tả công việc sửa chữa đã thực hiện..." 
-                        maxlength="255" required>${not empty report ? fn:escapeXml(report.details) : ''}</textarea>
+                        maxlength="255" required><c:out value="${detailsValue}" /></textarea>
               <div class="form-text">
                 <span id="detailsCount">0</span>/255 ký tự
               </div>
               <div class="invalid-feedback" id="detailsError"></div>
+            </div>
+
+            <div class="mb-3">
+              <label for="diagnosis" class="form-label fw-bold">Chẩn đoán <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="diagnosis" name="diagnosis" rows="4"
+                        placeholder="Chẩn đoán nguyên nhân lỗi, tình trạng thiết bị..."
+                        maxlength="255" required><c:out value="${diagnosisValue}" /></textarea>
+              <div class="form-text">
+                <span id="diagnosisCount">0</span>/255 ký tự
+              </div>
+              <div class="invalid-feedback" id="diagnosisError"></div>
             </div>
             
             <!-- Parts Selection (Simple Search & Select) -->
@@ -432,11 +470,15 @@
   const selectedPartsCount = document.getElementById('selectedPartsCount');
   const totalCost = document.getElementById('totalCost');
   const estimatedCostInput = document.getElementById('estimatedCost');
+  const noPartsOverrideSection = document.getElementById('noPartsOverrideSection');
+  const noPartsOverrideCheckbox = document.getElementById('noPartsOverride');
   // Contract selection removed - contract is automatically determined from ServiceRequest
   
   // State
   let allParts = []; // All available parts loaded from server
   let selectedParts = {}; // In-memory cart: {partId: {partId, partName, serialNumber, unitPrice, quantity}}
+  let partsSection = null;
+  let isNoPartsOverride = false;
   
   // Context path
   const contextPath = '${pageContext.request.contextPath}';
@@ -470,6 +512,64 @@
   const estimatedCostHint = document.getElementById('estimatedCostHint');
   const warrantyCostNotice = document.getElementById('warrantyCostNotice');
   let isWarrantyMode = false;
+
+  function toggleNoPartsOverrideState(enable, options = {}) {
+    const { skipClear = false, skipCheckboxUpdate = false } = options;
+    const newState = !!enable;
+    if (isNoPartsOverride === newState) {
+      // Ensure checkbox state matches even if nothing else changes
+      if (noPartsOverrideCheckbox && !skipCheckboxUpdate) {
+        noPartsOverrideCheckbox.checked = newState;
+      }
+    }
+    isNoPartsOverride = newState;
+
+    if (noPartsOverrideCheckbox && !skipCheckboxUpdate) {
+      noPartsOverrideCheckbox.checked = newState;
+    }
+
+    if (noPartsOverrideSection) {
+      noPartsOverrideSection.classList.toggle('override-active', newState);
+    }
+
+    if (partsSection) {
+      partsSection.style.opacity = newState ? '0.5' : '1';
+      partsSection.style.pointerEvents = newState ? 'none' : 'auto';
+    }
+
+    if (partSearchInput) {
+      if (newState) {
+        partSearchInput.disabled = true;
+        partSearchInput.placeholder = 'Đã bỏ qua lựa chọn linh kiện cho báo cáo này';
+      } else {
+        partSearchInput.placeholder = 'Tìm kiếm linh kiện theo tên hoặc số seri...';
+      }
+    }
+
+    if (estimatedCostInput && !isWarrantyMode && !isScheduleOrigin) {
+      estimatedCostInput.readOnly = false;
+      estimatedCostInput.classList.remove('bg-light');
+    }
+
+    if (newState) {
+      if (partsError) {
+        partsError.textContent = '';
+      }
+      if (!skipClear) {
+        const identifier = (requestIdInput && requestIdInput.value) || (scheduleIdInput && scheduleIdInput.value) || '';
+        if (identifier) {
+          clearCartAjax().catch(() => {});
+        } else {
+          selectedParts = {};
+          updateCartDisplay([], 0);
+        }
+      } else {
+        updateCartDisplay([], 0);
+      }
+    } else {
+      updatePartsSearchState();
+    }
+  }
 
   function applyRequestTypeUI(requestType) {
     const normalizedType = (requestType || '').toLowerCase();
@@ -551,6 +651,14 @@
         estimatedCostInput.classList.add('bg-light');
       }
     }
+
+    const shouldShowOverride = !isScheduleOrigin && !isWarrantyMode && normalizedType.length > 0;
+    if (noPartsOverrideSection) {
+      noPartsOverrideSection.classList.toggle('d-none', !shouldShowOverride);
+      if (!shouldShowOverride && isNoPartsOverride) {
+        toggleNoPartsOverrideState(false, { skipClear: true });
+      }
+    }
   }
   
   // ============================================
@@ -580,6 +688,13 @@
     requestIdInput = document.getElementById('requestIdHidden');
     scheduleIdInput = document.getElementById('scheduleIdHidden');
     isScheduleOrigin = !!(scheduleIdInput && scheduleIdInput.value);
+    partsSection = document.querySelector('.mb-3:has(#partSearchInput)');
+    isNoPartsOverride = !!(noPartsOverrideCheckbox && noPartsOverrideCheckbox.checked);
+    if (noPartsOverrideCheckbox) {
+      noPartsOverrideCheckbox.addEventListener('change', function() {
+        toggleNoPartsOverrideState(this.checked);
+      });
+    }
     
     console.log('Request ID select found:', !!requestIdSelect);
     console.log('Request ID input found:', !!requestIdInput);
@@ -597,6 +712,9 @@
     }
     const typeToApply = isScheduleOrigin ? 'Maintenance' : initialRequestType;
     applyRequestTypeUI(typeToApply);
+    if (isNoPartsOverride && !isWarrantyMode && !isScheduleOrigin) {
+      toggleNoPartsOverrideState(true, { skipClear: true, skipCheckboxUpdate: true });
+    }
     if (estimatedCostInput && !estimatedCostInput.getAttribute('data-last-service-value')) {
       estimatedCostInput.setAttribute('data-last-service-value', estimatedCostInput.value || '0');
     }
@@ -655,6 +773,9 @@
           if (scheduleIdInput) scheduleIdInput.value = '';
         }
         isScheduleOrigin = origin === 'Schedule';
+        if (noPartsOverrideCheckbox) {
+          toggleNoPartsOverrideState(false, { skipClear: true });
+        }
 
         // Duplicate check before proceeding
         checkExistingReportForSelection(origin, selectedRequestId, selectedScheduleId, function(exists, reportId) {
@@ -707,6 +828,13 @@
   
   // Check if parts search should be enabled
   function updatePartsSearchState() {
+    if (isNoPartsOverride) {
+      if (partSearchInput) {
+        partSearchInput.disabled = true;
+        partSearchInput.placeholder = 'Đã bỏ qua lựa chọn linh kiện cho báo cáo này';
+      }
+      return;
+    }
     // Check both select (create) and input (edit) for requestId
     const requestId = requestIdInput?.value || '';
     const scheduleId = scheduleIdInput?.value || '';
@@ -730,6 +858,9 @@
   }
   
   function enablePartsSearch() {
+    if (isNoPartsOverride) {
+      return;
+    }
     if (partSearchInput) {
       partSearchInput.disabled = false;
       partSearchInput.placeholder = 'Tìm kiếm linh kiện theo tên hoặc số seri...';
@@ -965,6 +1096,9 @@
   
   // Adjust quantity in the parts list - auto-adds to cart when quantity > 0
   function adjustPartQuantity(partId, delta) {
+    if (isNoPartsOverride) {
+      return;
+    }
     const part = allParts.find(p => p.partId === partId);
     if (!part) return;
     
@@ -1044,6 +1178,9 @@
   // ============================================
   
   function addPartToCart(partId, quantity) {
+    if (isNoPartsOverride) {
+      return;
+    }
     // Check both select (create) and input (edit) for requestId
     const requestId = requestIdInput?.value || '';
     const scheduleId = scheduleIdInput?.value || '';
@@ -1183,7 +1320,7 @@
           loadCartFromSession();
           
           // Also update estimated cost immediately (convert USD to VND)
-          if (estimatedCostInput) {
+          if (estimatedCostInput && !isNoPartsOverride) {
             const vndAmount = Math.round(usdToVnd(newSubtotal));
             estimatedCostInput.value = (isScheduleOrigin || isWarrantyMode) ? 0 : vndAmount;
           }
@@ -1277,7 +1414,14 @@
       estimatedCostInput.setAttribute('data-last-service-value', vndAmount);
       if (isWarrantyMode || isScheduleOrigin) {
         estimatedCostInput.value = 0;
+        estimatedCostInput.readOnly = true;
+        estimatedCostInput.classList.add('bg-light');
+      } else if (isNoPartsOverride) {
+        estimatedCostInput.readOnly = false;
+        estimatedCostInput.classList.remove('bg-light');
       } else {
+        estimatedCostInput.readOnly = false;
+        estimatedCostInput.classList.remove('bg-light');
         estimatedCostInput.value = vndAmount;
       }
     }
@@ -1288,7 +1432,10 @@
     if (!selectedPartsList) return;
     
     if (parts.length === 0) {
-      selectedPartsList.innerHTML = '<div class="list-group-item text-center text-muted py-4" id="emptyCartMessage"><i class="bi bi-cart-x me-2"></i>Chưa chọn linh kiện nào</div>';
+      const emptyIcon = isNoPartsOverride ? 'bi-clipboard-check' : 'bi-cart-x';
+      const emptyText = isNoPartsOverride ? 'Không yêu cầu linh kiện cho báo cáo này' : 'Chưa chọn linh kiện nào';
+      selectedPartsList.innerHTML = '<div class="list-group-item text-center text-muted py-4" id="emptyCartMessage"><i class="bi ' + emptyIcon + ' me-2"></i>' + emptyText + '</div>';
+      selectedParts = {};
     } else {
       let html = '';
       parts.forEach(function(part) {
@@ -1414,7 +1561,7 @@
     // ✅ Skip parts validation if warranty not eligible
     if (!isWarrantyMode || !isNotEligible) {
       const partsCount = selectedPartsCount ? parseInt(selectedPartsCount.textContent) || 0 : 0;
-      if (!isWarrantyMode && partsCount <= 0) {
+      if (!isWarrantyMode && !isNoPartsOverride && partsCount <= 0) {
         e.preventDefault();
         alert('Vui lòng chọn ít nhất một linh kiện cho báo cáo sửa chữa.');
         return false;
@@ -1432,8 +1579,9 @@
 // ✅ Handle warranty not eligible checkbox
 window.addEventListener('DOMContentLoaded', function() {
   const notEligibleCheckbox = document.getElementById('notEligibleForWarranty');
-  const partsSection = document.querySelector('.mb-3:has(#partSearchInput)');
+  const warrantyPartsSection = document.querySelector('.mb-3:has(#partSearchInput)');
   const detailsTextarea = document.getElementById('details');
+  const partSearchInputEl = document.getElementById('partSearchInput');
   
   if (notEligibleCheckbox) {
     notEligibleCheckbox.addEventListener('change', function() {
@@ -1441,16 +1589,16 @@ window.addEventListener('DOMContentLoaded', function() {
       
       
       // Disable/enable parts selection
-      if (partSearchInput) partSearchInput.disabled = isNotEligible;
+      if (partSearchInputEl) partSearchInputEl.disabled = isNotEligible;
       
       // Show/hide parts section
-      if (partsSection) {
+      if (warrantyPartsSection) {
         if (isNotEligible) {
-          partsSection.style.opacity = '0.5';
-          partsSection.style.pointerEvents = 'none';
+          warrantyPartsSection.style.opacity = '0.5';
+          warrantyPartsSection.style.pointerEvents = 'none';
         } else {
-          partsSection.style.opacity = '1';
-          partsSection.style.pointerEvents = 'auto';
+          warrantyPartsSection.style.opacity = '1';
+          warrantyPartsSection.style.pointerEvents = 'auto';
         }
       }
       

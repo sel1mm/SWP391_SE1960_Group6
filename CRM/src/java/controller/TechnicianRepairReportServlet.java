@@ -243,6 +243,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     req.setAttribute("customerContracts", customerContracts);
                     req.setAttribute("selectedRequestType", selectedRequestType);
                     req.setAttribute("isWarrantyRequest", "Warranty".equalsIgnoreCase(selectedRequestType));
+                    if (req.getAttribute("noPartsOverride") == null) {
+                        req.setAttribute("noPartsOverride", Boolean.FALSE);
+                    }
                     req.setAttribute("pageTitle", "Create Repair Report");
                     req.setAttribute("contentView", "/WEB-INF/technician/report-form.jsp");
                     req.setAttribute("activePage", "reports");
@@ -344,6 +347,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 req.setAttribute("activePage", "reports");
                 req.setAttribute("selectedRequestType", selectedRequestType);
                 req.setAttribute("isWarrantyRequest", "Warranty".equalsIgnoreCase(selectedRequestType));
+                if (req.getAttribute("noPartsOverride") == null) {
+                    req.setAttribute("noPartsOverride", Boolean.FALSE);
+                }
                 req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
 
             } else if ("detail".equals(action) && reportIdParam != null) {
@@ -564,6 +570,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     // ✅ THÊM: Kiểm tra warranty eligibility
                     String notEligibleParam = req.getParameter("notEligibleForWarranty");
                     boolean isNotEligibleForWarranty = "true".equalsIgnoreCase(notEligibleParam);
+                    boolean noPartsOverride = (!isWarranty && scheduleId == null) && isCheckboxChecked(req.getParameter("noPartsOverride"));
 
                     report.setRequestId(requestId);
                     if (scheduleId != null) {
@@ -573,8 +580,10 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                         report.setOrigin("ServiceRequest");
                     }
                     report.setTechnicianId(technicianId);
-                    report.setDetails(req.getParameter("details"));
-                    report.setDiagnosis(""); // Parts are stored in RepairReportDetail
+                    String detailsParam = req.getParameter("details");
+                    String diagnosisParam = req.getParameter("diagnosis");
+                    report.setDetails(detailsParam != null ? detailsParam.trim() : null);
+                    report.setDiagnosis(diagnosisParam != null ? diagnosisParam.trim() : null); // Parts are stored in RepairReportDetail
 
                     if (isWarranty && isNotEligibleForWarranty) {
                         report.setInspectionResult("NotEligible");
@@ -596,7 +605,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
 
                     List<String> validationErrors = new ArrayList<>();
                     if (!(isWarranty && isNotEligibleForWarranty)) {
-                        validationErrors.addAll(validateRepairReportInput(req, false, parts, isWarranty));
+                        validationErrors.addAll(validateRepairReportInput(req, false, parts, isWarranty, noPartsOverride));
                     }
 
                     // Calculate estimated cost (VND -> USD) unless warranty/maintenance
@@ -629,6 +638,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     }
 
                     if (!validationErrors.isEmpty()) {
+                        req.setAttribute("noPartsOverride", noPartsOverride);
                         req.setAttribute("validationErrors", validationErrors);
                         req.setAttribute("requestId", report.getRequestId());
                         req.setAttribute("selectedRequestType", scheduleId != null ? "Maintenance" : requestType);
@@ -767,20 +777,26 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                         requestType = serviceRequest.getRequestType();
                         isWarranty = "Warranty".equalsIgnoreCase(requestType);
                     }
+                    boolean noPartsOverride = (!isWarranty && existingReport.getScheduleId() == null)
+                            && isCheckboxChecked(req.getParameter("noPartsOverride"));
 
                     RepairReport report = new RepairReport();
                     report.setReportId(reportId);
                     report.setRequestId(existingReport.getRequestId());
                     report.setTechnicianId(technicianId);
-                    report.setDetails(req.getParameter("details"));
-                    report.setDiagnosis("");
+                    String detailsParam = req.getParameter("details");
+                    String diagnosisParam = req.getParameter("diagnosis");
+                    report.setDetails(detailsParam != null ? detailsParam.trim() : null);
+                    report.setDiagnosis(diagnosisParam != null ? diagnosisParam.trim() : null);
 
                     String cartKey = existingReport.getScheduleId() != null
                             ? "selectedParts_schedule_" + existingReport.getScheduleId()
                             : "selectedParts_" + existingReport.getRequestId();
                     @SuppressWarnings("unchecked")
                     List<RepairReportDetail> parts = (List<RepairReportDetail>) req.getSession().getAttribute(cartKey);
-                    if (parts == null || parts.isEmpty()) {
+                    if (noPartsOverride) {
+                        parts = new ArrayList<>();
+                    } else if (parts == null || parts.isEmpty()) {
                         parts = reportDAO.getReportDetails(reportId);
                     }
 
@@ -805,8 +821,9 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     report.setRepairDate(existingReport.getRepairDate());
                     report.setQuotationStatus("Pending");
 
-                    List<String> validationErrors = validateRepairReportInput(req, true, parts, isWarranty);
+                    List<String> validationErrors = validateRepairReportInput(req, true, parts, isWarranty, noPartsOverride);
                     if (!validationErrors.isEmpty()) {
+                        req.setAttribute("noPartsOverride", noPartsOverride);
                         req.setAttribute("validationErrors", validationErrors);
                         req.setAttribute("report", report);
                         req.setAttribute("selectedRequestType", requestType);
@@ -922,7 +939,8 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private List<String> validateRepairReportInput(HttpServletRequest req, boolean isEditMode, List<RepairReportDetail> parts, boolean isWarranty) {
+    private List<String> validateRepairReportInput(HttpServletRequest req, boolean isEditMode,
+            List<RepairReportDetail> parts, boolean isWarranty, boolean allowPartsOverride) {
         List<String> errors = new ArrayList<>();
 
         // Validate details
@@ -931,8 +949,14 @@ public class TechnicianRepairReportServlet extends HttpServlet {
             errors.addAll(detailsResult.getErrors());
         }
 
+        // Validate diagnosis
+        TechnicianValidator.ValidationResult diagnosisResult = TechnicianValidator.validateDiagnosis(req.getParameter("diagnosis"));
+        if (!diagnosisResult.isValid()) {
+            errors.addAll(diagnosisResult.getErrors());
+        }
+
         // Validate parts (replaces diagnosis validation)
-        if ((parts == null || parts.isEmpty()) && !isWarranty) {
+        if ((parts == null || parts.isEmpty()) && !isWarranty && !allowPartsOverride) {
             errors.add("Vui lòng chọn ít nhất một linh kiện");
         } else if (parts != null && !parts.isEmpty()) {
             try (PartDetailDAO partDetailDAO = new PartDetailDAO()) {
@@ -1023,6 +1047,14 @@ public class TechnicianRepairReportServlet extends HttpServlet {
         }
         String r = role.toLowerCase();
         return r.contains("technician") || r.equals("admin");
+    }
+
+    private boolean isCheckboxChecked(String value) {
+        if (value == null) {
+            return false;
+        }
+        String normalized = value.trim().toLowerCase();
+        return "true".equals(normalized) || "on".equals(normalized) || "1".equals(normalized);
     }
 
     /**

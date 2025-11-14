@@ -1648,4 +1648,63 @@ public class ContractDAO extends MyDAO {
         }
     }
 
+    /**
+     * Count contracts by status
+     */
+    public int countByStatus(String status) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Contract WHERE Status = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, status);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Count total service requests from all contracts
+     */
+    public int countTotalServiceRequests() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM ServiceRequest";
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    public Map<String, Object> getCustomerWithMostContracts() throws SQLException {
+        String sql = "SELECT "
+                + "a.accountId, "
+                + "a.fullName, "
+                + "COUNT(c.contractId) AS contractCount "
+                + "FROM Account a "
+                + "INNER JOIN Contract c ON a.accountId = c.customerId "
+                + "GROUP BY a.accountId, a.fullName "
+                + "ORDER BY contractCount DESC "
+                + "LIMIT 1";  // ✅ MySQL syntax
+
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                Map<String, Object> customer = new HashMap<>();
+                customer.put("accountId", rs.getInt("accountId"));
+                customer.put("fullName", rs.getString("fullName"));
+                customer.put("contractCount", rs.getInt("contractCount"));
+                return customer;
+            }
+        }
+
+        // Nếu không có hợp đồng nào
+        Map<String, Object> emptyResult = new HashMap<>();
+        emptyResult.put("accountId", 0);
+        emptyResult.put("fullName", "Chưa có");
+        emptyResult.put("contractCount", 0);
+        return emptyResult;
+    }
+
 }

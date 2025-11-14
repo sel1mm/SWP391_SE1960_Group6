@@ -1190,273 +1190,369 @@
                 }
             }
             /* ========== CHATBOT STYLES ========== */
-    .chatbot-container {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 99999;
-    }
-
-    .chatbot-button {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s;
-        position: relative;
-    }
-
-    .chatbot-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
-    }
-
-    .chatbot-button i {
-        color: white;
-        font-size: 24px;
-    }
-
-    .chatbot-badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        width: 20px;
-        height: 20px;
-        background: #ff4757;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        color: white;
-        font-weight: bold;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-    }
-
-    .chatbot-window {
-        position: fixed;
-        bottom: 100px;
-        right: 30px;
-        width: 420px;
-        height: 650px;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        display: none;
-        flex-direction: column;
-        overflow: hidden;
-        animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .chatbot-window.active {
-        display: flex;
-    }
-
-    .chatbot-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .chatbot-header h4 {
-        margin: 0;
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .chatbot-close {
-        background: rgba(255,255,255,0.2);
-        border: none;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        color: white;
-        transition: all 0.3s;
-    }
-
-    .chatbot-close:hover {
-        background: rgba(255,255,255,0.3);
-    }
-
-   /* CHATBOT RECOMMENDATIONS - Moved to bottom */
-        .chatbot-recommendations {
-            padding: 12px 15px;
-            background: #f8f9fa;
-            border-top: 1px solid #e0e0e0;
-            max-height: 140px;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-        }
-
-        .chatbot-recommendations.hidden {
-            max-height: 0;
-            padding: 0;
-            border: none;
-            overflow: hidden;
-        }
-
-        .recommendations-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .recommendations-title {
-            font-size: 0.75rem;
-            color: #667eea;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .recommendations-toggle {
-            background: none;
-            border: none;
-            color: #667eea;
-            cursor: pointer;
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 10px;
-            transition: all 0.2s;
-        }
-
-        .recommendations-toggle:hover {
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .recommendation-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .recommendation-chip {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 15px;
-            padding: 5px 10px;
-            font-size: 0.7rem;
-            color: #333;
-            cursor: pointer;
-            transition: all 0.3s;
-            white-space: nowrap;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .recommendation-chip:hover {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
-        }
-
-        .recommendation-category {
-            width: 100%;
-            font-size: 0.65rem;
-            color: #888;
-            margin-top: 6px;
-            margin-bottom: 3px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .chatbot-recommendations::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .chatbot-recommendations::-webkit-scrollbar-thumb {
-            background: #ddd;
-            border-radius: 10px;
-        }
-
-        .chatbot-input {
-            padding: 15px;
-            background: white;
-            border-top: 1px solid #eee;
-            display: flex;
-            gap: 10px;
-        }
-
-        .chatbot-input input {
-            flex: 1;
-            border: 1px solid #ddd;
-            border-radius: 25px;
-            padding: 12px 20px;
-            font-size: 0.9rem;
-            outline: none;
-            transition: all 0.3s;
-        }
-
-        .chatbot-input input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .chatbot-send {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .chatbot-send:hover:not(:disabled) {
-            transform: scale(1.1);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .chatbot-send:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        @media (max-width: 768px) {
-            .chatbot-window {
-                width: calc(100vw - 30px);
-                right: 15px;
+            .chatbot-container {
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                z-index: 99999;
             }
-        }
+
+            .chatbot-button {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border: none;
+                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s;
+                position: relative;
+            }
+
+            .chatbot-button:hover {
+                transform: scale(1.1);
+                box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+            }
+
+            .chatbot-button i {
+                color: white;
+                font-size: 24px;
+            }
+
+            .chatbot-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                width: 20px;
+                height: 20px;
+                background: #ff4757;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+                color: white;
+                font-weight: bold;
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.1);
+                }
+            }
+
+            .chatbot-window {
+                position: fixed;
+                bottom: 100px;
+                right: 30px;
+                width: 420px;
+                height: 650px;
+                background: white;
+                border-radius: 20px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                display: none;
+                flex-direction: column;
+                overflow: hidden;
+                animation: slideUp 0.3s ease-out;
+            }
+
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .chatbot-window.active {
+                display: flex;
+            }
+
+            .chatbot-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .chatbot-header h4 {
+                margin: 0;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .chatbot-close {
+                background: rgba(255,255,255,0.2);
+                border: none;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                cursor: pointer;
+                color: white;
+                transition: all 0.3s;
+            }
+
+            .chatbot-close:hover {
+                background: rgba(255,255,255,0.3);
+            }
+
+            /* ========== CHATBOT RECOMMENDATIONS ========== */
+            .chatbot-recommendations {
+                padding: 15px 20px;
+                background: white;
+                border-bottom: 1px solid #eee;
+                max-height: 150px;
+                overflow-y: auto;
+            }
+
+            .recommendations-title {
+                font-size: 0.8rem;
+                color: #667eea;
+                font-weight: 600;
+                margin-bottom: 10px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .recommendation-chips {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .recommendation-chip {
+                background: #f8f9fa;
+                border: 1px solid #e0e0e0;
+                border-radius: 20px;
+                padding: 6px 12px;
+                font-size: 0.75rem;
+                color: #333;
+                cursor: pointer;
+                transition: all 0.3s;
+                white-space: nowrap;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .recommendation-chip:hover {
+                background: #667eea;
+                color: white;
+                border-color: #667eea;
+                transform: translateY(-2px);
+            }
+
+            .recommendation-category {
+                width: 100%;
+                font-size: 0.7rem;
+                color: #888;
+                margin-top: 5px;
+                margin-bottom: 3px;
+                font-weight: 500;
+            }
+
+            /* Scrollbar for recommendations */
+            .chatbot-recommendations::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .chatbot-recommendations::-webkit-scrollbar-thumb {
+                background: #ddd;
+                border-radius: 10px;
+            }
+
+            .chatbot-messages {
+                flex: 1;
+                padding: 20px;
+                overflow-y: auto;
+                background: #f8f9fa;
+            }
+
+            .chatbot-messages::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .chatbot-messages::-webkit-scrollbar-thumb {
+                background: #ddd;
+                border-radius: 10px;
+            }
+
+            .message {
+                margin-bottom: 15px;
+                display: flex;
+                gap: 10px;
+                animation: fadeIn 0.3s;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .message.bot {
+                justify-content: flex-start;
+            }
+
+            .message.user {
+                justify-content: flex-end;
+            }
+
+            .message-avatar {
+                width: 35px;
+                height: 35px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                flex-shrink: 0;
+            }
+
+            .message.bot .message-avatar {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+
+            .message.user .message-avatar {
+                background: #ffc107;
+                color: white;
+            }
+
+            .message-content {
+                max-width: 70%;
+                padding: 12px 16px;
+                border-radius: 18px;
+                line-height: 1.5;
+                font-size: 0.9rem;
+            }
+
+            .message.bot .message-content {
+                background: white;
+                color: #333;
+                border-bottom-left-radius: 4px;
+                white-space: pre-line;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+
+            .message.user .message-content {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-bottom-right-radius: 4px;
+            }
+
+            .message.bot .message-content strong {
+                color: #1e3c72;
+                font-weight: 600;
+            }
+
+            .typing-indicator {
+                display: flex;
+                gap: 4px;
+                padding: 12px 16px;
+                background: white;
+                border-radius: 18px;
+                width: fit-content;
+            }
+
+            .typing-dot {
+                width: 8px;
+                height: 8px;
+                background: #667eea;
+                border-radius: 50%;
+                animation: typing 1.4s infinite;
+            }
+
+            .typing-dot:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .typing-dot:nth-child(3) {
+                animation-delay: 0.4s;
+            }
+
+            @keyframes typing {
+                0%, 60%, 100% {
+                    transform: translateY(0);
+                }
+                30% {
+                    transform: translateY(-10px);
+                }
+            }
+
+            .chatbot-input {
+                padding: 20px;
+                background: white;
+                border-top: 1px solid #eee;
+                display: flex;
+                gap: 10px;
+            }
+
+            .chatbot-input input {
+                flex: 1;
+                border: 1px solid #ddd;
+                border-radius: 25px;
+                padding: 12px 20px;
+                font-size: 0.9rem;
+                outline: none;
+                transition: all 0.3s;
+            }
+
+            .chatbot-input input:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+            .chatbot-send {
+                width: 45px;
+                height: 45px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border: none;
+                color: white;
+                cursor: pointer;
+                transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .chatbot-send:hover:not(:disabled) {
+                transform: scale(1.1);
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            }
+
+            .chatbot-send:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            @media (max-width: 768px) {
+                .chatbot-window {
+                    width: calc(100vw - 30px);
+                    right: 15px;
+                }
+            }
         </style>
     </head>
     <body>
@@ -2422,7 +2518,6 @@
             </div>
         </div>
 
-
         <style>
             /* ✅ STYLES FOR DETAIL MODAL */
             .detail-item {
@@ -2688,1789 +2783,1827 @@
                 </div>
             </div>
         </div>
+     
+
+           
+
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-                                                               // ========== TOGGLE REQUEST DETAILS (EXPAND/COLLAPSE) ==========
-                                                               function toggleRequestDetails(requestId) {
-                                                                   const details = document.getElementById('details-' + requestId);
-                                                                   const chevron = document.getElementById('chevron-' + requestId);
-                                                                   const content = document.getElementById('quotation-content-' + requestId);
-
-                                                                   if (details.classList.contains('show')) {
-                                                                       details.classList.remove('show');
-                                                                       chevron.classList.remove('expanded');
-                                                                   } else {
-                                                                       details.classList.add('show');
-                                                                       chevron.classList.add('expanded');
-
-                                                                       // Load quotation data via AJAX if not already loaded
-                                                                       if (content && content.querySelector('.fa-spinner')) {
-                                                                           loadQuotationDetails(requestId);
-                                                                       }
-                                                                   }
-                                                               }
-                                                               /**
-                                                                * ✅ ĐỒNG Ý BÁO GIÁ CỦA KỸ THUẬT VIÊN CỤ THỂ
-                                                                * Customer đồng ý với báo giá của 1 kỹ thuật viên
-                                                                */
-                                                               function approveQuotation(requestId, reportId, technicianName) {
-                                                                   console.log('🟢 approveQuotation called:', {requestId, reportId, technicianName});
-
-                                                                   Swal.fire({
-                                                                       title: 'Xác nhận đồng ý?',
-                                                                       html: `Bạn có chắc muốn đồng ý báo giá của <strong>${technicianName}</strong>?<br><br>` +
-                                                                               `<small class="text-muted">Báo giá sẽ được đánh dấu là "Đã duyệt".</small>`,
-                                                                       icon: 'question',
-                                                                       showCancelButton: true,
-                                                                       confirmButtonColor: '#28a745',
-                                                                       cancelButtonColor: '#6c757d',
-                                                                       confirmButtonText: '<i class="fas fa-check-circle"></i> Đồng ý',
-                                                                       cancelButtonText: '<i class="fas fa-times"></i> Hủy'
-                                                                   }).then((result) => {
-                                                                       if (result.isConfirmed) {
-                                                                           // Hiển thị loading
-                                                                           Swal.fire({
-                                                                               title: 'Đang xử lý...',
-                                                                               html: 'Vui lòng đợi trong giây lát',
-                                                                               allowOutsideClick: false,
-                                                                               didOpen: () => {
-                                                                                   Swal.showLoading();
-                                                                               }
-                                                                           });
-
-                                                                           // Gọi AJAX
-                                                                           const formData = new URLSearchParams();
-                                                                           formData.append('action', 'approveQuotation');
-                                                                           formData.append('requestId', requestId);
-                                                                           formData.append('reportId', reportId);
-
-                                                                           console.log('📤 Sending request:', formData.toString());
-
-                                                                           fetch('${pageContext.request.contextPath}/managerServiceRequest', {
-                                                                               method: 'POST',
-                                                                               headers: {
-                                                                                   'Content-Type': 'application/x-www-form-urlencoded'
-                                                                               },
-                                                                               body: formData.toString()
-                                                                           })
-                                                                                   .then(response => {
-                                                                                       console.log('📥 Response status:', response.status);
-                                                                                       if (!response.ok) {
-                                                                                           throw new Error('Server trả về lỗi: ' + response.status);
-                                                                                       }
-                                                                                       return response.text();
-                                                                                   })
-                                                                                   .then(text => {
-                                                                                       console.log('📥 Response text:', text);
-                                                                                       if (!text || text.trim() === '') {
-                                                                                           throw new Error('Server trả về response rỗng');
-                                                                                       }
-                                                                                       return JSON.parse(text);
-                                                                                   })
-                                                                                   .then(data => {
-                                                                                       console.log('✅ Parsed data:', data);
-                                                                                       Swal.close();
-
-                                                                                       if (data.success) {
-                                                                                           Swal.fire({
-                                                                                               icon: 'success',
-                                                                                               title: 'Thành công!',
-                                                                                               text: data.message || 'Đã đồng ý báo giá thành công!',
-                                                                                               confirmButtonText: 'OK'
-                                                                                           }).then(() => {
-                                                                                               location.reload();
-                                                                                           });
-                                                                                       } else {
-                                                                                           Swal.fire({
-                                                                                               icon: 'error',
-                                                                                               title: 'Lỗi!',
-                                                                                               text: data.message || 'Không thể đồng ý báo giá!'
-                                                                                           });
-                                                                                       }
-                                                                                   })
-                                                                                   .catch(error => {
-                                                                                       console.error('❌ Error:', error);
-                                                                                       Swal.close();
-                                                                                       Swal.fire({
-                                                                                           icon: 'error',
-                                                                                           title: 'Lỗi!',
-                                                                                           html: `Có lỗi xảy ra:<br><br>` +
-                                                                                                   `<small class="text-danger">${error.message}</small>`
-                                                                                       });
-                                                                                   });
-                                                                       }
-                                                                   });
-                                                               }
-
-                                                               // ========== LOAD QUOTATION DETAILS VIA AJAX ==========
-                                                               function loadQuotationDetails(requestId) {
-                                                                   const content = document.getElementById('quotation-content-' + requestId);
-
-                                                                   fetch('${pageContext.request.contextPath}/managerServiceRequest?action=getQuotationDetails&requestId=' + requestId)
-                                                                           .then(response => response.json())
-                                                                           .then(data => {
-                                                                               if (data.success && data.quotations && data.quotations.length > 0) {
-                                                                                   const requestType = data.requestType || 'Service';
-                                                                                   const isWarranty = requestType === 'Warranty';
-
-                                                                                   console.log('📋 Request Type:', requestType, '| Is Warranty:', isWarranty);
-
-                                                                                   let html = '<div class="quotation-table">';
-                                                                                   html += '<div class="quotation-table-header">';
-                                                                                   html += '<div>Technician</div>';
-                                                                                   html += '<div>Công việc mô tả</div>';
-                                                                                   html += '<div>Estimated Cost</div>';
-                                                                                   html += '<div>Status</div>';
-                                                                                   html += '<div style="text-align: center;">Số linh kiện</div>';
-                                                                                   html += '</div>';
-
-                                                                                   let totalCost = 0;
-                                                                                   let totalParts = 0;
-
-                                                                                   console.log('📋 Total quotations:', data.quotations.length);
-                                                                                   
-                                                                                   data.quotations.forEach((quotation, index) => {
-                                                                                       const cost = (parseFloat(quotation.estimatedCost) || 0) * 26000;
-                                                                                       totalCost += cost;
-                                                                                       const partsCount = quotation.parts ? quotation.parts.length : 0;
-                                                                                       totalParts += partsCount;
-                                                                                       
-                                                                                       console.log(`🔧 Technician ${index + 1}:`, quotation.technicianName, '| Parts:', partsCount);
-
-                                                                                       // ✅ KIỂM TRA TRẠNG THÁI PARTS
-                                                                                       let allPartsPaid = true;
-                                                                                       let hasUnpaidParts = false;
-
-                                                                                       if (quotation.parts && quotation.parts.length > 0) {
-                                                                                           quotation.parts.forEach(part => {
-                                                                                               if (part.paymentStatus !== 'Completed' && part.paymentStatus !== 'Cancelled') {
-                                                                                                   allPartsPaid = false;
-                                                                                                   hasUnpaidParts = true;
-                                                                                               }
-                                                                                           });
-                                                                                       }
-
-                                                                                       html += '<div class="technician-row">';
-                                                                                       html += '<div class="technician-header" onclick="toggleTechnician(\'tech-' + requestId + '-' + index + '\')">';
-                                                                                       html += '<div class="technician-name">';
-                                                                                       html += '<svg class="chevron-icon" id="chevron-tech-' + requestId + '-' + index + '" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;">';
-                                                                                       html += '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>';
-                                                                                       html += '</svg>';
-                                                                                       html += quotation.technicianName || 'N/A';
-                                                                                       html += '</div>';
-                                                                                       html += '<div class="technician-work">' + (quotation.workDescription || 'N/A') + '</div>';
-                                                                                       html += '<div class="technician-cost">' + cost.toLocaleString('vi-VN') + ' đ</div>';
-
-                                                                                       // ✅ HIỂN THỊ TRẠNG THÁI
-                                                                                       html += '<div>';
-                                                                                       const qStatus = quotation.quotationStatus || quotation.status;
-
-                                                                                       if (qStatus === 'Rejected' || quotation.invoiceStatus === 'Cancelled') {
-                                                                                           html += '<span class="badge badge-cancelled"><i class="fas fa-times-circle"></i> Từ chối</span>';
-                                                                                       } else if (qStatus === 'Approved' || quotation.invoiceStatus === 'Completed' || (allPartsPaid && quotation.parts && quotation.parts.length > 0)) {
-                                                                                           html += '<span class="badge badge-completed"><i class="fas fa-check-circle"></i> ' + (isWarranty ? 'Đã duyệt' : 'Đã thanh toán') + '</span>';
-                                                                                       } else if (qStatus === 'Pending') {
-                                                                                           html += '<span class="badge badge-pending"><i class="fas fa-clock"></i> Chờ xác nhận</span>';
-                                                                                       } else {
-                                                                                           html += '<span class="badge badge-' + getStatusClass(qStatus) + '">' + getStatusText(qStatus) + '</span>';
-                                                                                       }
-                                                                                       html += '</div>';
-
-                                                                                       html += '<div style="text-align: center; font-weight: 600;">' + partsCount + ' linh kiện</div>';
-                                                                                       html += '</div>';
-
-                                                                                       // ✅ CHI TIẾT LINH KIỆN
-                                                                                       if (quotation.parts && quotation.parts.length > 0) {
-                                                                                           html += '<div class="parts-section" id="parts-tech-' + requestId + '-' + index + '">';
-                                                                                           html += '<div class="parts-date"><strong>Ngày tạo:</strong> ' + (quotation.repairDate || 'N/A') + '</div>';
-                                                                                           html += '<div class="parts-table">';
-
-                                                                                           // TABLE HEADER
-                                                                                           if (isWarranty) {
-                                                                                               // WARRANTY: 3 cột
-                                                                                               html += '<div class="parts-table-header" style="grid-template-columns: 2fr 180px 100px;">';
-                                                                                               html += '<div>Tên Linh Kiện</div>';
-                                                                                               html += '<div>Serial Number</div>';
-                                                                                               html += '<div>Số Lượng</div>';
-                                                                                               html += '</div>';
-                                                                                           } else {
-                                                                                               // SERVICE: 5 cột
-                                                                                               html += '<div class="parts-table-header">';
-                                                                                               html += '<div>Tên Linh Kiện</div>';
-                                                                                               html += '<div>Serial Number</div>';
-                                                                                               html += '<div>Số Lượng</div>';
-                                                                                               html += '<div>Đơn Giá</div>';
-                                                                                               html += '<div>Thành Tiền</div>';
-                                                                                               html += '</div>';
-                                                                                           }
-
-                                                                                           let partsTotalCost = 0;
-
-                                                                                           // DANH SÁCH LINH KIỆN
-                                                                                           console.log(`  📦 Rendering ${quotation.parts.length} parts for technician ${index + 1}`);
-                                                                                           quotation.parts.forEach((part, partIndex) => {
-                                                                                               console.log(`    - Part ${partIndex + 1}:`, part.partName);
-                                                                                               const partTotal = (parseFloat(part.unitPrice) || 0) * 26000 * (parseInt(part.quantity) || 0);
-                                                                                               partsTotalCost += partTotal;
-
-                                                                                               if (isWarranty) {
-                                                                                                   // WARRANTY: Không hiển thị giá
-                                                                                                   html += '<div class="parts-table-row" style="grid-template-columns: 2fr 180px 100px;">';
-                                                                                                   html += '<div>' + (part.partName || 'N/A') + '</div>';
-                                                                                                   html += '<div class="parts-serial">' + (part.serialNumber || 'N/A') + '</div>';
-                                                                                                   html += '<div class="parts-quantity">' + (part.quantity || 0) + '</div>';
-                                                                                                   html += '</div>';
-                                                                                               } else {
-                                                                                                   // SERVICE: Hiển thị đầy đủ giá
-                                                                                                   html += '<div class="parts-table-row">';
-                                                                                                   html += '<div>' + (part.partName || 'N/A') + '</div>';
-                                                                                                   html += '<div class="parts-serial">' + (part.serialNumber || 'N/A') + '</div>';
-                                                                                                   html += '<div class="parts-quantity">' + (part.quantity || 0) + '</div>';
-                                                                                                   html += '<div class="parts-price">' + ((parseFloat(part.unitPrice) || 0) * 26000).toLocaleString('vi-VN') + ' đ</div>';
-                                                                                                   html += '<div class="parts-total">' + partTotal.toLocaleString('vi-VN') + ' đ</div>';
-                                                                                                   html += '</div>';
-                                                                                               }
-                                                                                           });
-
-                                                                                           // FOOTER - Chỉ cho Service
-                                                                                           if (!isWarranty) {
-                                                                                               html += '<div class="parts-table-footer">';
-                                                                                               html += '<div class="total-label">Tổng cộng:</div>';
-                                                                                               html += '<div class="total-value">' + partsTotalCost.toLocaleString('vi-VN') + ' đ</div>';
-                                                                                               html += '</div>';
-                                                                                           }
-                                                                                           html += '</div>';
-
-                                                                                           // ✅ ========== ACTION BUTTONS - LOGIC MỚI ========== 
-                                                                                           // Sử dụng lại biến qStatus đã khai báo ở trên
-                                                                                           const isRejected = qStatus === 'Rejected' || quotation.invoiceStatus === 'Cancelled';
-                                                                                           const isCompleted = quotation.invoiceStatus === 'Completed' || allPartsPaid;
-                                                                                           const isApproved = qStatus === 'Approved';
-                                                                                           const isPending = qStatus === 'Pending';
-
-                                                                                           // CHỈ HIỂN THỊ NÚT KHI: Chưa reject, chưa completed
-                                                                                           if (!isRejected && !isCompleted) {
-                                                                                               html += '<div class="technician-payment-section">';
-                                                                                               html += '<div class="payment-summary">';
-
-                                                                                               if (isWarranty) {
-                                                                                                   // WARRANTY: Hiển thị số lượng linh kiện
-                                                                                                   html += '<div class="payment-summary-text">Tổng số linh kiện cần thay thế</div>';
-                                                                                                   html += '<div class="payment-total-amount">' + partsCount + ' linh kiện</div>';
-                                                                                               } else {
-                                                                                                   // SERVICE: Hiển thị tổng tiền
-                                                                                                   html += '<div class="payment-summary-text">Tổng chi phí linh kiện của kỹ thuật viên</div>';
-                                                                                                   html += '<div class="payment-total-amount">' + partsTotalCost.toLocaleString('vi-VN') + ' đ</div>';
-                                                                                               }
-
-                                                                                               html += '</div>';
-                                                                                               html += '<div class="payment-actions">';
-
-                                                                                               // ========== LOGIC NÚT THEO TRẠNG THÁI - ĐÃ SỬA ==========
-                                                                                               if (isWarranty) {
-                                                                                                   // ✅ WARRANTY - CHỈ HIỂN THỊ NÚT Ở TRẠNG THÁI PENDING
-                                                                                                   if (isPending) {
-                                                                                                       // Trạng thái Pending → Hiển thị "Đồng ý báo giá" + "Từ chối"
-                                                                                                       html += '<button class="btn-approve-quotation" onclick="event.stopPropagation(); approveQuotation(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
-                                                                                                       html += '<i class="fas fa-check-circle"></i> Đồng ý báo giá';
-                                                                                                       html += '</button>';
-
-                                                                                                       // Nút từ chối
-                                                                                                       html += '<button class="btn-reject-quotation" onclick="event.stopPropagation(); rejectQuotation(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
-                                                                                                       html += '<i class="fas fa-times-circle"></i> Từ chối báo giá';
-                                                                                                       html += '</button>';
-                                                                                                   }
-                                                                                                   // BỎ NÚT THỨ 2 CHO WARRANTY - Khi đồng ý ở nút 1 sẽ tự động hoàn tất
-
-                                                                                               } else {
-                                                                                                   // ✅ SERVICE - HIỂN THỊ NÚT THANH TOÁN NGAY Ở CẢ PENDING VÀ APPROVED
-                                                                                                   if (isPending && hasUnpaidParts) {
-                                                                                                       // Hiển thị nút "Thanh toán tất cả" + "Từ chối"
-                                                                                                       html += '<button class="btn-pay-all" onclick="event.stopPropagation(); payForTechnician(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
-                                                                                                       html += '<i class="fas fa-credit-card"></i> Thanh toán tất cả';
-                                                                                                       html += '</button>';
-
-                                                                                                       html += '<button class="btn-reject-quotation" onclick="event.stopPropagation(); rejectQuotation(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
-                                                                                                       html += '<i class="fas fa-times-circle"></i> Từ chối báo giá';
-                                                                                                       html += '</button>';
-                                                                                                   }
-                                                                                               }
-
-                                                                                               html += '</div>'; // Close payment-actions
-                                                                                               html += '</div>'; // Close technician-payment-section
-                                                                                           } else if (isCompleted) {
-                                                                                               // ✅ HIỂN THỊ BADGE "HOÀN THÀNH"
-                                                                                               html += '<div class="alert alert-success" style="margin: 15px; text-align: center;">';
-                                                                                               html += '<i class="fas fa-check-circle"></i> ';
-                                                                                               html += isWarranty ? 'Đã hoàn tất thay thế linh kiện' : 'Đã thanh toán đầy đủ';
-                                                                                               html += '</div>';
-                                                                                           } else if (isRejected) {
-                                                                                               // ✅ HIỂN THỊ BADGE "ĐÃ TỪ CHỐI"
-                                                                                               html += '<div class="alert alert-danger" style="margin: 15px; text-align: center;">';
-                                                                                               html += '<i class="fas fa-times-circle"></i> Báo giá đã bị từ chối';
-                                                                                               html += '</div>';
-                                                                                           }
-
-                                                                                           html += '</div>'; // Close parts-section
-                                                                                       }
-
-                                                                                       html += '</div>'; // Close technician-row
-                                                                                   });
-
-                                                                                   html += '</div>'; // Close quotation-table
-
-                                                                                   // SUMMARY
-                                                                                   html += '<div class="quotation-summary">';
-                                                                                   html += '<div class="summary-count">Tổng số kỹ thuật viên: ' + data.quotations.length + ' | Tổng số linh kiện: ' + totalParts + '</div>';
-                                                                                   if (!isWarranty) {
-                                                                                       html += '<div class="summary-total">Tổng chi phí ước tính: ' + totalCost.toLocaleString('vi-VN') + ' đ</div>';
-                                                                                   }
-                                                                                   html += '</div>';
-
-                                                                                   content.innerHTML = html;
-                                                                               } else {
-                                                                                   content.innerHTML = '<div class="alert alert-info" style="margin: 20px;"><i class="fas fa-info-circle"></i> ' + (data.message || 'Chưa có báo giá nào') + '</div>';
-                                                                               }
-                                                                           })
-                                                                           .catch(error => {
-                                                                               console.error('Error loading quotation:', error);
-                                                                               content.innerHTML = '<div class="alert alert-danger" style="margin: 20px;"><i class="fas fa-exclamation-triangle"></i> Không thể tải dữ liệu báo giá</div>';
-                                                                           });
-                                                               }
-
-                                                               // ✅ HÀM MỚI: ĐỒNG Ý THAY THẾ TẤT CẢ LINH KIỆN BẢO HÀNH
-                                                               function approveWarrantyForTechnician(requestId, reportId, technicianName) {
-                                                                   Swal.fire({
-                                                                       title: 'Xác nhận đồng ý?',
-                                                                       html: '<p>Bạn có chắc chắn muốn đồng ý thay thế <strong>tất cả linh kiện</strong> của kỹ thuật viên:<br><strong>' + technicianName + '</strong>?</p>' +
-                                                                               '<small class="text-muted">Đây là dịch vụ bảo hành, không cần thanh toán.</small>',
-                                                                       icon: 'question',
-                                                                       showCancelButton: true,
-                                                                       confirmButtonText: '<i class="fas fa-check-circle"></i> Xác nhận đồng ý',
-                                                                       cancelButtonText: '<i class="fas fa-times"></i> Hủy',
-                                                                       confirmButtonColor: '#27ae60',
-                                                                       cancelButtonColor: '#95a5a6',
-                                                                       reverseButtons: true
-                                                                   }).then((result) => {
-                                                                       if (result.isConfirmed) {
-                                                                           // Hiển thị loading
-                                                                           Swal.fire({
-                                                                               title: 'Đang xử lý...',
-                                                                               html: 'Vui lòng đợi trong giây lát',
-                                                                               allowOutsideClick: false,
-                                                                               didOpen: () => {
-                                                                                   Swal.showLoading();
-                                                                               }
-                                                                           });
-
-                                                                           // TODO: Gọi API để approve tất cả parts của technician này
-                                                                           // Tạm thời redirect đến trang xử lý
-                                                                           const url = '${pageContext.request.contextPath}/managerServiceRequest?action=approveAllWarrantyParts&requestId=' + requestId + '&reportId=' + reportId;
-
-                                                                           fetch(url, {
-                                                                               method: 'POST'
-                                                                           })
-                                                                                   .then(response => response.json())
-                                                                                   .then(data => {
-                                                                                       Swal.close();
-                                                                                       if (data.success) {
-                                                                                           Swal.fire({
-                                                                                               icon: 'success',
-                                                                                               title: 'Thành công!',
-                                                                                               text: data.message || 'Đã đồng ý thay thế linh kiện!',
-                                                                                               confirmButtonText: 'OK'
-                                                                                           }).then(() => {
-                                                                                               location.reload();
-                                                                                           });
-                                                                                       } else {
-                                                                                           Swal.fire({
-                                                                                               icon: 'error',
-                                                                                               title: 'Lỗi!',
-                                                                                               text: data.message || 'Không thể xử lý yêu cầu!'
-                                                                                           });
-                                                                                       }
-                                                                                   })
-                                                                                   .catch(error => {
-                                                                                       Swal.close();
-                                                                                       Swal.fire({
-                                                                                           icon: 'error',
-                                                                                           title: 'Lỗi!',
-                                                                                           text: 'Có lỗi xảy ra: ' + error.message
-                                                                                       });
-                                                                                   });
-                                                                       }
-                                                                   });
-                                                               }
-
-                                                               // ========== TOGGLE TECHNICIAN PARTS ==========
-                                                               function toggleTechnician(id) {
-                                                                   const parts = document.getElementById('parts-' + id);
-                                                                   const chevron = document.getElementById('chevron-' + id);
-
-                                                                   if (parts.classList.contains('show')) {
-                                                                       parts.classList.remove('show');
-                                                                       chevron.style.transform = 'rotate(0deg)';
-                                                                   } else {
-                                                                       parts.classList.add('show');
-                                                                       chevron.style.transform = 'rotate(90deg)';
-                                                                   }
-                                                               }
-
-                                                               // ========== HELPER FUNCTIONS ==========
-                                                               function getStatusClass(status) {
-                                                                   const statusMap = {
-                                                                       'Pending': 'pending',
-                                                                       'AwaitingApproval': 'awaiting',
-                                                                       'Approved': 'inprogress',
-                                                                       'Completed': 'completed',
-                                                                       'Cancelled': 'cancelled',
-                                                                       'Rejected': 'cancelled'
-                                                                   };
-                                                                   return statusMap[status] || 'secondary';
-                                                               }
-
-                                                               function getStatusText(status) {
-                                                                   const textMap = {
-                                                                       'Pending': 'Chờ xác nhận',
-                                                                       'AwaitingApproval': 'Chờ xử lý',
-                                                                       'Approved': 'Đang xử lý',
-                                                                       'Completed': 'Hoàn thành',
-                                                                       'Cancelled': 'Đã hủy',
-                                                                       'Rejected': 'Từ chối'
-                                                                   };
-                                                                   return textMap[status] || status;
-                                                               }
-
-                                                               // ========== PAYMENT & CANCEL FUNCTIONS FOR INDIVIDUAL PARTS ==========
-
-                                                               /**
-                                                                * ✅ Thanh toán cho 1 linh kiện cụ thể - Chuyển sang trang thanh toán
-                                                                * @param requestId - ID của service request
-                                                                * @param reportId - ID của repair report (technician's quotation)
-                                                                * @param partDetailId - ID của part detail (linh kiện cụ thể)
-                                                                * @param partName - Tên linh kiện (để hiển thị)
-                                                                */
-                                                               function payForPart(requestId, reportId, partDetailId, partName) {
-                                                                   // Chuyển sang trang thanh toán với thông tin linh kiện
-                                                                   const url = '${pageContext.request.contextPath}/payment?requestId=' + requestId +
-                                                                           '&reportId=' + reportId +
-                                                                           '&partDetailId=' + partDetailId +
-                                                                           '&partName=' + encodeURIComponent(partName);
-
-                                                                   window.location.href = url;
-                                                               }
-
-                                                               /**
-                                                                * ✅ Hủy 1 linh kiện cụ thể - CHỈ HỦY LINH KIỆN ĐÓ
-                                                                * @param requestId - ID của service request
-                                                                * @param reportId - ID của repair report
-                                                                * @param partDetailId - ID của part detail
-                                                                * @param partName - Tên linh kiện
-                                                                */
-                                                               function cancelPart(requestId, reportId, partDetailId, partName) {
-                                                                   Swal.fire({
-                                                                       title: 'Xác nhận hủy linh kiện',
-                                                                       html: '<p>Bạn có chắc chắn muốn hủy linh kiện:<br><strong>' + partName + '</strong>?</p>',
-                                                                       icon: 'warning',
-                                                                       showCancelButton: true,
-                                                                       confirmButtonText: '<i class="fas fa-trash"></i> Xác nhận hủy',
-                                                                       cancelButtonText: '<i class="fas fa-times"></i> Giữ lại',
-                                                                       confirmButtonColor: '#e74c3c',
-                                                                       cancelButtonColor: '#95a5a6',
-                                                                       reverseButtons: true
-                                                                   }).then((result) => {
-                                                                       if (result.isConfirmed) {
-                                                                           // Hiển thị loading
-                                                                           Swal.fire({
-                                                                               title: 'Đang xử lý...',
-                                                                               text: 'Vui lòng đợi',
-                                                                               allowOutsideClick: false,
-                                                                               didOpen: () => {
-                                                                                   Swal.showLoading();
-                                                                               }
-                                                                           });
-
-                                                                           // Gửi request hủy linh kiện
-                                                                           const formData = new FormData();
-                                                                           formData.append('action', 'cancelPart');
-                                                                           formData.append('requestId', requestId);
-                                                                           formData.append('reportId', reportId);
-                                                                           formData.append('partDetailId', partDetailId);
-
-                                                                           fetch('${pageContext.request.contextPath}/managerServiceRequest', {
-                                                                               method: 'POST',
-                                                                               body: formData
-                                                                           })
-                                                                                   .then(response => {
-                                                                                       console.log('Response status:', response.status);
-                                                                                       console.log('Response headers:', response.headers);
-                                                                                       return response.text(); // Đọc text trước để debug
-                                                                                   })
-                                                                                   .then(text => {
-                                                                                       console.log('Response text:', text);
-                                                                                       try {
-                                                                                           return JSON.parse(text);
-                                                                                       } catch (e) {
-                                                                                           console.error('JSON parse error:', e);
-                                                                                           console.error('Response was:', text);
-                                                                                           throw new Error('Invalid JSON response: ' + text.substring(0, 100));
-                                                                                       }
-                                                                                   })
-                                                                                   .then(data => {
-                                                                                       Swal.close();
-
-                                                                                       if (data.success) {
-                                                                                           Swal.fire({
-                                                                                               icon: 'success',
-                                                                                               title: 'Đã hủy linh kiện!',
-                                                                                               text: data.message || 'Linh kiện đã được hủy thành công',
-                                                                                               timer: 2000,
-                                                                                               showConfirmButton: false
-                                                                                           }).then(() => {
-                                                                                               // Reload dropdown để cập nhật trạng thái
-                                                                                               loadQuotationDetails(requestId);
-                                                                                           });
-                                                                                       } else {
-                                                                                           Swal.fire({
-                                                                                               icon: 'error',
-                                                                                               title: 'Lỗi!',
-                                                                                               text: data.message || 'Không thể hủy linh kiện'
-                                                                                           });
-                                                                                       }
-                                                                                   })
-                                                                                   .catch(error => {
-                                                                                       Swal.close();
-                                                                                       console.error('Error:', error);
-                                                                                       Swal.fire({
-                                                                                           icon: 'error',
-                                                                                           title: 'Lỗi!',
-                                                                                           text: 'Có lỗi xảy ra khi hủy: ' + error.message
-                                                                                       });
-                                                                                   });
-                                                                       }
-                                                                   });
-                                                               }
-
-                                                               /**
-                                                                * ✅ THANH TOÁN TỔNG CHO KỸ THUẬT VIÊN
-                                                                * Thanh toán tất cả linh kiện của 1 kỹ thuật viên
-                                                                * @param requestId - ID của service request
-                                                                * @param reportId - ID của repair report (technician's quotation)
-                                                                * @param technicianName - Tên kỹ thuật viên
-                                                                */
-                                                               function payForTechnician(requestId, reportId, technicianName) {
-                                                                   Swal.fire({
-                                                                       title: 'Xác nhận thanh toán',
-                                                                       html: '<p>Bạn có chắc chắn muốn thanh toán <strong>tất cả linh kiện</strong> của kỹ thuật viên:<br><strong>' + technicianName + '</strong>?</p>',
-                                                                       icon: 'question',
-                                                                       showCancelButton: true,
-                                                                       confirmButtonText: '<i class="fas fa-credit-card"></i> Xác nhận thanh toán',
-                                                                       cancelButtonText: '<i class="fas fa-times"></i> Hủy',
-                                                                       confirmButtonColor: '#27ae60',
-                                                                       cancelButtonColor: '#95a5a6',
-                                                                       reverseButtons: true
-                                                                   }).then((result) => {
-                                                                       if (result.isConfirmed) {
-                                                                           // Chuyển sang trang thanh toán với thông tin kỹ thuật viên
-                                                                           const url = '${pageContext.request.contextPath}/payment?requestId=' + requestId +
-                                                                                   '&reportId=' + reportId +
-                                                                                   '&paymentType=technician' +
-                                                                                   '&technicianName=' + encodeURIComponent(technicianName);
-
-                                                                           window.location.href = url;
-                                                                       }
-                                                                   });
-                                                               }
-
-
-
-                                                               // ========== OLD PAYMENT FUNCTIONS (Keep for backward compatibility) ==========
-                                                               function makePayment(requestId, reportId) {
-                                                                   Swal.fire({
-                                                                       title: 'Xác nhận thanh toán',
-                                                                       text: 'Bạn có chắc chắn muốn thanh toán báo giá này?',
-                                                                       icon: 'question',
-                                                                       showCancelButton: true,
-                                                                       confirmButtonText: 'Xác nhận',
-                                                                       cancelButtonText: 'Hủy',
-                                                                       confirmButtonColor: '#27ae60',
-                                                                       cancelButtonColor: '#95a5a6'
-                                                                   }).then((result) => {
-                                                                       if (result.isConfirmed) {
-                                                                           window.location.href = '${pageContext.request.contextPath}/managerServiceRequest?action=makePayment&requestId=' + requestId + '&reportId=' + reportId;
-                                                                       }
-                                                                   });
-                                                               }
-
-                                                               function cancelQuotation(requestId, reportId) {
-                                                                   Swal.fire({
-                                                                       title: 'Xác nhận hủy',
-                                                                       text: 'Bạn có chắc chắn muốn hủy báo giá này?',
-                                                                       icon: 'warning',
-                                                                       showCancelButton: true,
-                                                                       confirmButtonText: 'Xác nhận hủy',
-                                                                       cancelButtonText: 'Giữ lại',
-                                                                       confirmButtonColor: '#e74c3c',
-                                                                       cancelButtonColor: '#95a5a6'
-                                                                   }).then((result) => {
-                                                                       if (result.isConfirmed) {
-                                                                           Swal.fire({
-                                                                               icon: 'info',
-                                                                               title: 'Đã hủy!',
-                                                                               text: 'Báo giá đã được hủy',
-                                                                               timer: 2000,
-                                                                               showConfirmButton: false
-                                                                           });
-                                                                       }
-                                                                   });
-                                                               }
-
-                                                               /**
-                                                                * ✅ TỪ CHỐI BÁO GIÁ CỦA KỸ THUẬT VIÊN
-                                                                * @param requestId - ID của service request
-                                                                * @param reportId - ID của repair report
-                                                                * @param technicianName - Tên kỹ thuật viên
-                                                                */
-                                                               function rejectQuotation(requestId, reportId, technicianName) {
-                                                                   Swal.fire({
-                                                                       title: 'Xác nhận từ chối?',
-                                                                       html: `Bạn có chắc muốn từ chối báo giá của <strong>${technicianName}</strong>?<br><br>` +
-                                                                               `<small class="text-muted">Báo giá sẽ bị đánh dấu là "Đã từ chối".</small>`,
-                                                                       icon: 'warning',
-                                                                       showCancelButton: true,
-                                                                       confirmButtonColor: '#e74c3c',
-                                                                       cancelButtonColor: '#6c757d',
-                                                                       confirmButtonText: '<i class="fas fa-times-circle"></i> Từ chối',
-                                                                       cancelButtonText: '<i class="fas fa-arrow-left"></i> Quay lại'
-                                                                   }).then((result) => {
-                                                                       if (result.isConfirmed) {
-                                                                           // Hiển thị loading
-                                                                           Swal.fire({
-                                                                               title: 'Đang xử lý...',
-                                                                               html: 'Vui lòng đợi trong giây lát',
-                                                                               allowOutsideClick: false,
-                                                                               didOpen: () => {
-                                                                                   Swal.showLoading();
-                                                                               }
-                                                                           });
-
-                                                                           // Gọi AJAX
-                                                                           const formData = new URLSearchParams();
-                                                                           formData.append('action', 'rejectQuotation');
-                                                                           formData.append('requestId', requestId);
-                                                                           formData.append('reportId', reportId);
-
-                                                                           fetch('${pageContext.request.contextPath}/managerServiceRequest', {
-                                                                               method: 'POST',
-                                                                               headers: {
-                                                                                   'Content-Type': 'application/x-www-form-urlencoded'
-                                                                               },
-                                                                               body: formData.toString()
-                                                                           })
-                                                                                   .then(response => response.json())
-                                                                                   .then(data => {
-                                                                                       Swal.close();
-
-                                                                                       if (data.success) {
-                                                                                           Swal.fire({
-                                                                                               icon: 'success',
-                                                                                               title: 'Đã từ chối!',
-                                                                                               text: data.message || 'Báo giá đã được từ chối thành công!',
-                                                                                               confirmButtonText: 'OK'
-                                                                                           }).then(() => {
-                                                                                               location.reload();
-                                                                                           });
-                                                                                       } else {
-                                                                                           Swal.fire({
-                                                                                               icon: 'error',
-                                                                                               title: 'Lỗi!',
-                                                                                               text: data.message || 'Không thể từ chối báo giá!'
-                                                                                           });
-                                                                                       }
-                                                                                   })
-                                                                                   .catch(error => {
-                                                                                       Swal.close();
-                                                                                       Swal.fire({
-                                                                                           icon: 'error',
-                                                                                           title: 'Lỗi!',
-                                                                                           text: 'Có lỗi xảy ra: ' + error.message
-                                                                                       });
-                                                                                   });
-                                                                       }
-                                                                   });
-                                                               }
-
-                                                               // ========== OTHER UTILITY FUNCTIONS FROM ORIGINAL CODE ==========
-                                                               function refreshPage() {
-                                                                   window.location.href = "${pageContext.request.contextPath}/managerServiceRequest";
-                                                               }
-
-                                                               function toggleSidebar() {
-                                                                   const sidebar = document.getElementById('sidebar');
-                                                                   const toggleIcon = document.getElementById('toggleIcon');
-                                                                   sidebar.classList.toggle('collapsed');
-
-                                                                   if (sidebar.classList.contains('collapsed')) {
-                                                                       toggleIcon.classList.remove('fa-chevron-left');
-                                                                       toggleIcon.classList.add('fa-chevron-right');
-                                                                   } else {
-                                                                       toggleIcon.classList.remove('fa-chevron-right');
-                                                                       toggleIcon.classList.add('fa-chevron-left');
-                                                                   }
-                                                               }
-
-                                                               function scrollToTop() {
-                                                                   window.scrollTo({
-                                                                       top: 0,
-                                                                       behavior: 'smooth'
-                                                                   });
-                                                               }
-
-                                                               function goToPage(pageNumber) {
-                                                                   const urlParams = new URLSearchParams(window.location.search);
-                                                                   urlParams.set('page', pageNumber);
-                                                                   if (!urlParams.has('action')) {
-                                                                       urlParams.set('action', 'search');
-                                                                   }
-                                                                   window.location.href = '${pageContext.request.contextPath}/managerServiceRequest?' + urlParams.toString();
-                                                               }
-
-                                                               // View request detail function (from original)
-                                                               function viewRequestDetail(requestId, displayStatus) {
-                                                                   console.log('🔍 Opening detail modal for request:', requestId, 'Status:', displayStatus);
-
-                                                                   // Hiển thị loading
-                                                                   Swal.fire({
-                                                                       title: 'Đang tải...',
-                                                                       html: 'Vui lòng đợi trong giây lát',
-                                                                       allowOutsideClick: false,
-                                                                       didOpen: () => {
-                                                                           Swal.showLoading();
-                                                                       }
-                                                                   });
-
-                                                                   // Gọi AJAX để lấy dữ liệu
-                                                                   fetch('${pageContext.request.contextPath}/managerServiceRequest?action=viewDetail&requestId=' + requestId)
-                                                                           .then(response => response.json())
-                                                                           .then(data => {
-                                                                               Swal.close(); // Đóng loading
-
-                                                                               if (!data.success) {
-                                                                                   Swal.fire({
-                                                                                       icon: 'error',
-                                                                                       title: 'Lỗi!',
-                                                                                       text: data.message || 'Không thể tải thông tin yêu cầu'
-                                                                                   });
-                                                                                   return;
-                                                                               }
-
-                                                                               console.log('✅ Received data:', data);
-
-                                                                               // Hiển thị modal tùy theo trạng thái
-                                                                               if (displayStatus === 'Chờ Xác Nhận') {
-                                                                                   showPendingModal(data);
-                                                                               } else if (displayStatus === 'Chờ Xử Lý') {
-                                                                                   showAwaitingModal(data);
-                                                                               } else if (displayStatus === 'Đang Xử Lý') {
-                                                                                   showInProgressModal(data);
-                                                                               } else if (displayStatus === 'Hoàn Thành') {
-                                                                                   showCompletedModal(data);
-                                                                               } else {
-                                                                                   // Fallback: dùng modal Pending
-                                                                                   showPendingModal(data);
-                                                                               }
-                                                                           })
-                                                                           .catch(error => {
-                                                                               Swal.close();
-                                                                               console.error('❌ Error:', error);
-                                                                               Swal.fire({
-                                                                                   icon: 'error',
-                                                                                   title: 'Lỗi!',
-                                                                                   text: 'Có lỗi xảy ra khi tải dữ liệu: ' + error.message
-                                                                               });
-                                                                           });
-                                                               }
-
-                                                               // ========== MODAL 1: CHỜ XÁC NHẬN ==========
-                                                               function showPendingModal(data) {
-                                                                   document.getElementById('pendingRequestId').textContent = '#' + data.requestId;
-                                                                   document.getElementById('pendingRequestDate').textContent = data.requestDate;
-                                                                   document.getElementById('pendingContractId').textContent = data.contractId || 'N/A';
-                                                                   document.getElementById('pendingEquipmentName').textContent = data.equipmentName || 'N/A';
-                                                                   document.getElementById('pendingDescription').textContent = data.description;
-
-                                                                   // Priority badge
-                                                                   const priorityBadge = document.getElementById('pendingPriority');
-                                                                   const priorityMap = {
-                                                                       'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
-                                                                       'High': {className: 'bg-warning text-dark', text: 'Cao'},
-                                                                       'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
-                                                                   };
-                                                                   const priority = priorityMap[data.priorityLevel] || {className: 'bg-dark', text: data.priorityLevel};
-                                                                   priorityBadge.className = 'badge ' + priority.className;
-                                                                   priorityBadge.textContent = priority.text;
-
-                                                                   // Request Type badge
-                                                                   const typeBadge = document.getElementById('pendingRequestType');
-                                                                   if (data.requestType === 'Service' || data.requestType === 'Warranty') {
-                                                                       typeBadge.className = 'badge bg-primary';
-                                                                       typeBadge.textContent = '🔧 Hỗ Trợ Thiết Bị';
-                                                                   } else if (data.requestType === 'InformationUpdate') {
-                                                                       typeBadge.className = 'badge bg-info';
-                                                                       typeBadge.textContent = '👤 Hỗ Trợ Tài Khoản';
-                                                                   } else {
-                                                                       typeBadge.className = 'badge bg-secondary';
-                                                                       typeBadge.textContent = data.requestType || 'N/A';
-                                                                   }
-
-                                                                   // Mở modal
-                                                                   new bootstrap.Modal(document.getElementById('viewModalPending')).show();
-                                                               }
-
-                                                               // ========== MODAL 2: CHỜ XỬ LÝ ==========
-                                                               function showAwaitingModal(data) {
-                                                                   document.getElementById('awaitingRequestId').textContent = '#' + data.requestId;
-                                                                   document.getElementById('awaitingRequestDate').textContent = data.requestDate;
-                                                                   document.getElementById('awaitingContractId').textContent = data.contractId || 'N/A';
-                                                                   document.getElementById('awaitingEquipmentName').textContent = data.equipmentName || 'N/A';
-                                                                   document.getElementById('awaitingDescription').textContent = data.description;
-
-                                                                   // Priority badge
-                                                                   const priorityBadge = document.getElementById('awaitingPriority');
-                                                                   const priorityMap = {
-                                                                       'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
-                                                                       'High': {className: 'bg-warning text-dark', text: 'Cao'},
-                                                                       'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
-                                                                   };
-                                                                   const priority = priorityMap[data.priorityLevel] || {className: 'bg-dark', text: data.priorityLevel};
-                                                                   priorityBadge.className = 'badge ' + priority.className;
-                                                                   priorityBadge.textContent = priority.text;
-
-                                                                   // Request Type badge
-                                                                   const typeBadge = document.getElementById('awaitingRequestType');
-                                                                   if (data.requestType === 'Service' || data.requestType === 'Warranty') {
-                                                                       typeBadge.className = 'badge bg-primary';
-                                                                       typeBadge.textContent = '🔧 Hỗ Trợ Thiết Bị';
-                                                                   } else if (data.requestType === 'InformationUpdate') {
-                                                                       typeBadge.className = 'badge bg-info';
-                                                                       typeBadge.textContent = '👤 Hỗ Trợ Tài Khoản';
-                                                                   } else {
-                                                                       typeBadge.className = 'badge bg-secondary';
-                                                                       typeBadge.textContent = data.requestType || 'N/A';
-                                                                   }
-
-                                                                   // Tên người xử lý
-                                                                   const technicianNameEl = document.getElementById('awaitingTechnicianName');
-                                                                   if (data.assignedTechnicianName) {
-                                                                       technicianNameEl.innerHTML = '<i class="fas fa-user-check"></i> ' + data.assignedTechnicianName;
-                                                                       technicianNameEl.className = 'fw-normal text-primary';
-                                                                   } else {
-                                                                       technicianNameEl.innerHTML = '<i class="fas fa-question-circle"></i> Chưa phân công';
-                                                                       technicianNameEl.className = 'fw-normal text-muted';
-                                                                   }
-
-                                                                   // Mở modal
-                                                                   new bootstrap.Modal(document.getElementById('viewModalAwaiting')).show();
-                                                               }
-
-                                                               // ========== MODAL 3: ĐANG XỬ LÝ ==========
-                                                               function showInProgressModal(data) {
-                                                                   console.log('📋 Showing In Progress Modal with full details');
-                                                                   console.log('📦 Data:', data);
-
-                                                                   // Thông tin yêu cầu cơ bản
-                                                                   document.getElementById('inProgressRequestId').textContent = '#' + data.requestId;
-                                                                   document.getElementById('inProgressRequestDate').textContent = data.requestDate;
-                                                                   document.getElementById('inProgressContractId').textContent = data.contractId || 'N/A';
-                                                                   document.getElementById('inProgressEquipmentName').textContent = data.equipmentName || 'N/A';
-                                                                   document.getElementById('inProgressDescription').textContent = data.description;
-
-                                                                   // Priority badge
-                                                                   const priorityBadge = document.getElementById('inProgressPriority');
-                                                                   const priorityMap = {
-                                                                       'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
-                                                                       'High': {className: 'bg-warning text-dark', text: 'Cao'},
-                                                                       'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
-                                                                   };
-                                                                   const priority = priorityMap[data.priorityLevel] || {className: 'bg-dark', text: data.priorityLevel};
-                                                                   priorityBadge.className = 'badge ' + priority.className;
-                                                                   priorityBadge.textContent = priority.text;
-
-                                                                   // Request Type badge
-                                                                   const typeBadge = document.getElementById('inProgressRequestType');
-                                                                   if (data.requestType === 'Service' || data.requestType === 'Warranty') {
-                                                                       typeBadge.className = 'badge bg-primary';
-                                                                       typeBadge.textContent = '🔧 Hỗ Trợ Thiết Bị';
-                                                                   } else if (data.requestType === 'InformationUpdate') {
-                                                                       typeBadge.className = 'badge bg-info';
-                                                                       typeBadge.textContent = '👤 Hỗ Trợ Tài Khoản';
-                                                                   } else {
-                                                                       typeBadge.className = 'badge bg-secondary';
-                                                                       typeBadge.textContent = data.requestType || 'N/A';
-                                                                   }
-
-                                                                   // Load danh sách technicians và parts
-                                                                   loadTechniciansForModal(data.requestId);
-
-                                                                   // Mở modal
-                                                                   new bootstrap.Modal(document.getElementById('viewModalInProgress')).show();
-                                                               }
-
-                                                               // ✅ Load danh sách technicians với parts cho modal chi tiết
-                                                               function loadTechniciansForModal(requestId) {
-                                                                   const container = document.getElementById('inProgressTechniciansList');
-
-                                                                   console.log('🔍 Loading technicians for request:', requestId);
-
-                                                                   fetch('${pageContext.request.contextPath}/managerServiceRequest?action=getQuotationDetails&requestId=' + requestId)
-                                                                           .then(response => {
-                                                                               console.log('📡 Response status:', response.status);
-                                                                               return response.json();
-                                                                           })
-                                                                           .then(data => {
-                                                                               console.log('📦 Received data:', data);
-
-                                                                               if (data.success && data.quotations && data.quotations.length > 0) {
-                                                                                   console.log('✅ Found', data.quotations.length, 'quotations');
-                                                                                   let html = '<div style="padding: 20px;">';
-
-                                                                                   data.quotations.forEach((quotation, index) => {
-                                                                                       const techInitial = quotation.technicianName ? quotation.technicianName.charAt(0).toUpperCase() : 'T';
-                                                                                       const cost = (parseFloat(quotation.estimatedCost) || 0) * 26000;
-                                                                                       const partsCount = quotation.parts ? quotation.parts.length : 0;
-
-                                                                                       html += '<div class="technician-card">';
-
-                                                                                       // Header với avatar và info
-                                                                                       html += '<div class="technician-header-row">';
-                                                                                       html += '<div class="technician-avatar">' + techInitial + '</div>';
-                                                                                       html += '<div class="technician-info">';
-                                                                                       html += '<div class="technician-name">' + (quotation.technicianName || 'N/A') + '</div>';
-                                                                                       html += '<div class="technician-work-desc">' + (quotation.workDescription || 'Không có mô tả') + '</div>';
-                                                                                       html += '<div class="technician-meta">';
-                                                                                       html += '<div class="meta-item">';
-                                                                                       html += '<i class="fas fa-calendar-check"></i>';
-                                                                                       html += '<span>Ngày sửa: ' + (quotation.repairDate || 'Chưa xác định') + '</span>';
-                                                                                       html += '</div>';
-                                                                                       html += '<div class="meta-item">';
-                                                                                       html += '<i class="fas fa-cogs"></i>';
-                                                                                       html += '<span>' + partsCount + ' linh kiện</span>';
-                                                                                       html += '</div>';
-                                                                                       html += '</div>';
-                                                                                       html += '</div>';
-                                                                                       html += '<div class="technician-cost-badge">';
-                                                                                       html += cost.toLocaleString('vi-VN') + ' đ';
-                                                                                       html += '</div>';
-                                                                                       html += '</div>';
-
-                                                                                       // Danh sách linh kiện
-                                                                                       if (quotation.parts && quotation.parts.length > 0) {
-                                                                                           html += '<div class="parts-list-header">';
-                                                                                           html += '<i class="fas fa-tools"></i>';
-                                                                                           html += '<span>Danh Sách Linh Kiện Cần Thay Thế</span>';
-                                                                                           html += '</div>';
-
-                                                                                           quotation.parts.forEach(part => {
-                                                                                               const unitPrice = (parseFloat(part.unitPrice) || 0) * 26000;
-                                                                                               const quantity = parseInt(part.quantity) || 0;
-                                                                                               const totalPrice = unitPrice * quantity;
-
-                                                                                               html += '<div class="part-item">';
-                                                                                               html += '<div>';
-                                                                                               html += '<div class="part-name">' + (part.partName || 'N/A') + '</div>';
-                                                                                               html += '<div class="part-serial">' + (part.serialNumber || 'N/A') + '</div>';
-                                                                                               html += '</div>';
-                                                                                               html += '<div class="part-quantity">x' + quantity + '</div>';
-                                                                                               html += '<div class="text-muted" style="text-align: right; font-size: 0.85rem;">' + unitPrice.toLocaleString('vi-VN') + ' đ</div>';
-                                                                                               html += '<div class="part-price">' + totalPrice.toLocaleString('vi-VN') + ' đ</div>';
-
-                                                                                               // Status hoặc action buttons
-                                                                                               html += '<div class="part-actions">';
-                                                                                               if (part.paymentStatus === 'Completed') {
-                                                                                                   html += '<span class="badge badge-completed" style="font-size: 0.7rem;">';
-                                                                                                   html += '<i class="fas fa-check-circle"></i> Đã thanh toán';
-                                                                                                   html += '</span>';
-                                                                                               } else if (part.paymentStatus === 'Cancelled') {
-                                                                                                   html += '<span class="badge badge-cancelled" style="font-size: 0.7rem;">';
-                                                                                                   html += '<i class="fas fa-times-circle"></i> Đã hủy';
-                                                                                                   html += '</span>';
-                                                                                               }
-                                                                                               html += '</div>';
-                                                                                              
-                                                                                           });
-                                                                                       } else {
-                                                                                           html += '<div class="no-parts-message">';
-                                                                                           html += '<i class="fas fa-box-open"></i>';
-                                                                                           html += '<p>Không có linh kiện nào cần thay thế</p>';
-                                                                                           html += '</div>';
-                                                                                       }
-
-                                                                                       html += '</div>'; // Close technician-card
-                                                                                   });
-
-                                                                                   html += '</div>';
-                                                                                   container.innerHTML = html;
-                                                                               } else {
-                                                                                   console.warn('⚠️ No quotations found or data.success = false');
-                                                                                   console.log('Data:', data);
-                                                                                   container.innerHTML = '<div class="text-center py-4"><i class="fas fa-info-circle fa-2x text-muted mb-2"></i><p class="text-muted">Chưa có thông tin người sửa chữa</p><small class="text-muted">RequestId: ' + requestId + '</small></div>';
-                                                                               }
-                                                                           })
-                                                                           .catch(error => {
-                                                                               console.error('❌ Error loading technicians:', error);
-                                                                               container.innerHTML = '<div class="text-center py-4 text-danger"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><p>Không thể tải thông tin</p><small>' + error.message + '</small></div>';
-                                                                           });
-                                                               }
-
-                                                               // ========== MODAL 4: HOÀN THÀNH ==========
-                                                               function showCompletedModal(data) {
-                                                                   console.log('✅ Showing Completed Modal with full details');
-                                                                   console.log('📦 Data:', data);
-
-                                                                   // Thông tin yêu cầu cơ bản
-                                                                   document.getElementById('completedRequestId').textContent = '#' + data.requestId;
-                                                                   document.getElementById('completedRequestDate').textContent = data.requestDate;
-                                                                   document.getElementById('completedContractId').textContent = data.contractId || 'N/A';
-                                                                   document.getElementById('completedEquipmentName').textContent = data.equipmentName || 'N/A';
-                                                                   document.getElementById('completedDescription').textContent = data.description;
-
-                                                                   // Load danh sách technicians và parts cho yêu cầu hoàn thành
-                                                                   loadCompletedTechnicians(data.requestId);
-
-                                                                   // Mở modal
-                                                                   new bootstrap.Modal(document.getElementById('viewModalCompleted')).show();
-                                                               }
-
-                                                               // ✅ Load danh sách technicians với parts cho modal hoàn thành
-                                                               function loadCompletedTechnicians(requestId) {
-                                                                   const container = document.getElementById('completedTechniciansList');
-
-                                                                   console.log('🔍 Loading completed technicians for request:', requestId);
-
-                                                                   fetch('${pageContext.request.contextPath}/managerServiceRequest?action=getQuotationDetails&requestId=' + requestId)
-                                                                           .then(response => {
-                                                                               console.log('📡 Response status:', response.status);
-                                                                               return response.json();
-                                                                           })
-                                                                           .then(data => {
-                                                                               console.log('📦 Received data:', data);
-
-                                                                               if (data.success && data.quotations && data.quotations.length > 0) {
-                                                                                   console.log('✅ Found', data.quotations.length, 'quotations');
-                                                                                   let html = '<div style="padding: 20px;">';
-                                                                                   let totalCost = 0;
-
-                                                                                   data.quotations.forEach((quotation, index) => {
-                                                                                       const techInitial = quotation.technicianName ? quotation.technicianName.charAt(0).toUpperCase() : 'T';
-                                                                                       const cost = (parseFloat(quotation.estimatedCost) || 0) * 26000;
-                                                                                       totalCost += cost;
-                                                                                       const partsCount = quotation.parts ? quotation.parts.length : 0;
-
-                                                                                       html += '<div class="technician-card">';
-
-                                                                                       // Header với avatar và info
-                                                                                       html += '<div class="technician-header-row">';
-                                                                                       html += '<div class="technician-avatar">' + techInitial + '</div>';
-                                                                                       html += '<div class="technician-info">';
-                                                                                       html += '<div class="technician-name">' + (quotation.technicianName || 'N/A') + '</div>';
-                                                                                       html += '<div class="technician-work-desc">' + (quotation.workDescription || 'Không có mô tả') + '</div>';
-                                                                                       html += '<div class="technician-meta">';
-                                                                                       html += '<div class="meta-item">';
-                                                                                       html += '<i class="fas fa-calendar-check"></i>';
-                                                                                       html += '<span>Ngày sửa: ' + (quotation.repairDate || 'Chưa xác định') + '</span>';
-                                                                                       html += '</div>';
-                                                                                       html += '<div class="meta-item">';
-                                                                                       html += '<i class="fas fa-cogs"></i>';
-                                                                                       html += '<span>' + partsCount + ' linh kiện</span>';
-                                                                                       html += '</div>';
-                                                                                       html += '</div>';
-                                                                                       html += '</div>';
-                                                                                       html += '<div class="technician-cost-badge">';
-                                                                                       html += cost.toLocaleString('vi-VN') + ' đ';
-                                                                                       html += '</div>';
-                                                                                       html += '</div>';
-
-                                                                                       // Danh sách linh kiện
-                                                                                       if (quotation.parts && quotation.parts.length > 0) {
-                                                                                           html += '<div class="parts-list-header">';
-                                                                                           html += '<i class="fas fa-tools"></i>';
-                                                                                           html += '<span>Danh Sách Linh Kiện Đã Thay Thế</span>';
-                                                                                           html += '</div>';
-
-                                                                                           let partsTotalCost = 0;
-
-                                                                                           quotation.parts.forEach(part => {
-                                                                                               const unitPrice = (parseFloat(part.unitPrice) || 0) * 26000;
-                                                                                               const quantity = parseInt(part.quantity) || 0;
-                                                                                               const totalPrice = unitPrice * quantity;
-                                                                                               partsTotalCost += totalPrice;
-
-                                                                                               html += '<div class="part-item">';
-                                                                                               html += '<div>';
-                                                                                               html += '<div class="part-name">' + (part.partName || 'N/A') + '</div>';
-                                                                                               html += '<div class="part-serial">' + (part.serialNumber || 'N/A') + '</div>';
-                                                                                               html += '</div>';
-                                                                                               html += '<div class="part-quantity">x' + quantity + '</div>';
-                                                                                               html += '<div class="text-muted" style="text-align: right; font-size: 0.85rem;">' + unitPrice.toLocaleString('vi-VN') + ' đ</div>';
-                                                                                               html += '<div class="part-price">' + totalPrice.toLocaleString('vi-VN') + ' đ</div>';
-
-                                                                                               // Hiển thị trạng thái thanh toán
-                                                                                               
-                                                                                               html += '</div>';
-                                                                                               html += '</div>';
-                                                                                           });
-
-                                                                                           // Tổng chi phí linh kiện của kỹ thuật viên
-                                                                                           html += '<div class="mt-3 p-3 bg-light border rounded">';
-                                                                                           html += '<div class="d-flex justify-content-between align-items-center">';
-                                                                                           html += '<strong class="text-success"><i class="fas fa-calculator"></i> Tổng chi phí linh kiện:</strong>';
-                                                                                           html += '<strong class="text-success" style="font-size: 1.2rem;">' + partsTotalCost.toLocaleString('vi-VN') + ' đ</strong>';
-                                                                                           html += '</div>';
-                                                                                           html += '</div>';
-                                                                                       } else {
-                                                                                           html += '<div class="no-parts-message">';
-                                                                                           html += '<i class="fas fa-box-open"></i>';
-                                                                                           html += '<p>Không có linh kiện nào được thay thế</p>';
-                                                                                           html += '</div>';
-                                                                                       }
-
-                                                                                       html += '</div>'; // Close technician-card
-                                                                                   });
-
-                                                                                   // Tổng kết toàn bộ
-                                                                                   html += '<div class="card mt-3 border-success">';
-                                                                                   html += '<div class="card-body bg-light">';
-                                                                                   html += '<div class="row">';
-                                                                                   html += '<div class="col-md-6">';
-                                                                                   html += '<h6 class="text-success mb-2"><i class="fas fa-users-cog"></i> Tổng Kết</h6>';
-                                                                                   html += '<p class="mb-1"><strong>Số kỹ thuật viên:</strong> ' + data.quotations.length + '</p>';
-                                                                                   html += '<p class="mb-0"><strong>Trạng thái:</strong> <span class="badge badge-completed">Hoàn thành</span></p>';
-                                                                                   html += '</div>';
-                                                                                   html += '<div class="col-md-6 text-end">';
-                                                                                   html += '<h6 class="text-success mb-2"><i class="fas fa-money-bill-wave"></i> Tổng Chi Phí</h6>';
-                                                                                   html += '<h3 class="text-success mb-0">' + totalCost.toLocaleString('vi-VN') + ' đ</h3>';
-                                                                                   html += '</div>';
-                                                                                   html += '</div>';
-                                                                                   html += '</div>';
-                                                                                   html += '</div>';
-
-                                                                                   html += '</div>';
-                                                                                   container.innerHTML = html;
-                                                                               } else {
-                                                                                   console.warn('⚠️ No quotations found or data.success = false');
-                                                                                   console.log('Data:', data);
-                                                                                   container.innerHTML = '<div class="text-center py-4"><i class="fas fa-info-circle fa-2x text-muted mb-2"></i><p class="text-muted">Chưa có thông tin kỹ thuật viên</p></div>';
-                                                                               }
-                                                                           })
-                                                                           .catch(error => {
-                                                                               console.error('❌ Error loading technicians:', error);
-                                                                               container.innerHTML = '<div class="text-center py-4 text-danger"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><p>Không thể tải thông tin</p><small>' + error.message + '</small></div>';
-                                                                           });
-                                                               }
-
-                                                               // Scroll to top button
-                                                               window.addEventListener('scroll', function () {
-                                                                   const scrollBtn = document.getElementById('scrollToTop');
-                                                                   if (window.pageYOffset > 300) {
-                                                                       scrollBtn.classList.add('show');
-                                                                   } else {
-                                                                       scrollBtn.classList.remove('show');
-                                                                   }
-                                                               });
-
-                                                               // Toast notifications (from original)
-                                                               function showToast(message, type) {
-                                                                   const container = document.getElementById('toastContainer');
-                                                                   let iconClass = 'fa-check-circle';
-                                                                   if (type === 'error')
-                                                                       iconClass = 'fa-exclamation-circle';
-                                                                   if (type === 'info')
-                                                                       iconClass = 'fa-info-circle';
-
-                                                                   const toastDiv = document.createElement('div');
-                                                                   toastDiv.className = 'toast-notification ' + type;
-
-                                                                   const iconDiv = document.createElement('div');
-                                                                   iconDiv.className = 'toast-icon ' + type;
-                                                                   iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
-
-                                                                   const contentDiv = document.createElement('div');
-                                                                   contentDiv.className = 'toast-content';
-                                                                   contentDiv.textContent = message;
-
-                                                                   const closeBtn = document.createElement('button');
-                                                                   closeBtn.className = 'toast-close';
-                                                                   closeBtn.type = 'button';
-                                                                   closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                                                                   closeBtn.onclick = hideToast;
-
-                                                                   toastDiv.appendChild(iconDiv);
-                                                                   toastDiv.appendChild(contentDiv);
-                                                                   toastDiv.appendChild(closeBtn);
-
-                                                                   container.innerHTML = '';
-                                                                   container.appendChild(toastDiv);
-
-                                                                   setTimeout(hideToast, 5000);
-                                                               }
-
-                                                               function hideToast() {
-                                                                   const container = document.getElementById('toastContainer');
-                                                                   const toast = container.querySelector('.toast-notification');
-                                                                   if (toast) {
-                                                                       toast.classList.add('hiding');
-                                                                       setTimeout(function () {
-                                                                           container.innerHTML = '';
-                                                                       }, 400);
-                                                                   }
-                                                               }
-
-                                                               // ========== CREATE FORM FUNCTIONS ==========
-                                                               function toggleFields() {
-                                                                   const supportType = document.getElementById('supportType').value;
-                                                                   const equipmentSelectField = document.getElementById('equipmentSelectField');
-                                                                   const requestTypeField = document.getElementById('requestTypeField');
-                                                                   const priorityField = document.getElementById('priorityField');
-                                                                   const descriptionField = document.getElementById('descriptionField');
-                                                                   const priorityInput = document.getElementById('priorityLevel');
-                                                                   const descriptionInput = document.getElementById('description');
-                                                                   const requestTypeInput = document.getElementById('requestType');
-
-                                                                   if (supportType === 'equipment') {
-                                                                       equipmentSelectField.style.display = 'block';
-                                                                       requestTypeField.style.display = 'block';
-                                                                       priorityField.style.display = 'block';
-                                                                       descriptionField.style.display = 'block';
-                                                                       priorityInput.setAttribute('required', 'required');
-                                                                       descriptionInput.setAttribute('required', 'required');
-                                                                       requestTypeInput.setAttribute('required', 'required');
-                                                                       updateCharCount();
-                                                                   } else {
-                                                                       equipmentSelectField.style.display = 'none';
-                                                                       requestTypeField.style.display = 'none';
-                                                                       priorityField.style.display = 'none';
-                                                                       descriptionField.style.display = 'none';
-                                                                       priorityInput.removeAttribute('required');
-                                                                       descriptionInput.removeAttribute('required');
-                                                                       requestTypeInput.removeAttribute('required');
-                                                                   }
-                                                               }
-
-                                                               function toggleEquipmentDropdown() {
-                                                                   const menu = document.getElementById('equipmentDropdownMenu');
-                                                                   const icon = document.getElementById('equipmentDropdownIcon');
-
-                                                                   if (menu.style.display === 'none' || menu.style.display === '') {
-                                                                       menu.style.display = 'block';
-                                                                       icon.classList.remove('fa-chevron-down');
-                                                                       icon.classList.add('fa-chevron-up');
-                                                                   } else {
-                                                                       menu.style.display = 'none';
-                                                                       icon.classList.remove('fa-chevron-up');
-                                                                       icon.classList.add('fa-chevron-down');
-                                                                   }
-                                                               }
-
-                                                               function updateSelectedEquipment() {
-                                                                   const checkboxes = document.querySelectorAll('.equipment-checkbox:checked');
-                                                                   const display = document.getElementById('selectedEquipmentDisplay');
-                                                                   const label = document.getElementById('equipmentDropdownLabel');
-
-                                                                   if (checkboxes.length === 0) {
-                                                                       display.innerHTML = '';
-                                                                       label.innerHTML = '<i class="fas fa-list"></i> Chọn thiết bị cần hỗ trợ';
-                                                                       return;
-                                                                   }
-
-                                                                   // Update label
-                                                                   label.innerHTML = '<i class="fas fa-check-circle text-success"></i> Đã chọn ' + checkboxes.length + ' thiết bị';
-
-                                                                   // Update display
-                                                                   let html = '<div class="alert alert-info mb-0 mt-2"><strong>Đã chọn ' + checkboxes.length + ' thiết bị:</strong><ul class="mb-0 mt-2">';
-                                                                   checkboxes.forEach(function (cb) {
-                                                                       const model = cb.dataset.model;
-                                                                       const serial = cb.dataset.serial;
-                                                                       html += '<li><strong>' + model + '</strong> (SN: ' + serial + ')</li>';
-                                                                   });
-                                                                   html += '</ul></div>';
-                                                                   display.innerHTML = html;
-                                                               }
-
-                                                               function updateCharCount() {
-                                                                   const textarea = document.getElementById('description');
-                                                                   const charCount = document.getElementById('charCount');
-                                                                   if (!textarea || !charCount)
-                                                                       return;
-
-                                                                   const currentLength = textarea.value.length;
-                                                                   charCount.textContent = currentLength + '/1000';
-
-                                                                   if (currentLength > 900) {
-                                                                       charCount.className = 'text-danger';
-                                                                   } else if (currentLength > 700) {
-                                                                       charCount.className = 'text-warning';
-                                                                   } else {
-                                                                       charCount.className = 'text-muted';
-                                                                   }
-                                                               }
-
-                                                               function validateCreateForm(event) {
-                                                                   const supportType = document.getElementById('supportType').value;
-                                                                   const description = document.getElementById('description').value.trim();
-
-                                                                   if (!supportType) {
-                                                                       event.preventDefault();
-                                                                       showToast('Vui lòng chọn loại hỗ trợ!', 'error');
-                                                                       return false;
-                                                                   }
-
-                                                                   if (description.length < 10) {
-                                                                       event.preventDefault();
-                                                                       showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
-                                                                       document.getElementById('description').focus();
-                                                                       return false;
-                                                                   }
-
-                                                                   if (description.length > 1000) {
-                                                                       event.preventDefault();
-                                                                       showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
-                                                                       document.getElementById('description').focus();
-                                                                       return false;
-                                                                   }
-
-                                                                   // Chỉ kiểm tra thiết bị cho loại hỗ trợ thiết bị
-                                                                   const selectedEquipment = document.querySelectorAll('.equipment-checkbox:checked');
-                                                                   if (selectedEquipment.length === 0) {
-                                                                       event.preventDefault();
-                                                                       showToast('Vui lòng chọn ít nhất một thiết bị!', 'error');
-                                                                       return false;
-                                                                   }
-
-                                                                   return true;
-                                                               }
-
-                                                               // ========== EVENT LISTENERS ==========
-                                                               document.addEventListener('DOMContentLoaded', function () {
-                                                                   console.log('🔍 DOM Loaded');
-
-                                                                   // Event cho textarea
-                                                                   const descriptionTextarea = document.getElementById('description');
-                                                                   if (descriptionTextarea) {
-                                                                       descriptionTextarea.addEventListener('input', updateCharCount);
-                                                                   }
-
-                                                                   // Reset form khi đóng modal TẠO MỚI
-                                                                   const createModal = document.getElementById('createModal');
-                                                                   if (createModal) {
-                                                                       createModal.addEventListener('hidden.bs.modal', function () {
-                                                                           document.getElementById('createForm').reset();
-                                                                           toggleFields();
-
-                                                                           // Reset dropdown
-                                                                           const menu = document.getElementById('equipmentDropdownMenu');
-                                                                           if (menu) {
-                                                                               menu.style.display = 'none';
-                                                                           }
-
-                                                                           const icon = document.getElementById('equipmentDropdownIcon');
-                                                                           if (icon) {
-                                                                               icon.classList.remove('fa-chevron-up');
-                                                                               icon.classList.add('fa-chevron-down');
-                                                                           }
-
-                                                                           // Uncheck all checkboxes
-                                                                           document.querySelectorAll('.equipment-checkbox').forEach(cb => cb.checked = false);
-                                                                           updateSelectedEquipment();
-                                                                       });
-
-                                                                       createModal.addEventListener('shown.bs.modal', function () {
-                                                                           updateCharCount();
-                                                                       });
-                                                                   }
-
-                                                                   // Đóng dropdown khi click bên ngoài
-                                                                   document.addEventListener('click', function (event) {
-                                                                       const dropdown = document.getElementById('equipmentDropdownMenu');
-                                                                       const button = document.getElementById('equipmentDropdownBtn');
-
-                                                                       if (dropdown && button) {
-                                                                           if (!button.contains(event.target) && !dropdown.contains(event.target)) {
-                                                                               dropdown.style.display = 'none';
-                                                                               const icon = document.getElementById('equipmentDropdownIcon');
-                                                                               if (icon) {
-                                                                                   icon.classList.remove('fa-chevron-up');
-                                                                                   icon.classList.add('fa-chevron-down');
-                                                                               }
-                                                                           }
-                                                                       }
-                                                                   });
-                                                               });
-
-                                                               // ========== FUNCTION TỪ CHỐI BÁO GIÁ ==========
-                                                               function rejectQuotation(requestId, reportId, technicianName) {
-                                                                   console.log('🔴 rejectQuotation called:', {requestId, reportId, technicianName});
-
-                                                                   Swal.fire({
-                                                                       title: 'Xác nhận từ chối?',
-                                                                       html: `Bạn có chắc muốn từ chối báo giá của <strong>${technicianName}</strong>?<br><br>` +
-                                                                               `<small class="text-muted">Báo giá sẽ được đánh dấu là "Từ chối" và không thể hoàn tác.</small>`,
-                                                                       icon: 'warning',
-                                                                       showCancelButton: true,
-                                                                       confirmButtonColor: '#d33',
-                                                                       cancelButtonColor: '#6c757d',
-                                                                       confirmButtonText: '<i class="fas fa-times-circle"></i> Từ chối',
-                                                                       cancelButtonText: '<i class="fas fa-arrow-left"></i> Hủy'
-                                                                   }).then((result) => {
-                                                                       if (result.isConfirmed) {
-                                                                           // Hiển thị loading
-                                                                           Swal.fire({
-                                                                               title: 'Đang xử lý...',
-                                                                               html: 'Vui lòng đợi trong giây lát',
-                                                                               allowOutsideClick: false,
-                                                                               didOpen: () => {
-                                                                                   Swal.showLoading();
-                                                                               }
-                                                                           });
-
-                                                                           // Gọi AJAX
-                                                                           const formData = new URLSearchParams();
-                                                                           formData.append('action', 'rejectQuotation');
-                                                                           formData.append('requestId', requestId);
-                                                                           formData.append('reportId', reportId);
-
-                                                                           console.log('📤 Sending request:', formData.toString());
-
-                                                                           fetch('${pageContext.request.contextPath}/managerServiceRequest', {
-                                                                               method: 'POST',
-                                                                               headers: {
-                                                                                   'Content-Type': 'application/x-www-form-urlencoded'
-                                                                               },
-                                                                               body: formData.toString()
-                                                                           })
-                                                                                   .then(response => {
-                                                                                       console.log('📥 Response status:', response.status);
-                                                                                       if (!response.ok) {
-                                                                                           throw new Error('Server trả về lỗi: ' + response.status);
-                                                                                       }
-                                                                                       return response.text();
-                                                                                   })
-                                                                                   .then(text => {
-                                                                                       console.log('📥 Response text:', text);
-                                                                                       if (!text || text.trim() === '') {
-                                                                                           throw new Error('Server trả về response rỗng. Vui lòng kiểm tra server log.');
-                                                                                       }
-                                                                                       return JSON.parse(text);
-                                                                                   })
-                                                                                   .then(data => {
-                                                                                       console.log('✅ Parsed data:', data);
-                                                                                       Swal.close();
-
-                                                                                       if (data.success) {
-                                                                                           Swal.fire({
-                                                                                               icon: 'success',
-                                                                                               title: 'Thành công!',
-                                                                                               text: data.message || 'Đã từ chối báo giá thành công!',
-                                                                                               confirmButtonText: 'OK'
-                                                                                           }).then(() => {
-                                                                                               location.reload();
-                                                                                           });
-                                                                                       } else {
-                                                                                           Swal.fire({
-                                                                                               icon: 'error',
-                                                                                               title: 'Lỗi!',
-                                                                                               text: data.message || 'Không thể từ chối báo giá!'
-                                                                                           });
-                                                                                       }
-                                                                                   })
-                                                                                   .catch(error => {
-                                                                                       console.error('❌ Error:', error);
-                                                                                       Swal.close();
-                                                                                       Swal.fire({
-                                                                                           icon: 'error',
-                                                                                           title: 'Lỗi!',
-                                                                                           html: `Có lỗi xảy ra khi từ chối báo giá:<br><br>` +
-                                                                                                   `<small class="text-danger">${error.message}</small><br><br>` +
-                                                                                                   `<small class="text-muted">Vui lòng kiểm tra console log và server log để biết thêm chi tiết.</small>`
-                                                                                       });
-                                                                                   });
-                                                                       }
-                                                                   });
-                                                               }
-  // ========== FAQ DATA ========== 
-const FAQ_DATA_WIDGET = [
-    {
-        "category": "Giới thiệu chung",
-        "questions": [
-            {
-                "question": "Hệ thống của bạn cung cấp dịch vụ gì?",
-                "answer": "Hệ thống của chúng tôi cung cấp dịch vụ bảo hành và bảo trì thiết bị cho khách hàng. Khi quý khách mua thiết bị, chúng tôi sẽ tạo hợp đồng và lưu thông tin vào hệ thống. Khi thiết bị cần sửa chữa, quý khách chỉ cần tạo yêu cầu trực tuyến, chúng tôi sẽ xử lý và thực hiện sửa chữa theo quy trình chuyên nghiệp."
-            },
-            {
-                "question": "Làm thế nào để liên hệ bộ phận hỗ trợ khách hàng?",
-                "answer": "Quý khách có thể liên hệ với bộ phận hỗ trợ khách hàng qua:\n- Hotline: [Số điện thoại]\n- Email: [Địa chỉ email]\n- Chat trực tuyến trên website\n- Hoặc tạo yêu cầu hỗ trợ trực tiếp trên hệ thống"
-            }
-        ]
-    },
-    {
-        "category": "Yêu cầu dịch vụ",
-        "questions": [
-            {
-                "question": "Làm thế nào để tạo yêu cầu bảo hành/bảo trì?",
-                "answer": "Để tạo yêu cầu, quý khách thực hiện theo các bước sau:\n\n1. Truy cập trang \"Yêu cầu dịch vụ\"\n2. Nhấn nút \"Tạo yêu cầu mới\" ở góc trên màn hình\n3. Chọn \"Hỗ trợ thiết bị\"\n4. Chọn thiết bị cần bảo hành từ danh sách\n5. Chọn mức độ ưu tiên cho yêu cầu\n6. Mô tả chi tiết vấn đề của thiết bị\n7. Kiểm tra lại thông tin và nhấn \"Gửi yêu cầu\""
-            },
-            {
-                "question": "Thời gian xử lý yêu cầu mất bao lâu?",
-                "answer": "Thời gian xử lý yêu cầu phụ thuộc vào:\n- Mức độ ưu tiên của yêu cầu\n- Tình trạng thiết bị\n- Khả năng sẵn có của phụ tùng\n\nThông thường:\n- Yêu cầu khẩn cấp: 24-48 giờ\n- Yêu cầu thường: 3-5 ngày làm việc"
-            },
-            {
-                "question": "Các trạng thái của yêu cầu dịch vụ có ý nghĩa gì?",
-                "answer": "Yêu cầu sẽ đi qua các trạng thái:\n\n1. Chờ xác nhận: Yêu cầu vừa được tạo\n2. Chờ xử lý: Đã được xác nhận, chờ phân công\n3. Đang xử lý: Kỹ thuật viên đang xử lý\n4. Hoàn thành: Đã sửa chữa xong\n5. Đã hủy: Yêu cầu bị hủy"
-            }
-        ]
-    },
-    {
-        "category": "Hợp đồng",
-        "questions": [
-            {
-                "question": "Làm thế nào để xem thông tin hợp đồng?",
-                "answer": "Để xem thông tin hợp đồng:\n\n1. Truy cập trang \"Hợp đồng\"\n2. Xem danh sách tất cả các hợp đồng\n3. Nhấn \"Danh sách thiết bị\" để xem chi tiết\n\nThông tin bao gồm:\n- Mã hợp đồng\n- Loại hợp đồng\n- Ngày hiệu lực\n- Trạng thái"
-            },
-            {
-                "question": "Chính sách bảo hành như thế nào?",
-                "answer": "Chính sách bảo hành:\n\n- Thời gian: Theo hợp đồng (12-36 tháng)\n- Phạm vi: Lỗi nhà sản xuất, hỏng hóc bình thường\n- Miễn phí phụ tùng và sửa chữa\n\nKhông bảo hành:\n- Sử dụng sai cách\n- Va đập, rơi vỡ\n- Can thiệp bởi bên thứ ba"
-            }
-        ]
-    },
-    {
-        "category": "Hóa đơn & Thanh toán",
-        "questions": [
-            {
-                "question": "Làm thế nào để xem hóa đơn?",
-                "answer": "Để xem hóa đơn:\n\n1. Truy cập trang \"Hóa đơn\"\n2. Xem danh sách hóa đơn\n\nThông tin gồm:\n- Mã hóa đơn\n- Số tiền\n- Ngày phát hành\n- Hạn thanh toán\n- Trạng thái"
-            },
-            {
-                "question": "Làm thế nào để thanh toán hóa đơn?",
-                "answer": "Các phương thức thanh toán:\n\n1. Thanh toán trực tuyến:\n- Chuyển khoản ngân hàng\n- Ví điện tử (Momo, ZaloPay)\n- Thẻ ATM/Tín dụng\n\n2. Thanh toán trực tiếp:\n- Tại văn phòng\n- Thu tiền tận nơi"
-            }
-        ]
-    },
-    {
-        "category": "Thiết bị",
-        "questions": [
-            {
-                "question": "Làm thế nào để xem thông tin thiết bị?",
-                "answer": "Để xem thiết bị:\n\n1. Truy cập trang \"Thiết bị\"\n2. Xem danh sách thiết bị\n3. Nhấn \"Chi tiết\" để xem thêm\n\nThông tin:\n- Tên thiết bị\n- Mã/Serial number\n- Hợp đồng liên quan\n- Trạng thái\n- Thời hạn bảo hành"
-            }
-        ]
-    }
-];
+                        // ========== TOGGLE REQUEST DETAILS (EXPAND/COLLAPSE) ==========
+                        function toggleRequestDetails(requestId) {
+                            const details = document.getElementById('details-' + requestId);
+                            const chevron = document.getElementById('chevron-' + requestId);
+                            const content = document.getElementById('quotation-content-' + requestId);
+
+                            if (details.classList.contains('show')) {
+                                details.classList.remove('show');
+                                chevron.classList.remove('expanded');
+                            } else {
+                                details.classList.add('show');
+                                chevron.classList.add('expanded');
+
+                                // Load quotation data via AJAX if not already loaded
+                                if (content && content.querySelector('.fa-spinner')) {
+                                    loadQuotationDetails(requestId);
+                                }
+                            }
+                        }
+                        /**
+                         * ✅ ĐỒNG Ý BÁO GIÁ CỦA KỸ THUẬT VIÊN CỤ THỂ
+                         * Customer đồng ý với báo giá của 1 kỹ thuật viên
+                         */
+                        function approveQuotation(requestId, reportId, technicianName) {
+                            console.log('🟢 approveQuotation called:', {requestId, reportId, technicianName});
+
+                            Swal.fire({
+                                title: 'Xác nhận đồng ý?',
+                                html: `Bạn có chắc muốn đồng ý báo giá của <strong>${technicianName}</strong>?<br><br>` +
+                                        `<small class="text-muted">Báo giá sẽ được đánh dấu là "Đã duyệt".</small>`,
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonColor: '#28a745',
+                                cancelButtonColor: '#6c757d',
+                                confirmButtonText: '<i class="fas fa-check-circle"></i> Đồng ý',
+                                cancelButtonText: '<i class="fas fa-times"></i> Hủy'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Hiển thị loading
+                                    Swal.fire({
+                                        title: 'Đang xử lý...',
+                                        html: 'Vui lòng đợi trong giây lát',
+                                        allowOutsideClick: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                        }
+                                    });
+
+                                    // Gọi AJAX
+                                    const formData = new URLSearchParams();
+                                    formData.append('action', 'approveQuotation');
+                                    formData.append('requestId', requestId);
+                                    formData.append('reportId', reportId);
+
+                                    console.log('📤 Sending request:', formData.toString());
+
+                                    fetch('${pageContext.request.contextPath}/managerServiceRequest', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                        },
+                                        body: formData.toString()
+                                    })
+                                            .then(response => {
+                                                console.log('📥 Response status:', response.status);
+                                                if (!response.ok) {
+                                                    throw new Error('Server trả về lỗi: ' + response.status);
+                                                }
+                                                return response.text();
+                                            })
+                                            .then(text => {
+                                                console.log('📥 Response text:', text);
+                                                if (!text || text.trim() === '') {
+                                                    throw new Error('Server trả về response rỗng');
+                                                }
+                                                return JSON.parse(text);
+                                            })
+                                            .then(data => {
+                                                console.log('✅ Parsed data:', data);
+                                                Swal.close();
+
+                                                if (data.success) {
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Thành công!',
+                                                        text: data.message || 'Đã đồng ý báo giá thành công!',
+                                                        confirmButtonText: 'OK'
+                                                    }).then(() => {
+                                                        location.reload();
+                                                    });
+                                                } else {
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Lỗi!',
+                                                        text: data.message || 'Không thể đồng ý báo giá!'
+                                                    });
+                                                }
+                                            })
+                                            .catch(error => {
+                                                console.error('❌ Error:', error);
+                                                Swal.close();
+                                                Swal.fire({
+                                                    icon: 'error',
+                                                    title: 'Lỗi!',
+                                                    html: `Có lỗi xảy ra:<br><br>` +
+                                                            `<small class="text-danger">${error.message}</small>`
+                                                });
+                                            });
+                                }
+                            });
+                        }
+
+                        // ========== LOAD QUOTATION DETAILS VIA AJAX ==========
+                        function loadQuotationDetails(requestId) {
+                            const content = document.getElementById('quotation-content-' + requestId);
+
+                            fetch('${pageContext.request.contextPath}/managerServiceRequest?action=getQuotationDetails&requestId=' + requestId)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success && data.quotations && data.quotations.length > 0) {
+                                            const requestType = data.requestType || 'Service';
+                                            const isWarranty = requestType === 'Warranty';
+
+                                            console.log('📋 Request Type:', requestType, '| Is Warranty:', isWarranty);
+
+                                            let html = '<div class="quotation-table">';
+                                            html += '<div class="quotation-table-header">';
+                                            html += '<div>Technician</div>';
+                                            html += '<div>Công việc mô tả</div>';
+                                            html += '<div>Estimated Cost</div>';
+                                            html += '<div>Status</div>';
+                                            html += '<div style="text-align: center;">Số linh kiện</div>';
+                                            html += '</div>';
+
+                                            let totalCost = 0;
+                                            let totalParts = 0;
+
+                                            console.log('📋 Total quotations:', data.quotations.length);
+
+                                            data.quotations.forEach((quotation, index) => {
+                                                const cost = (parseFloat(quotation.estimatedCost) || 0) * 26000;
+                                                totalCost += cost;
+                                                const partsCount = quotation.parts ? quotation.parts.length : 0;
+                                                totalParts += partsCount;
+
+                                                console.log(`🔧 Technician ${index + 1}:`, quotation.technicianName, '| Parts:', partsCount);
+
+                                                // ✅ KIỂM TRA TRẠNG THÁI PARTS
+                                                let allPartsPaid = true;
+                                                let hasUnpaidParts = false;
+                                                let isServiceOnlyQuotation = false; // ✅ THÊM FLAG MỚI
+
+                                                if (quotation.parts && quotation.parts.length > 0) {
+                                                    // CÓ LINH KIỆN - kiểm tra trạng thái thanh toán
+                                                    quotation.parts.forEach(part => {
+                                                        if (part.paymentStatus !== 'Completed' && part.paymentStatus !== 'Cancelled') {
+                                                            allPartsPaid = false;
+                                                            hasUnpaidParts = true;
+                                                        }
+                                                    });
+                                                } else {
+                                                    // ✅ KHÔNG CÓ LINH KIỆN - là dịch vụ thuần (vệ sinh, bảo trì...)
+                                                    // Coi như cần thanh toán nếu chưa có invoice hoặc invoice chưa completed
+                                                    isServiceOnlyQuotation = true;
+                                                    allPartsPaid = (quotation.invoiceStatus === 'Completed');
+                                                    hasUnpaidParts = (quotation.invoiceStatus !== 'Completed' && quotation.invoiceStatus !== 'Cancelled');
+                                                }
+
+                                                html += '<div class="technician-row">';
+                                                html += '<div class="technician-header" onclick="toggleTechnician(\'tech-' + requestId + '-' + index + '\')">';
+                                                html += '<div class="technician-name">';
+                                                html += '<svg class="chevron-icon" id="chevron-tech-' + requestId + '-' + index + '" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;">';
+                                                html += '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>';
+                                                html += '</svg>';
+                                                html += quotation.technicianName || 'N/A';
+                                                html += '</div>';
+                                                html += '<div class="technician-work">' + (quotation.workDescription || 'N/A') + '</div>';
+                                                html += '<div class="technician-cost">' + cost.toLocaleString('vi-VN') + ' đ</div>';
+
+                                                // ✅ HIỂN THỊ TRẠNG THÁI
+                                                html += '<div>';
+                                                const qStatus = quotation.quotationStatus || quotation.status;
+
+                                                if (qStatus === 'Rejected' || quotation.invoiceStatus === 'Cancelled') {
+                                                    html += '<span class="badge badge-cancelled"><i class="fas fa-times-circle"></i> Từ chối</span>';
+                                                } else if (qStatus === 'Approved' || quotation.invoiceStatus === 'Completed' || (allPartsPaid && quotation.parts && quotation.parts.length > 0)) {
+                                                    html += '<span class="badge badge-completed"><i class="fas fa-check-circle"></i> ' + (isWarranty ? 'Đã duyệt' : 'Đã thanh toán') + '</span>';
+                                                } else if (qStatus === 'Pending') {
+                                                    html += '<span class="badge badge-pending"><i class="fas fa-clock"></i> Chờ xác nhận</span>';
+                                                } else {
+                                                    html += '<span class="badge badge-' + getStatusClass(qStatus) + '">' + getStatusText(qStatus) + '</span>';
+                                                }
+                                                html += '</div>';
+
+                                                html += '<div style="text-align: center; font-weight: 600;">' + partsCount + ' linh kiện</div>';
+                                                html += '</div>';
+
+                                                // ✅ CHI TIẾT LINH KIỆN VÀ THANH TOÁN
+                                                    html += '<div class="parts-section" id="parts-tech-' + requestId + '-' + index + '">';
+
+                                                    if (quotation.parts && quotation.parts.length > 0) {
+                                                        // ✅ CÓ LINH KIỆN - Hiển thị bảng parts
+                                                        html += '<div class="parts-date"><strong>Ngày tạo:</strong> ' + (quotation.repairDate || 'N/A') + '</div>';
+                                                        html += '<div class="parts-table">';
+
+                                                        // TABLE HEADER
+                                                        if (isWarranty) {
+                                                            html += '<div class="parts-table-header" style="grid-template-columns: 2fr 180px 100px;">';
+                                                            html += '<div>Tên Linh Kiện</div>';
+                                                            html += '<div>Serial Number</div>';
+                                                            html += '<div>Số Lượng</div>';
+                                                            html += '</div>';
+                                                        } else {
+                                                            html += '<div class="parts-table-header">';
+                                                            html += '<div>Tên Linh Kiện</div>';
+                                                            html += '<div>Serial Number</div>';
+                                                            html += '<div>Số Lượng</div>';
+                                                            html += '<div>Đơn Giá</div>';
+                                                            html += '<div>Thành Tiền</div>';
+                                                            html += '</div>';
+                                                        }
+
+                                                        let partsTotalCost = 0;
+
+                                                        // DANH SÁCH LINH KIỆN
+                                                        quotation.parts.forEach((part, partIndex) => {
+                                                            const partTotal = (parseFloat(part.unitPrice) || 0) * 26000 * (parseInt(part.quantity) || 0);
+                                                            partsTotalCost += partTotal;
+
+                                                            if (isWarranty) {
+                                                                html += '<div class="parts-table-row" style="grid-template-columns: 2fr 180px 100px;">';
+                                                                html += '<div>' + (part.partName || 'N/A') + '</div>';
+                                                                html += '<div class="parts-serial">' + (part.serialNumber || 'N/A') + '</div>';
+                                                                html += '<div class="parts-quantity">' + (part.quantity || 0) + '</div>';
+                                                                html += '</div>';
+                                                            } else {
+                                                                html += '<div class="parts-table-row">';
+                                                                html += '<div>' + (part.partName || 'N/A') + '</div>';
+                                                                html += '<div class="parts-serial">' + (part.serialNumber || 'N/A') + '</div>';
+                                                                html += '<div class="parts-quantity">' + (part.quantity || 0) + '</div>';
+                                                                html += '<div class="parts-price">' + ((parseFloat(part.unitPrice) || 0) * 26000).toLocaleString('vi-VN') + ' đ</div>';
+                                                                html += '<div class="parts-total">' + partTotal.toLocaleString('vi-VN') + ' đ</div>';
+                                                                html += '</div>';
+                                                            }
+                                                        });
+
+                                                        // FOOTER - Chỉ cho Service
+                                                        if (!isWarranty) {
+                                                            html += '<div class="parts-table-footer">';
+                                                            html += '<div class="total-label">Tổng cộng:</div>';
+                                                            html += '<div class="total-value">' + partsTotalCost.toLocaleString('vi-VN') + ' đ</div>';
+                                                            html += '</div>';
+                                                        }
+                                                        html += '</div>'; // Close parts-table
+
+                                                    } else {
+                                                        // ✅ KHÔNG CÓ LINH KIỆN - Service only (vệ sinh, bảo trì...)
+                                                        html += '<div class="alert alert-info" style="margin: 20px;">';
+                                                        html += '<i class="fas fa-info-circle"></i> ';
+                                                        html += '<strong>Dịch vụ không yêu cầu thay thế linh kiện</strong><br>';
+                                                        html += '<small class="text-muted">Đây là dịch vụ vệ sinh, bảo trì hoặc kiểm tra không cần thay thế phụ tùng.</small>';
+                                                        html += '</div>';
+                                                    }
+
+                                                    // ✅ ========== ACTION BUTTONS - DI CHUYỂN RA NGOÀI ========== 
+                                                    
+                                                    const isRejected = qStatus === 'Rejected' || quotation.invoiceStatus === 'Cancelled';
+                                                    const isCompleted = quotation.invoiceStatus === 'Completed' || allPartsPaid;
+                                                    const isApproved = qStatus === 'Approved';
+                                                    const isPending = qStatus === 'Pending';
+
+                                                    console.log('🔍 Payment Button Check:', {
+                                                        requestId,
+                                                        reportId: quotation.reportId,
+                                                        techName: quotation.technicianName,
+                                                        qStatus,
+                                                        isWarranty,
+                                                        hasUnpaidParts,
+                                                        isServiceOnlyQuotation,
+                                                        isRejected,
+                                                        isCompleted,
+                                                        isPending,
+                                                        isApproved
+                                                    });
+
+                                                    // CHỈ HIỂN THỊ NÚT KHI: Chưa reject, chưa completed
+                                                    if (!isRejected && !isCompleted) {
+                                                        html += '<div class="technician-payment-section">';
+                                                        html += '<div class="payment-summary">';
+
+                                                        if (isWarranty) {
+                                                            // WARRANTY: Hiển thị số lượng linh kiện
+                                                            const partsCount = quotation.parts ? quotation.parts.length : 0;
+                                                            html += '<div class="payment-summary-text">Tổng số linh kiện cần thay thế</div>';
+                                                            html += '<div class="payment-total-amount">' + partsCount + ' linh kiện</div>';
+                                                        } else {
+                                                            // SERVICE: Hiển thị tổng tiền
+                                                            html += '<div class="payment-summary-text">' + 
+                                                                    (isServiceOnlyQuotation ? 'Tổng chi phí dịch vụ' : 'Tổng chi phí linh kiện của kỹ thuật viên') + 
+                                                                    '</div>';
+                                                            html += '<div class="payment-total-amount">' + cost.toLocaleString('vi-VN') + ' đ</div>';
+                                                        }
+
+                                                        html += '</div>';
+                                                        html += '<div class="payment-actions">';
+
+                                                        // ========== LOGIC NÚT THEO TRẠNG THÁI ==========
+                                                        if (isWarranty) {
+                                                            // WARRANTY - CHỈ HIỂN THỊ NÚT Ở TRẠNG THÁI PENDING
+                                                            if (isPending) {
+                                                                html += '<button class="btn-approve-quotation" onclick="event.stopPropagation(); approveQuotation(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
+                                                                html += '<i class="fas fa-check-circle"></i> Đồng ý báo giá';
+                                                                html += '</button>';
+
+                                                                html += '<button class="btn-reject-quotation" onclick="event.stopPropagation(); rejectQuotation(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
+                                                                html += '<i class="fas fa-times-circle"></i> Từ chối báo giá';
+                                                                html += '</button>';
+                                                            }
+                                                        } else {
+                                                            // ✅ SERVICE - HIỂN THỊ NÚT CHO CẢ PARTS VÀ SERVICE-ONLY
+                                                            // Điều kiện: isPending VÀ (có parts chưa thanh toán HOẶC là service-only chưa completed)
+                                                            if (isPending && (hasUnpaidParts || isServiceOnlyQuotation)) {
+                                                                html += '<button class="btn-pay-all" onclick="event.stopPropagation(); payForTechnician(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
+                                                                html += '<i class="fas fa-credit-card"></i> Thanh toán';
+                                                                html += '</button>';
+
+                                                                html += '<button class="btn-reject-quotation" onclick="event.stopPropagation(); rejectQuotation(' + requestId + ', ' + quotation.reportId + ', \'' + (quotation.technicianName || 'Kỹ thuật viên') + '\')">';
+                                                                html += '<i class="fas fa-times-circle"></i> Từ chối báo giá';
+                                                                html += '</button>';
+                                                            }
+                                                        }
+
+                                                        html += '</div>'; // Close payment-actions
+                                                        html += '</div>'; // Close technician-payment-section
+
+                                                    } else if (isCompleted) {
+                                                        // ✅ HIỂN THỊ BADGE "HOÀN THÀNH"
+                                                        html += '<div class="alert alert-success" style="margin: 15px; text-align: center;">';
+                                                        html += '<i class="fas fa-check-circle"></i> ';
+                                                        html += isWarranty ? 'Đã hoàn tất thay thế linh kiện' : 'Đã thanh toán đầy đủ';
+                                                        html += '</div>';
+                                                    } else if (isRejected) {
+                                                        // ✅ HIỂN THỊ BADGE "ĐÃ TỪ CHỐI"
+                                                        html += '<div class="alert alert-danger" style="margin: 15px; text-align: center;">';
+                                                        html += '<i class="fas fa-times-circle"></i> Báo giá đã bị từ chối';
+                                                        html += '</div>';
+                                                    }
+
+                                                    html += '</div>'; // Close parts-section
+                                                    html += '</div>'; // Close technician-row
+                                            });
+
+                                            html += '</div>'; // Close quotation-table
+
+                                            // SUMMARY
+                                            html += '<div class="quotation-summary">';
+                                            html += '<div class="summary-count">Tổng số kỹ thuật viên: ' + data.quotations.length + ' | Tổng số linh kiện: ' + totalParts + '</div>';
+                                            if (!isWarranty) {
+                                                html += '<div class="summary-total">Tổng chi phí ước tính: ' + totalCost.toLocaleString('vi-VN') + ' đ</div>';
+                                            }
+                                            html += '</div>';
+
+                                            content.innerHTML = html;
+                                        } else {
+                                            content.innerHTML = '<div class="alert alert-info" style="margin: 20px;"><i class="fas fa-info-circle"></i> ' + (data.message || 'Chưa có báo giá nào') + '</div>';
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error loading quotation:', error);
+                                        content.innerHTML = '<div class="alert alert-danger" style="margin: 20px;"><i class="fas fa-exclamation-triangle"></i> Không thể tải dữ liệu báo giá</div>';
+                                    });
+                        }
+
+                        // ✅ HÀM MỚI: ĐỒNG Ý THAY THẾ TẤT CẢ LINH KIỆN BẢO HÀNH
+                        function approveWarrantyForTechnician(requestId, reportId, technicianName) {
+                            Swal.fire({
+                                title: 'Xác nhận đồng ý?',
+                                html: '<p>Bạn có chắc chắn muốn đồng ý thay thế <strong>tất cả linh kiện</strong> của kỹ thuật viên:<br><strong>' + technicianName + '</strong>?</p>' +
+                                        '<small class="text-muted">Đây là dịch vụ bảo hành, không cần thanh toán.</small>',
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonText: '<i class="fas fa-check-circle"></i> Xác nhận đồng ý',
+                                cancelButtonText: '<i class="fas fa-times"></i> Hủy',
+                                confirmButtonColor: '#27ae60',
+                                cancelButtonColor: '#95a5a6',
+                                reverseButtons: true
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Hiển thị loading
+                                    Swal.fire({
+                                        title: 'Đang xử lý...',
+                                        html: 'Vui lòng đợi trong giây lát',
+                                        allowOutsideClick: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                        }
+                                    });
+
+                                    // TODO: Gọi API để approve tất cả parts của technician này
+                                    // Tạm thời redirect đến trang xử lý
+                                    const url = '${pageContext.request.contextPath}/managerServiceRequest?action=approveAllWarrantyParts&requestId=' + requestId + '&reportId=' + reportId;
+
+                                    fetch(url, {
+                                        method: 'POST'
+                                    })
+                                            .then(response => response.json())
+                                            .then(data => {
+                                                Swal.close();
+                                                if (data.success) {
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Thành công!',
+                                                        text: data.message || 'Đã đồng ý thay thế linh kiện!',
+                                                        confirmButtonText: 'OK'
+                                                    }).then(() => {
+                                                        location.reload();
+                                                    });
+                                                } else {
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Lỗi!',
+                                                        text: data.message || 'Không thể xử lý yêu cầu!'
+                                                    });
+                                                }
+                                            })
+                                            .catch(error => {
+                                                Swal.close();
+                                                Swal.fire({
+                                                    icon: 'error',
+                                                    title: 'Lỗi!',
+                                                    text: 'Có lỗi xảy ra: ' + error.message
+                                                });
+                                            });
+                                }
+                            });
+                        }
+
+                        // ========== TOGGLE TECHNICIAN PARTS ==========
+                        function toggleTechnician(id) {
+                            const parts = document.getElementById('parts-' + id);
+                            const chevron = document.getElementById('chevron-' + id);
+
+                            // ✅ THÊM NULL CHECK
+                            if (!parts || !chevron) {
+                                console.warn('Elements not found for id:', id);
+                                return;
+                            }
+
+                            if (parts.classList.contains('show')) {
+                                parts.classList.remove('show');
+                                chevron.style.transform = 'rotate(0deg)';
+                            } else {
+                                parts.classList.add('show');
+                                chevron.style.transform = 'rotate(90deg)';
+                            }
+                        }
+
+                        // ========== HELPER FUNCTIONS ==========
+                        function getStatusClass(status) {
+                            const statusMap = {
+                                'Pending': 'pending',
+                                'AwaitingApproval': 'awaiting',
+                                'Approved': 'inprogress',
+                                'Completed': 'completed',
+                                'Cancelled': 'cancelled',
+                                'Rejected': 'cancelled'
+                            };
+                            return statusMap[status] || 'secondary';
+                        }
+
+                        function getStatusText(status) {
+                            const textMap = {
+                                'Pending': 'Chờ xác nhận',
+                                'AwaitingApproval': 'Chờ xử lý',
+                                'Approved': 'Đang xử lý',
+                                'Completed': 'Hoàn thành',
+                                'Cancelled': 'Đã hủy',
+                                'Rejected': 'Từ chối'
+                            };
+                            return textMap[status] || status;
+                        }
+
+                        // ========== PAYMENT & CANCEL FUNCTIONS FOR INDIVIDUAL PARTS ==========
+
+                        /**
+                         * ✅ Thanh toán cho 1 linh kiện cụ thể - Chuyển sang trang thanh toán
+                         * @param requestId - ID của service request
+                         * @param reportId - ID của repair report (technician's quotation)
+                         * @param partDetailId - ID của part detail (linh kiện cụ thể)
+                         * @param partName - Tên linh kiện (để hiển thị)
+                         */
+                        function payForPart(requestId, reportId, partDetailId, partName) {
+                            // Chuyển sang trang thanh toán với thông tin linh kiện
+                            const url = '${pageContext.request.contextPath}/payment?requestId=' + requestId +
+                                    '&reportId=' + reportId +
+                                    '&partDetailId=' + partDetailId +
+                                    '&partName=' + encodeURIComponent(partName);
+
+                            window.location.href = url;
+                        }
+
+                        /**
+                         * ✅ Hủy 1 linh kiện cụ thể - CHỈ HỦY LINH KIỆN ĐÓ
+                         * @param requestId - ID của service request
+                         * @param reportId - ID của repair report
+                         * @param partDetailId - ID của part detail
+                         * @param partName - Tên linh kiện
+                         */
+                        function cancelPart(requestId, reportId, partDetailId, partName) {
+                            Swal.fire({
+                                title: 'Xác nhận hủy linh kiện',
+                                html: '<p>Bạn có chắc chắn muốn hủy linh kiện:<br><strong>' + partName + '</strong>?</p>',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: '<i class="fas fa-trash"></i> Xác nhận hủy',
+                                cancelButtonText: '<i class="fas fa-times"></i> Giữ lại',
+                                confirmButtonColor: '#e74c3c',
+                                cancelButtonColor: '#95a5a6',
+                                reverseButtons: true
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Hiển thị loading
+                                    Swal.fire({
+                                        title: 'Đang xử lý...',
+                                        text: 'Vui lòng đợi',
+                                        allowOutsideClick: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                        }
+                                    });
+
+                                    // Gửi request hủy linh kiện
+                                    const formData = new FormData();
+                                    formData.append('action', 'cancelPart');
+                                    formData.append('requestId', requestId);
+                                    formData.append('reportId', reportId);
+                                    formData.append('partDetailId', partDetailId);
+
+                                    fetch('${pageContext.request.contextPath}/managerServiceRequest', {
+                                        method: 'POST',
+                                        body: formData
+                                    })
+                                            .then(response => {
+                                                console.log('Response status:', response.status);
+                                                console.log('Response headers:', response.headers);
+                                                return response.text(); // Đọc text trước để debug
+                                            })
+                                            .then(text => {
+                                                console.log('Response text:', text);
+                                                try {
+                                                    return JSON.parse(text);
+                                                } catch (e) {
+                                                    console.error('JSON parse error:', e);
+                                                    console.error('Response was:', text);
+                                                    throw new Error('Invalid JSON response: ' + text.substring(0, 100));
+                                                }
+                                            })
+                                            .then(data => {
+                                                Swal.close();
+
+                                                if (data.success) {
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Đã hủy linh kiện!',
+                                                        text: data.message || 'Linh kiện đã được hủy thành công',
+                                                        timer: 2000,
+                                                        showConfirmButton: false
+                                                    }).then(() => {
+                                                        // Reload dropdown để cập nhật trạng thái
+                                                        loadQuotationDetails(requestId);
+                                                    });
+                                                } else {
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Lỗi!',
+                                                        text: data.message || 'Không thể hủy linh kiện'
+                                                    });
+                                                }
+                                            })
+                                            .catch(error => {
+                                                Swal.close();
+                                                console.error('Error:', error);
+                                                Swal.fire({
+                                                    icon: 'error',
+                                                    title: 'Lỗi!',
+                                                    text: 'Có lỗi xảy ra khi hủy: ' + error.message
+                                                });
+                                            });
+                                }
+                            });
+                        }
+
+                        /**
+                         * ✅ THANH TOÁN TỔNG CHO KỸ THUẬT VIÊN
+                         * Thanh toán tất cả linh kiện của 1 kỹ thuật viên
+                         * @param requestId - ID của service request
+                         * @param reportId - ID của repair report (technician's quotation)
+                         * @param technicianName - Tên kỹ thuật viên
+                         */
+                        function payForTechnician(requestId, reportId, technicianName) {
+                            Swal.fire({
+                                title: 'Xác nhận thanh toán',
+                                html: '<p>Bạn có chắc chắn muốn thanh toán <strong>tất cả linh kiện</strong> của kỹ thuật viên:<br><strong>' + technicianName + '</strong>?</p>',
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonText: '<i class="fas fa-credit-card"></i> Xác nhận thanh toán',
+                                cancelButtonText: '<i class="fas fa-times"></i> Hủy',
+                                confirmButtonColor: '#27ae60',
+                                cancelButtonColor: '#95a5a6',
+                                reverseButtons: true
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Chuyển sang trang thanh toán với thông tin kỹ thuật viên
+                                    const url = '${pageContext.request.contextPath}/payment?requestId=' + requestId +
+                                            '&reportId=' + reportId +
+                                            '&paymentType=technician' +
+                                            '&technicianName=' + encodeURIComponent(technicianName);
+
+                                    window.location.href = url;
+                                }
+                            });
+                        }
+
+
+
+                        // ========== OLD PAYMENT FUNCTIONS (Keep for backward compatibility) ==========
+                        function makePayment(requestId, reportId) {
+                            Swal.fire({
+                                title: 'Xác nhận thanh toán',
+                                text: 'Bạn có chắc chắn muốn thanh toán báo giá này?',
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonText: 'Xác nhận',
+                                cancelButtonText: 'Hủy',
+                                confirmButtonColor: '#27ae60',
+                                cancelButtonColor: '#95a5a6'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '${pageContext.request.contextPath}/managerServiceRequest?action=makePayment&requestId=' + requestId + '&reportId=' + reportId;
+                                }
+                            });
+                        }
+
+                        function cancelQuotation(requestId, reportId) {
+                            Swal.fire({
+                                title: 'Xác nhận hủy',
+                                text: 'Bạn có chắc chắn muốn hủy báo giá này?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Xác nhận hủy',
+                                cancelButtonText: 'Giữ lại',
+                                confirmButtonColor: '#e74c3c',
+                                cancelButtonColor: '#95a5a6'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    Swal.fire({
+                                        icon: 'info',
+                                        title: 'Đã hủy!',
+                                        text: 'Báo giá đã được hủy',
+                                        timer: 2000,
+                                        showConfirmButton: false
+                                    });
+                                }
+                            });
+                        }
+
+                        /**
+                         * ✅ TỪ CHỐI BÁO GIÁ CỦA KỸ THUẬT VIÊN
+                         * @param requestId - ID của service request
+                         * @param reportId - ID của repair report
+                         * @param technicianName - Tên kỹ thuật viên
+                         */
+                        function rejectQuotation(requestId, reportId, technicianName) {
+                            Swal.fire({
+                                title: 'Xác nhận từ chối?',
+                                html: `Bạn có chắc muốn từ chối báo giá của <strong>${technicianName}</strong>?<br><br>` +
+                                        `<small class="text-muted">Báo giá sẽ bị đánh dấu là "Đã từ chối".</small>`,
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#e74c3c',
+                                cancelButtonColor: '#6c757d',
+                                confirmButtonText: '<i class="fas fa-times-circle"></i> Từ chối',
+                                cancelButtonText: '<i class="fas fa-arrow-left"></i> Quay lại'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Hiển thị loading
+                                    Swal.fire({
+                                        title: 'Đang xử lý...',
+                                        html: 'Vui lòng đợi trong giây lát',
+                                        allowOutsideClick: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                        }
+                                    });
+
+                                    // Gọi AJAX
+                                    const formData = new URLSearchParams();
+                                    formData.append('action', 'rejectQuotation');
+                                    formData.append('requestId', requestId);
+                                    formData.append('reportId', reportId);
+
+                                    fetch('${pageContext.request.contextPath}/managerServiceRequest', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                        },
+                                        body: formData.toString()
+                                    })
+                                            .then(response => response.json())
+                                            .then(data => {
+                                                Swal.close();
+
+                                                if (data.success) {
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Đã từ chối!',
+                                                        text: data.message || 'Báo giá đã được từ chối thành công!',
+                                                        confirmButtonText: 'OK'
+                                                    }).then(() => {
+                                                        location.reload();
+                                                    });
+                                                } else {
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Lỗi!',
+                                                        text: data.message || 'Không thể từ chối báo giá!'
+                                                    });
+                                                }
+                                            })
+                                            .catch(error => {
+                                                Swal.close();
+                                                Swal.fire({
+                                                    icon: 'error',
+                                                    title: 'Lỗi!',
+                                                    text: 'Có lỗi xảy ra: ' + error.message
+                                                });
+                                            });
+                                }
+                            });
+                        }
+
+                        // ========== OTHER UTILITY FUNCTIONS FROM ORIGINAL CODE ==========
+                        function refreshPage() {
+                            window.location.href = "${pageContext.request.contextPath}/managerServiceRequest";
+                        }
+
+                        function toggleSidebar() {
+                            const sidebar = document.getElementById('sidebar');
+                            const toggleIcon = document.getElementById('toggleIcon');
+                            sidebar.classList.toggle('collapsed');
+
+                            if (sidebar.classList.contains('collapsed')) {
+                                toggleIcon.classList.remove('fa-chevron-left');
+                                toggleIcon.classList.add('fa-chevron-right');
+                            } else {
+                                toggleIcon.classList.remove('fa-chevron-right');
+                                toggleIcon.classList.add('fa-chevron-left');
+                            }
+                        }
+
+                        function scrollToTop() {
+                            window.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
+                            });
+                        }
+
+                        function goToPage(pageNumber) {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            urlParams.set('page', pageNumber);
+                            if (!urlParams.has('action')) {
+                                urlParams.set('action', 'search');
+                            }
+                            window.location.href = '${pageContext.request.contextPath}/managerServiceRequest?' + urlParams.toString();
+                        }
+
+                        // View request detail function (from original)
+                        function viewRequestDetail(requestId, displayStatus) {
+                            console.log('🔍 Opening detail modal for request:', requestId, 'Status:', displayStatus);
+
+                            // Hiển thị loading
+                            Swal.fire({
+                                title: 'Đang tải...',
+                                html: 'Vui lòng đợi trong giây lát',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+
+                            // Gọi AJAX để lấy dữ liệu
+                            fetch('${pageContext.request.contextPath}/managerServiceRequest?action=viewDetail&requestId=' + requestId)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        Swal.close(); // Đóng loading
+
+                                        if (!data.success) {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Lỗi!',
+                                                text: data.message || 'Không thể tải thông tin yêu cầu'
+                                            });
+                                            return;
+                                        }
+
+                                        console.log('✅ Received data:', data);
+
+                                        // Hiển thị modal tùy theo trạng thái
+                                        if (displayStatus === 'Chờ Xác Nhận') {
+                                            showPendingModal(data);
+                                        } else if (displayStatus === 'Chờ Xử Lý') {
+                                            showAwaitingModal(data);
+                                        } else if (displayStatus === 'Đang Xử Lý') {
+                                            showInProgressModal(data);
+                                        } else if (displayStatus === 'Hoàn Thành') {
+                                            showCompletedModal(data);
+                                        } else {
+                                            // Fallback: dùng modal Pending
+                                            showPendingModal(data);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        Swal.close();
+                                        console.error('❌ Error:', error);
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Lỗi!',
+                                            text: 'Có lỗi xảy ra khi tải dữ liệu: ' + error.message
+                                        });
+                                    });
+                        }
+
+                        // ========== MODAL 1: CHỜ XÁC NHẬN ==========
+                        function showPendingModal(data) {
+                            document.getElementById('pendingRequestId').textContent = '#' + data.requestId;
+                            document.getElementById('pendingRequestDate').textContent = data.requestDate;
+                            document.getElementById('pendingContractId').textContent = data.contractId || 'N/A';
+                            document.getElementById('pendingEquipmentName').textContent = data.equipmentName || 'N/A';
+                            document.getElementById('pendingDescription').textContent = data.description;
+
+                            // Priority badge
+                            const priorityBadge = document.getElementById('pendingPriority');
+                            const priorityMap = {
+                                'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
+                                'High': {className: 'bg-warning text-dark', text: 'Cao'},
+                                'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
+                            };
+                            const priority = priorityMap[data.priorityLevel] || {className: 'bg-dark', text: data.priorityLevel};
+                            priorityBadge.className = 'badge ' + priority.className;
+                            priorityBadge.textContent = priority.text;
+
+                            // Request Type badge
+                            const typeBadge = document.getElementById('pendingRequestType');
+                            if (data.requestType === 'Service' || data.requestType === 'Warranty') {
+                                typeBadge.className = 'badge bg-primary';
+                                typeBadge.textContent = '🔧 Hỗ Trợ Thiết Bị';
+                            } else if (data.requestType === 'InformationUpdate') {
+                                typeBadge.className = 'badge bg-info';
+                                typeBadge.textContent = '👤 Hỗ Trợ Tài Khoản';
+                            } else {
+                                typeBadge.className = 'badge bg-secondary';
+                                typeBadge.textContent = data.requestType || 'N/A';
+                            }
+
+                            // Mở modal
+                            new bootstrap.Modal(document.getElementById('viewModalPending')).show();
+                        }
+
+                        // ========== MODAL 2: CHỜ XỬ LÝ ==========
+                        function showAwaitingModal(data) {
+                            document.getElementById('awaitingRequestId').textContent = '#' + data.requestId;
+                            document.getElementById('awaitingRequestDate').textContent = data.requestDate;
+                            document.getElementById('awaitingContractId').textContent = data.contractId || 'N/A';
+                            document.getElementById('awaitingEquipmentName').textContent = data.equipmentName || 'N/A';
+                            document.getElementById('awaitingDescription').textContent = data.description;
+
+                            // Priority badge
+                            const priorityBadge = document.getElementById('awaitingPriority');
+                            const priorityMap = {
+                                'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
+                                'High': {className: 'bg-warning text-dark', text: 'Cao'},
+                                'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
+                            };
+                            const priority = priorityMap[data.priorityLevel] || {className: 'bg-dark', text: data.priorityLevel};
+                            priorityBadge.className = 'badge ' + priority.className;
+                            priorityBadge.textContent = priority.text;
+
+                            // Request Type badge
+                            const typeBadge = document.getElementById('awaitingRequestType');
+                            if (data.requestType === 'Service' || data.requestType === 'Warranty') {
+                                typeBadge.className = 'badge bg-primary';
+                                typeBadge.textContent = '🔧 Hỗ Trợ Thiết Bị';
+                            } else if (data.requestType === 'InformationUpdate') {
+                                typeBadge.className = 'badge bg-info';
+                                typeBadge.textContent = '👤 Hỗ Trợ Tài Khoản';
+                            } else {
+                                typeBadge.className = 'badge bg-secondary';
+                                typeBadge.textContent = data.requestType || 'N/A';
+                            }
+
+                            // Tên người xử lý
+                            const technicianNameEl = document.getElementById('awaitingTechnicianName');
+                            if (data.assignedTechnicianName) {
+                                technicianNameEl.innerHTML = '<i class="fas fa-user-check"></i> ' + data.assignedTechnicianName;
+                                technicianNameEl.className = 'fw-normal text-primary';
+                            } else {
+                                technicianNameEl.innerHTML = '<i class="fas fa-question-circle"></i> Chưa phân công';
+                                technicianNameEl.className = 'fw-normal text-muted';
+                            }
+
+                            // Mở modal
+                            new bootstrap.Modal(document.getElementById('viewModalAwaiting')).show();
+                        }
+
+                        // ========== MODAL 3: ĐANG XỬ LÝ ==========
+                        function showInProgressModal(data) {
+                            console.log('📋 Showing In Progress Modal with full details');
+                            console.log('📦 Data:', data);
+
+                            // Thông tin yêu cầu cơ bản
+                            document.getElementById('inProgressRequestId').textContent = '#' + data.requestId;
+                            document.getElementById('inProgressRequestDate').textContent = data.requestDate;
+                            document.getElementById('inProgressContractId').textContent = data.contractId || 'N/A';
+                            document.getElementById('inProgressEquipmentName').textContent = data.equipmentName || 'N/A';
+                            document.getElementById('inProgressDescription').textContent = data.description;
+
+                            // Priority badge
+                            const priorityBadge = document.getElementById('inProgressPriority');
+                            const priorityMap = {
+                                'Normal': {className: 'bg-secondary', text: 'Bình Thường'},
+                                'High': {className: 'bg-warning text-dark', text: 'Cao'},
+                                'Urgent': {className: 'bg-danger', text: 'Khẩn Cấp'}
+                            };
+                            const priority = priorityMap[data.priorityLevel] || {className: 'bg-dark', text: data.priorityLevel};
+                            priorityBadge.className = 'badge ' + priority.className;
+                            priorityBadge.textContent = priority.text;
+
+                            // Request Type badge
+                            const typeBadge = document.getElementById('inProgressRequestType');
+                            if (data.requestType === 'Service' || data.requestType === 'Warranty') {
+                                typeBadge.className = 'badge bg-primary';
+                                typeBadge.textContent = '🔧 Hỗ Trợ Thiết Bị';
+                            } else if (data.requestType === 'InformationUpdate') {
+                                typeBadge.className = 'badge bg-info';
+                                typeBadge.textContent = '👤 Hỗ Trợ Tài Khoản';
+                            } else {
+                                typeBadge.className = 'badge bg-secondary';
+                                typeBadge.textContent = data.requestType || 'N/A';
+                            }
+
+                            // Load danh sách technicians và parts
+                            loadTechniciansForModal(data.requestId);
+
+                            // Mở modal
+                            new bootstrap.Modal(document.getElementById('viewModalInProgress')).show();
+                        }
+
+                        // ✅ Load danh sách technicians với parts cho modal chi tiết
+                        function loadTechniciansForModal(requestId) {
+                            const container = document.getElementById('inProgressTechniciansList');
+
+                            console.log('🔍 Loading technicians for request:', requestId);
+
+                            fetch('${pageContext.request.contextPath}/managerServiceRequest?action=getQuotationDetails&requestId=' + requestId)
+                                    .then(response => {
+                                        console.log('📡 Response status:', response.status);
+                                        return response.json();
+                                    })
+                                    .then(data => {
+                                        console.log('📦 Received data:', data);
+
+                                        if (data.success && data.quotations && data.quotations.length > 0) {
+                                            console.log('✅ Found', data.quotations.length, 'quotations');
+                                            let html = '<div style="padding: 20px;">';
+
+                                            data.quotations.forEach((quotation, index) => {
+                                                const techInitial = quotation.technicianName ? quotation.technicianName.charAt(0).toUpperCase() : 'T';
+                                                const cost = (parseFloat(quotation.estimatedCost) || 0) * 26000;
+                                                const partsCount = quotation.parts ? quotation.parts.length : 0;
+
+                                                html += '<div class="technician-card">';
+
+                                                // Header với avatar và info
+                                                html += '<div class="technician-header-row">';
+                                                html += '<div class="technician-avatar">' + techInitial + '</div>';
+                                                html += '<div class="technician-info">';
+                                                html += '<div class="technician-name">' + (quotation.technicianName || 'N/A') + '</div>';
+                                                html += '<div class="technician-work-desc">' + (quotation.workDescription || 'Không có mô tả') + '</div>';
+                                                html += '<div class="technician-meta">';
+                                                html += '<div class="meta-item">';
+                                                html += '<i class="fas fa-calendar-check"></i>';
+                                                html += '<span>Ngày sửa: ' + (quotation.repairDate || 'Chưa xác định') + '</span>';
+                                                html += '</div>';
+                                                html += '<div class="meta-item">';
+                                                html += '<i class="fas fa-cogs"></i>';
+                                                html += '<span>' + partsCount + ' linh kiện</span>';
+                                                html += '</div>';
+                                                html += '</div>';
+                                                html += '</div>';
+                                                html += '<div class="technician-cost-badge">';
+                                                html += cost.toLocaleString('vi-VN') + ' đ';
+                                                html += '</div>';
+                                                html += '</div>';
+
+                                                // Danh sách linh kiện
+                                                if (quotation.parts && quotation.parts.length > 0) {
+                                                    html += '<div class="parts-list-header">';
+                                                    html += '<i class="fas fa-tools"></i>';
+                                                    html += '<span>Danh Sách Linh Kiện Cần Thay Thế</span>';
+                                                    html += '</div>';
+
+                                                    quotation.parts.forEach(part => {
+                                                        const unitPrice = (parseFloat(part.unitPrice) || 0) * 26000;
+                                                        const quantity = parseInt(part.quantity) || 0;
+                                                        const totalPrice = unitPrice * quantity;
+
+                                                        html += '<div class="part-item">';
+                                                        html += '<div>';
+                                                        html += '<div class="part-name">' + (part.partName || 'N/A') + '</div>';
+                                                        html += '<div class="part-serial">' + (part.serialNumber || 'N/A') + '</div>';
+                                                        html += '</div>';
+                                                        html += '<div class="part-quantity">x' + quantity + '</div>';
+                                                        html += '<div class="text-muted" style="text-align: right; font-size: 0.85rem;">' + unitPrice.toLocaleString('vi-VN') + ' đ</div>';
+                                                        html += '<div class="part-price">' + totalPrice.toLocaleString('vi-VN') + ' đ</div>';
+
+                                                        // Status hoặc action buttons
+                                                        html += '<div class="part-actions">';
+                                                        if (part.paymentStatus === 'Completed') {
+                                                            html += '<span class="badge badge-completed" style="font-size: 0.7rem;">';
+                                                            html += '<i class="fas fa-check-circle"></i> Đã thanh toán';
+                                                            html += '</span>';
+                                                        } else if (part.paymentStatus === 'Cancelled') {
+                                                            html += '<span class="badge badge-cancelled" style="font-size: 0.7rem;">';
+                                                            html += '<i class="fas fa-times-circle"></i> Đã hủy';
+                                                            html += '</span>';
+                                                        }
+                                                        html += '</div>';
+
+                                                    });
+                                                } else {
+                                                    html += '<div class="no-parts-message">';
+                                                    html += '<i class="fas fa-box-open"></i>';
+                                                    html += '<p>Không có linh kiện nào cần thay thế</p>';
+                                                    html += '</div>';
+                                                }
+
+                                                html += '</div>'; // Close technician-card
+                                            });
+
+                                            html += '</div>';
+                                            container.innerHTML = html;
+                                        } else {
+                                            console.warn('⚠️ No quotations found or data.success = false');
+                                            console.log('Data:', data);
+                                            container.innerHTML = '<div class="text-center py-4"><i class="fas fa-info-circle fa-2x text-muted mb-2"></i><p class="text-muted">Chưa có thông tin người sửa chữa</p><small class="text-muted">RequestId: ' + requestId + '</small></div>';
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('❌ Error loading technicians:', error);
+                                        container.innerHTML = '<div class="text-center py-4 text-danger"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><p>Không thể tải thông tin</p><small>' + error.message + '</small></div>';
+                                    });
+                        }
+
+                        // ========== MODAL 4: HOÀN THÀNH ==========
+                        function showCompletedModal(data) {
+                            console.log('✅ Showing Completed Modal with full details');
+                            console.log('📦 Data:', data);
+
+                            // Thông tin yêu cầu cơ bản
+                            document.getElementById('completedRequestId').textContent = '#' + data.requestId;
+                            document.getElementById('completedRequestDate').textContent = data.requestDate;
+                            document.getElementById('completedContractId').textContent = data.contractId || 'N/A';
+                            document.getElementById('completedEquipmentName').textContent = data.equipmentName || 'N/A';
+                            document.getElementById('completedDescription').textContent = data.description;
+
+                            // Load danh sách technicians và parts cho yêu cầu hoàn thành
+                            loadCompletedTechnicians(data.requestId);
+
+                            // Mở modal
+                            new bootstrap.Modal(document.getElementById('viewModalCompleted')).show();
+                        }
+
+                        // ✅ Load danh sách technicians với parts cho modal hoàn thành
+                        function loadCompletedTechnicians(requestId) {
+                            const container = document.getElementById('completedTechniciansList');
+
+                            console.log('🔍 Loading completed technicians for request:', requestId);
+
+                            fetch('${pageContext.request.contextPath}/managerServiceRequest?action=getQuotationDetails&requestId=' + requestId)
+                                    .then(response => {
+                                        console.log('📡 Response status:', response.status);
+                                        return response.json();
+                                    })
+                                    .then(data => {
+                                        console.log('📦 Received data:', data);
+
+                                        if (data.success && data.quotations && data.quotations.length > 0) {
+                                            console.log('✅ Found', data.quotations.length, 'quotations');
+                                            let html = '<div style="padding: 20px;">';
+                                            let totalCost = 0;
+
+                                            data.quotations.forEach((quotation, index) => {
+                                                const techInitial = quotation.technicianName ? quotation.technicianName.charAt(0).toUpperCase() : 'T';
+                                                const cost = (parseFloat(quotation.estimatedCost) || 0) * 26000;
+                                                totalCost += cost;
+                                                const partsCount = quotation.parts ? quotation.parts.length : 0;
+
+                                                html += '<div class="technician-card">';
+
+                                                // Header với avatar và info
+                                                html += '<div class="technician-header-row">';
+                                                html += '<div class="technician-avatar">' + techInitial + '</div>';
+                                                html += '<div class="technician-info">';
+                                                html += '<div class="technician-name">' + (quotation.technicianName || 'N/A') + '</div>';
+                                                html += '<div class="technician-work-desc">' + (quotation.workDescription || 'Không có mô tả') + '</div>';
+                                                html += '<div class="technician-meta">';
+                                                html += '<div class="meta-item">';
+                                                html += '<i class="fas fa-calendar-check"></i>';
+                                                html += '<span>Ngày sửa: ' + (quotation.repairDate || 'Chưa xác định') + '</span>';
+                                                html += '</div>';
+                                                html += '<div class="meta-item">';
+                                                html += '<i class="fas fa-cogs"></i>';
+                                                html += '<span>' + partsCount + ' linh kiện</span>';
+                                                html += '</div>';
+                                                html += '</div>';
+                                                html += '</div>';
+                                                html += '<div class="technician-cost-badge">';
+                                                html += cost.toLocaleString('vi-VN') + ' đ';
+                                                html += '</div>';
+                                                html += '</div>';
+
+                                                // Danh sách linh kiện
+                                                if (quotation.parts && quotation.parts.length > 0) {
+                                                    html += '<div class="parts-list-header">';
+                                                    html += '<i class="fas fa-tools"></i>';
+                                                    html += '<span>Danh Sách Linh Kiện Đã Thay Thế</span>';
+                                                    html += '</div>';
+
+                                                    let partsTotalCost = 0;
+
+                                                    quotation.parts.forEach(part => {
+                                                        const unitPrice = (parseFloat(part.unitPrice) || 0) * 26000;
+                                                        const quantity = parseInt(part.quantity) || 0;
+                                                        const totalPrice = unitPrice * quantity;
+                                                        partsTotalCost += totalPrice;
+
+                                                        html += '<div class="part-item">';
+                                                        html += '<div>';
+                                                        html += '<div class="part-name">' + (part.partName || 'N/A') + '</div>';
+                                                        html += '<div class="part-serial">' + (part.serialNumber || 'N/A') + '</div>';
+                                                        html += '</div>';
+                                                        html += '<div class="part-quantity">x' + quantity + '</div>';
+                                                        html += '<div class="text-muted" style="text-align: right; font-size: 0.85rem;">' + unitPrice.toLocaleString('vi-VN') + ' đ</div>';
+                                                        html += '<div class="part-price">' + totalPrice.toLocaleString('vi-VN') + ' đ</div>';
+
+                                                        // Hiển thị trạng thái thanh toán
+
+                                                        html += '</div>';
+                                                        html += '</div>';
+                                                    });
+
+                                                    // Tổng chi phí linh kiện của kỹ thuật viên
+                                                    html += '<div class="mt-3 p-3 bg-light border rounded">';
+                                                    html += '<div class="d-flex justify-content-between align-items-center">';
+                                                    html += '<strong class="text-success"><i class="fas fa-calculator"></i> Tổng chi phí linh kiện:</strong>';
+                                                    html += '<strong class="text-success" style="font-size: 1.2rem;">' + partsTotalCost.toLocaleString('vi-VN') + ' đ</strong>';
+                                                    html += '</div>';
+                                                    html += '</div>';
+                                                } else {
+                                                    html += '<div class="no-parts-message">';
+                                                    html += '<i class="fas fa-box-open"></i>';
+                                                    html += '<p>Không có linh kiện nào được thay thế</p>';
+                                                    html += '</div>';
+                                                }
+
+                                                html += '</div>'; // Close technician-card
+                                            });
+
+                                            // Tổng kết toàn bộ
+                                            html += '<div class="card mt-3 border-success">';
+                                            html += '<div class="card-body bg-light">';
+                                            html += '<div class="row">';
+                                            html += '<div class="col-md-6">';
+                                            html += '<h6 class="text-success mb-2"><i class="fas fa-users-cog"></i> Tổng Kết</h6>';
+                                            html += '<p class="mb-1"><strong>Số kỹ thuật viên:</strong> ' + data.quotations.length + '</p>';
+                                            html += '<p class="mb-0"><strong>Trạng thái:</strong> <span class="badge badge-completed">Hoàn thành</span></p>';
+                                            html += '</div>';
+                                            html += '<div class="col-md-6 text-end">';
+                                            html += '<h6 class="text-success mb-2"><i class="fas fa-money-bill-wave"></i> Tổng Chi Phí</h6>';
+                                            html += '<h3 class="text-success mb-0">' + totalCost.toLocaleString('vi-VN') + ' đ</h3>';
+                                            html += '</div>';
+                                            html += '</div>';
+                                            html += '</div>';
+                                            html += '</div>';
+
+                                            html += '</div>';
+                                            container.innerHTML = html;
+                                        } else {
+                                            console.warn('⚠️ No quotations found or data.success = false');
+                                            console.log('Data:', data);
+                                            container.innerHTML = '<div class="text-center py-4"><i class="fas fa-info-circle fa-2x text-muted mb-2"></i><p class="text-muted">Chưa có thông tin kỹ thuật viên</p></div>';
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('❌ Error loading technicians:', error);
+                                        container.innerHTML = '<div class="text-center py-4 text-danger"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><p>Không thể tải thông tin</p><small>' + error.message + '</small></div>';
+                                    });
+                        }
+
+                        // Scroll to top button
+                        window.addEventListener('scroll', function () {
+                            const scrollBtn = document.getElementById('scrollToTop');
+                            if (window.pageYOffset > 300) {
+                                scrollBtn.classList.add('show');
+                            } else {
+                                scrollBtn.classList.remove('show');
+                            }
+                        });
+
+                        // Toast notifications (from original)
+                        function showToast(message, type) {
+                            const container = document.getElementById('toastContainer');
+                            let iconClass = 'fa-check-circle';
+                            if (type === 'error')
+                                iconClass = 'fa-exclamation-circle';
+                            if (type === 'info')
+                                iconClass = 'fa-info-circle';
+
+                            const toastDiv = document.createElement('div');
+                            toastDiv.className = 'toast-notification ' + type;
+
+                            const iconDiv = document.createElement('div');
+                            iconDiv.className = 'toast-icon ' + type;
+                            iconDiv.innerHTML = '<i class="fas ' + iconClass + '"></i>';
+
+                            const contentDiv = document.createElement('div');
+                            contentDiv.className = 'toast-content';
+                            contentDiv.textContent = message;
+
+                            const closeBtn = document.createElement('button');
+                            closeBtn.className = 'toast-close';
+                            closeBtn.type = 'button';
+                            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                            closeBtn.onclick = hideToast;
+
+                            toastDiv.appendChild(iconDiv);
+                            toastDiv.appendChild(contentDiv);
+                            toastDiv.appendChild(closeBtn);
+
+                            container.innerHTML = '';
+                            container.appendChild(toastDiv);
+
+                            setTimeout(hideToast, 5000);
+                        }
+
+                        function hideToast() {
+                            const container = document.getElementById('toastContainer');
+                            const toast = container.querySelector('.toast-notification');
+                            if (toast) {
+                                toast.classList.add('hiding');
+                                setTimeout(function () {
+                                    container.innerHTML = '';
+                                }, 400);
+                            }
+                        }
+
+                        // ========== CREATE FORM FUNCTIONS ==========
+                        function toggleFields() {
+                            const supportType = document.getElementById('supportType').value;
+                            const equipmentSelectField = document.getElementById('equipmentSelectField');
+                            const requestTypeField = document.getElementById('requestTypeField');
+                            const priorityField = document.getElementById('priorityField');
+                            const descriptionField = document.getElementById('descriptionField');
+                            const priorityInput = document.getElementById('priorityLevel');
+                            const descriptionInput = document.getElementById('description');
+                            const requestTypeInput = document.getElementById('requestType');
+
+                            if (supportType === 'equipment') {
+                                equipmentSelectField.style.display = 'block';
+                                requestTypeField.style.display = 'block';
+                                priorityField.style.display = 'block';
+                                descriptionField.style.display = 'block';
+                                priorityInput.setAttribute('required', 'required');
+                                descriptionInput.setAttribute('required', 'required');
+                                requestTypeInput.setAttribute('required', 'required');
+                                updateCharCount();
+                            } else {
+                                equipmentSelectField.style.display = 'none';
+                                requestTypeField.style.display = 'none';
+                                priorityField.style.display = 'none';
+                                descriptionField.style.display = 'none';
+                                priorityInput.removeAttribute('required');
+                                descriptionInput.removeAttribute('required');
+                                requestTypeInput.removeAttribute('required');
+                            }
+                        }
+
+                        function toggleEquipmentDropdown() {
+                            const menu = document.getElementById('equipmentDropdownMenu');
+                            const icon = document.getElementById('equipmentDropdownIcon');
+
+                            if (menu.style.display === 'none' || menu.style.display === '') {
+                                menu.style.display = 'block';
+                                icon.classList.remove('fa-chevron-down');
+                                icon.classList.add('fa-chevron-up');
+                            } else {
+                                menu.style.display = 'none';
+                                icon.classList.remove('fa-chevron-up');
+                                icon.classList.add('fa-chevron-down');
+                            }
+                        }
+
+                        function updateSelectedEquipment() {
+                            const checkboxes = document.querySelectorAll('.equipment-checkbox:checked');
+                            const display = document.getElementById('selectedEquipmentDisplay');
+                            const label = document.getElementById('equipmentDropdownLabel');
+
+                            if (checkboxes.length === 0) {
+                                display.innerHTML = '';
+                                label.innerHTML = '<i class="fas fa-list"></i> Chọn thiết bị cần hỗ trợ';
+                                return;
+                            }
+
+                            // Update label
+                            label.innerHTML = '<i class="fas fa-check-circle text-success"></i> Đã chọn ' + checkboxes.length + ' thiết bị';
+
+                            // Update display
+                            let html = '<div class="alert alert-info mb-0 mt-2"><strong>Đã chọn ' + checkboxes.length + ' thiết bị:</strong><ul class="mb-0 mt-2">';
+                            checkboxes.forEach(function (cb) {
+                                const model = cb.dataset.model;
+                                const serial = cb.dataset.serial;
+                                html += '<li><strong>' + model + '</strong> (SN: ' + serial + ')</li>';
+                            });
+                            html += '</ul></div>';
+                            display.innerHTML = html;
+                        }
+
+                        function updateCharCount() {
+                            const textarea = document.getElementById('description');
+                            const charCount = document.getElementById('charCount');
+                            if (!textarea || !charCount)
+                                return;
+
+                            const currentLength = textarea.value.length;
+                            charCount.textContent = currentLength + '/1000';
+
+                            if (currentLength > 900) {
+                                charCount.className = 'text-danger';
+                            } else if (currentLength > 700) {
+                                charCount.className = 'text-warning';
+                            } else {
+                                charCount.className = 'text-muted';
+                            }
+                        }
+
+                        function validateCreateForm(event) {
+                            const supportType = document.getElementById('supportType').value;
+                            const description = document.getElementById('description').value.trim();
+
+                            if (!supportType) {
+                                event.preventDefault();
+                                showToast('Vui lòng chọn loại hỗ trợ!', 'error');
+                                return false;
+                            }
+
+                            if (description.length < 10) {
+                                event.preventDefault();
+                                showToast('Mô tả phải có ít nhất 10 ký tự!', 'error');
+                                document.getElementById('description').focus();
+                                return false;
+                            }
+
+                            if (description.length > 1000) {
+                                event.preventDefault();
+                                showToast('Mô tả không được vượt quá 1000 ký tự!', 'error');
+                                document.getElementById('description').focus();
+                                return false;
+                            }
+
+                            // Chỉ kiểm tra thiết bị cho loại hỗ trợ thiết bị
+                            const selectedEquipment = document.querySelectorAll('.equipment-checkbox:checked');
+                            if (selectedEquipment.length === 0) {
+                                event.preventDefault();
+                                showToast('Vui lòng chọn ít nhất một thiết bị!', 'error');
+                                return false;
+                            }
+
+                            return true;
+                        }
+
+                        // ========== EVENT LISTENERS ==========
+                        document.addEventListener('DOMContentLoaded', function () {
+                            console.log('🔍 DOM Loaded');
+
+                            // Event cho textarea
+                            const descriptionTextarea = document.getElementById('description');
+                            if (descriptionTextarea) {
+                                descriptionTextarea.addEventListener('input', updateCharCount);
+                            }
+
+                            // Reset form khi đóng modal TẠO MỚI
+                            const createModal = document.getElementById('createModal');
+                            if (createModal) {
+                                createModal.addEventListener('hidden.bs.modal', function () {
+                                    document.getElementById('createForm').reset();
+                                    toggleFields();
+
+                                    // Reset dropdown
+                                    const menu = document.getElementById('equipmentDropdownMenu');
+                                    if (menu) {
+                                        menu.style.display = 'none';
+                                    }
+
+                                    const icon = document.getElementById('equipmentDropdownIcon');
+                                    if (icon) {
+                                        icon.classList.remove('fa-chevron-up');
+                                        icon.classList.add('fa-chevron-down');
+                                    }
+
+                                    // Uncheck all checkboxes
+                                    document.querySelectorAll('.equipment-checkbox').forEach(cb => cb.checked = false);
+                                    updateSelectedEquipment();
+                                });
+
+                                createModal.addEventListener('shown.bs.modal', function () {
+                                    updateCharCount();
+                                });
+                            }
+
+                            // Đóng dropdown khi click bên ngoài
+                            document.addEventListener('click', function (event) {
+                                const dropdown = document.getElementById('equipmentDropdownMenu');
+                                const button = document.getElementById('equipmentDropdownBtn');
+
+                                if (dropdown && button) {
+                                    if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+                                        dropdown.style.display = 'none';
+                                        const icon = document.getElementById('equipmentDropdownIcon');
+                                        if (icon) {
+                                            icon.classList.remove('fa-chevron-up');
+                                            icon.classList.add('fa-chevron-down');
+                                        }
+                                    }
+                                }
+                            });
+                        });
+
+                        // ========== FUNCTION TỪ CHỐI BÁO GIÁ ==========
+                        function rejectQuotation(requestId, reportId, technicianName) {
+                            console.log('🔴 rejectQuotation called:', {requestId, reportId, technicianName});
+
+                            Swal.fire({
+                                title: 'Xác nhận từ chối?',
+                                html: `Bạn có chắc muốn từ chối báo giá của <strong>${technicianName}</strong>?<br><br>` +
+                                        `<small class="text-muted">Báo giá sẽ được đánh dấu là "Từ chối" và không thể hoàn tác.</small>`,
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#d33',
+                                cancelButtonColor: '#6c757d',
+                                confirmButtonText: '<i class="fas fa-times-circle"></i> Từ chối',
+                                cancelButtonText: '<i class="fas fa-arrow-left"></i> Hủy'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Hiển thị loading
+                                    Swal.fire({
+                                        title: 'Đang xử lý...',
+                                        html: 'Vui lòng đợi trong giây lát',
+                                        allowOutsideClick: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                        }
+                                    });
+
+                                    // Gọi AJAX
+                                    const formData = new URLSearchParams();
+                                    formData.append('action', 'rejectQuotation');
+                                    formData.append('requestId', requestId);
+                                    formData.append('reportId', reportId);
+
+                                    console.log('📤 Sending request:', formData.toString());
+
+                                    fetch('${pageContext.request.contextPath}/managerServiceRequest', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                        },
+                                        body: formData.toString()
+                                    })
+                                            .then(response => {
+                                                console.log('📥 Response status:', response.status);
+                                                if (!response.ok) {
+                                                    throw new Error('Server trả về lỗi: ' + response.status);
+                                                }
+                                                return response.text();
+                                            })
+                                            .then(text => {
+                                                console.log('📥 Response text:', text);
+                                                if (!text || text.trim() === '') {
+                                                    throw new Error('Server trả về response rỗng. Vui lòng kiểm tra server log.');
+                                                }
+                                                return JSON.parse(text);
+                                            })
+                                            .then(data => {
+                                                console.log('✅ Parsed data:', data);
+                                                Swal.close();
+
+                                                if (data.success) {
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Thành công!',
+                                                        text: data.message || 'Đã từ chối báo giá thành công!',
+                                                        confirmButtonText: 'OK'
+                                                    }).then(() => {
+                                                        location.reload();
+                                                    });
+                                                } else {
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Lỗi!',
+                                                        text: data.message || 'Không thể từ chối báo giá!'
+                                                    });
+                                                }
+                                            })
+                                            .catch(error => {
+                                                console.error('❌ Error:', error);
+                                                Swal.close();
+                                                Swal.fire({
+                                                    icon: 'error',
+                                                    title: 'Lỗi!',
+                                                    html: `Có lỗi xảy ra khi từ chối báo giá:<br><br>` +
+                                                            `<small class="text-danger">${error.message}</small><br><br>` +
+                                                            `<small class="text-muted">Vui lòng kiểm tra console log và server log để biết thêm chi tiết.</small>`
+                                                });
+                                            });
+                                }
+                            });
+                        }
+                        // ========== FAQ DATA ========== 
+                        const FAQ_DATA_WIDGET = [
+                            {
+                                "category": "Giới thiệu chung",
+                                "questions": [
+                                    {
+                                        "question": "Hệ thống của bạn cung cấp dịch vụ gì?",
+                                        "answer": "Hệ thống của chúng tôi cung cấp dịch vụ bảo hành và bảo trì thiết bị cho khách hàng. Khi quý khách mua thiết bị, chúng tôi sẽ tạo hợp đồng và lưu thông tin vào hệ thống. Khi thiết bị cần sửa chữa, quý khách chỉ cần tạo yêu cầu trực tuyến, chúng tôi sẽ xử lý và thực hiện sửa chữa theo quy trình chuyên nghiệp."
+                                    },
+                                    {
+                                        "question": "Làm thế nào để liên hệ bộ phận hỗ trợ khách hàng?",
+                                        "answer": "Quý khách có thể liên hệ với bộ phận hỗ trợ khách hàng qua:\n- Hotline: [Số điện thoại]\n- Email: [Địa chỉ email]\n- Chat trực tuyến trên website\n- Hoặc tạo yêu cầu hỗ trợ trực tiếp trên hệ thống"
+                                    }
+                                ]
+                            },
+                            {
+                                "category": "Yêu cầu dịch vụ",
+                                "questions": [
+                                    {
+                                        "question": "Làm thế nào để tạo yêu cầu bảo hành/bảo trì?",
+                                        "answer": "Để tạo yêu cầu, quý khách thực hiện theo các bước sau:\n\n1. Truy cập trang \"Yêu cầu dịch vụ\"\n2. Nhấn nút \"Tạo yêu cầu mới\" ở góc trên màn hình\n3. Chọn \"Hỗ trợ thiết bị\"\n4. Chọn thiết bị cần bảo hành từ danh sách\n5. Chọn mức độ ưu tiên cho yêu cầu\n6. Mô tả chi tiết vấn đề của thiết bị\n7. Kiểm tra lại thông tin và nhấn \"Gửi yêu cầu\""
+                                    },
+                                    {
+                                        "question": "Thời gian xử lý yêu cầu mất bao lâu?",
+                                        "answer": "Thời gian xử lý yêu cầu phụ thuộc vào:\n- Mức độ ưu tiên của yêu cầu\n- Tình trạng thiết bị\n- Khả năng sẵn có của phụ tùng\n\nThông thường:\n- Yêu cầu khẩn cấp: 24-48 giờ\n- Yêu cầu thường: 3-5 ngày làm việc"
+                                    },
+                                    {
+                                        "question": "Các trạng thái của yêu cầu dịch vụ có ý nghĩa gì?",
+                                        "answer": "Yêu cầu sẽ đi qua các trạng thái:\n\n1. Chờ xác nhận: Yêu cầu vừa được tạo\n2. Chờ xử lý: Đã được xác nhận, chờ phân công\n3. Đang xử lý: Kỹ thuật viên đang xử lý\n4. Hoàn thành: Đã sửa chữa xong\n5. Đã hủy: Yêu cầu bị hủy"
+                                    }
+                                ]
+                            },
+                            {
+                                "category": "Hợp đồng",
+                                "questions": [
+                                    {
+                                        "question": "Làm thế nào để xem thông tin hợp đồng?",
+                                        "answer": "Để xem thông tin hợp đồng:\n\n1. Truy cập trang \"Hợp đồng\"\n2. Xem danh sách tất cả các hợp đồng\n3. Nhấn \"Danh sách thiết bị\" để xem chi tiết\n\nThông tin bao gồm:\n- Mã hợp đồng\n- Loại hợp đồng\n- Ngày hiệu lực\n- Trạng thái"
+                                    },
+                                    {
+                                        "question": "Chính sách bảo hành như thế nào?",
+                                        "answer": "Chính sách bảo hành:\n\n- Thời gian: Theo hợp đồng (12-36 tháng)\n- Phạm vi: Lỗi nhà sản xuất, hỏng hóc bình thường\n- Miễn phí phụ tùng và sửa chữa\n\nKhông bảo hành:\n- Sử dụng sai cách\n- Va đập, rơi vỡ\n- Can thiệp bởi bên thứ ba"
+                                    }
+                                ]
+                            },
+                            {
+                                "category": "Hóa đơn & Thanh toán",
+                                "questions": [
+                                    {
+                                        "question": "Làm thế nào để xem hóa đơn?",
+                                        "answer": "Để xem hóa đơn:\n\n1. Truy cập trang \"Hóa đơn\"\n2. Xem danh sách hóa đơn\n\nThông tin gồm:\n- Mã hóa đơn\n- Số tiền\n- Ngày phát hành\n- Hạn thanh toán\n- Trạng thái"
+                                    },
+                                    {
+                                        "question": "Làm thế nào để thanh toán hóa đơn?",
+                                        "answer": "Các phương thức thanh toán:\n\n1. Thanh toán trực tuyến:\n- Chuyển khoản ngân hàng\n- Ví điện tử (Momo, ZaloPay)\n- Thẻ ATM/Tín dụng\n\n2. Thanh toán trực tiếp:\n- Tại văn phòng\n- Thu tiền tận nơi"
+                                    }
+                                ]
+                            },
+                            {
+                                "category": "Thiết bị",
+                                "questions": [
+                                    {
+                                        "question": "Làm thế nào để xem thông tin thiết bị?",
+                                        "answer": "Để xem thiết bị:\n\n1. Truy cập trang \"Thiết bị\"\n2. Xem danh sách thiết bị\n3. Nhấn \"Chi tiết\" để xem thêm\n\nThông tin:\n- Tên thiết bị\n- Mã/Serial number\n- Hợp đồng liên quan\n- Trạng thái\n- Thời hạn bảo hành"
+                                    }
+                                ]
+                            }
+                        ];
 
 // Initialize recommendations when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    showNewRecommendationsWidget();
-});
+                        document.addEventListener('DOMContentLoaded', function () {
+                            showNewRecommendationsWidget();
+                        });
 
-function showNewRecommendationsWidget() {
-    const container = document.getElementById('recommendationChipsWidget');
-    if (!container) return;
+                        function showNewRecommendationsWidget() {
+                            const container = document.getElementById('recommendationChipsWidget');
+                            if (!container)
+                                return;
 
-    container.innerHTML = '';
+                            container.innerHTML = '';
 
-    // Get all questions
-    const allQuestions = FAQ_DATA_WIDGET.flatMap(category => 
-        category.questions.map(q => ({
-            question: q.question,
-            category: category.category
-        }))
-    );
+                            // Get all questions
+                            const allQuestions = FAQ_DATA_WIDGET.flatMap(category =>
+                                category.questions.map(q => ({
+                                        question: q.question,
+                                        category: category.category
+                                    }))
+                            );
 
-    // Random 6 questions
-    const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
-    const selectedQuestions = shuffled.slice(0, 6);
+                            // Random 6 questions
+                            const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+                            const selectedQuestions = shuffled.slice(0, 6);
 
-    // Group by category
-    const questionsByCategory = {};
-    selectedQuestions.forEach(item => {
-        if (!questionsByCategory[item.category]) {
-            questionsByCategory[item.category] = [];
-        }
-        questionsByCategory[item.category].push(item.question);
-    });
+                            // Group by category
+                            const questionsByCategory = {};
+                            selectedQuestions.forEach(item => {
+                                if (!questionsByCategory[item.category]) {
+                                    questionsByCategory[item.category] = [];
+                                }
+                                questionsByCategory[item.category].push(item.question);
+                            });
 
-    // Render chips
-    Object.entries(questionsByCategory).forEach(([category, questions]) => {
-        const categoryDiv = document.createElement('div');
-        categoryDiv.className = 'recommendation-category';
-        categoryDiv.textContent = category;
-        container.appendChild(categoryDiv);
+                            // Render chips
+                            Object.entries(questionsByCategory).forEach(([category, questions]) => {
+                                const categoryDiv = document.createElement('div');
+                                categoryDiv.className = 'recommendation-category';
+                                categoryDiv.textContent = category;
+                                container.appendChild(categoryDiv);
 
-        questions.forEach(question => {
-            const chip = document.createElement('div');
-            chip.className = 'recommendation-chip';
-            chip.textContent = question;
-            chip.title = question;
-            chip.onclick = () => sendRecommendedQuestionWidget(question);
-            container.appendChild(chip);
-        });
-    });
-}
+                                questions.forEach(question => {
+                                    const chip = document.createElement('div');
+                                    chip.className = 'recommendation-chip';
+                                    chip.textContent = question;
+                                    chip.title = question;
+                                    chip.onclick = () => sendRecommendedQuestionWidget(question);
+                                    container.appendChild(chip);
+                                });
+                            });
+                        }
 
-function sendRecommendedQuestionWidget(question) {
-    const input = document.getElementById('chatInputWidget');
-    input.value = question;
-    sendMessageWidget();
-}
+                        function sendRecommendedQuestionWidget(question) {
+                            const input = document.getElementById('chatInputWidget');
+                            input.value = question;
+                            sendMessageWidget();
+                        }
 
-function hideRecommendationsWidget() {
-    const recommendations = document.getElementById('chatbotRecommendationsWidget');
-    if (recommendations) {
-        recommendations.style.display = 'none';
-    }
-}
+                        function hideRecommendationsWidget() {
+                            const recommendations = document.getElementById('chatbotRecommendationsWidget');
+                            if (recommendations) {
+                                recommendations.style.display = 'none';
+                            }
+                        }
 
-function showRecommendationsWidget() {
-    const recommendations = document.getElementById('chatbotRecommendationsWidget');
-    if (recommendations) {
-        recommendations.style.display = 'block';
-        showNewRecommendationsWidget();
-    }
-}
+                        function showRecommendationsWidget() {
+                            const recommendations = document.getElementById('chatbotRecommendationsWidget');
+                            if (recommendations) {
+                                recommendations.style.display = 'block';
+                                showNewRecommendationsWidget();
+                            }
+                        }
 
-function toggleChatbotWidget() {
-    const chatWindow = document.getElementById('chatbotWindowWidget');
-    chatWindow.classList.toggle('active');
-    
-    if (chatWindow.classList.contains('active')) {
-        showRecommendationsWidget();
-        setTimeout(() => {
-            document.getElementById('chatInputWidget').focus();
-        }, 300);
-    }
-}
+                        function toggleChatbotWidget() {
+                            const chatWindow = document.getElementById('chatbotWindowWidget');
+                            chatWindow.classList.toggle('active');
 
-function handleKeyPressWidget(event) {
-    if (event.key === 'Enter') {
-        sendMessageWidget();
-    }
-}
+                            if (chatWindow.classList.contains('active')) {
+                                showRecommendationsWidget();
+                                setTimeout(() => {
+                                    document.getElementById('chatInputWidget').focus();
+                                }, 300);
+                            }
+                        }
 
-function addMessageWidget(content, isUser = false) {
-    const messagesDiv = document.getElementById('chatMessagesWidget');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    avatar.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    
-    if (isUser) {
-        contentDiv.textContent = content;
-        messageDiv.appendChild(contentDiv);
-        messageDiv.appendChild(avatar);
-    } else {
-        contentDiv.innerHTML = formatMessageWidget(content);
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(contentDiv);
-    }
-    
-    messagesDiv.appendChild(messageDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
+                        function handleKeyPressWidget(event) {
+                            if (event.key === 'Enter') {
+                                sendMessageWidget();
+                            }
+                        }
 
-function showTypingWidget() {
-    const messagesDiv = document.getElementById('chatMessagesWidget');
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'message bot';
-    typingDiv.id = 'typingIndicatorWidget';
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    avatar.innerHTML = '<i class="fas fa-robot"></i>';
-    
-    const typing = document.createElement('div');
-    typing.className = 'typing-indicator';
-    typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-    
-    typingDiv.appendChild(avatar);
-    typingDiv.appendChild(typing);
-    messagesDiv.appendChild(typingDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
+                        function addMessageWidget(content, isUser = false) {
+                            const messagesDiv = document.getElementById('chatMessagesWidget');
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
 
-function hideTypingWidget() {
-    const typing = document.getElementById('typingIndicatorWidget');
-    if (typing) {
-        typing.remove();
-    }
-}
+                            const avatar = document.createElement('div');
+                            avatar.className = 'message-avatar';
+                            avatar.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
 
-async function sendMessageWidget() {
-    const input = document.getElementById('chatInputWidget');
-    const sendBtn = document.getElementById('sendBtnWidget');
-    const question = input.value.trim();
-    
-    if (!question) return;
-    
-    hideRecommendationsWidget();
-    addMessageWidget(question, true);
-    input.value = '';
-    
-    input.disabled = true;
-    sendBtn.disabled = true;
-    
-    showTypingWidget();
-    
-    try {
-        const response = await fetch('${pageContext.request.contextPath}/askGemini', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ q: question })
-        });
-        
-        const data = await response.json();
-        hideTypingWidget();
-        
-        if (data.success && data.answer) {
-            addMessageWidget(data.answer, false);
-        } else {
-            addMessageWidget(data.error || 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.', false);
-        }
-        
-        setTimeout(() => {
-            showRecommendationsWidget();
-        }, 500);
-        
-    } catch (error) {
-        hideTypingWidget();
-        addMessageWidget('Xin lỗi, không thể kết nối đến server. Vui lòng thử lại sau.', false);
-        console.error('Error:', error);
-        
-        setTimeout(() => {
-            showRecommendationsWidget();
-        }, 500);
-    } finally {
-        input.disabled = false;
-        sendBtn.disabled = false;
-        input.focus();
-    }
-}
+                            const contentDiv = document.createElement('div');
+                            contentDiv.className = 'message-content';
 
-function formatMessageWidget(text) {
-    if (!text) return '';
-    
-    let formatted = text.replace(/\n/g, '<br>');
-    formatted = formatted.replace(/(\d+\.)\s/g, '<br>$1 ');
-    formatted = formatted.replace(/^- /gm, '<br>• ');
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    formatted = formatted.replace(/([A-Z][^.!?]*:\s*)/g, '<strong>$1</strong>');
-    
-    return formatted;
-}
+                            if (isUser) {
+                                contentDiv.textContent = content;
+                                messageDiv.appendChild(contentDiv);
+                                messageDiv.appendChild(avatar);
+                            } else {
+                                contentDiv.innerHTML = formatMessageWidget(content);
+                                messageDiv.appendChild(avatar);
+                                messageDiv.appendChild(contentDiv);
+                            }
+
+                            messagesDiv.appendChild(messageDiv);
+                            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        }
+
+                        function showTypingWidget() {
+                            const messagesDiv = document.getElementById('chatMessagesWidget');
+                            const typingDiv = document.createElement('div');
+                            typingDiv.className = 'message bot';
+                            typingDiv.id = 'typingIndicatorWidget';
+
+                            const avatar = document.createElement('div');
+                            avatar.className = 'message-avatar';
+                            avatar.innerHTML = '<i class="fas fa-robot"></i>';
+
+                            const typing = document.createElement('div');
+                            typing.className = 'typing-indicator';
+                            typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+                            typingDiv.appendChild(avatar);
+                            typingDiv.appendChild(typing);
+                            messagesDiv.appendChild(typingDiv);
+                            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        }
+
+                        function hideTypingWidget() {
+                            const typing = document.getElementById('typingIndicatorWidget');
+                            if (typing) {
+                                typing.remove();
+                            }
+                        }
+
+                        async function sendMessageWidget() {
+                            const input = document.getElementById('chatInputWidget');
+                            const sendBtn = document.getElementById('sendBtnWidget');
+                            const question = input.value.trim();
+
+                            if (!question)
+                                return;
+
+                            hideRecommendationsWidget();
+                            addMessageWidget(question, true);
+                            input.value = '';
+
+                            input.disabled = true;
+                            sendBtn.disabled = true;
+
+                            showTypingWidget();
+
+                            try {
+                                const response = await fetch('${pageContext.request.contextPath}/askGemini', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({q: question})
+                                });
+
+                                const data = await response.json();
+                                hideTypingWidget();
+
+                                if (data.success && data.answer) {
+                                    addMessageWidget(data.answer, false);
+                                } else {
+                                    addMessageWidget(data.error || 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.', false);
+                                }
+
+                                setTimeout(() => {
+                                    showRecommendationsWidget();
+                                }, 500);
+
+                            } catch (error) {
+                                hideTypingWidget();
+                                addMessageWidget('Xin lỗi, không thể kết nối đến server. Vui lòng thử lại sau.', false);
+                                console.error('Error:', error);
+
+                                setTimeout(() => {
+                                    showRecommendationsWidget();
+                                }, 500);
+                            } finally {
+                                input.disabled = false;
+                                sendBtn.disabled = false;
+                                input.focus();
+                            }
+                        }
+
+                        function formatMessageWidget(text) {
+                            if (!text)
+                                return '';
+
+                            let formatted = text.replace(/\n/g, '<br>');
+                            formatted = formatted.replace(/(\d+\.)\s/g, '<br>$1 ');
+                            formatted = formatted.replace(/^- /gm, '<br>• ');
+                            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                            formatted = formatted.replace(/([A-Z][^.!?]*:\s*)/g, '<strong>$1</strong>');
+
+                            return formatted;
+                        }
         </script>
     </body>
 </html>

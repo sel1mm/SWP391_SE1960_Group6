@@ -25,7 +25,6 @@ public class AskGeminiServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
         
-        // Enable CORS if needed
         response.setHeader("Access-Control-Allow-Origin", "*");
         response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
         response.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -38,15 +37,12 @@ public class AskGeminiServlet extends HttpServlet {
             return;
         }
 
-        // Đọc file customer.json từ thư mục data
         String faqContent = readFAQFile();
-        
         if (faqContent == null || faqContent.equals("[]")) {
             System.err.println("WARNING: FAQ file not found or empty");
-            faqContent = "[]"; // Fallback to empty array
+            faqContent = "[]";
         }
 
-        // Đọc câu hỏi từ request
         String question = "";
         try {
             BufferedReader reader = request.getReader();
@@ -61,7 +57,6 @@ public class AskGeminiServlet extends HttpServlet {
                 question = requestBody.optString("q", "").trim();
             }
         } catch (Exception e) {
-            // Fallback to parameter
             question = Optional.ofNullable(request.getParameter("q")).orElse("").trim();
         }
 
@@ -73,8 +68,8 @@ public class AskGeminiServlet extends HttpServlet {
         }
 
         try {
-            // Gọi Gemini để trả lời
-            String answer = answerFromFAQ(question, faqContent);
+            // Kiểm tra loại câu hỏi và xử lý phù hợp
+            String answer = answerQuestion(question, faqContent);
             
             JSONObject resp = new JSONObject();
             resp.put("answer", answer);
@@ -108,7 +103,6 @@ public class AskGeminiServlet extends HttpServlet {
 
     private String readFAQFile() {
         try {
-            // Try multiple paths
             String[] paths = {
                 "/data/customer.json",
                 "/WEB-INF/data/customer.json",
@@ -127,7 +121,6 @@ public class AskGeminiServlet extends HttpServlet {
                 }
             }
             
-            // Try as resource
             InputStream is = getServletContext().getResourceAsStream("/data/customer.json");
             if (is != null) {
                 String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
@@ -143,6 +136,90 @@ public class AskGeminiServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Phương thức mới: Phân loại và trả lời câu hỏi
+     */
+    private String answerQuestion(String question, String faqContent) throws IOException {
+        // Kiểm tra xem có phải câu hỏi chào hỏi/thông thường không
+        if (isGreetingOrSmallTalk(question)) {
+            return handleGeneralConversation(question);
+        }
+        
+        // Nếu không phải, tìm trong FAQ
+        return answerFromFAQ(question, faqContent);
+    }
+
+    /**
+     * Kiểm tra câu hỏi có phải chào hỏi/hội thoại thông thường
+     */
+    private boolean isGreetingOrSmallTalk(String question) {
+        String q = question.toLowerCase().trim();
+        
+        // Danh sách từ khóa chào hỏi và câu hỏi thông thường
+        String[] greetings = {
+            "hello", "hi", "hey", "chào", "xin chào", "chao",
+            "how are you", "bạn khỏe không", "bạn thế nào",
+            "good morning", "good afternoon", "good evening",
+            "buổi sáng", "buổi chiều", "buổi tối",
+            "cảm ơn", "thank", "thanks", "ok", "okay",
+            "tạm biệt", "bye", "goodbye", "see you",
+            "bạn là ai", "who are you", "you are",
+            "tên bạn", "your name", "giới thiệu",
+            "help me", "giúp tôi", "giúp mình"
+        };
+        
+        for (String keyword : greetings) {
+            if (q.contains(keyword)) {
+                return true;
+            }
+        }
+        
+        // Câu hỏi ngắn (dưới 15 ký tự) thường là chào hỏi
+        if (q.length() < 15 && !q.contains("?")) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Xử lý các câu hỏi chào hỏi và hội thoại thông thường
+     */
+    private String handleGeneralConversation(String question) throws IOException {
+        String prompt = 
+            "Bạn là trợ lý AI thân thiện cho hệ thống quản lý bảo trì thiết bị.\n\n" +
+            "THÔNG TIN VỀ BẠN:\n" +
+            "- Tên: Trợ lý AI\n" +
+            "- Vai trò: Hỗ trợ khách hàng về hệ thống quản lý bảo trì thiết bị\n" +
+            "- Khả năng: Trả lời câu hỏi về bảo trì thiết bị, hướng dẫn sử dụng hệ thống\n\n" +
+            "CÂU NÓI CỦA NGƯỜI DÙNG: " + question + "\n\n" +
+            "YÊU CẦU:\n" +
+            "- Trả lời một cách tự nhiên, thân thiện bằng tiếng Việt\n" +
+            "- Nếu là lời chào, hãy chào lại và giới thiệu bản thân ngắn gọn\n" +
+            "- Nếu là cảm ơn, hãy đáp lại lịch sự\n" +
+            "- Nếu hỏi về khả năng, giải thích bạn có thể giúp gì\n" +
+            "- Giữ câu trả lời ngắn gọn (dưới 150 từ)\n" +
+            "- Luôn thể hiện sẵn sàng hỗ trợ\n\n" +
+            "CÂU TRẢ LỜI:";
+        
+        JSONObject payload = new JSONObject();
+        JSONArray contents = new JSONArray();
+        JSONArray parts = new JSONArray();
+        parts.put(new JSONObject().put("text", prompt));
+        contents.put(new JSONObject().put("role", "user").put("parts", parts));
+        payload.put("contents", contents);
+        
+        String resp = callGeminiApi(payload.toString());
+        if (resp == null) {
+            return "Xin chào! Tôi là trợ lý AI. Tôi có thể giúp gì cho bạn hôm nay?";
+        }
+        
+        return extractTextFromGeminiResponse(resp, 500);
+    }
+
+    /**
+     * Trả lời câu hỏi từ FAQ
+     */
     private String answerFromFAQ(String question, String faqContent) throws IOException {
         String prompt = 
             "Bạn là trợ lý AI hỗ trợ khách hàng cho hệ thống quản lý bảo trì thiết bị.\n\n" +
@@ -199,80 +276,74 @@ public class AskGeminiServlet extends HttpServlet {
         return responseText;
     }
 
- private String extractTextFromGeminiResponse(String resp, int maxLength) {
-    try {
-        JSONObject respObj = new JSONObject(resp);
-        if (respObj.has("candidates")) {
-            JSONArray candidates = respObj.getJSONArray("candidates");
-            if (candidates.length() > 0) {
-                JSONObject candidate = candidates.getJSONObject(0);
-                if (candidate.has("content")) {
-                    JSONObject content = candidate.getJSONObject("content");
-                    if (content.has("parts")) {
-                        JSONArray resParts = content.getJSONArray("parts");
-                        if (resParts.length() > 0) {
-                            JSONObject part = resParts.getJSONObject(0);
-                            if (part.has("text")) {
-                                String text = part.getString("text").trim();
-                                
-                                // Format text để xuống dòng đẹp hơn
-                                text = formatTextForDisplay(text);
-                                
-                                text = text.replaceAll("(?s)```.*?```", "").trim();
-                                if (text.length() > maxLength) {
-                                    text = text.substring(0, maxLength) + "...";
+    private String extractTextFromGeminiResponse(String resp, int maxLength) {
+        try {
+            JSONObject respObj = new JSONObject(resp);
+            if (respObj.has("candidates")) {
+                JSONArray candidates = respObj.getJSONArray("candidates");
+                if (candidates.length() > 0) {
+                    JSONObject candidate = candidates.getJSONObject(0);
+                    if (candidate.has("content")) {
+                        JSONObject content = candidate.getJSONObject("content");
+                        if (content.has("parts")) {
+                            JSONArray resParts = content.getJSONArray("parts");
+                            if (resParts.length() > 0) {
+                                JSONObject part = resParts.getJSONObject(0);
+                                if (part.has("text")) {
+                                    String text = part.getString("text").trim();
+                                    text = formatTextForDisplay(text);
+                                    text = text.replaceAll("(?s)```.*?```", "").trim();
+                                    if (text.length() > maxLength) {
+                                        text = text.substring(0, maxLength) + "...";
+                                    }
+                                    return text;
                                 }
-                                return text;
                             }
                         }
                     }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
+        return "Xin lỗi, tôi không thể trả lời câu hỏi này.";
     }
-    return "Xin lỗi, tôi không thể trả lời câu hỏi này.";
-}
 
-private String formatTextForDisplay(String text) {
-    if (text == null || text.isEmpty()) {
-        return text;
-    }
-    
-    // 1. Giữ nguyên các dòng mới có sẵn
-    text = text.replace("\r\n", "\n").replace("\r", "\n");
-    
-    // 2. Đảm bảo mỗi dòng không quá dài (tự động xuống dòng)
-    StringBuilder formatted = new StringBuilder();
-    String[] paragraphs = text.split("\n");
-    
-    for (String paragraph : paragraphs) {
-        if (paragraph.trim().isEmpty()) {
-            formatted.append("\n"); // Giữ khoảng cách giữa các đoạn
-            continue;
+    private String formatTextForDisplay(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
         }
         
-        // Nếu đoạn văn quá dài, tự động xuống dòng
-        if (paragraph.length() > 80) {
-            String[] words = paragraph.split(" ");
-            StringBuilder line = new StringBuilder();
+        text = text.replace("\r\n", "\n").replace("\r", "\n");
+        
+        StringBuilder formatted = new StringBuilder();
+        String[] paragraphs = text.split("\n");
+        
+        for (String paragraph : paragraphs) {
+            if (paragraph.trim().isEmpty()) {
+                formatted.append("\n");
+                continue;
+            }
             
-            for (String word : words) {
-                if (line.length() + word.length() + 1 > 80) {
-                    formatted.append(line.toString().trim()).append("\n");
-                    line = new StringBuilder();
+            if (paragraph.length() > 80) {
+                String[] words = paragraph.split(" ");
+                StringBuilder line = new StringBuilder();
+                
+                for (String word : words) {
+                    if (line.length() + word.length() + 1 > 80) {
+                        formatted.append(line.toString().trim()).append("\n");
+                        line = new StringBuilder();
+                    }
+                    line.append(word).append(" ");
                 }
-                line.append(word).append(" ");
+                if (line.length() > 0) {
+                    formatted.append(line.toString().trim()).append("\n");
+                }
+            } else {
+                formatted.append(paragraph).append("\n");
             }
-            if (line.length() > 0) {
-                formatted.append(line.toString().trim()).append("\n");
-            }
-        } else {
-            formatted.append(paragraph).append("\n");
         }
+        
+        return formatted.toString().trim();
     }
-    
-    return formatted.toString().trim();
-}
 }

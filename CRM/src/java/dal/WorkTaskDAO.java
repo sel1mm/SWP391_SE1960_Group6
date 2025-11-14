@@ -243,16 +243,29 @@ public class WorkTaskDAO extends MyDAO {
         }
 
         // Update task status
-        String updateTaskSql = "UPDATE WorkTask SET status = ?, "
-                + "endDate = CASE WHEN ? = 'Completed' THEN CURRENT_DATE ELSE endDate END "
-                + "WHERE taskId = ?";
-
         int affected;
-        try (PreparedStatement ps = getValidConnection().prepareStatement(updateTaskSql)) {
-            ps.setString(1, newStatus);
-            ps.setString(2, newStatus);
-            ps.setInt(3, taskId);
-            affected = ps.executeUpdate();
+        String updateTaskSql;
+        if ("Completed".equals(newStatus) || "Failed".equals(newStatus)) {
+            updateTaskSql = "UPDATE WorkTask SET status = ?, endDate = CURRENT_DATE WHERE taskId = ?";
+            try (PreparedStatement ps = getValidConnection().prepareStatement(updateTaskSql)) {
+                ps.setString(1, newStatus);
+                ps.setInt(2, taskId);
+                affected = ps.executeUpdate();
+            }
+        } else if ("Assigned".equals(newStatus) || "In Progress".equals(newStatus)) {
+            updateTaskSql = "UPDATE WorkTask SET status = ?, endDate = NULL WHERE taskId = ?";
+            try (PreparedStatement ps = getValidConnection().prepareStatement(updateTaskSql)) {
+                ps.setString(1, newStatus);
+                ps.setInt(2, taskId);
+                affected = ps.executeUpdate();
+            }
+        } else {
+            updateTaskSql = "UPDATE WorkTask SET status = ? WHERE taskId = ?";
+            try (PreparedStatement ps = getValidConnection().prepareStatement(updateTaskSql)) {
+                ps.setString(1, newStatus);
+                ps.setInt(2, taskId);
+                affected = ps.executeUpdate();
+            }
         }
 
         // Nếu update thành công và task vừa được set là Completed
@@ -262,8 +275,7 @@ public class WorkTaskDAO extends MyDAO {
             // Kiểm tra xem tất cả task của request này đã completed chưa
             if (areAllTasksCompletedForRequest(requestId)) {
                 // Cập nhật request status thành Completed
-                ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO();
-                try {
+                try (ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO()) {
                     serviceRequestDAO.updateStatus(requestId, "Completed");
                     System.out.println("✅ All tasks completed for Request #" + requestId
                             + ". Request status updated to Completed.");

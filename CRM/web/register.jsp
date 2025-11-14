@@ -250,7 +250,7 @@
                     <input type="checkbox" class="form-check-input" id="termsCheckbox" required>
                     <label class="form-check-label" for="termsCheckbox">
                         Việc đăng ký tài khoản đồng nghĩa với việc bạn đã đọc và đồng ý với 
-                        <a href="#" target="_blank">Điều khoản & Dịch vụ</a> của chúng tôi.
+                        <a href="tos.jsp" target="_blank">Điều khoản & Dịch vụ</a> của chúng tôi.
                     </label>
                 </div>
 

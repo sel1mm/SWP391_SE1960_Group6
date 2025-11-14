@@ -169,29 +169,35 @@ public class TechnicianTaskServlet extends HttpServlet {
                     int technicianId = sessionId.intValue();
                     String trimmedStatus = newStatus.trim();
                     
-                    // ✅ VALIDATION: Check if trying to complete task with pending repair report
+                    // ✅ VALIDATION: Check if trying to complete task without valid repair report
                     if ("Completed".equals(trimmedStatus)) {
-                        try {
-                            RepairReportDAO reportDAO = new RepairReportDAO();
+                        try (RepairReportDAO reportDAO = new RepairReportDAO()) {
                             RepairReport report = null;
                             if (task.getRequestId() != null) {
                                 report = reportDAO.findByRequestIdAndTechnician(task.getRequestId(), technicianId);
                             } else if (task.getScheduleId() != null) {
                                 report = reportDAO.findByScheduleIdAndTechnician(task.getScheduleId(), technicianId);
                             }
-                            
-                            if (report != null) {
-                                String quotationStatus = report.getQuotationStatus();
-                                if (quotationStatus != null && "Pending".equals(quotationStatus)) {
-                                    String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Không thể hoàn tất công việc: Khách hàng chưa phản hồi báo giá. Vui lòng chờ họ chấp thuận hoặc từ chối.");
-                                    resp.sendRedirect(redirectUrl);
-                                    return;
-                                }
+
+                            if (report == null) {
+                                String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage,
+                                        "error", "Không thể hoàn tất công việc: Vui lòng tạo và gửi báo cáo sửa chữa trước.");
+                                resp.sendRedirect(redirectUrl);
+                                return;
+                            }
+
+                            String quotationStatus = report.getQuotationStatus();
+                            if (quotationStatus == null || "Pending".equalsIgnoreCase(quotationStatus)) {
+                                String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage,
+                                        "error", "Không thể hoàn tất công việc: Báo giá vẫn đang chờ phản hồi từ khách hàng.");
+                                resp.sendRedirect(redirectUrl);
+                                return;
                             }
                         } catch (SQLException e) {
                             System.err.println("Error checking repair report status: " + e.getMessage());
                             e.printStackTrace();
-                            String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage, "error", "Lỗi kiểm tra trạng thái báo cáo: " + e.getMessage());
+                            String redirectUrl = buildTaskListUrlWithMessage(req, preservedQ, preservedStatus, preservedPage,
+                                    "error", "Lỗi kiểm tra trạng thái báo cáo: " + e.getMessage());
                             resp.sendRedirect(redirectUrl);
                             return;
                         }
