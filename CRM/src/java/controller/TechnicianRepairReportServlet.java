@@ -22,7 +22,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import utils.TechnicianValidator;
 
 /**
@@ -605,7 +607,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
 
                     List<String> validationErrors = new ArrayList<>();
                     if (!(isWarranty && isNotEligibleForWarranty)) {
-                        validationErrors.addAll(validateRepairReportInput(req, false, parts, isWarranty, noPartsOverride));
+                        validationErrors.addAll(validateRepairReportInput(req, false, parts, isWarranty, noPartsOverride, null));
                     }
 
                     // Calculate estimated cost (VND -> USD) unless warranty/maintenance
@@ -780,6 +782,8 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     boolean noPartsOverride = (!isWarranty && existingReport.getScheduleId() == null)
                             && isCheckboxChecked(req.getParameter("noPartsOverride"));
 
+                    List<RepairReportDetail> existingReservedParts = reportDAO.getReportDetails(reportId);
+
                     RepairReport report = new RepairReport();
                     report.setReportId(reportId);
                     report.setRequestId(existingReport.getRequestId());
@@ -797,7 +801,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     if (noPartsOverride) {
                         parts = new ArrayList<>();
                     } else if (parts == null || parts.isEmpty()) {
-                        parts = reportDAO.getReportDetails(reportId);
+                        parts = new ArrayList<>(existingReservedParts);
                     }
 
                     BigDecimal estimatedCost;
@@ -821,7 +825,7 @@ public class TechnicianRepairReportServlet extends HttpServlet {
                     report.setRepairDate(existingReport.getRepairDate());
                     report.setQuotationStatus("Pending");
 
-                    List<String> validationErrors = validateRepairReportInput(req, true, parts, isWarranty, noPartsOverride);
+                    List<String> validationErrors = validateRepairReportInput(req, true, parts, isWarranty, noPartsOverride, existingReservedParts);
                     if (!validationErrors.isEmpty()) {
                         req.setAttribute("noPartsOverride", noPartsOverride);
                         req.setAttribute("validationErrors", validationErrors);
@@ -941,8 +945,25 @@ public class TechnicianRepairReportServlet extends HttpServlet {
     }
 
     private List<String> validateRepairReportInput(HttpServletRequest req, boolean isEditMode,
-            List<RepairReportDetail> parts, boolean isWarranty, boolean allowPartsOverride) {
+            List<RepairReportDetail> parts, boolean isWarranty, boolean allowPartsOverride,
+            List<RepairReportDetail> existingAllocations) {
         List<String> errors = new ArrayList<>();
+
+        Map<Integer, Integer> reservedQtyByPart = new HashMap<>();
+        Set<Integer> reservedPartDetailIds = new HashSet<>();
+        Map<Integer, Integer> reservedPartDetailToPartId = new HashMap<>();
+        if (existingAllocations != null && !existingAllocations.isEmpty()) {
+            for (RepairReportDetail existingDetail : existingAllocations) {
+                if (existingDetail == null) {
+                    continue;
+                }
+                reservedQtyByPart.merge(existingDetail.getPartId(), existingDetail.getQuantity(), Integer::sum);
+                if (existingDetail.getPartDetailId() != null) {
+                    reservedPartDetailIds.add(existingDetail.getPartDetailId());
+                    reservedPartDetailToPartId.put(existingDetail.getPartDetailId(), existingDetail.getPartId());
+                }
+            }
+        }
 
         // Validate details
         TechnicianValidator.ValidationResult detailsResult = TechnicianValidator.validateDetails(req.getParameter("details"));
@@ -980,18 +1001,27 @@ public class TechnicianRepairReportServlet extends HttpServlet {
 
                     // Validate available quantity
                     int availableQty = partDetailDAO.getAvailableQuantityForPart(part.getPartId());
-                    if (part.getQuantity() > availableQty) {
+                    int reservedQty = reservedQtyByPart.getOrDefault(part.getPartId(), 0);
+                    int effectiveAvailable = availableQty + reservedQty;
+                    if (part.getQuantity() > effectiveAvailable) {
                         errors.add("Không đủ số lượng cho linh kiện ID " + part.getPartId()
-                                + ". Yêu cầu: " + part.getQuantity() + ", Có sẵn: " + availableQty);
+                                + ". Yêu cầu: " + part.getQuantity() + ", Có sẵn: " + effectiveAvailable);
                     }
 
                     // Validate partDetailId if specified
                     if (part.getPartDetailId() != null) {
-                        var partDetail = partDetailDAO.lockAndValidatePartDetail(part.getPartDetailId());
-                        if (partDetail == null) {
-                            errors.add("Mã chi tiết linh kiện " + part.getPartDetailId() + " không khả dụng");
-                        } else if (partDetail.getPartId() != part.getPartId()) {
-                            errors.add("Mã chi tiết linh kiện " + part.getPartDetailId() + " không thuộc về linh kiện ID " + part.getPartId());
+                        if (reservedPartDetailIds.contains(part.getPartDetailId())) {
+                            Integer expectedPartId = reservedPartDetailToPartId.get(part.getPartDetailId());
+                            if (expectedPartId != null && expectedPartId != part.getPartId()) {
+                                errors.add("Mã chi tiết linh kiện " + part.getPartDetailId() + " không thuộc về linh kiện ID " + part.getPartId());
+                            }
+                        } else {
+                            var partDetail = partDetailDAO.lockAndValidatePartDetail(part.getPartDetailId());
+                            if (partDetail == null) {
+                                errors.add("Mã chi tiết linh kiện " + part.getPartDetailId() + " không khả dụng");
+                            } else if (partDetail.getPartId() != part.getPartId()) {
+                                errors.add("Mã chi tiết linh kiện " + part.getPartDetailId() + " không thuộc về linh kiện ID " + part.getPartId());
+                            }
                         }
                     }
                 }
