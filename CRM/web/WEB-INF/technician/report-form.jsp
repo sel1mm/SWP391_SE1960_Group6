@@ -286,7 +286,7 @@
                   <input type="text"
                          id="partSearchInput"
                          class="form-control"
-                         placeholder="Tìm kiếm linh kiện theo tên hoặc số seri..."
+                         placeholder="Tìm kiếm linh kiện theo tên..."
                          autocomplete="off">
                   <span class="input-group-text">
                     <i class="bi bi-search" id="searchIcon"></i>
@@ -307,7 +307,6 @@
                       <thead class="table-light sticky-top">
                         <tr>
                           <th>Tên linh kiện</th>
-                          <th class="text-center">Số seri</th>
                           <th class="text-center">Đơn giá</th>
                           <th class="text-center">Có sẵn</th>
                           <th class="text-center">Số lượng</th>
@@ -316,7 +315,7 @@
                       <tbody id="partsListBody">
                         <!-- Will be populated by JavaScript -->
                         <tr>
-                          <td colspan="5" class="text-center text-muted py-4">
+                          <td colspan="4" class="text-center text-muted py-4">
                             <i class="bi bi-search me-2"></i>Chọn một công việc trước để tải linh kiện có sẵn
                           </td>
                         </tr>
@@ -542,7 +541,7 @@
         partSearchInput.disabled = true;
         partSearchInput.placeholder = 'Đã bỏ qua lựa chọn linh kiện cho báo cáo này';
       } else {
-        partSearchInput.placeholder = 'Tìm kiếm linh kiện theo tên hoặc số seri...';
+        partSearchInput.placeholder = 'Tìm kiếm linh kiện theo tên...';
       }
     }
 
@@ -863,7 +862,7 @@
     }
     if (partSearchInput) {
       partSearchInput.disabled = false;
-      partSearchInput.placeholder = 'Tìm kiếm linh kiện theo tên hoặc số seri...';
+      partSearchInput.placeholder = 'Tìm kiếm linh kiện theo tên...';
     }
   }
   
@@ -1000,8 +999,7 @@
     const filtered = allParts.filter(part => {
       if (!searchTerm) return true;
       const name = (part.partName || '').toLowerCase();
-      const serial = (part.serialNumber || '').toLowerCase();
-      return name.includes(searchTerm) || serial.includes(searchTerm);
+      return name.includes(searchTerm);
     });
     
     renderPartsList(filtered);
@@ -1017,7 +1015,7 @@
     
     if (!parts || parts.length === 0) {
       console.log('No parts to render, showing empty message');
-      partsListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>Không tìm thấy linh kiện. Vui lòng kiểm tra xem linh kiện có tồn tại trong cơ sở dữ liệu không.</td></tr>';
+      partsListBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>Không tìm thấy linh kiện. Vui lòng kiểm tra xem linh kiện có tồn tại trong cơ sở dữ liệu không.</td></tr>';
       return;
     }
     
@@ -1039,7 +1037,6 @@
       
       html += '<tr data-part-id="' + partId + '">';
       html += '<td><strong>' + escapeHtml(part.partName) + '</strong></td>';
-      html += '<td class="text-center">' + escapeHtml(part.serialNumber || 'N/A') + '</td>';
       html += '<td class="text-center"><strong class="text-success">₫' + formatVnd(usdToVnd(part.unitPrice)) + '</strong></td>';
       html += '<td class="text-center"><span class="badge bg-success">' + part.availableQuantity + '</span></td>';
       html += '<td class="text-center">';
@@ -1153,7 +1150,7 @@
   function clearPartsList() {
     allParts = [];
     if (partsListBody) {
-      partsListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-search me-2"></i>Chọn một công việc trước để tải linh kiện có sẵn</td></tr>';
+      partsListBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-search me-2"></i>Chọn một công việc trước để tải linh kiện có sẵn</td></tr>';
     }
   }
   
@@ -1452,7 +1449,6 @@
         html += '<div class="list-group-item d-flex justify-content-between align-items-start">';
         html += '<div class="flex-grow-1">';
         html += '<div class="fw-bold">' + escapeHtml(part.partName) + '</div>';
-        html += '<div class="text-muted small">S/N: ' + escapeHtml(part.serialNumber || 'N/A') + '</div>';
         html += '<div class="text-muted small">';
         html += '₫' + formatVnd(unitPriceVnd) + ' × ' + part.quantity + ' = <strong>₫' + formatVnd(lineTotalVnd) + '</strong>';
         html += '</div>';
