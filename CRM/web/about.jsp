@@ -542,8 +542,8 @@
                         <ul class="footer-list">
                             <li><a href="about.jsp">→ Về chúng tôi</a></li>
                             <li><a href="tos.jsp">→ Điều khoản sử dụng</a></li>
-                            <li><a href="baohanh.jsp">→ Chính sách bảo hành</a></li>
-                            <li><a href="baogia.jsp">→ Báo giá dịch vụ</a></li>
+                             <li><a href="baohanh.jsp">→ Điều khoản sử dụng</a></li>
+                             <li><a href="baogia.jsp">→ Báo giá dịch vụ</a></li>
 
                         </ul>
                     </div>

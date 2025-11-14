@@ -101,8 +101,8 @@
                 }
             }
 
-            /* Pricing Section */
-            .pricing-section {
+            /* Services Section */
+            .services-section {
                 max-width: 1200px;
                 margin: -50px auto 80px;
                 padding: 0 20px;
@@ -110,151 +110,37 @@
                 z-index: 10;
             }
 
-            .pricing-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-                gap: 30px;
-                margin-bottom: 60px;
-            }
-
-            .pricing-card {
+            .content-wrapper {
                 background: white;
-                border-radius: 20px;
                 padding: 40px;
+                border-radius: 20px;
                 box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-                transition: all 0.3s;
-                position: relative;
-                overflow: hidden;
             }
 
-            .pricing-card:hover {
-                transform: translateY(-10px);
-                box-shadow: 0 25px 70px rgba(102,126,234,0.3);
-            }
-
-            .pricing-card.featured {
-                border: 3px solid #667eea;
-                transform: scale(1.05);
-            }
-
-            .pricing-card.featured::before {
-                content: 'PHỔ BIẾN NHẤT';
-                position: absolute;
-                top: 20px;
-                right: -35px;
+            /* Back Button */
+            .back-button {
+                display:inline-flex;
+                align-items:center;
+                gap:8px;
+                padding:12px 24px;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 5px 40px;
-                transform: rotate(45deg);
-                font-size: 12px;
-                font-weight: 700;
-                letter-spacing: 1px;
+                color:white;
+                text-decoration:none;
+                border-radius:12px;
+                font-weight:600;
+                margin-bottom:40px;
+                transition: all 0.3s ease;
             }
-
-            .pricing-header {
-                text-align: center;
-                margin-bottom: 30px;
-            }
-
-            .pricing-icon {
-                font-size: 50px;
-                margin-bottom: 15px;
-            }
-
-            .pricing-title {
-                font-size: 28px;
-                font-weight: 700;
-                color: #2d3748;
-                margin-bottom: 10px;
-            }
-
-            .pricing-subtitle {
-                font-size: 14px;
-                color: #666;
-                margin-bottom: 20px;
-            }
-
-            .pricing-price {
-                font-size: 48px;
-                font-weight: 700;
-                color: #667eea;
-                margin-bottom: 5px;
-            }
-
-            .pricing-price span {
-                font-size: 18px;
-                color: #666;
-                font-weight: 400;
-            }
-
-            .pricing-period {
-                font-size: 14px;
-                color: #999;
-                margin-bottom: 30px;
-            }
-
-            .pricing-features {
-                list-style: none;
-                margin-bottom: 30px;
-            }
-
-            .pricing-features li {
-                padding: 12px 0;
-                font-size: 15px;
-                color: #555;
-                border-bottom: 1px solid #f0f0f0;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-
-            .pricing-features li:last-child {
-                border-bottom: none;
-            }
-
-            .feature-icon {
-                color: #667eea;
-                font-weight: 700;
-            }
-
-            .feature-disabled {
-                color: #ccc !important;
-            }
-
-            .pricing-button {
-                width: 100%;
-                padding: 16px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border: none;
-                border-radius: 12px;
-                font-size: 16px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s;
-            }
-
-            .pricing-button:hover {
+            .back-button:hover {
                 transform: translateY(-3px);
-                box-shadow: 0 10px 30px rgba(102,126,234,0.4);
+                box-shadow:0 8px 25px rgba(102,126,234,0.4);
             }
-
-            .pricing-button.outline {
-                background: transparent;
-                border: 2px solid #667eea;
-                color: #667eea;
+            .back-icon {
+                font-size:1.1em;
+                transition: transform 0.3s ease;
             }
-
-            .pricing-button.outline:hover {
-                background: #667eea;
-                color: white;
-            }
-
-            /* Services Section */
-            .services-section {
-                max-width: 1200px;
-                margin: 0 auto 80px;
-                padding: 0 20px;
+            .back-button:hover .back-icon {
+                transform: translateX(-3px);
             }
 
             .section-title {
@@ -328,56 +214,6 @@
                 border-top: 1px solid #f0f0f0;
             }
 
-            /* Comparison Table */
-            .comparison-section {
-                max-width: 1200px;
-                margin: 0 auto 80px;
-                padding: 0 20px;
-            }
-
-            .comparison-table {
-                background: white;
-                border-radius: 20px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-                overflow: hidden;
-            }
-
-            .comparison-table table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-
-            .comparison-table th {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 20px;
-                font-weight: 600;
-                font-size: 16px;
-                text-align: left;
-            }
-
-            .comparison-table td {
-                padding: 18px 20px;
-                border-bottom: 1px solid #f0f0f0;
-                font-size: 14px;
-            }
-
-            .comparison-table tr:hover {
-                background: #f8f9fc;
-            }
-
-            .check-icon {
-                color: #667eea;
-                font-weight: 700;
-                font-size: 18px;
-            }
-
-            .cross-icon {
-                color: #ccc;
-                font-weight: 700;
-                font-size: 18px;
-            }
-
             /* CTA Section */
             .cta-section {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -442,21 +278,66 @@
 
             /* Footer */
             footer {
-                background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-                color: #e2e8f0;
-                padding: 60px 20px 30px;
-                border-top: 1px solid #4a5568;
+                background:#1a202c;
+                padding:80px 20px 40px;
+                color:#cbd5e0;
+                margin-top:100px;
             }
-
-            .footer-content {
-                max-width: 1200px;
-                margin: 0 auto;
-                text-align: center;
+            .footer-grid {
+                max-width:1200px;
+                margin:0 auto;
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+                gap:60px;
             }
-
-            .footer-content p {
-                font-size: 13px;
-                color: #a0aec0;
+            .footer-title {
+                font-size:18px;
+                font-weight:700;
+                margin-bottom:25px;
+                color:#fff;
+                display:flex;
+                align-items:center;
+                gap:10px;
+            }
+            .title-bar {
+                width:4px;
+                height:20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius:2px;
+            }
+            .footer-heading {
+                font-size:16px;
+                font-weight:700;
+                margin-bottom:25px;
+                color:#fff;
+            }
+            .footer-desc {
+                font-size:14px;
+                line-height:1.8;
+                color:#cbd5e0;
+                margin-bottom:20px;
+            }
+            .footer-version {
+                font-size:13px;
+                line-height:1.8;
+                color:#a0aec0;
+            }
+            .footer-list {
+                list-style:none;
+                padding:0;
+            }
+            .footer-list li {
+                margin-bottom:12px;
+                font-size:14px;
+            }
+            .footer-list a, .footer-list span {
+                color:#cbd5e0;
+                text-decoration:none;
+                transition:all 0.3s;
+            }
+            .footer-list a:hover, .footer-list span:hover {
+                color:#fff;
+                transform:translateX(4px);
             }
 
             /* Responsive */
@@ -473,24 +354,16 @@
                     font-size: 16px;
                 }
 
-                .pricing-grid {
-                    grid-template-columns: 1fr;
-                }
-
-                .pricing-card.featured {
-                    transform: scale(1);
-                }
-
                 .services-grid {
                     grid-template-columns: 1fr;
                 }
 
-                .comparison-table {
-                    overflow-x: auto;
-                }
-
                 .section-title {
                     font-size: 28px;
+                }
+
+                .footer-grid {
+                    gap:40px;
                 }
             }
         </style>
@@ -502,8 +375,43 @@
                 <div class="logo">CRM System</div>
                 <div class="nav-links">
                     <a href="home.jsp">Trang chủ</a>
-                    <a href="pricing.jsp">Báo giá</a>
-                    <a href="login">Đăng nhập</a>
+                    <% 
+                        model.Account acc = (model.Account) session.getAttribute("session_login");
+                        if (acc == null) { 
+                    %>
+                    <a href="login" class="btn-login">Đăng nhập</a>
+                    <% 
+                        } else { 
+                            String userRole = (String) session.getAttribute("session_role");
+                            String dashboardLink = "#";
+                            if ("admin".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "admin.jsp";
+                            } else if ("Technical Manager".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "technicalManagerApproval";
+                            } else if ("Customer Support Staff".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "dashboard.jsp";
+                            } else if ("Storekeeper".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "storekeeper";
+                            } else if ("Technician".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "technician/dashboard";
+                            } else if ("customer".equalsIgnoreCase(userRole)) {
+                                dashboardLink = "managerServiceRequest";
+                            } else {
+                                dashboardLink = "home.jsp";
+                            }
+                    %>
+                    <a href="#" style="color: white; font-size: 15px; text-decoration: none;">
+                        👋 Xin chào, <strong><%= acc.getUsername() %></strong>
+                    </a>
+                    <a href="<%= dashboardLink %>" class="btn-login" style="background: rgba(255,255,255,0.2); text-decoration: none;">
+                        📊 Dashboard
+                    </a>
+                    <a href="logout" class="btn-login" style="background: rgba(255,255,255,0.2); text-decoration: none;">
+                        Đăng xuất
+                    </a>
+                    <% 
+                        } 
+                    %>
                 </div>
             </div>
         </nav>
@@ -514,80 +422,15 @@
             <p>Lựa chọn gói dịch vụ phù hợp với nhu cầu quản lý khách hàng và thiết bị của doanh nghiệp bạn</p>
         </section>
 
-        <!-- Pricing Cards -->
-        <section class="pricing-section">
-            <div class="pricing-grid">
-                <!-- Basic Plan -->
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <div class="pricing-icon">🌱</div>
-                        <h3 class="pricing-title">Gói Cơ Bản</h3>
-                        <p class="pricing-subtitle">Dành cho doanh nghiệp nhỏ</p>
-                        <div class="pricing-price">2.900.000₫<span>/tháng</span></div>
-                        <p class="pricing-period">Thanh toán hàng tháng</p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><span class="feature-icon">✓</span> Quản lý tối đa 100 khách hàng</li>
-                        <li><span class="feature-icon">✓</span> 3 tài khoản người dùng</li>
-                        <li><span class="feature-icon">✓</span> Quản lý hợp đồng cơ bản</li>
-                        <li><span class="feature-icon">✓</span> Báo cáo cơ bản</li>
-                        <li><span class="feature-icon">✓</span> Hỗ trợ email</li>
-                        <li><span class="feature-icon feature-disabled">✗</span> Quản lý thiết bị nâng cao</li>
-                        <li><span class="feature-icon feature-disabled">✗</span> API tích hợp</li>
-                    </ul>
-                    <button class="pricing-button outline">Chọn gói này</button>
-                </div>
-
-                <!-- Professional Plan -->
-                <div class="pricing-card featured">
-                    <div class="pricing-header">
-                        <div class="pricing-icon">🚀</div>
-                        <h3 class="pricing-title">Gói Chuyên Nghiệp</h3>
-                        <p class="pricing-subtitle">Dành cho doanh nghiệp vừa</p>
-                        <div class="pricing-price">5.900.000₫<span>/tháng</span></div>
-                        <p class="pricing-period">Thanh toán hàng tháng</p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><span class="feature-icon">✓</span> Quản lý không giới hạn khách hàng</li>
-                        <li><span class="feature-icon">✓</span> 10 tài khoản người dùng</li>
-                        <li><span class="feature-icon">✓</span> Quản lý hợp đồng & thiết bị</li>
-                        <li><span class="feature-icon">✓</span> Báo cáo nâng cao</li>
-                        <li><span class="feature-icon">✓</span> Hỗ trợ 24/7</li>
-                        <li><span class="feature-icon">✓</span> Quản lý bảo trì định kỳ</li>
-                        <li><span class="feature-icon">✓</span> API tích hợp cơ bản</li>
-                    </ul>
-                    <button class="pricing-button">Chọn gói này</button>
-                </div>
-
-                <!-- Enterprise Plan -->
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <div class="pricing-icon">👑</div>
-                        <h3 class="pricing-title">Gói Doanh Nghiệp</h3>
-                        <p class="pricing-subtitle">Giải pháp toàn diện</p>
-                        <div class="pricing-price">Liên hệ</div>
-                        <p class="pricing-period">Tùy chỉnh theo nhu cầu</p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><span class="feature-icon">✓</span> Không giới hạn mọi tính năng</li>
-                        <li><span class="feature-icon">✓</span> Không giới hạn người dùng</li>
-                        <li><span class="feature-icon">✓</span> Tùy chỉnh theo yêu cầu</li>
-                        <li><span class="feature-icon">✓</span> Phân tích dữ liệu AI</li>
-                        <li><span class="feature-icon">✓</span> Hỗ trợ ưu tiên 24/7</li>
-                        <li><span class="feature-icon">✓</span> API không giới hạn</li>
-                        <li><span class="feature-icon">✓</span> Đào tạo & Tư vấn</li>
-                    </ul>
-                    <button class="pricing-button">Liên hệ tư vấn</button>
-                </div>
-            </div>
-        </section>
-
         <!-- Additional Services -->
         <section class="services-section">
-            <h2 class="section-title">Dịch Vụ Bổ Sung</h2>
-            <p class="section-subtitle">Các dịch vụ chăm sóc khách hàng và bảo trì thiết bị chuyên nghiệp</p>
-            
-            <div class="services-grid">
+            <div class="content-wrapper">
+                <a href="home.jsp" class="back-button"><span class="back-icon">←</span>Về Trang chủ</a>
+                
+                <h2 class="section-title">Dịch Vụ Bổ Sung</h2>
+                <p class="section-subtitle">Các dịch vụ chăm sóc khách hàng và bảo trì thiết bị chuyên nghiệp</p>
+
+                <div class="services-grid">
                 <div class="service-card">
                     <div class="service-header">
                         <h4 class="service-title">Hợp đồng Bảo trì Cơ bản</h4>
@@ -654,105 +497,107 @@
                     <p class="service-details">🎨 Thời gian hoàn thành: 1 tuần</p>
                 </div>
             </div>
-        </section>
-
-        <!-- Comparison Table -->
-        <section class="comparison-section">
-            <h2 class="section-title">So Sánh Chi Tiết Các Gói</h2>
-            <p class="section-subtitle">Xem chi tiết tính năng của từng gói dịch vụ</p>
-            
-            <div class="comparison-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tính năng</th>
-                            <th>Gói Cơ Bản</th>
-                            <th>Gói Chuyên Nghiệp</th>
-                            <th>Gói Doanh Nghiệp</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Số lượng khách hàng</strong></td>
-                            <td>Tối đa 100</td>
-                            <td>Không giới hạn</td>
-                            <td>Không giới hạn</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Tài khoản người dùng</strong></td>
-                            <td>3 tài khoản</td>
-                            <td>10 tài khoản</td>
-                            <td>Không giới hạn</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Quản lý hợp đồng</strong></td>
-                            <td><span class="check-icon">✓</span></td>
-                            <td><span class="check-icon">✓</span></td>
-                            <td><span class="check-icon">✓</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Quản lý thiết bị</strong></td>
-                            <td><span class="cross-icon">✗</span></td>
-                            <td><span class="check-icon">✓</span></td>
-                            <td><span class="check-icon">✓</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Quản lý bảo trì</strong></td>
-                            <td><span class="cross-icon">✗</span></td>
-                            <td><span class="check-icon">✓</span></td>
-                            <td><span class="check-icon">✓</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Báo cáo & Thống kê</strong></td>
-                            <td>Cơ bản</td>
-                            <td>Nâng cao</td>
-                            <td>Phân tích AI</td>
-                        </tr>
-                        <tr>
-                            <td><strong>API tích hợp</strong></td>
-                            <td><span class="cross-icon">✗</span></td>
-                            <td>Cơ bản</td>
-                            <td>Không giới hạn</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Hỗ trợ khách hàng</strong></td>
-                            <td>Email</td>
-                            <td>24/7</td>
-                            <td>Ưu tiên 24/7</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Đào tạo</strong></td>
-                            <td><span class="cross-icon">✗</span></td>
-                            <td>Video hướng dẫn</td>
-                            <td>Tận nơi</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Tùy chỉnh hệ thống</strong></td>
-                            <td><span class="cross-icon">✗</span></td>
-                            <td><span class="cross-icon">✗</span></td>
-                            <td><span class="check-icon">✓</span></td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </section>
 
-        <!-- CTA Section -->
-        <section class="cta-section">
-            <div class="cta-content">
-                <h2>Bạn cần tư vấn thêm?</h2>
-                <p>Đội ngũ chuyên gia của chúng tôi sẵn sàng hỗ trợ bạn lựa chọn gói dịch vụ phù hợp nhất</p>
-                <div class="cta-buttons">
-                    <a href="#" class="btn btn-white">Liên hệ ngay</a>
-                    <a href="#" class="btn btn-outline">Đặt lịch tư vấn</a>
-                </div>
-            </div>
-        </section>
-
+ 
         <!-- Footer -->
-        <footer>
-            <div class="footer-content">
-                <p>&copy; 2025 CRM System. All rights reserved. | Phát triển bởi <strong>Group 6</strong></p>
+        <footer style="background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); color: #e2e8f0; padding: 80px 20px 40px; margin-top: 100px; border-top: 1px solid #4a5568;">
+            <div style="max-width: 1200px; margin: 0 auto;">
+                <!-- Main Footer Content -->
+                <div class="footer-grid">
+                    <!-- About Section -->
+                    <div>
+                        <h3 class="footer-title">
+                            <span class="title-bar"></span>
+                            CRM System
+                        </h3>
+                        <p class="footer-desc">
+                            Giải pháp quản lý khách hàng toàn diện, giúp doanh nghiệp tối ưu hóa quy trình và nâng cao chất lượng dịch vụ.
+                        </p>
+                        <p class="footer-version">
+                            <strong>Version:</strong> 1.0.0<br>
+                            <strong>Phiên bản:</strong> Enterprise Edition
+                        </p>
+                    </div>
+
+                    <!-- Features -->
+                    <div>
+                        <h4 class="footer-heading">Tính năng chính</h4>
+                        <ul class="footer-list">
+                            <li>→ Quản lý khách hàng</li>
+                            <li>→ Quản lý hợp đồng</li>
+                            <li>→ Quản lý thiết bị</li>
+                            <li>→ Báo cáo & Phân tích</li>
+                            <li>→ Quản lý yêu cầu dịch vụ</li>
+                        </ul>
+                    </div>
+
+                    <!-- Company Info -->
+                    <div>
+                        <h4 class="footer-heading">Thông tin công ty</h4>
+                        <ul class="footer-list">
+                            <li><a href="about.jsp">→ Về chúng tôi</a></li>
+                            <li><a href="tos.jsp">→ Điều khoản sử dụng</a></li>
+                            <li><a href="baohanh.jsp">→ Chính sách bảo hành</a></li>
+                            <li><a href="baogia.jsp">→ Báo giá dịch vụ</a></li>
+
+                        </ul>
+                    </div>
+                </div>
+
+
+                <!-- Divider -->
+                <div style="height: 1px; background: linear-gradient(to right, transparent, #4a5568, transparent); margin-bottom: 40px;"></div>
+
+                <!-- Bottom Info -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; align-items: start; margin-bottom: 30px;">
+                    <!-- Contact Info -->
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 15px; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Liên hệ</h4>
+                        <div style="font-size: 13px; line-height: 2; color: #cbd5e0;">
+                            <p style="margin: 0;">📧 Email: <strong>support@crmsystem.com</strong></p>
+                            <p style="margin: 0;">📞 Hotline: <strong>(+84) 123 456 7890</strong></p>
+                            <p style="margin: 0;">🏢 Địa chỉ: <strong>Ho Chi Minh City, Vietnam</strong></p>
+                            <p style="margin: 0;">⏰ Hỗ trợ: <strong>24/7</strong></p>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 15px; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Thống kê</h4>
+                        <div style="font-size: 13px; line-height: 2; color: #cbd5e0;">
+                            <p style="margin: 0;">👥 Người dùng: <strong>5,000+</strong></p>
+                            <p style="margin: 0;">🏢 Công ty: <strong>1,200+</strong></p>
+                            <p style="margin: 0;">📊 Dữ liệu: <strong>500K+</strong></p>
+                            <p style="margin: 0;">⭐ Đánh giá: <strong>4.9/5.0</strong></p>
+                        </div>
+                    </div>
+
+                    <!-- Certification -->
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 15px; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Chứng chỉ</h4>
+                        <div style="font-size: 12px; line-height: 1.8; color: #cbd5e0;">
+                            <p style="margin: 0; display: inline-block; background: rgba(102,126,234,0.1); padding: 4px 8px; border-radius: 4px; margin-right: 6px; margin-bottom: 6px;">🔒 ISO 27001</p><br>
+                            <p style="margin: 0; display: inline-block; background: rgba(102,126,234,0.1); padding: 4px 8px; border-radius: 4px; margin-right: 6px; margin-bottom: 6px;">✓ GDPR</p><br>
+                            <p style="margin: 0; display: inline-block; background: rgba(102,126,234,0.1); padding: 4px 8px; border-radius: 4px;">🛡️ SOC 2</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Bottom -->
+                <div style="border-top: 1px solid #4a5568; padding-top: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                    <p style="font-size: 13px; color: #a0aec0; margin: 0;">
+                        &copy; 2025 CRM System. All rights reserved. | Phát triển bởi <strong>Group 6</strong>
+                    </p>
+                    <div style="display: flex; gap: 20px; font-size: 13px;">
+                        <a href="#" style="color: #cbd5e0; text-decoration: none; transition: color 0.3s;">Chính sách bảo mật</a>
+                        <span style="color: #4a5568;">|</span>
+                        <a href="#" style="color: #cbd5e0; text-decoration: none; transition: color 0.3s;">Điều khoản dịch vụ</a>
+                        <span style="color: #4a5568;">|</span>
+                        <a href="#" style="color: #cbd5e0; text-decoration: none; transition: color 0.3s;">Cài đặt Cookie</a>
+                    </div>
+                </div>
             </div>
         </footer>
     </body>
