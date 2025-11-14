@@ -228,6 +228,43 @@ public class WorkTaskDAO extends MyDAO {
     }
 
     /**
+     * Find a specific task by ID with assignment date (for detail view)
+     * Returns WorkTaskWithCustomer object containing task and assignmentDate
+     */
+    public WorkTaskWithCustomer findByIdWithAssignmentDate(int taskId) throws SQLException {
+        String sql = "SELECT wt.taskId, wt.requestId, wt.scheduleId, wt.technicianId, "
+                + "wt.taskType, wt.taskDetails, wt.startDate, wt.endDate, wt.status, "
+                + "COALESCE(wt.requestId, ms.requestId) AS effectiveRequestId, "
+                + "COALESCE(DATE(wa_max.assignmentDate), ms.scheduledDate) AS assignmentDate "
+                + "FROM WorkTask wt "
+                + "LEFT JOIN MaintenanceSchedule ms ON wt.scheduleId = ms.scheduleId "
+                + "LEFT JOIN ( "
+                + "  SELECT taskId, MAX(assignmentDate) AS assignmentDate "
+                + "  FROM WorkAssignment "
+                + "  GROUP BY taskId "
+                + ") wa_max ON wa_max.taskId = wt.taskId "
+                + "WHERE wt.taskId = ?";
+
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, taskId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    WorkTaskWithCustomer taskWithCustomer = new WorkTaskWithCustomer();
+                    taskWithCustomer.task = mapResultSetToWorkTask(rs);
+                    Integer effectiveRequestId = rs.getObject("effectiveRequestId", Integer.class);
+                    if (effectiveRequestId != null) {
+                        taskWithCustomer.task.setRequestId(effectiveRequestId);
+                    }
+                    taskWithCustomer.assignmentDate = rs.getDate("assignmentDate");
+                    return taskWithCustomer;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Update task status and auto-update request status if all tasks completed
      */
     public boolean updateTaskStatus(int taskId, String newStatus) throws SQLException {

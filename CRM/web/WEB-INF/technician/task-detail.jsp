@@ -148,11 +148,11 @@
         </div>
         <div class="card-body">
           <div class="mb-3">
-            <label class="form-label fw-bold">Ngày bắt đầu</label>
+            <label class="form-label fw-bold">Ngày giao việc</label>
             <p class="form-control-plaintext">
               <c:choose>
-                <c:when test="${task.startDate != null}">
-                  <i class="bi bi-calendar-event me-1"></i>${task.startDate}
+                <c:when test="${assignmentDate != null}">
+                  <i class="bi bi-calendar-event me-1"></i>${assignmentDate}
                 </c:when>
                 <c:otherwise>
                   <span class="text-muted">Chưa đặt</span>
@@ -259,13 +259,10 @@
             <label for="statusSelect" class="form-label">Trạng thái mới</label>
             <select class="form-select" name="newStatus" id="statusSelect" required>
               <option value="">Chọn trạng thái</option>
-              <option value="Pending">Đang chờ</option>
               <option value="Assigned">Đã giao</option>
               <option value="In Progress">Đang thực hiện</option>
               <option value="Completed">Hoàn thành</option>
               <option value="Failed">Thất bại</option>
-              <option value="On Hold">Tạm hoãn</option>
-              <option value="Cancelled">Đã hủy</option>
             </select>
           </div>
         </div>

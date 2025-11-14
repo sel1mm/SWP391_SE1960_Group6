@@ -45,9 +45,10 @@ public class TechnicianTaskServlet extends HttpServlet {
             if ("detail".equals(action) && taskIdParam != null) {
                 // Show task detail
                 int taskId = Integer.parseInt(taskIdParam);
-                WorkTask task = taskDAO.findById(taskId);
+                WorkTaskDAO.WorkTaskWithCustomer taskWithCustomer = taskDAO.findByIdWithAssignmentDate(taskId);
                 
-                if (task != null && task.getTechnicianId() == technicianId) {
+                if (taskWithCustomer != null && taskWithCustomer.task.getTechnicianId() == technicianId) {
+                    WorkTask task = taskWithCustomer.task;
                     RepairReport existingReport = null;
                     RepairReportDAO reportDAO = new RepairReportDAO();
                     try {
@@ -60,6 +61,7 @@ public class TechnicianTaskServlet extends HttpServlet {
                         System.err.println("Error loading existing report: " + e.getMessage());
                     }
                     req.setAttribute("task", task);
+                    req.setAttribute("assignmentDate", taskWithCustomer.assignmentDate);
                     req.setAttribute("existingReport", existingReport);
                     // Also expose scheduleId so JSP can render Create Report for schedules
                     if (task.getScheduleId() != null && task.getRequestId() == null) {
