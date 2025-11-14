@@ -32,9 +32,6 @@
       <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/contracts?action=equipment">
         <i class="bi bi-gear me-1"></i>Xem thiết bị
       </a>
-      <a class="btn btn-success" href="${pageContext.request.contextPath}/technician/contracts?action=create">
-        <i class="bi bi-plus-circle me-1"></i>Tạo hợp đồng
-      </a>
       <a class="btn btn-primary" href="${pageContext.request.contextPath}/technician/tasks">
         <i class="bi bi-list-task me-1"></i>Công việc của tôi
       </a>

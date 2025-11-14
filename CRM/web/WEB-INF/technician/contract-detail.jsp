@@ -249,9 +249,6 @@
             <a class="btn btn-primary" href="${pageContext.request.contextPath}/technician/tasks">
               <i class="bi bi-list-task me-1"></i>Xem công việc của tôi
             </a>
-            <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/technician/reports?action=create">
-              <i class="bi bi-clipboard-plus me-1"></i>Tạo báo cáo
-            </a>
             <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/technician/contracts?action=equipment">
               <i class="bi bi-gear me-1"></i>Xem tất cả thiết bị
             </a>

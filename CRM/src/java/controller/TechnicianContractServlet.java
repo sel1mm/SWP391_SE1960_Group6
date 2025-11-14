@@ -46,20 +46,10 @@ public class TechnicianContractServlet extends HttpServlet {
             EquipmentDAO equipmentDAO = new EquipmentDAO();
             
             if ("create".equals(action)) {
-                // Show contract creation form
-                System.out.println("🔍 TechnicianContractServlet: Creating contract form...");
-                List<ContractDAO.Customer> customers = contractDAO.getCustomersAssignedToTechnician(sessionId);
-                System.out.println("📊 Found " + customers.size() + " customers assigned to technician");
-                
-                List<EquipmentWithStatus> availableParts = contractDAO.getAvailableParts();
-                System.out.println("📊 Found " + availableParts.size() + " available parts");
-                
-                req.setAttribute("customers", customers);
-                req.setAttribute("availableParts", availableParts);
-                req.setAttribute("pageTitle", "Tạo hợp đồng");
-                req.setAttribute("contentView", "/WEB-INF/technician/contract-form.jsp");
-                req.setAttribute("activePage", "contracts");
-                req.getRequestDispatcher("/WEB-INF/technician/technician-layout.jsp").forward(req, resp);
+                // Contract creation is out of scope for technicians - redirect to contracts list
+                req.setAttribute("error", "Tạo hợp đồng không nằm trong phạm vi quyền của kỹ thuật viên.");
+                doGetContracts(req, resp);
+                return;
                 
             } else if ("contracts".equals(action) || action == null) {
                 // Show contracts list with pagination and filtering
@@ -233,61 +223,8 @@ public class TechnicianContractServlet extends HttpServlet {
         String action = req.getParameter("action");
         
         if ("create".equals(action)) {
-            // Handle contract creation with mandatory part validation
-            try {
-                ContractDAO contractDAO = new ContractDAO();
-                
-                // Get form parameters
-                int customerId = Integer.parseInt(req.getParameter("customerId"));
-                String contractType = req.getParameter("contractType");
-                String description = req.getParameter("description");
-                String contractDate = req.getParameter("contractDate");
-                String status = req.getParameter("status");
-                // Enforce allowed statuses only (Active, Completed). Default to Active if invalid/missing
-                if (status == null || status.trim().isEmpty()) {
-                    status = "Active";
-                } else {
-                    String s = status.trim();
-                    if (!"Active".equals(s) && !"Completed".equals(s)) {
-                        status = "Active";
-                    } else {
-                        status = s;
-                    }
-                }
-                String partIdParam = req.getParameter("partId");
-                
-                // Part is mandatory
-                if (partIdParam == null || partIdParam.trim().isEmpty()) {
-                    req.getSession().setAttribute("errorMessage", "Vui lòng chọn linh kiện sửa chữa.");
-                    resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
-                    return;
-                }
-                int partId = Integer.parseInt(partIdParam.trim());
-                if (!contractDAO.isPartAvailable(partId)) {
-                    req.getSession().setAttribute("errorMessage", "Linh kiện đã chọn không còn sẵn. Vui lòng chọn linh kiện khác hoặc liên hệ thủ kho.");
-                    resp.sendRedirect(req.getContextPath() + "/technician/contracts?action=create");
-                    return;
-                }
-
-                // Always create contract with part assignment
-                long contractId = contractDAO.createContractWithPart(
-                    customerId,
-                    java.sql.Date.valueOf(contractDate),
-                    contractType,
-                    status,
-                    description,
-                    partId
-                );
-                
-                if (contractId > 0) {
-                    req.getSession().setAttribute("successMessage", "Tạo hợp đồng thành công với linh kiện đính kèm ✅");
-                } else {
-                    req.getSession().setAttribute("errorMessage", "Tạo hợp đồng thất bại, vui lòng thử lại.");
-                }
-                
-            } catch (Exception e) {
-                req.getSession().setAttribute("errorMessage", "Lỗi tạo hợp đồng: " + e.getMessage());
-            }
+            // Contract creation is out of scope for technicians - redirect to contracts list
+            req.getSession().setAttribute("error", "Tạo hợp đồng không nằm trong phạm vi quyền của kỹ thuật viên.");
         }
         
         // Redirect to contracts list
