@@ -1694,12 +1694,209 @@ public class ContractDAO extends MyDAO {
         String sql = "SELECT "
                 + "a.accountId, "
                 + "a.fullName, "
-                + "COUNT(c.contractId) AS contractCount "
+                + "COUNT(DISTINCT c.contractId) AS contractCount, "
+                + "( "
+                + "    SELECT COUNT(DISTINCT equipmentId) "
+                + "    FROM ( "
+                + "        SELECT ce2.equipmentId "
+                + "        FROM Contract c2 "
+                + "        LEFT JOIN ContractEquipment ce2 ON c2.contractId = ce2.contractId "
+                + "        WHERE c2.customerId = a.accountId AND ce2.equipmentId IS NOT NULL "
+                + "        UNION "
+                + "        SELECT cae2.equipmentId "
+                + "        FROM Contract c3 "
+                + "        LEFT JOIN ContractAppendix ca2 ON c3.contractId = ca2.contractId "
+                + "        LEFT JOIN ContractAppendixEquipment cae2 ON ca2.appendixId = cae2.appendixId "
+                + "        WHERE c3.customerId = a.accountId AND cae2.equipmentId IS NOT NULL "
+                + "    ) AS allEquipments "
+                + ") AS totalEquipmentCount "
                 + "FROM Account a "
                 + "INNER JOIN Contract c ON a.accountId = c.customerId "
                 + "GROUP BY a.accountId, a.fullName "
-                + "ORDER BY contractCount DESC "
-                + "LIMIT 1";  // ✅ MySQL syntax
+                + "ORDER BY contractCount DESC, totalEquipmentCount DESC "
+                + "LIMIT 1";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                Map<String, Object> customer = new HashMap<>();
+                customer.put("accountId", rs.getInt("accountId"));
+                customer.put("fullName", rs.getString("fullName"));
+                customer.put("contractCount", rs.getInt("contractCount"));
+                customer.put("totalEquipmentCount", rs.getInt("totalEquipmentCount")); // Thêm trường này
+                return customer;
+            }
+        }
+
+        // Nếu không có hợp đồng nào
+        Map<String, Object> emptyResult = new HashMap<>();
+        emptyResult.put("accountId", 0);
+        emptyResult.put("fullName", "Chưa có");
+        emptyResult.put("contractCount", 0);
+        emptyResult.put("totalEquipmentCount", 0);
+        return emptyResult;
+    }
+
+    public List<Contract> getContractsByCustomerId(int customerId) throws SQLException {
+        List<Contract> contracts = new ArrayList<>();
+
+        String sql = """
+        SELECT 
+            c.contractId,
+            c.customerId,
+            c.contractDate,
+            c.contractType,
+            c.status,
+            c.details,
+            c.fileAttachment
+        FROM Contract c
+        WHERE c.customerId = ?
+        ORDER BY c.contractDate DESC
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Contract contract = new Contract();
+                    contract.setContractId(rs.getInt("contractId"));
+                    contract.setCustomerId(rs.getInt("customerId"));
+
+                    Date contractDate = rs.getDate("contractDate");
+                    if (contractDate != null) {
+                        contract.setContractDate(contractDate.toLocalDate());
+                    }
+
+                    contract.setContractType(rs.getString("contractType"));
+                    contract.setStatus(rs.getString("status"));
+                    contract.setDetails(rs.getString("details"));
+                    contract.setFileAttachment(rs.getString("fileAttachment"));
+
+                    contracts.add(contract);
+                }
+            }
+        }
+
+        System.out.println("✅ getContractsByCustomerId: Found " + contracts.size() + " contracts for customer " + customerId);
+        return contracts;
+    }
+
+    /**
+     * ✅ Lấy danh sách thiết bị của một hợp đồng (bao gồm cả thiết bị từ phụ
+     * lục)
+     */
+    public List<Map<String, Object>> getEquipmentByContractId(int contractId) throws SQLException {
+        List<Map<String, Object>> equipmentList = new ArrayList<>();
+
+        String sql = """
+        SELECT 
+            e.equipmentId,
+            e.serialNumber,
+            e.model,
+            e.description,
+            ce.startDate,
+            ce.endDate,
+            ce.quantity,
+            ce.price,
+            CASE 
+                WHEN ce.endDate IS NULL OR ce.endDate >= CURDATE() THEN 'Active'
+                WHEN ce.endDate < CURDATE() THEN 'Expired'
+                ELSE 'Pending'
+            END AS status,
+            'Contract' AS source
+        FROM ContractEquipment ce
+        JOIN Equipment e ON ce.equipmentId = e.equipmentId
+        WHERE ce.contractId = ?
+        
+        UNION ALL
+        
+        SELECT 
+            e.equipmentId,
+            e.serialNumber,
+            e.model,
+            e.description,
+            cae.startDate,
+            cae.endDate,
+            1 AS quantity,
+            0 AS price,
+            CASE 
+                WHEN cae.endDate IS NULL OR cae.endDate >= CURDATE() THEN 'Active'
+                WHEN cae.endDate < CURDATE() THEN 'Expired'
+                ELSE 'Pending'
+            END AS status,
+            'Appendix' AS source
+        FROM ContractAppendix ca
+        JOIN ContractAppendixEquipment cae ON ca.appendixId = cae.appendixId
+        JOIN Equipment e ON cae.equipmentId = e.equipmentId
+        WHERE ca.contractId = ?
+          AND ca.status = 'Approved'
+        
+        ORDER BY startDate DESC
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, contractId);
+            ps.setInt(2, contractId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> equipment = new HashMap<>();
+                    equipment.put("equipmentId", rs.getInt("equipmentId"));
+                    equipment.put("serialNumber", rs.getString("serialNumber"));
+                    equipment.put("model", rs.getString("model"));
+                    equipment.put("description", rs.getString("description"));
+
+                    Date startDate = rs.getDate("startDate");
+                    equipment.put("startDate", startDate != null ? startDate.toString() : null);
+
+                    Date endDate = rs.getDate("endDate");
+                    equipment.put("endDate", endDate != null ? endDate.toString() : null);
+
+                    equipment.put("quantity", rs.getInt("quantity"));
+                    equipment.put("price", rs.getBigDecimal("price"));
+                    equipment.put("status", rs.getString("status"));
+                    equipment.put("source", rs.getString("source"));
+
+                    equipmentList.add(equipment);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error getting equipment for contract " + contractId + ": " + e.getMessage());
+            throw e;
+        }
+
+        System.out.println("✅ Found " + equipmentList.size() + " equipment items for contract " + contractId);
+        return equipmentList;
+    }
+
+    /**
+     * Đếm tổng số hợp đồng trong hệ thống
+     */
+    public int getTotalContractCount() {
+        String sql = "SELECT COUNT(*) FROM Contract";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error counting contracts: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    /**
+     * Lấy khách hàng có nhiều hợp đồng nhất
+     */
+    public Map<String, Object> getTopCustomer() {
+        String sql = "SELECT TOP 1 a.accountId, a.fullName, COUNT(c.contractId) as contractCount "
+                + "FROM Account a "
+                + "INNER JOIN Contract c ON a.accountId = c.customerId "
+                + "GROUP BY a.accountId, a.fullName "
+                + "ORDER BY contractCount DESC";
 
         try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
@@ -1710,14 +1907,12 @@ public class ContractDAO extends MyDAO {
                 customer.put("contractCount", rs.getInt("contractCount"));
                 return customer;
             }
+        } catch (SQLException e) {
+            System.err.println("❌ Error getting top customer: " + e.getMessage());
+            e.printStackTrace();
         }
 
-        // Nếu không có hợp đồng nào
-        Map<String, Object> emptyResult = new HashMap<>();
-        emptyResult.put("accountId", 0);
-        emptyResult.put("fullName", "Chưa có");
-        emptyResult.put("contractCount", 0);
-        return emptyResult;
+        return null;
     }
 
 }

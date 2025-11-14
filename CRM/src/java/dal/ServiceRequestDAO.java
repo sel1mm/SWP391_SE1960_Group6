@@ -2064,34 +2064,32 @@ public class ServiceRequestDAO extends MyDAO {
      * @param newStatus "Approved" hoặc "Rejected"
      * @return true nếu cập nhật thành công
      */
-public boolean updateQuotationStatus(int reportId, String newStatus) {
-    String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
-    
-    try {
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        
-        try (Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/final",
-                "root",
-                "sa12345");
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, newStatus);
-            ps.setInt(2, reportId);
-            
-            int rows = ps.executeUpdate();
-            
-            System.out.println("✅ Updated " + rows + " rows");
-            return rows > 0;
-            
-        }
-    } catch (Exception e) {
-        System.err.println("❌ Error: " + e.getMessage());
-        e.printStackTrace();
-        return false;
-    }
-}
+    public boolean updateQuotationStatus(int reportId, String newStatus) {
+        String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
 
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            try (Connection conn = DriverManager.getConnection(
+                    "jdbc:mysql://localhost:3306/final",
+                    "root",
+                    "sa12345"); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                ps.setString(1, newStatus);
+                ps.setInt(2, reportId);
+
+                int rows = ps.executeUpdate();
+
+                System.out.println("✅ Updated " + rows + " rows");
+                return rows > 0;
+
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     // ============ INNER CLASS FOR COMBINED DATA ============
     /**

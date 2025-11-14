@@ -3454,3 +3454,17 @@ ADD COLUMN inspectionResult ENUM('Eligible', 'NotEligible') DEFAULT 'Eligible';
 ALTER TABLE Contract
 ADD COLUMN fileAttachment VARCHAR(255);
 
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 3 AND contractId = 10;
+
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 2 AND contractId = 11;
+
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 5 AND contractId = 11;
+
+DELETE FROM Contract where contractId = 11;
+
+DELETE FROM ContractEquipment 
+WHERE equipmentId = 7 AND contractId = 3;
+

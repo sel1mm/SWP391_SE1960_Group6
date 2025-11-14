@@ -89,7 +89,7 @@ public class LoginController extends HttpServlet {
             } else if ("Technical Manager".equals(userRole)) {
                 response.sendRedirect("technicalManagerApproval");
             } else if ("Customer Support Staff".equals(userRole)) {
-                response.sendRedirect("dashboard.jsp");
+                response.sendRedirect("dashboard");
             } else if ("Storekeeper".equals(userRole)) {
                 response.sendRedirect(MessageConstant.STOREKEEPER_URL);
 
