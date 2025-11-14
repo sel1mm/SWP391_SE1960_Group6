@@ -1063,7 +1063,6 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>Mã hợp đồng</th>
-                                            <th>Loại hợp đồng</th>
                                             <th>Ngày ký</th>
                                             <th>Trạng thái</th>
                                             <th>Chi tiết</th>
@@ -1072,160 +1071,102 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <c:forEach var="contract" items="${contractList}" varStatus="status">
-                                            <tr 
-                                                data-contractid="${contract.contractId}"
-                                                data-customerid="${contract.customerId}"
-                                                data-customername="${contract.customerName}"
-                                                data-customeremail="${contract.customerEmail}"
-                                                data-customerphone="${contract.customerPhone}"
-                                                data-customeraddress="${contract.customerAddress}"
-                                                data-verified="${contract.verified}"
-                                                data-contracttype="${contract.contractType}"
-                                                data-contractdate="${contract.contractDate}"
-                                                data-startdate="${contract.startDate}"
-                                                data-enddate="${contract.endDate}"
-                                                data-status="${contract.status}"
-                                                data-details="${contract.details}"
-                                                data-equipmentcount="${contract.equipmentCount}"
-                                                data-fileattachment="${contract.fileAttachment}">
+                                    <c:forEach var="contract" items="${contractList}" varStatus="status">
+                                        <tr 
+                                            data-contractid="${contract.contractId}"
+                                            data-customerid="${contract.customerId}"
+                                            data-customername="${contract.customerName}"
+                                            data-customeremail="${contract.customerEmail}"
+                                            data-customerphone="${contract.customerPhone}"
+                                            data-customeraddress="${contract.customerAddress}"
+                                            data-verified="${contract.verified}"
+                                            data-contracttype="${contract.contractType}"
+                                            data-contractdate="${contract.contractDate}"
+                                            data-startdate="${contract.startDate}"
+                                            data-enddate="${contract.endDate}"
+                                            data-status="${contract.status}"
+                                            data-details="${contract.details}"
+                                            data-equipmentcount="${contract.equipmentCount}"
+                                            data-fileattachment="${contract.fileAttachment}">
 
-                                                <td><strong>#${contract.contractId}</strong></td>
+                                            <td><strong>#${contract.contractId}</strong></td>
+                                            <td>${contract.contractDate}</td>
 
-                                                <!-- Cột Loại Hợp Đồng -->
-                                                <td>
-                                                    <c:choose>
-                                                        <%-- Sales - Tím đậm --%>
-                                                        <c:when test="${contract.contractType eq 'Sales'}">
-                                                            <span class="badge badge-gradient badge-sales">
-                                                                <i class="fas fa-shopping-cart"></i> 
-                                                                <span>Sales</span>
-                                                            </span>
-                                                        </c:when>
+                                            <td>
+                                                <c:choose>
+                                                    <c:when test="${contract.status eq 'Active'}">
+                                                        <span class="badge bg-success">Active</span>
+                                                    </c:when>
+                                                    <c:when test="${contract.status eq 'Completed'}">
+                                                        <span class="badge bg-primary">Completed</span>
+                                                    </c:when>
+                                                    <c:when test="${contract.status eq 'Cancelled'}">
+                                                        <span class="badge bg-danger">Cancelled</span>
+                                                    </c:when>
+                                                    <c:when test="${contract.status eq 'Approved'}">
+                                                        <span class="badge bg-success">Đã duyệt</span>
+                                                    </c:when>
+                                                    <c:when test="${contract.status eq 'Draft'}">
+                                                        <span class="badge bg-warning text-dark">Bản nháp</span>
+                                                    </c:when>
+                                                    <c:when test="${contract.status eq 'Archived'}">
+                                                        <span class="badge bg-secondary">Lưu trữ</span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge bg-secondary">${contract.status}</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
 
-                                                        <%-- Warranty - Cam --%>
-                                                        <c:when test="${contract.contractType eq 'Warranty'}">
-                                                            <span class="badge badge-gradient badge-warranty">
-                                                                <i class="fas fa-shield-alt"></i> 
-                                                                <span>Warranty</span>
-                                                            </span>
-                                                        </c:when>
+                                            <td>
+                                                <small class="text-muted">${contract.details}</small>
+                                            </td>
 
-                                                        <%-- Bảo trì - Xanh lá --%>
-                                                        <c:when test="${contract.contractType eq 'Bảo trì' or contract.contractType eq 'Maintenance'}">
-                                                            <span class="badge badge-gradient badge-maintenance">
-                                                                <i class="fas fa-tools"></i> 
-                                                                <span>Bảo Trì</span>
-                                                            </span>
-                                                        </c:when>
+                                            <!-- Số yêu cầu liên quan -->
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-outline-info" 
+                                                        onclick="viewServiceRequests('${contract.contractId}')">
+                                                    <i class="fas fa-clipboard-list"></i> 
+                                                    ${contract.requestCount > 0 ? contract.requestCount : '0'}
+                                                </button>
+                                            </td>
 
-                                                        <%-- Phụ lục - Hồng --%>
-                                                        <c:when test="${contract.contractType eq 'Appendix'}">
-                                                            <span class="badge badge-gradient badge-appendix">
-                                                                <i class="fas fa-file-plus"></i> 
-                                                                <span>Phụ Lục</span>
-                                                            </span>
-                                                        </c:when>
-
-                                                        <%-- Hợp đồng chính - Navy --%>
-                                                        <c:when test="${contract.contractType eq 'MainContract' or empty contract.contractType}">
-                                                            <span class="badge badge-gradient badge-contract">
-                                                                <i class="fas fa-file-contract"></i> 
-                                                                <span>Hợp Đồng</span>
-                                                            </span>
-                                                        </c:when>
-
-                                                        <%-- Không xác định - Xám --%>
-                                                        <c:otherwise>
-                                                            <span class="badge badge-gradient badge-unknown">
-                                                                <i class="fas fa-question"></i> 
-                                                                <span>${contract.contractType}</span>
-                                                            </span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </td>
-                                                <td>${contract.contractDate}</td>
-
-                                                <td>
-                                                    <c:choose>
-                                                        <%-- Trạng thái hợp đồng chính --%>
-                                                        <c:when test="${contract.status eq 'Active'}">
-                                                            <span class="badge bg-success">Active</span>
-                                                        </c:when>
-                                                        <c:when test="${contract.status eq 'Completed'}">
-                                                            <span class="badge bg-primary">Completed</span>
-                                                        </c:when>
-                                                        <c:when test="${contract.status eq 'Cancelled'}">
-                                                            <span class="badge bg-danger">Cancelled</span>
-                                                        </c:when>
-
-                                                        <%-- Trạng thái hợp đồng phụ lục --%>
-                                                        <c:when test="${contract.status eq 'Approved'}">
-                                                            <span class="badge bg-success">Đã duyệt</span>
-                                                        </c:when>
-                                                        <c:when test="${contract.status eq 'Draft'}">
-                                                            <span class="badge bg-warning text-dark">Bản nháp</span>
-                                                        </c:when>
-                                                        <c:when test="${contract.status eq 'Archived'}">
-                                                            <span class="badge bg-secondary">Lưu trữ</span>
-                                                        </c:when>
-
-                                                        <%-- Trạng thái không xác định --%>
-                                                        <c:otherwise>
-                                                            <span class="badge bg-secondary">${contract.status}</span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </td>
-
-                                                <td>
-                                                    <small class="text-muted">${contract.details}</small>
-                                                </td>
-
-                                                <!-- Số yêu cầu liên quan -->
-                                                <td class="text-center">
-                                                    <button class="btn btn-sm btn-outline-info" 
-                                                            onclick="viewServiceRequests('${contract.contractId}')">
-                                                        <i class="fas fa-clipboard-list"></i> 
-                                                        ${contract.requestCount > 0 ? contract.requestCount : '0'}
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-dark" 
+                                                            title="Xem chi tiết"
+                                                            onclick="viewContractDetailsWithAppendix('${contract.contractId}')">
+                                                        <i class="fas fa-eye"></i>
                                                     </button>
-                                                </td>
 
-                                                <td>
-                                                    <div class="btn-group">
-                                                        <button class="btn btn-sm btn-outline-dark" 
-                                                                title="Xem chi tiết"
-                                                                onclick="viewContractDetailsWithAppendix('${contract.contractId}')">
-                                                            <i class="fas fa-eye"></i>
+                                                    <button class="btn btn-sm btn-outline-primary" 
+                                                            title="Xem thiết bị"
+                                                            onclick="viewEquipmentList('${contract.contractId}')">
+                                                        <i class="fas fa-tools"></i>
+                                                    </button>
+
+                                                    <c:if test="${not empty contract.documentUrl}">
+                                                        <button class="btn btn-sm btn-outline-success" 
+                                                                title="Xem hợp đồng"
+                                                                onclick="viewContractDocument('${contract.documentUrl}')">
+                                                            <i class="fas fa-file-pdf"></i>
                                                         </button>
+                                                    </c:if>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
 
-                                                        <button class="btn btn-sm btn-outline-primary" 
-                                                                title="Xem thiết bị"
-                                                                onclick="viewEquipmentList('${contract.contractId}')">
-                                                            <i class="fas fa-tools"></i>
-                                                        </button>
-
-                                                        <c:if test="${not empty contract.documentUrl}">
-                                                            <button class="btn btn-sm btn-outline-success" 
-                                                                    title="Xem hợp đồng"
-                                                                    onclick="viewContractDocument('${contract.documentUrl}')">
-                                                                <i class="fas fa-file-pdf"></i>
-                                                            </button>
-                                                        </c:if>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
-
-                                        <c:if test="${empty contractList}">
-                                            <tr>
-                                                <td colspan="7" class="text-center py-4">
-                                                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-                                                    <h5 class="text-muted">Không có hợp đồng nào</h5>
-                                                    <p class="text-muted">Bạn chưa có hợp đồng nào trong hệ thống.</p>
-                                                </td>
-                                            </tr>
-                                        </c:if>
-                                    </tbody>
+                                    <c:if test="${empty contractList}">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                                                <h5 class="text-muted">Không có hợp đồng nào</h5>
+                                                <p class="text-muted">Bạn chưa có hợp đồng nào trong hệ thống.</p>
+                                            </td>
+                                        </tr>
+                                    </c:if>
+                                </tbody>
                                 </table>
                             </div>
                         </div>
