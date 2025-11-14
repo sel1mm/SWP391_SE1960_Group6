@@ -26,31 +26,31 @@ public class AccountService {
         accountProfileDAO = new AccountProfileDAO();
 
     }
-public Response<Account> checkLogin(String username, String password) {
-    Account account = accountDAO.getAccountByUserName(username);
-    
-    if (account == null) {
-        return new Response<>(null, false, MessageConstant.LOGIN_FAILED);
+
+    public Response<Account> checkLogin(String username, String password) {
+        Account account = accountDAO.getAccountByUserName(username);
+
+        if (account == null) {
+            return new Response<>(null, false, MessageConstant.LOGIN_FAILED);
+        }
+
+        // ✅ Kiểm tra trạng thái Inactive
+        if ("Inactive".equalsIgnoreCase(account.getStatus())) {
+            return new Response<>(null, false, "Tài khoản chưa được kích hoạt. Vui lòng liên hệ quản trị viên.");
+        }
+
+        // Kiểm tra verified
+        if (account.getProfile() != null && !account.getProfile().isVerified()) {
+            return new Response<>(null, false, "Tài khoản chưa được xác thực. Vui lòng xác thực trước khi đăng nhập.");
+        }
+
+        // Kiểm tra password
+        if (passwordHasher.checkPassword(password, account.getPasswordHash())) {
+            return new Response<>(account, true, MessageConstant.LOGIN_SUCCESS);
+        } else {
+            return new Response<>(null, false, MessageConstant.LOGIN_FAILED);
+        }
     }
-    
-    // ✅ Kiểm tra trạng thái Inactive
-    if ("Inactive".equalsIgnoreCase(account.getStatus())) {
-        return new Response<>(null, false, "Tài khoản chưa được kích hoạt. Vui lòng liên hệ quản trị viên.");
-    }
-    
-    // Kiểm tra verified
-    if (account.getProfile() != null && !account.getProfile().isVerified()) {
-        return new Response<>(null, false, "Tài khoản chưa được xác thực. Vui lòng xác thực trước khi đăng nhập.");
-    }
-    
-    // Kiểm tra password
-    if (passwordHasher.checkPassword(password, account.getPasswordHash())) {
-        return new Response<>(account, true, MessageConstant.LOGIN_SUCCESS);
-    } else {
-        return new Response<>(null, false, MessageConstant.LOGIN_FAILED);
-    }
-}
-    
 
     public Response<Boolean> register(RegisterRequest request) {
         if (accountDAO.checkExistUserName(request.getUsername())) {
@@ -96,7 +96,7 @@ public Response<Account> checkLogin(String username, String password) {
 
         return new Response<>(false, false, "Đăng ký thất bại! Vui lòng thử lại sau!");
     }
-    
+
     public Response<Boolean> registerByCSS(RegisterRequest request) {
         if (accountDAO.checkExistUserName(request.getUsername())) {
             return new Response<>(false, false, "Tên đăng nhập đã tồn tại");
@@ -270,65 +270,66 @@ public Response<Account> checkLogin(String username, String password) {
 
         return accountDAO.createAccount(account);
     }
-public Response<Account> updateAccount(Account account) {
-    // Validate required fields
-    if (account.getUsername() == null || account.getUsername().trim().isEmpty()) {
-        return new Response<>(null, false, "Username is required");
-    }
-    if (account.getEmail() == null || account.getEmail().trim().isEmpty()) {
-        return new Response<>(null, false, "Email is required");
-    }
 
-    // Check if account exists
-    Response<Account> existingAccountRes = accountDAO.getAccountById2(account.getAccountId());
-    if (!existingAccountRes.isSuccess() || existingAccountRes.getData() == null) {
-        return new Response<>(null, false, "Account not found");
-    }
+    public Response<Account> updateAccount(Account account) {
+        // Validate required fields
+        if (account.getUsername() == null || account.getUsername().trim().isEmpty()) {
+            return new Response<>(null, false, "Username is required");
+        }
+        if (account.getEmail() == null || account.getEmail().trim().isEmpty()) {
+            return new Response<>(null, false, "Email is required");
+        }
 
-    Account oldAccount = existingAccountRes.getData();
+        // Check if account exists
+        Response<Account> existingAccountRes = accountDAO.getAccountById2(account.getAccountId());
+        if (!existingAccountRes.isSuccess() || existingAccountRes.getData() == null) {
+            return new Response<>(null, false, "Account not found");
+        }
 
-    // Check username change
-    if (!account.getUsername().trim().equalsIgnoreCase(oldAccount.getUsername())) {
-        Response<Boolean> usernameExists = accountDAO.isUsernameExists(account.getUsername().trim());
-        if (usernameExists.isSuccess() && usernameExists.getData()) {
-            // Double check if it's not the same account
-            Account checkAccount = accountDAO.getAccountByUserName(account.getUsername().trim());
-            if (checkAccount != null && checkAccount.getAccountId() != account.getAccountId()) {
-                return new Response<>(null, false, "Username already exists");
+        Account oldAccount = existingAccountRes.getData();
+
+        // Check username change
+        if (!account.getUsername().trim().equalsIgnoreCase(oldAccount.getUsername())) {
+            Response<Boolean> usernameExists = accountDAO.isUsernameExists(account.getUsername().trim());
+            if (usernameExists.isSuccess() && usernameExists.getData()) {
+                // Double check if it's not the same account
+                Account checkAccount = accountDAO.getAccountByUserName(account.getUsername().trim());
+                if (checkAccount != null && checkAccount.getAccountId() != account.getAccountId()) {
+                    return new Response<>(null, false, "Username already exists");
+                }
             }
         }
-    }
 
-    // Check email change
-    if (!account.getEmail().trim().equalsIgnoreCase(oldAccount.getEmail())) {
-        Response<Boolean> emailExists = accountDAO.isEmailExistsExcludingId(account.getEmail().trim(), account.getAccountId());
-        if (emailExists.isSuccess() && emailExists.getData()) {
-            return new Response<>(null, false, "Email already exists");
-        }
-    }
-
-    // Check phone change (if provided)
-    if (account.getPhone() != null && !account.getPhone().trim().isEmpty()) {
-        if (oldAccount.getPhone() == null || !account.getPhone().trim().equalsIgnoreCase(oldAccount.getPhone())) {
-            Response<Boolean> phoneExists = accountDAO.isPhoneExistsExcludingId(account.getPhone().trim(), account.getAccountId());
-            if (phoneExists.isSuccess() && phoneExists.getData()) {
-                return new Response<>(null, false, "Phone number already exists");
+        // Check email change
+        if (!account.getEmail().trim().equalsIgnoreCase(oldAccount.getEmail())) {
+            Response<Boolean> emailExists = accountDAO.isEmailExistsExcludingId(account.getEmail().trim(), account.getAccountId());
+            if (emailExists.isSuccess() && emailExists.getData()) {
+                return new Response<>(null, false, "Email already exists");
             }
         }
-    }
 
-    // Clean up data
-    account.setUsername(account.getUsername().trim());
-    account.setEmail(account.getEmail().trim());
-    if (account.getPhone() != null) {
-        account.setPhone(account.getPhone().trim());
-    }
-    if (account.getFullName() != null) {
-        account.setFullName(account.getFullName().trim());
-    }
+        // Check phone change (if provided)
+        if (account.getPhone() != null && !account.getPhone().trim().isEmpty()) {
+            if (oldAccount.getPhone() == null || !account.getPhone().trim().equalsIgnoreCase(oldAccount.getPhone())) {
+                Response<Boolean> phoneExists = accountDAO.isPhoneExistsExcludingId(account.getPhone().trim(), account.getAccountId());
+                if (phoneExists.isSuccess() && phoneExists.getData()) {
+                    return new Response<>(null, false, "Phone number already exists");
+                }
+            }
+        }
 
-    return accountDAO.updateAccount(account);
-}
+        // Clean up data
+        account.setUsername(account.getUsername().trim());
+        account.setEmail(account.getEmail().trim());
+        if (account.getPhone() != null) {
+            account.setPhone(account.getPhone().trim());
+        }
+        if (account.getFullName() != null) {
+            account.setFullName(account.getFullName().trim());
+        }
+
+        return accountDAO.updateAccount(account);
+    }
 
     public Response<Account> updateCustomerAccount(Account account, AccountProfile profile) {
         try {
@@ -515,8 +516,8 @@ public Response<Account> updateAccount(Account account) {
     public int countAllAccounts(String keyword, String status, String roleId) {
         return accountDAO.countAllAccounts(keyword, status, roleId);
     }
-    
-        // ✅ Lấy tài khoản theo email (trả về Response)
+
+    // ✅ Lấy tài khoản theo email (trả về Response)
     public Response<Account> getAccountByEmailResponse(String email) {
         try {
             if (email == null || email.trim().isEmpty()) {
@@ -571,11 +572,11 @@ public Response<Account> updateAccount(Account account) {
         try {
             com.google.gson.Gson gson = new com.google.gson.GsonBuilder()
                     .registerTypeAdapter(java.time.LocalDate.class,
-                            (com.google.gson.JsonSerializer<java.time.LocalDate>) (date, type, context) ->
-                                    new com.google.gson.JsonPrimitive(date.toString()))
+                            (com.google.gson.JsonSerializer<java.time.LocalDate>) (date, type, context)
+                            -> new com.google.gson.JsonPrimitive(date.toString()))
                     .registerTypeAdapter(java.time.LocalDateTime.class,
-                            (com.google.gson.JsonSerializer<java.time.LocalDateTime>) (date, type, context) ->
-                                    new com.google.gson.JsonPrimitive(date.toString()))
+                            (com.google.gson.JsonSerializer<java.time.LocalDateTime>) (date, type, context)
+                            -> new com.google.gson.JsonPrimitive(date.toString()))
                     .create();
 
             java.util.Map<String, Object> data = new java.util.HashMap<>();
@@ -589,5 +590,29 @@ public Response<Account> updateAccount(Account account) {
         }
     }
 
+    /**
+     * ✅ Tìm khách hàng theo serial number của thiết bị
+     */
+    public Response<List<Account>> searchCustomerByEquipmentSerial(String serialNumber, int offset, int limit) {
+        try {
+            List<Account> accounts = accountDAO.searchCustomersByEquipmentSerial(serialNumber, offset, limit);
+            return new Response<>(accounts, true, "Success");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response<>(null, false, "Lỗi khi tìm kiếm: " + e.getMessage());
+        }
+    }
+
+    /**
+     * ✅ Đếm số khách hàng theo serial number
+     */
+    public int countCustomersByEquipmentSerial(String serialNumber) {
+        try {
+            return accountDAO.countCustomersByEquipmentSerial(serialNumber);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
 
 }

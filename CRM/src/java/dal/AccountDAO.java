@@ -1177,7 +1177,6 @@ public class AccountDAO extends MyDAO {
     public List<Account> searchCustomerAccountsPaged(String keyword, String status, int offset, int limit) {
         List<Account> list = new ArrayList<>();
 
-        // ✅ Sử dụng roleName để đảm bảo không phụ thuộc roleId
         StringBuilder sql = new StringBuilder("""
         SELECT a.*, 
                p.address AS address, 
@@ -1193,9 +1192,9 @@ public class AccountDAO extends MyDAO {
         WHERE r.roleName = 'Customer'
     """);
 
-        // ✅ Thêm điều kiện tìm kiếm nếu có keyword hoặc status
+        // ✅ THÊM phone vào điều kiện tìm kiếm
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ?)");
+            sql.append(" AND (a.username LIKE ? OR a.fullName LIKE ? OR a.email LIKE ? OR a.phone LIKE ?)");
         }
         if (status != null && !status.trim().isEmpty()) {
             sql.append(" AND a.status = ?");
@@ -1206,24 +1205,22 @@ public class AccountDAO extends MyDAO {
         try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
             int index = 1;
 
-            // ✅ Gán giá trị cho keyword
+            // ✅ Gán giá trị cho keyword (bây giờ có 4 tham số thay vì 3)
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String searchPattern = "%" + keyword.trim() + "%";
-                ps.setString(index++, searchPattern);
-                ps.setString(index++, searchPattern);
-                ps.setString(index++, searchPattern);
+                ps.setString(index++, searchPattern); // username
+                ps.setString(index++, searchPattern); // fullName
+                ps.setString(index++, searchPattern); // email
+                ps.setString(index++, searchPattern); // phone ✅ THÊM
             }
 
-            // ✅ Gán giá trị cho status
             if (status != null && !status.trim().isEmpty()) {
                 ps.setString(index++, status.trim());
             }
 
-            // ✅ Giới hạn phân trang
             ps.setInt(index++, limit);
             ps.setInt(index, offset);
 
-            // ✅ Sử dụng try-with-resources cho ResultSet để tránh rò rỉ
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     LocalDateTime createdAt = rs.getTimestamp("createdAt") != null
@@ -1233,7 +1230,6 @@ public class AccountDAO extends MyDAO {
                             ? rs.getTimestamp("updatedAt").toLocalDateTime()
                             : null;
 
-                    // ✅ Khởi tạo Account
                     Account account = new Account(
                             rs.getInt("accountId"),
                             rs.getString("username"),
@@ -1246,7 +1242,6 @@ public class AccountDAO extends MyDAO {
                             updatedAt
                     );
 
-                    // ✅ Khởi tạo Profile (nếu có dữ liệu)
                     AccountProfile profile = new AccountProfile();
                     profile.setAccountId(rs.getInt("accountId"));
                     profile.setAddress(rs.getString("address"));
@@ -1279,8 +1274,9 @@ public class AccountDAO extends MyDAO {
                 + "JOIN Role r ON ar.roleId = r.roleId "
                 + "WHERE r.roleName = 'Customer' ");
 
+        // ✅ THÊM phone vào điều kiện đếm
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append("AND (a.username LIKE ? OR a.email LIKE ? OR a.fullName LIKE ?) ");
+            sql.append("AND (a.username LIKE ? OR a.email LIKE ? OR a.fullName LIKE ? OR a.phone LIKE ?) ");
         }
         if (status != null && !status.trim().isEmpty()) {
             sql.append("AND a.status = ? ");
@@ -1290,9 +1286,10 @@ public class AccountDAO extends MyDAO {
             int idx = 1;
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String like = "%" + keyword + "%";
-                ps.setString(idx++, like);
-                ps.setString(idx++, like);
-                ps.setString(idx++, like);
+                ps.setString(idx++, like); // username
+                ps.setString(idx++, like); // email
+                ps.setString(idx++, like); // fullName
+                ps.setString(idx++, like); // phone ✅ THÊM
             }
             if (status != null && !status.trim().isEmpty()) {
                 ps.setString(idx++, status);
@@ -1448,5 +1445,277 @@ public class AccountDAO extends MyDAO {
         }
         return list;
     }
-    
+
+    public List<Account> searchCustomersByEquipmentSerial(String serialNumber, int offset, int limit) throws SQLException {
+        List<Account> accounts = new ArrayList<>();
+
+        String sql = """
+        SELECT DISTINCT 
+            a.accountId,
+            a.username,
+            a.passwordHash,
+            a.fullName,
+            a.email,
+            a.phone,
+            a.status,
+            a.createdAt,
+            a.updatedAt,
+            p.address, 
+            p.dateOfBirth, 
+            p.avatarUrl, 
+            p.nationalId, 
+            p.verified, 
+            p.extraData
+        FROM Account a
+        INNER JOIN AccountRole ar ON a.accountId = ar.accountId
+        INNER JOIN Role r ON ar.roleId = r.roleId
+        LEFT JOIN AccountProfile p ON a.accountId = p.accountId
+        WHERE r.roleName = 'Customer'
+        AND a.accountId IN (
+            SELECT DISTINCT c.customerId
+            FROM Contract c
+            JOIN ContractEquipment ce ON c.contractId = ce.contractId
+            JOIN Equipment e ON ce.equipmentId = e.equipmentId
+            WHERE e.serialNumber LIKE ?
+            
+            UNION
+            
+            SELECT DISTINCT c.customerId
+            FROM Contract c
+            JOIN ContractAppendix ca ON c.contractId = ca.contractId
+            JOIN ContractAppendixEquipment cae ON ca.appendixId = cae.appendixId
+            JOIN Equipment e ON cae.equipmentId = e.equipmentId
+            WHERE e.serialNumber LIKE ?
+            AND ca.status = 'Approved'
+        )
+        ORDER BY a.fullName
+        LIMIT ? OFFSET ?
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            String searchPattern = "%" + serialNumber + "%";
+            ps.setString(1, searchPattern); // cho hợp đồng chính
+            ps.setString(2, searchPattern); // cho phụ lục
+            ps.setInt(3, limit);
+            ps.setInt(4, offset);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                // Extract Account
+                LocalDateTime createdAt = rs.getTimestamp("createdAt") != null
+                        ? rs.getTimestamp("createdAt").toLocalDateTime()
+                        : null;
+                LocalDateTime updatedAt = rs.getTimestamp("updatedAt") != null
+                        ? rs.getTimestamp("updatedAt").toLocalDateTime()
+                        : null;
+
+                Account account = new Account(
+                        rs.getInt("accountId"),
+                        rs.getString("username"),
+                        rs.getString("passwordHash"),
+                        rs.getString("fullName"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("status"),
+                        createdAt,
+                        updatedAt
+                );
+
+                // Extract AccountProfile
+                AccountProfile profile = new AccountProfile();
+                profile.setAccountId(rs.getInt("accountId"));
+                profile.setAddress(rs.getString("address"));
+
+                if (rs.getDate("dateOfBirth") != null) {
+                    profile.setDateOfBirth(rs.getDate("dateOfBirth").toLocalDate());
+                }
+
+                profile.setAvatarUrl(rs.getString("avatarUrl"));
+                profile.setNationalId(rs.getString("nationalId"));
+                profile.setVerified(rs.getBoolean("verified"));
+                profile.setExtraData(rs.getString("extraData"));
+
+                account.setProfile(profile);
+                accounts.add(account);
+            }
+        }
+
+        return accounts;
+    }
+
+    /**
+     * ✅ Tìm khách hàng theo serial number của thiết bị Kiểm tra cả trong hợp
+     * đồng chính và phụ lục
+     */
+    public List<Account> searchCustomerByEquipmentSerial(String serialNumber, int offset, int limit)
+            throws SQLException {
+        List<Account> customers = new ArrayList<>();
+
+        String sql = """
+        SELECT DISTINCT 
+            a.accountId,
+            a.username,
+            a.passwordHash,
+            a.fullName,
+            a.email,
+            a.phone,
+            a.status,
+            a.createdAt,
+            a.updatedAt,
+            p.address, 
+            p.dateOfBirth, 
+            p.avatarUrl, 
+            p.nationalId, 
+            p.verified, 
+            p.extraData
+        FROM Account a
+        INNER JOIN AccountRole ar ON a.accountId = ar.accountId
+        INNER JOIN Role r ON ar.roleId = r.roleId
+        LEFT JOIN AccountProfile p ON a.accountId = p.accountId
+        WHERE r.roleName = 'Customer'
+        AND a.accountId IN (
+            -- Khách hàng có thiết bị trong hợp đồng chính
+            SELECT DISTINCT c.customerId
+            FROM Contract c
+            JOIN ContractEquipment ce ON c.contractId = ce.contractId
+            JOIN Equipment e ON ce.equipmentId = e.equipmentId
+            WHERE e.serialNumber LIKE ?
+            
+            UNION
+            
+            -- Khách hàng có thiết bị trong phụ lục
+            SELECT DISTINCT c.customerId
+            FROM Contract c
+            JOIN ContractAppendix ca ON c.contractId = ca.contractId
+            JOIN ContractAppendixEquipment cae ON ca.appendixId = cae.appendixId
+            JOIN Equipment e ON cae.equipmentId = e.equipmentId
+            WHERE e.serialNumber LIKE ?
+            AND ca.status = 'Approved'
+        )
+        ORDER BY a.fullName
+        LIMIT ? OFFSET ?
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            String searchPattern = "%" + serialNumber + "%";
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+            ps.setInt(3, limit);
+            ps.setInt(4, offset);
+
+            System.out.println("🔍 Searching customers by serial: " + serialNumber);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    // ✅ Khởi tạo Account với đầy đủ thông tin
+                    LocalDateTime createdAt = rs.getTimestamp("createdAt") != null
+                            ? rs.getTimestamp("createdAt").toLocalDateTime()
+                            : null;
+                    LocalDateTime updatedAt = rs.getTimestamp("updatedAt") != null
+                            ? rs.getTimestamp("updatedAt").toLocalDateTime()
+                            : null;
+
+                    Account account = new Account(
+                            rs.getInt("accountId"),
+                            rs.getString("username"),
+                            rs.getString("passwordHash"),
+                            rs.getString("fullName"),
+                            rs.getString("email"),
+                            rs.getString("phone"),
+                            rs.getString("status"),
+                            createdAt,
+                            updatedAt
+                    );
+
+                    // ✅ Khởi tạo Profile
+                    AccountProfile profile = new AccountProfile();
+                    profile.setAccountId(rs.getInt("accountId"));
+                    profile.setAddress(rs.getString("address"));
+
+                    if (rs.getDate("dateOfBirth") != null) {
+                        profile.setDateOfBirth(rs.getDate("dateOfBirth").toLocalDate());
+                    }
+
+                    profile.setAvatarUrl(rs.getString("avatarUrl"));
+                    profile.setNationalId(rs.getString("nationalId"));
+                    profile.setVerified(rs.getBoolean("verified"));
+                    profile.setExtraData(rs.getString("extraData"));
+
+                    account.setProfile(profile);
+                    customers.add(account);
+                }
+            }
+        }
+
+        System.out.println("✅ Found " + customers.size() + " customers with serial: " + serialNumber);
+        return customers;
+    }
+
+    /**
+     * ✅ Đếm số khách hàng theo serial number
+     */
+    public int countCustomersByEquipmentSerial(String serialNumber) throws SQLException {
+        String sql = """
+        SELECT COUNT(DISTINCT a.accountId)
+        FROM Account a
+        INNER JOIN AccountRole ar ON a.accountId = ar.accountId
+        INNER JOIN Role r ON ar.roleId = r.roleId
+        WHERE r.roleName = 'Customer'
+        AND a.accountId IN (
+            -- Khách hàng có thiết bị trong hợp đồng chính
+            SELECT DISTINCT c.customerId
+            FROM Contract c
+            JOIN ContractEquipment ce ON c.contractId = ce.contractId
+            JOIN Equipment e ON ce.equipmentId = e.equipmentId
+            WHERE e.serialNumber LIKE ?
+            
+            UNION
+            
+            -- Khách hàng có thiết bị trong phụ lục
+            SELECT DISTINCT c.customerId
+            FROM Contract c
+            JOIN ContractAppendix ca ON c.contractId = ca.contractId
+            JOIN ContractAppendixEquipment cae ON ca.appendixId = cae.appendixId
+            JOIN Equipment e ON cae.equipmentId = e.equipmentId
+            WHERE e.serialNumber LIKE ?
+            AND ca.status = 'Approved'
+        )
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            String searchPattern = "%" + serialNumber + "%";
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1);
+                    System.out.println("📊 Total customers with serial '" + serialNumber + "': " + count);
+                    return count;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Đếm tổng số khách hàng trong hệ thống
+     */
+    public int getTotalCustomerCount() {
+        String sql = "SELECT COUNT(*) FROM Account as a join AccountRole as b on a.AccountId = b.AccountId  WHERE b.roleId = 2"; 
+
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error counting customers: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
 }

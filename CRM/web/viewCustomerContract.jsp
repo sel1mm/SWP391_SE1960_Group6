@@ -280,7 +280,7 @@
                         </h4>
                         <nav class="nav flex-column">
                             <c:if test="${sessionScope.session_role eq 'Admin' || sessionScope.session_role eq 'Customer Support Staff'}">
-                                <a class="nav-link ${currentPage eq 'dashboard' ? 'fw-bold bg-white text-dark' : ''}" href="dashboard.jsp">
+                                <a class="nav-link ${currentPage eq 'dashboard' ? 'fw-bold bg-white text-dark' : ''}" href="dashboard">
                                     <i class="fas fa-palette me-2"></i> Trang chủ
                                 </a>
                             </c:if>

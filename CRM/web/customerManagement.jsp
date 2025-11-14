@@ -144,6 +144,28 @@
                 color: #000;
                 border-color: #fff;
             }
+            
+            /* ========== FIX MODAL Z-INDEX ========== */
+.modal {
+    z-index: 1055 !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+.modal-dialog {
+    z-index: 1056 !important;
+}
+
+/* Đảm bảo modal hiển thị trên tất cả */
+.modal.show {
+    display: block !important;
+}
+
+.modal.show .modal-dialog {
+    transform: translate(0, 0) !important;
+}
 
         </style>
     </head>
@@ -158,7 +180,7 @@
                         </h4>
                         <nav class="nav flex-column">
                             <c:if test="${sessionScope.session_role eq 'Admin' || sessionScope.session_role eq 'Customer Support Staff'}">
-                                <a class="nav-link ${currentPage eq 'dashboard' ? 'fw-bold bg-white text-dark' : ''}" href="dashboard.jsp">
+                                <a class="nav-link ${currentPage eq 'dashboard' ? 'fw-bold bg-white text-dark' : ''}" href="dashboard">
                                     <i class="fas fa-palette me-2"></i> Trang chủ
                                 </a>
                             </c:if>
@@ -221,27 +243,62 @@
                                 <form class="row g-3 align-items-center flex-grow-1" action="customerManagement" method="GET">
                                     <input type="hidden" name="action" value="search">
 
-                                    <div class="col-md-5">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control search-box"
-                                                   name="searchName" placeholder="Tìm kiếm theo username, email hoặc họ tên..."
-                                                   value="${param.searchName}">
-                                        </div>
+                                <div class="col-md-4">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark text-white">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                        <input type="text" class="form-control search-box"
+                                               name="searchName" placeholder="Tìm theo username, email, họ tên..."
+                                               value="${param.searchName}">
                                     </div>
+                                </div>
 
-                                    <div class="col-md-3">
-                                        <select name="status" class="form-select">
-                                            <option value="">Tất cả trạng thái</option>
-                                            <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>Active</option>
-                                            <option value="Inactive" ${param.status == 'Inactive' ? 'selected' : ''}>Inactive</option>
-                                        </select>
+                                <!-- ✅ THÊM MỚI: Ô tìm kiếm theo serial number -->
+                                <div class="col-md-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark text-white">
+                                            <i class="fas fa-barcode"></i>
+                                        </span>
+                                        <input type="text" class="form-control search-box"
+                                               name="searchSerial" placeholder="Serial thiết bị..."
+                                               value="${param.searchSerial}">
                                     </div>
+                                </div>
 
-                                    <div class="col-md-2 d-grid">
-                                        <button type="submit" class="btn btn-dark btn-custom">
-                                            <i class="fas fa-search"></i> Tìm Kiếm
-                                        </button>
+                                <!-- Dropdown trạng thái -->
+                                <div class="col-md-2">
+                                    <select name="status" class="form-select">
+                                        <option value="">Tất cả</option>
+                                        <option value="Active" ${param.status == 'Active' ? 'selected' : ''}>Active</option>
+                                        <option value="Inactive" ${param.status == 'Inactive' ? 'selected' : ''}>Inactive</option>
+                                    </select>
+                                </div>
+
+                                <!-- Nút tìm kiếm -->
+                                <div class="col-md-2 d-grid">
+                                    <button type="submit" class="btn btn-dark btn-custom">
+                                        <i class="fas fa-search"></i> Tìm Kiếm
+                                    </button>
+                                </div>
+                                
+                                <!-- ✅ THÊM: Hiển thị badge khi đang search -->
+                                <c:if test="${not empty param.searchSerial or not empty param.searchName}">
+                                    <div class="mt-3 d-flex gap-2">
+                                        <c:if test="${not empty param.searchSerial}">
+                                            <span class="badge bg-info text-dark">
+                                                <i class="fas fa-barcode"></i> Serial: <strong>${param.searchSerial}</strong>
+                                                <a href="customerManagement" class="text-dark ms-2" style="text-decoration: none;">×</a>
+                                            </span>
+                                        </c:if>
+                                        <c:if test="${not empty param.searchName}">
+                                            <span class="badge bg-info text-dark">
+                                                <i class="fas fa-user"></i> Tìm: <strong>${param.searchName}</strong>
+                                                <a href="customerManagement" class="text-dark ms-2" style="text-decoration: none;">×</a>
+                                            </span>
+                                        </c:if>
                                     </div>
+                                </c:if>
                                 </form>
 
                                 <div class="d-flex gap-2">
@@ -309,7 +366,8 @@
                                                                 '${empty acc.profile.avatarUrl ? "" : acc.profile.avatarUrl}',
                                                                 '${empty acc.profile.nationalId ? "" : acc.profile.nationalId}',
                                                                 '${acc.profile.verified ? 1 : 0}',
-                                                                '${empty acc.profile.extraData ? "" : acc.profile.extraData}'
+                                                                '${empty acc.profile.extraData ? "" : acc.profile.extraData}',
+                                                                ${acc.accountId}
                                                             )"
                                                                 title="Xem chi tiết">
                                                             <i class="fas fa-eye"></i>
@@ -386,6 +444,10 @@
                                                     <c:if test="${not empty param.searchName}">
                                                         <c:param name="searchName" value="${fn:trim(param.searchName)}" />
                                                     </c:if>
+                                                    <!-- ✅ THÊM searchSerial vào pagination -->
+                                                    <c:if test="${not empty param.searchSerial}">
+                                                        <c:param name="searchSerial" value="${fn:trim(param.searchSerial)}" />
+                                                    </c:if>
                                                     <c:if test="${not empty param.status}">
                                                         <c:param name="status" value="${fn:trim(param.status)}" />
                                                     </c:if>
@@ -411,6 +473,10 @@
                                                         <c:if test="${not empty param.searchName}">
                                                             <c:param name="searchName" value="${fn:trim(param.searchName)}" />
                                                         </c:if>
+                                                        <!-- ✅ THÊM searchSerial vào pagination -->
+                                                        <c:if test="${not empty param.searchSerial}">
+                                                            <c:param name="searchSerial" value="${fn:trim(param.searchSerial)}" />
+                                                        </c:if>
                                                         <c:if test="${not empty param.status}">
                                                             <c:param name="status" value="${fn:trim(param.status)}" />
                                                         </c:if>
@@ -433,6 +499,10 @@
                                                     <c:param name="action" value="search" />
                                                     <c:if test="${not empty param.searchName}">
                                                         <c:param name="searchName" value="${fn:trim(param.searchName)}" />
+                                                    </c:if>
+                                                    <!-- ✅ THÊM searchSerial vào pagination -->
+                                                    <c:if test="${not empty param.searchSerial}">
+                                                        <c:param name="searchSerial" value="${fn:trim(param.searchSerial)}" />
                                                     </c:if>
                                                     <c:if test="${not empty param.status}">
                                                         <c:param name="status" value="${fn:trim(param.status)}" />
@@ -460,15 +530,12 @@
                         </c:if>
 
                     </div>
-
-
-                    <!-- Form ẩn -->
-                    <form id="deleteForm" method="post" action="customerManagement" style="display:none;">
-                        <input type="hidden" name="action" value="delete"/>
-                        <input type="hidden" name="id" id="deleteUserId"/>
-                    </form>
+                </div>
+            </div>
+        </div>
+                                   
                     
-                    <!-- Modal Xem Chi Tiết -->
+<!-- Modal Xem Chi Tiết -->
 <div class="modal fade" id="viewUserModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -477,6 +544,7 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
+        <!-- ✅ Row 1: Thông tin cơ bản -->
         <div class="row">
           <div class="col-md-4 text-center">
             <img id="viewAvatar" src="" class="img-fluid rounded-circle mb-3" style="max-width:150px; border:2px solid #ccc;">
@@ -493,11 +561,31 @@
             <p><strong>Xác thực:</strong> <span id="viewVerified"></span></p>
             <p><strong>Ghi chú thêm:</strong> <span id="viewExtraData"></span></p>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+        </div> <!-- ✅ ĐÓNG Row 1 -->
+        
+        <hr class="my-4"> <!-- ✅ HR nằm NGOÀI row -->
+        
+        <!-- ✅ Row 2: Hợp đồng -->
+        <div class="row">
+          <div class="col-12">
+            <h6 class="fw-bold mb-3">
+              <i class="fas fa-file-contract text-primary"></i> Hợp Đồng 
+              (<span id="viewContractCount">0</span>)
+            </h6>
+            <div id="viewContractsContainer">
+              <div class="text-center py-4">
+                <div class="spinner-border" role="status">
+                  <span class="visually-hidden">Đang tải...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div> <!-- ✅ ĐÓNG Row 2 -->
+        
+      </div> <!-- ✅ ĐÓNG modal-body -->
+    </div> <!-- ✅ ĐÓNG modal-content -->
+  </div> <!-- ✅ ĐÓNG modal-dialog -->
+</div> <!-- ✅ ĐÓNG modal -->
 
 
                   <!-- Modal thêm -->
@@ -629,7 +717,6 @@
             </div>
         </form>
     </div>
-    
 </div>
                   
 
@@ -771,13 +858,16 @@
     </div>
 </div>
 
-                </div>
-            </div>
-        </div>
+                                                        <!-- Form ẩn -->
+                    <form id="deleteForm" method="post" action="customerManagement" style="display:none;">
+                        <input type="hidden" name="action" value="delete"/>
+                        <input type="hidden" name="id" id="deleteUserId"/>
+                    </form>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script>
+        <script>    
+            
 document.addEventListener("DOMContentLoaded", function () {
 
     // ========== VALIDATE FORM THÊM NGƯỜI DÙNG ==========
@@ -1159,6 +1249,24 @@ function checkEditPasswordMatch() {
 
             return valid;
         }
+        const editPasswordInput = document.getElementById("editPassword");
+        if (editPasswordInput) {
+            editPasswordInput.addEventListener("input", function () {
+                const confirmGroup = document.getElementById("editConfirmPasswordGroup");
+                const confirmInput = document.getElementById("editConfirmPassword");
+
+                if (this.value.trim() !== "") {
+                    confirmGroup.classList.remove("d-none");
+                    confirmInput.required = true;
+                } else {
+                    confirmGroup.classList.add("d-none");
+                    confirmInput.value = "";
+                    confirmInput.required = false;
+                    document.getElementById("editConfirmPasswordError").style.display = "none";
+                }
+            });
+        }
+        
 
         // Ẩn lỗi khi người dùng gõ lại
         document.querySelectorAll("#editUserForm input, #editUserForm textarea, #editUserForm select").forEach(input => {
@@ -1232,7 +1340,7 @@ function openEditModal(id, username, fullName, email, phone, status, address, da
     new bootstrap.Modal(document.getElementById("editUserModal")).show();
 }
 
-function openViewModal(username, fullName, email, phone, status, address, dob, avatar, nationalId, verified, extraData) {
+function openViewModal(username, fullName, email, phone, status, address, dob, avatar, nationalId, verified, extraData, accountId) {
     document.getElementById("viewUsername").textContent = username;
     document.getElementById("viewFullName").textContent = fullName;
     document.getElementById("viewEmail").textContent = email;
@@ -1245,25 +1353,166 @@ function openViewModal(username, fullName, email, phone, status, address, dob, a
     document.getElementById("viewStatus").textContent = status;
     document.getElementById("viewStatus").className = "badge " + (status === "Active" ? "bg-success" : "bg-secondary");
     document.getElementById("viewAvatar").src = avatar || "https://via.placeholder.com/150";
+    
+    loadCustomerContracts(accountId);
 
     new bootstrap.Modal(document.getElementById("viewUserModal")).show();
 }
 
-// Hiện ô "Xác nhận mật khẩu" khi người dùng nhập vào "Mật khẩu mới"
-document.getElementById("editPassword").addEventListener("input", function () {
-    const confirmGroup = document.getElementById("editConfirmPasswordGroup");
-    const confirmInput = document.getElementById("editConfirmPassword");
 
-    if (this.value.trim() !== "") {
-        confirmGroup.classList.remove("d-none"); // Hiện ô xác nhận
-        confirmInput.required = true;
-    } else {
-        confirmGroup.classList.add("d-none");    // Ẩn nếu mật khẩu rỗng
-        confirmInput.value = "";
-        confirmInput.required = false;
-        document.getElementById("editConfirmPasswordError").style.display = "none";
+// ========== CONTRACT LOADING FUNCTIONS ==========
+
+// Load contracts và equipment cho customer
+async function loadCustomerContracts(customerId) {
+    const container = document.getElementById('viewContractsContainer');
+    const countSpan = document.getElementById('viewContractCount');
+    
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const response = await fetch("/" + ctx + "/customerManagement?action=getCustomerContracts&customerId=" + customerId);
+        
+        if (!response.ok) throw new Error("Không thể tải hợp đồng");
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || "Lỗi khi tải dữ liệu");
+        }
+        
+        countSpan.innerText = data.contracts ? data.contracts.length : 0;
+        
+        if (!data.contracts || data.contracts.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">' +
+                '<i class="fas fa-info-circle"></i> Khách hàng chưa có hợp đồng nào' +
+                '</div>';
+            return;
+        }
+        
+        let html = '<div class="accordion" id="contractsAccordion">';
+        
+        data.contracts.forEach((contract, index) => {
+            const statusBadge = contract.status === 'Active' ? 'bg-success' : 
+                              contract.status === 'Completed' ? 'bg-primary' : 'bg-danger';
+            
+            html += '<div class="accordion-item">' +
+                '<h2 class="accordion-header" id="heading' + index + '">' +
+                '<button class="accordion-button collapsed" type="button" ' +
+                'data-bs-toggle="collapse" data-bs-target="#collapse' + index + '" ' +
+                'onclick="loadContractEquipmentForView(' + contract.contractId + ', ' + index + ')">' +
+                '<div class="w-100 d-flex justify-content-between align-items-center pe-3">' +
+                '<div>' +
+                '<strong>#' + contract.contractId + '</strong> - ' + contract.details +
+                '</div>' +
+                '<div>' +
+                '<span class="badge ' + statusBadge + ' me-2">' + contract.status + '</span>' +
+                '<small class="text-muted">Ngày ký: ' + contract.contractDate + '</small>' +
+                '</div>' +
+                '</div>' +
+                '</button>' +
+                '</h2>' +
+                '<div id="collapse' + index + '" class="accordion-collapse collapse" ' +
+                'data-bs-parent="#contractsAccordion">' +
+                '<div class="accordion-body" id="equipmentContainer' + index + '">' +
+                '<div class="text-center py-3">' +
+                '<div class="spinner-border spinner-border-sm" role="status"></div>' +
+                '<p class="mt-2 mb-0">Đang tải thiết bị...</p>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error("Error:", error);
+        container.innerHTML = '<div class="alert alert-danger">' +
+            '<i class="fas fa-exclamation-circle"></i> ' + error.message +
+            '</div>';
     }
-});
+}
+
+async function loadContractEquipmentForView(contractId, index) {
+    const container = document.getElementById('equipmentContainer' + index);
+    
+    if (container.dataset.loaded === 'true') {
+        return;
+    }
+    
+    try {
+        const ctx = window.location.pathname.split("/")[1];
+        const response = await fetch("/" + ctx + "/customerManagement?action=getContractEquipment&contractId=" + contractId);
+        
+        if (!response.ok) throw new Error("Không thể tải thiết bị");
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || "Lỗi khi tải dữ liệu");
+        }
+        
+        if (!data.equipment || data.equipment.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center mb-0">Chưa có thiết bị nào</p>';
+            container.dataset.loaded = 'true';
+            return;
+        }
+        
+        let html = '<div class="table-responsive">' +
+            '<table class="table table-sm table-hover mb-0">' +
+            '<thead class="table-light">' +
+            '<tr>' +
+            '<th width="5%">#</th>' +
+            '<th width="20%">Model</th>' +
+            '<th width="18%">Serial Number</th>' +
+            '<th width="15%">Ngày bắt đầu</th>' +
+            '<th width="15%">Ngày kết thúc</th>' +
+            '<th width="12%">Trạng thái</th>' +
+            '<th width="15%">Nguồn</th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody>';
+        
+        data.equipment.forEach((eq, idx) => {
+            let statusBadge = 'bg-secondary', statusText = 'Unknown';
+            
+            if (eq.status === 'Active') {
+                statusBadge = 'bg-success';
+                statusText = 'Đang hoạt động';
+            } else if (eq.status === 'Expired') {
+                statusBadge = 'bg-danger';
+                statusText = 'Hết hạn';
+            } else if (eq.status === 'Pending') {
+                statusBadge = 'bg-warning text-dark';
+                statusText = 'Chưa bắt đầu';
+            }
+            
+            let sourceBadge = eq.source === 'Contract' ? 'bg-primary' : 'bg-warning text-dark';
+            let sourceText = eq.source === 'Contract' ? 'Hợp đồng' : 'Phụ lục';
+            
+            html += '<tr>' +
+                '<td>' + (idx + 1) + '</td>' +
+                '<td><strong>' + (eq.model || 'N/A') + '</strong></td>' +
+                '<td><code class="text-primary">' + (eq.serialNumber || 'N/A') + '</code></td>' +
+                '<td>' + (eq.startDate || '-') + '</td>' +
+                '<td>' + (eq.endDate || '-') + '</td>' +
+                '<td><span class="badge ' + statusBadge + '">' + statusText + '</span></td>' +
+                '<td><span class="badge ' + sourceBadge + '">' + sourceText + '</span></td>' +
+                '</tr>';
+        });
+        
+        html += '</tbody></table></div>';
+        
+        container.innerHTML = html;
+        container.dataset.loaded = 'true';
+        
+    } catch (error) {
+        console.error("Error:", error);
+        container.innerHTML = '<div class="alert alert-danger">' +
+            '<i class="fas fa-exclamation-circle"></i> ' + error.message +
+            '</div>';
+    }
+}
 </script>
     </body>
 </html>

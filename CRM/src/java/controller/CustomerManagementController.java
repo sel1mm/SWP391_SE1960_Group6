@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import dal.AccountProfileDAO;
+import dal.ContractDAO;
 import dto.RegisterRequest;
 import dto.Response;
 import dto.UserDTO;
@@ -21,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import model.Account;
 import model.AccountProfile;
+import model.Contract;
+import model.Equipment;
 import service.AccountService;
 import utils.passwordHasher;
 
@@ -39,9 +42,32 @@ public class CustomerManagementController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        String action = request.getParameter("action");
+
+        // ✅ QUAN TRỌNG: Kiểm tra API actions TRƯỚC, return NGAY
+        if ("getCustomerContracts".equals(action)) {
+            handleGetCustomerContracts(request, response);
+            return; // ⭐ DỪNG NGAY, KHÔNG forward JSP
+        }
+
+        if ("getContractEquipment".equals(action)) {
+            handleGetContractEquipment(request, response);
+            return; // ⭐ DỪNG NGAY, KHÔNG forward JSP
+        }
+
+        if ("getById".equals(action)) {
+            handleGetById(request, response);
+            return; // ⭐ DỪNG NGAY, KHÔNG forward JSP
+        }
+
+        // ========== PHẦN NÀY CHỈ CHẠY KHI KHÔNG PHẢI API ==========
         AccountService accountService = new AccountService();
 
-        String action = request.getParameter("action");
+        String searchSerial = request.getParameter("searchSerial");
+        if (searchSerial == null) {
+            searchSerial = "";
+        }
+
         String keyword = request.getParameter("searchName");
         String status = request.getParameter("status");
 
@@ -67,15 +93,20 @@ public class CustomerManagementController extends HttpServlet {
             Response<List<Account>> res;
             int totalRecords = 0;
 
-            if ((!keyword.isEmpty()) || (!status.isEmpty())) {
-
+            if (!searchSerial.isEmpty()) {
+                res = accountService.searchCustomerByEquipmentSerial(
+                        searchSerial,
+                        (page - 1) * recordsPerPage,
+                        recordsPerPage
+                );
+                totalRecords = accountService.countCustomersByEquipmentSerial(searchSerial);
+            } else if ((!keyword.isEmpty()) || (!status.isEmpty())) {
                 res = accountService.searchCustomerAccountsPaged(
                         keyword,
                         status,
                         (page - 1) * recordsPerPage,
                         recordsPerPage
                 );
-
                 totalRecords = accountService.countSearchCustomerAccounts(keyword, status);
             } else {
                 res = accountService.getCustomerAccountsPaged(
@@ -85,11 +116,11 @@ public class CustomerManagementController extends HttpServlet {
                 totalRecords = accountService.countAllCustomerAccounts();
             }
 
-            //Tính tổng số trang
             int totalPages = (int) Math.ceil((double) totalRecords / recordsPerPage);
             if (totalPages == 0) {
                 totalPages = 1;
             }
+
             if (res.isSuccess()) {
                 request.setAttribute("userList", res.getData());
             } else {
@@ -99,79 +130,75 @@ public class CustomerManagementController extends HttpServlet {
             request.setAttribute("currentPageNumber", page);
             request.setAttribute("totalPages", totalPages);
             request.setAttribute("searchName", keyword);
+            request.setAttribute("searchSerial", searchSerial);
             request.setAttribute("status", status);
-            request.setAttribute("currentPageSection", "users"); // tránh trùng với biến 'currentPage'
+            request.setAttribute("currentPageSection", "users");
 
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("message", "Lỗi khi xử lý dữ liệu: " + e.getMessage());
         }
 
-        // ✅ API: Lấy thông tin người dùng (Account + Profile) theo email hoặc ID
-        if ("getById".equals(action)) {
-            response.setContentType("application/json;charset=UTF-8");
-            String idParam = request.getParameter("userId");
-            String emailParam = request.getParameter("email");
-
-            try {
-                Account account = null;
-                AccountProfile profile = null;
-
-                // ✅ Lấy theo ID nếu có
-                if (idParam != null && idParam.matches("\\d+")) {
-                    int userId = Integer.parseInt(idParam);
-                    Response<Account> res = accountService.getAccountById(userId);
-                    if (res.isSuccess() && res.getData() != null) {
-                        account = res.getData();
-                        profile = accountService.getProfileById(userId);
-                    }
-                } // ✅ Hoặc lấy theo email nếu có
-                else if (emailParam != null && !emailParam.trim().isEmpty()) {
-                    Response<Account> res = accountService.getAccountByEmailResponse(emailParam.trim());
-                    if (res.isSuccess() && res.getData() != null) {
-                        account = res.getData();
-                        profile = accountService.getProfileById(account.getAccountId());
-                    }
-                }
-
-                // ✅ Cấu hình Gson an toàn (hỗ trợ LocalDate + LocalDateTime)
-                Gson gson = new GsonBuilder()
-                        .registerTypeAdapter(LocalDate.class,
-                                (JsonSerializer<LocalDate>) (src, typeOfSrc, context)
-                                -> src == null ? null : new JsonPrimitive(src.toString()))
-                        .registerTypeAdapter(LocalDateTime.class,
-                                (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context)
-                                -> src == null ? null : new JsonPrimitive(src.toString()))
-                        .serializeNulls()
-                        .setPrettyPrinting()
-                        .create();
-
-                PrintWriter out = response.getWriter();
-
-                // ✅ Gửi JSON phản hồi
-                if (account != null) {
-                    Map<String, Object> result = new HashMap<>();
-                    result.put("success", true);
-                    result.put("account", account);
-                    result.put("profile", profile);
-
-                    out.print(gson.toJson(result));
-                } else {
-                    out.print("{\"success\":false,\"message\":\"Không tìm thấy tài khoản\"}");
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                // ⚠️ Escape lỗi JSON
-                String safeMsg = e.getMessage() != null
-                        ? e.getMessage().replace("\"", "\\\"")
-                        : "Không xác định";
-                response.getWriter().print("{\"success\":false,\"message\":\"Lỗi hệ thống: " + safeMsg + "\"}");
-            }
-            return; // ⚠️ Dừng hẳn, không forward JSP
-        }
-
         request.getRequestDispatcher("customerManagement.jsp").forward(request, response);
+    }
+
+    private void handleGetById(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        String idParam = request.getParameter("userId");
+        String emailParam = request.getParameter("email");
+
+        AccountService accountService = new AccountService();
+
+        try {
+            Account account = null;
+            AccountProfile profile = null;
+
+            if (idParam != null && idParam.matches("\\d+")) {
+                int userId = Integer.parseInt(idParam);
+                Response<Account> res = accountService.getAccountById(userId);
+                if (res.isSuccess() && res.getData() != null) {
+                    account = res.getData();
+                    profile = accountService.getProfileById(userId);
+                }
+            } else if (emailParam != null && !emailParam.trim().isEmpty()) {
+                Response<Account> res = accountService.getAccountByEmailResponse(emailParam.trim());
+                if (res.isSuccess() && res.getData() != null) {
+                    account = res.getData();
+                    profile = accountService.getProfileById(account.getAccountId());
+                }
+            }
+
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(LocalDate.class,
+                            (JsonSerializer<LocalDate>) (src, typeOfSrc, context)
+                            -> src == null ? null : new JsonPrimitive(src.toString()))
+                    .registerTypeAdapter(LocalDateTime.class,
+                            (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context)
+                            -> src == null ? null : new JsonPrimitive(src.toString()))
+                    .serializeNulls()
+                    .setPrettyPrinting()
+                    .create();
+
+            PrintWriter out = response.getWriter();
+
+            if (account != null) {
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("account", account);
+                result.put("profile", profile);
+                out.print(gson.toJson(result));
+            } else {
+                out.print("{\"success\":false,\"message\":\"Không tìm thấy tài khoản\"}");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            String safeMsg = e.getMessage() != null
+                    ? e.getMessage().replace("\"", "\\\"")
+                    : "Không xác định";
+            response.getWriter().print("{\"success\":false,\"message\":\"Lỗi hệ thống: " + safeMsg + "\"}");
+        }
     }
 
     @Override
@@ -337,7 +364,6 @@ public class CustomerManagementController extends HttpServlet {
                     String nationalId = request.getParameter("nationalId");
                     String verifiedStr = request.getParameter("verified");
                     String extraData = request.getParameter("extraData");
-                    
 
                     // Validate định dạng cơ bản
                     if (fullName == null || !fullName.matches(FULLNAME_REGEX)
@@ -456,5 +482,100 @@ public class CustomerManagementController extends HttpServlet {
         }
 
         response.sendRedirect("customerManagement");
+    }
+
+    // Handler lấy equipment của contract
+    private void handleGetContractEquipment(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+
+        try {
+            String contractIdStr = request.getParameter("contractId");
+
+            if (contractIdStr == null || contractIdStr.trim().isEmpty()) {
+                response.getWriter().write("{\"success\":false,\"message\":\"Contract ID không hợp lệ\"}");
+                return;
+            }
+
+            int contractId = Integer.parseInt(contractIdStr);
+
+            ContractDAO contractDAO = new ContractDAO();
+            // ✅ THAY ĐỔI: Sử dụng List<Map<String, Object>> thay vì List<Equipment>
+            List<Map<String, Object>> equipment = contractDAO.getEquipmentByContractId(contractId);
+
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(LocalDate.class,
+                            (JsonSerializer<LocalDate>) (src, typeOfSrc, context)
+                            -> src == null ? null : new JsonPrimitive(src.toString()))
+                    .registerTypeAdapter(LocalDateTime.class,
+                            (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context)
+                            -> src == null ? null : new JsonPrimitive(src.toString()))
+                    .serializeNulls()
+                    .setPrettyPrinting()
+                    .create();
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("equipment", equipment);
+
+            response.getWriter().write(gson.toJson(result));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            String safeMsg = e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Không xác định";
+            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi: " + safeMsg + "\"}");
+        }
+    }
+
+    private void handleGetCustomerContracts(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+
+        System.out.println("=== handleGetCustomerContracts CALLED ==="); // ⭐ DEBUG
+
+        try {
+            String customerIdStr = request.getParameter("customerId");
+
+            System.out.println("customerId parameter: " + customerIdStr); // ⭐ DEBUG
+
+            if (customerIdStr == null || customerIdStr.trim().isEmpty()) {
+                System.out.println("❌ Customer ID is null or empty");
+                response.getWriter().write("{\"success\":false,\"message\":\"Customer ID không hợp lệ\"}");
+                return;
+            }
+
+            int customerId = Integer.parseInt(customerIdStr);
+            System.out.println("✅ Parsed customerId: " + customerId); // ⭐ DEBUG
+
+            ContractDAO contractDAO = new ContractDAO();
+            List<Contract> contracts = contractDAO.getContractsByCustomerId(customerId);
+
+            System.out.println("✅ Found " + contracts.size() + " contracts"); // ⭐ DEBUG
+
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(LocalDate.class,
+                            (JsonSerializer<LocalDate>) (src, typeOfSrc, context)
+                            -> src == null ? null : new JsonPrimitive(src.toString()))
+                    .registerTypeAdapter(LocalDateTime.class,
+                            (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context)
+                            -> src == null ? null : new JsonPrimitive(src.toString()))
+                    .serializeNulls()
+                    .setPrettyPrinting()
+                    .create();
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("contracts", contracts);
+
+            String jsonResult = gson.toJson(result);
+            System.out.println("JSON Response: " + jsonResult); // ⭐ DEBUG
+
+            response.getWriter().write(jsonResult);
+
+        } catch (Exception e) {
+            System.err.println("❌ Exception in handleGetCustomerContracts:");
+            e.printStackTrace();
+            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi: " + e.getMessage() + "\"}");
+        }
     }
 }
