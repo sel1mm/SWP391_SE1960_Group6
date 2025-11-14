@@ -3389,28 +3389,49 @@
                          * @param technicianName - Tên kỹ thuật viên
                          */
                         function payForTechnician(requestId, reportId, technicianName) {
-                            Swal.fire({
-                                title: 'Xác nhận thanh toán',
-                                html: '<p>Bạn có chắc chắn muốn thanh toán <strong>tất cả linh kiện</strong> của kỹ thuật viên:<br><strong>' + technicianName + '</strong>?</p>',
-                                icon: 'question',
-                                showCancelButton: true,
-                                confirmButtonText: '<i class="fas fa-credit-card"></i> Xác nhận thanh toán',
-                                cancelButtonText: '<i class="fas fa-times"></i> Hủy',
-                                confirmButtonColor: '#27ae60',
-                                cancelButtonColor: '#95a5a6',
-                                reverseButtons: true
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    // Chuyển sang trang thanh toán với thông tin kỹ thuật viên
-                                    const url = '${pageContext.request.contextPath}/payment?requestId=' + requestId +
-                                            '&reportId=' + reportId +
-                                            '&paymentType=technician' +
-                                            '&technicianName=' + encodeURIComponent(technicianName);
-
-                                    window.location.href = url;
-                                }
-                            });
-                        }
+    Swal.fire({
+        title: 'Xác nhận thanh toán',
+        html: '<p>Bạn có chắc chắn muốn thanh toán <strong>tất cả linh kiện</strong> của kỹ thuật viên:<br><strong>' + technicianName + '</strong>?</p>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-credit-card"></i> Xác nhận thanh toán',
+        cancelButtonText: '<i class="fas fa-times"></i> Hủy',
+        confirmButtonColor: '#27ae60',
+        cancelButtonColor: '#95a5a6',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // ✅ GỌI SERVLET ĐỂ CẬP NHẬT quotationStatus TRƯỚC
+            fetch('${pageContext.request.contextPath}/managerServiceRequest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=payForTechnician&requestId=' + requestId + '&reportId=' + reportId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // ✅ SAU ĐÓ MỚI CHUYỂN SANG TRANG THANH TOÁN
+                    window.location.href = '${pageContext.request.contextPath}/payment?requestId=' + requestId + '&reportId=' + reportId;
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi!',
+                        text: data.message || 'Không thể xử lý yêu cầu!'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: 'Có lỗi xảy ra: ' + error.message
+                });
+            });
+        }
+    });
+}
 
 
 

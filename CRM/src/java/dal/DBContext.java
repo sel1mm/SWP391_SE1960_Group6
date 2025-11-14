@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DBContext {
+public class DBContext implements AutoCloseable {
 
     public Connection connection;
 
@@ -16,8 +16,8 @@ public class DBContext {
 
 
 
-            String password = "1choigamenhuhack";   
-            String url = "jdbc:mysql://localhost:3306/testdb?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
+            String password = "sa12345";   
+            String url = "jdbc:mysql://localhost:3306/final?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
 
 
 
@@ -62,6 +62,18 @@ public class DBContext {
         } catch (SQLException ex) {
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
             return false;
+        }
+    }
+    
+    @Override
+    public void close() {
+        if (connection != null) {
+            try {
+                connection.close();
+                System.out.println("✅ DBContext connection closed");
+            } catch (SQLException ex) {
+                System.err.println("❌ Error closing connection: " + ex.getMessage());
+            }
         }
     }
 
