@@ -7,6 +7,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import model.RepairReport;
+import java.sql.DriverManager;
 
 public class ServiceRequestDAO extends MyDAO {
 
@@ -2063,32 +2064,34 @@ public class ServiceRequestDAO extends MyDAO {
      * @param newStatus "Approved" hoặc "Rejected"
      * @return true nếu cập nhật thành công
      */
-    public boolean updateQuotationStatus(int reportId, String newStatus) {
-        // ✅ Cập nhật trực tiếp RepairReport.quotationStatus
-        String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
-
-        try {
-            ps = con.prepareStatement(sql);
+public boolean updateQuotationStatus(int reportId, String newStatus) {
+    String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
+    
+    try {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        
+        try (Connection conn = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/final",
+                "root",
+                "sa12345");
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
             ps.setString(1, newStatus);
             ps.setInt(2, reportId);
-
-            int affectedRows = ps.executeUpdate();
-
-            if (affectedRows > 0) {
-                System.out.println("✅ Updated quotation status for reportId " + reportId + " to: " + newStatus);
-                return true;
-            } else {
-                System.out.println("❌ No rows affected when updating reportId: " + reportId);
-                return false;
-            }
-        } catch (Exception e) {
-            System.err.println("❌ Error updating quotation status: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        } finally {
-            closeResources();
+            
+            int rows = ps.executeUpdate();
+            
+            System.out.println("✅ Updated " + rows + " rows");
+            return rows > 0;
+            
         }
+    } catch (Exception e) {
+        System.err.println("❌ Error: " + e.getMessage());
+        e.printStackTrace();
+        return false;
     }
+}
+
 
     // ============ INNER CLASS FOR COMBINED DATA ============
     /**

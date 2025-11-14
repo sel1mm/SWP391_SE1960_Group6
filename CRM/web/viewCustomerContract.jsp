@@ -2079,16 +2079,31 @@ async function viewContractDetailsWithAppendix(contractId) {
         const countSpan = document.getElementById('appendixCount');
         
         if (data.appendixes && data.appendixes.length > 0) {
-            countSpan.innerText = data.appendixes.length;
+            // ✅ LỌC BỎ REPAIR PART APPENDIX KHÔNG CÓ LINH KIỆN
+            const filteredAppendixes = data.appendixes.filter(function(app) {
+                // Nếu là RepairPart appendix mà không có parts, bỏ qua
+                if (app.appendixType === 'RepairPart' && (app.partCount === 0 || !app.partCount)) {
+                    return false;
+                }
+                return true;
+            });
+            
+            // ✅ CẬP NHẬT SỐ LƯỢNG SAU KHI LỌC
+            countSpan.innerText = filteredAppendixes.length;
+            
+            if (filteredAppendixes.length === 0) {
+                container.innerHTML = '<p class="text-muted">Chưa có phụ lục nào</p>';
+                return;
+            }
             
             let html = '';
-            data.appendixes.forEach(function(app) {
+            // ✅ DÙNG filteredAppendixes THAY VÌ data.appendixes
+            filteredAppendixes.forEach(function(app) {
                 const statusBadge = app.status === 'Approved' ? 'bg-success' :
                                   app.status === 'Draft' ? 'bg-warning' : 'bg-secondary';
                 
                 // ✅ XỬ LÝ RIÊNG CHO REPAIR PART APPENDIX
                 if (app.appendixType === 'RepairPart') {
-                    // ✅ NHÂN 26000 CHO TỔNG TIỀN
                     const totalAmountUSD = app.totalAmount || 0;
                     const totalAmountVND = totalAmountUSD * 26000;
                     const isWarranty = !!app.warrantyCovered;
@@ -2113,14 +2128,12 @@ async function viewContractDetailsWithAppendix(contractId) {
                         '</div>' +
                         '<div class="btn-group">';
                     
-                    // NÚT XEM CHI TIẾT
                     html += '<button type="button" class="btn btn-sm btn-outline-warning" ' +
                            'onclick="viewRepairPartAppendixDetails(' + app.appendixId + ')" ' +
                            'title="Xem chi tiết linh kiện">' +
                            '<i class="fas fa-eye"></i> Chi tiết' +
                            '</button>';
                     
-                    // NÚT XEM FILE (nếu có)
                     if (app.fileAttachment) {
                         html += '<a href="' + app.fileAttachment + '" target="_blank" ' +
                                'class="btn btn-sm btn-outline-success" title="Xem file đính kèm">' +
@@ -2131,7 +2144,8 @@ async function viewContractDetailsWithAppendix(contractId) {
                     html += '</div></div></div>';
                     
                 } else {
-                    // ✅ XỬ LÝ CHO APPENDIX THÔNG THƯỜNG (AddEquipment, Other)
+                    // XỬ LÝ CHO APPENDIX THÔNG THƯỜNG (AddEquipment, Other)
+                    // ... (giữ nguyên code cũ)
                     let typeLabel = 'Khác';
                     let typeBadgeClass = 'bg-secondary';
                     if (app.warrantyCovered) {
@@ -2139,9 +2153,6 @@ async function viewContractDetailsWithAppendix(contractId) {
                         typeBadgeClass = 'bg-warning text-dark';
                     } else if (app.appendixType === 'AddEquipment') {
                         typeLabel = 'Thêm thiết bị';
-                        typeBadgeClass = 'bg-info';
-                    } else if (app.appendixType === 'RepairPart') {
-                        typeLabel = 'Linh kiện sửa chữa';
                         typeBadgeClass = 'bg-info';
                     }
                     

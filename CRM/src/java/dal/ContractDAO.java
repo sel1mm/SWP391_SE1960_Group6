@@ -984,7 +984,8 @@ public class ContractDAO extends MyDAO {
             contractDate, 
             contractType,
             status, 
-            details
+            details,
+            fileAttachment
         FROM Contract 
         WHERE customerId = ?
     """;
@@ -1010,6 +1011,12 @@ public class ContractDAO extends MyDAO {
 
                     c.setStatus(rs.getString("status"));
                     c.setDetails(rs.getString("details"));
+
+                    // ✅ THÊM: Lấy file attachment
+                    String fileAttachment = rs.getString("fileAttachment");
+                    c.setFileAttachment(fileAttachment);
+                    c.setDocumentUrl(fileAttachment); // Set cả 2 cho tương thích
+
                     list.add(c);
                 }
             }
@@ -1023,7 +1030,8 @@ public class ContractDAO extends MyDAO {
             ca.effectiveDate as contractDate,
             ca.status,
             CONCAT('Phụ lục: ', ca.appendixName, ' (HĐ #', ca.contractId, ')') as details,
-            ca.contractId as parentContractId
+            ca.contractId as parentContractId,
+            ca.fileAttachment
         FROM ContractAppendix ca
         JOIN Contract c ON ca.contractId = c.contractId
         WHERE c.customerId = ?
@@ -1049,6 +1057,11 @@ public class ContractDAO extends MyDAO {
                     c.setContractType("Appendix");
                     c.setStatus(rs.getString("status"));
                     c.setDetails(rs.getString("details"));
+
+                    // ✅ THÊM: Lấy file attachment của phụ lục
+                    String fileAttachment = rs.getString("fileAttachment");
+                    c.setFileAttachment(fileAttachment);
+                    c.setDocumentUrl(fileAttachment); // Set cả 2 cho tương thích
 
                     list.add(c);
                 }

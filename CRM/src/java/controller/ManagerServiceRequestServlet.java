@@ -170,6 +170,8 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             handleCancelPart(request, response, customerId);
         } else if ("approveWarrantyPart".equals(action)) {  // ✅ THÊM ACTION MỚI
             handleApproveWarrantyPart(request, response, customerId);
+        } else if ("payForTechnician".equals(action)) {
+            handlePayForTechnician(request, response, customerId);
         }
     }
 
@@ -1873,5 +1875,109 @@ public class ManagerServiceRequestServlet extends HttpServlet {
             out.flush();
         }
     }
+
+    /**
+ * ✅ XỬ LÝ THANH TOÁN CHO TẤT CẢ LINH KIỆN CỦA KỸ THUẬT VIÊN
+ * Cập nhật quotationStatus và trả về JSON
+ */
+private void handlePayForTechnician(HttpServletRequest request, HttpServletResponse response, int customerId)
+        throws ServletException, IOException {
+
+    System.out.println("\n" + "=".repeat(80));
+    System.out.println("========== HANDLE PAY FOR TECHNICIAN ==========");
+    System.out.println("=".repeat(80));
+
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+    PrintWriter out = response.getWriter();
+
+    String requestIdStr = request.getParameter("requestId");
+    String reportIdStr = request.getParameter("reportId");
+
+    System.out.println("📥 Received parameters from frontend:");
+    System.out.println("   - requestId (raw): " + requestIdStr);
+    System.out.println("   - reportId (raw): " + reportIdStr);
+
+    if (requestIdStr == null || reportIdStr == null) {
+        System.err.println("❌ Missing required parameters");
+        out.write("{\"success\": false, \"message\": \"Thiếu thông tin bắt buộc!\"}");
+        out.flush();
+        return;
+    }
+
+    try {
+        int requestId = Integer.parseInt(requestIdStr.trim());
+        int reportId = Integer.parseInt(reportIdStr.trim());
+
+        System.out.println("🔍 Parsed integer values:");
+        System.out.println("   - requestId: " + requestId);
+        System.out.println("   - reportId: " + reportId);
+
+        // ✅ Kiểm tra quyền
+        ServiceRequest sr = serviceRequestDAO.getRequestById(requestId);
+
+        if (sr == null) {
+            System.err.println("❌ ServiceRequest not found");
+            out.write("{\"success\": false, \"message\": \"Không tìm thấy yêu cầu dịch vụ!\"}");
+            out.flush();
+            return;
+        }
+
+        System.out.println("✅ ServiceRequest found:");
+        System.out.println("   - RequestId: " + sr.getRequestId());
+        System.out.println("   - CreatedBy: " + sr.getCreatedBy());
+        System.out.println("   - DisplayStatus: " + sr.getDisplayStatus());
+        System.out.println("   - Current customerId: " + customerId);
+
+        if (sr.getCreatedBy() != customerId) {
+            System.err.println("❌ Permission denied");
+            out.write("{\"success\": false, \"message\": \"Bạn không có quyền xử lý yêu cầu này!\"}");
+            out.flush();
+            return;
+        }
+
+        // ✅ Kiểm tra trạng thái request
+        if (!"Đang Xử Lý".equals(sr.getDisplayStatus())) {
+            System.err.println("❌ Invalid status: " + sr.getDisplayStatus());
+            out.write("{\"success\": false, \"message\": \"Chỉ có thể thanh toán cho yêu cầu đang xử lý!\"}");
+            out.flush();
+            return;
+        }
+
+        // ✅ CẬP NHẬT quotationStatus = 'Approved'
+        System.out.println("\n--- Calling updateQuotationStatus ---");
+        System.out.println("   - Will update reportId: " + reportId);
+        System.out.println("   - New status: Approved");
+        
+        boolean updateSuccess = serviceRequestDAO.updateQuotationStatus(reportId, "Approved");
+
+        System.out.println("\n--- Update Result ---");
+        System.out.println("   - Success: " + updateSuccess);
+
+        if (!updateSuccess) {
+            System.err.println("❌ updateQuotationStatus returned false");
+            out.write("{\"success\": false, \"message\": \"Không thể cập nhật trạng thái báo giá!\"}");
+            out.flush();
+            return;
+        }
+
+        System.out.println("✅ Successfully updated quotationStatus to 'Approved'");
+        System.out.println("=".repeat(80) + "\n");
+        
+        // ✅ TRẢ VỀ JSON SUCCESS
+        out.write("{\"success\": true, \"message\": \"Đã xác nhận báo giá thành công!\"}");
+        out.flush();
+
+    } catch (NumberFormatException e) {
+        System.err.println("❌ NumberFormatException: " + e.getMessage());
+        out.write("{\"success\": false, \"message\": \"Thông tin không hợp lệ!\"}");
+        out.flush();
+    } catch (Exception e) {
+        System.err.println("❌ Exception: " + e.getMessage());
+        e.printStackTrace();
+        out.write("{\"success\": false, \"message\": \"Có lỗi xảy ra: " + escapeJson(e.getMessage()) + "\"}");
+        out.flush();
+    }
+}
 
 }
