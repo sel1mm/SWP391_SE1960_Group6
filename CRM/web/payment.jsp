@@ -269,6 +269,55 @@
                     border-bottom: 1px solid #e0e0e0;
                 }
             }
+            
+            .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+}
+
+.btn-back:hover {
+    background: #5a6268;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-back i {
+    font-size: 1.1rem;
+}
+
+/* Back button in header */
+.header-back-btn {
+    padding: 10px 20px;
+    font-size: 0.95rem;
+}
+
+/* Back button in payment section */
+.payment-back-btn {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 15px;
+    background: #f8f9fa;
+    color: #495057;
+    border: 2px solid #dee2e6;
+}
+
+.payment-back-btn:hover {
+    background: #e9ecef;
+    color: #212529;
+    border-color: #adb5bd;
+}
         </style>
     </head>
     <body>
@@ -285,6 +334,10 @@
         <div class="payment-container">
             <!-- Header -->
             <div class="payment-header">
+                <a href="javascript:history.back();" class="btn-back header-back-btn">
+        <i class="fas fa-arrow-left"></i>
+        <span>Quay lại</span>
+    </a>
                 <div class="contract-id-section">
                     <div class="contract-id-icon">
                         <i class="fas fa-receipt"></i>

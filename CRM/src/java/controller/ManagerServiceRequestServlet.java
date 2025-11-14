@@ -1949,20 +1949,20 @@ private void handlePayForTechnician(HttpServletRequest request, HttpServletRespo
         System.out.println("   - Will update reportId: " + reportId);
         System.out.println("   - New status: Approved");
         
-        boolean updateSuccess = serviceRequestDAO.updateQuotationStatus(reportId, "Approved");
+//        boolean updateSuccess = serviceRequestDAO.updateQuotationStatus(reportId, "Approved");
 
-        System.out.println("\n--- Update Result ---");
-        System.out.println("   - Success: " + updateSuccess);
+//        System.out.println("\n--- Update Result ---");
+//        System.out.println("   - Success: " + updateSuccess);
 
-        if (!updateSuccess) {
-            System.err.println("❌ updateQuotationStatus returned false");
-            out.write("{\"success\": false, \"message\": \"Không thể cập nhật trạng thái báo giá!\"}");
-            out.flush();
-            return;
-        }
-
-        System.out.println("✅ Successfully updated quotationStatus to 'Approved'");
-        System.out.println("=".repeat(80) + "\n");
+//        if (!updateSuccess) {
+//            System.err.println("❌ updateQuotationStatus returned false");
+//            out.write("{\"success\": false, \"message\": \"Không thể cập nhật trạng thái báo giá!\"}");
+//            out.flush();
+//            return;
+//        }
+//
+//        System.out.println("✅ Successfully updated quotationStatus to 'Approved'");
+//        System.out.println("=".repeat(80) + "\n");
         
         // ✅ TRẢ VỀ JSON SUCCESS
         out.write("{\"success\": true, \"message\": \"Đã xác nhận báo giá thành công!\"}");
