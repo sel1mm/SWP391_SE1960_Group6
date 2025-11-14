@@ -282,24 +282,28 @@ public class WorkTaskDAO extends MyDAO {
         }
 
         // Update task status
+        // Auto-set startDate on first status update (if NULL) - represents when technician acknowledges/starts work
         int affected;
         String updateTaskSql;
         if ("Completed".equals(newStatus) || "Failed".equals(newStatus)) {
-            updateTaskSql = "UPDATE WorkTask SET status = ?, endDate = CURRENT_DATE WHERE taskId = ?";
+            updateTaskSql = "UPDATE WorkTask SET status = ?, endDate = CURRENT_DATE, " +
+                            "startDate = COALESCE(startDate, CURRENT_DATE) WHERE taskId = ?";
             try (PreparedStatement ps = getValidConnection().prepareStatement(updateTaskSql)) {
                 ps.setString(1, newStatus);
                 ps.setInt(2, taskId);
                 affected = ps.executeUpdate();
             }
         } else if ("Assigned".equals(newStatus) || "In Progress".equals(newStatus)) {
-            updateTaskSql = "UPDATE WorkTask SET status = ?, endDate = NULL WHERE taskId = ?";
+            updateTaskSql = "UPDATE WorkTask SET status = ?, endDate = NULL, " +
+                            "startDate = COALESCE(startDate, CURRENT_DATE) WHERE taskId = ?";
             try (PreparedStatement ps = getValidConnection().prepareStatement(updateTaskSql)) {
                 ps.setString(1, newStatus);
                 ps.setInt(2, taskId);
                 affected = ps.executeUpdate();
             }
         } else {
-            updateTaskSql = "UPDATE WorkTask SET status = ? WHERE taskId = ?";
+            updateTaskSql = "UPDATE WorkTask SET status = ?, " +
+                            "startDate = COALESCE(startDate, CURRENT_DATE) WHERE taskId = ?";
             try (PreparedStatement ps = getValidConnection().prepareStatement(updateTaskSql)) {
                 ps.setString(1, newStatus);
                 ps.setInt(2, taskId);
@@ -1004,7 +1008,8 @@ public class WorkTaskDAO extends MyDAO {
      * @throws SQLException if database error occurs
      */
     public boolean completeTaskForRequest(int technicianId, int requestId) throws SQLException {
-        String sql = "UPDATE WorkTask SET status = 'Completed', endDate = CURRENT_DATE "
+        String sql = "UPDATE WorkTask SET status = 'Completed', endDate = CURRENT_DATE, "
+                + "startDate = COALESCE(startDate, CURRENT_DATE) "
                 + "WHERE technicianId = ? AND requestId = ? AND status != 'Completed'";
 
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
@@ -1035,7 +1040,8 @@ public class WorkTaskDAO extends MyDAO {
      * @throws SQLException if database error occurs
      */
     public boolean completeTaskForSchedule(int technicianId, int scheduleId) throws SQLException {
-        String sql = "UPDATE WorkTask SET status = 'Completed', endDate = CURRENT_DATE "
+        String sql = "UPDATE WorkTask SET status = 'Completed', endDate = CURRENT_DATE, "
+                + "startDate = COALESCE(startDate, CURRENT_DATE) "
                 + "WHERE technicianId = ? AND scheduleId = ? AND status != 'Completed'";
 
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {

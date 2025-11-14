@@ -67,6 +67,7 @@
             <th class="d-none d-md-table-cell">Chi tiết</th>
             <th>Trạng thái</th>
             <th>Ngày giao việc</th>
+            <th>Ngày bắt đầu</th>
             <th>Ngày kết thúc</th>
             <th>Thao tác</th>
           </tr>
@@ -127,6 +128,16 @@
                 </td>
                 <td>
                   <c:choose>
+                    <c:when test="${taskWithCustomer.task.startDate != null}">
+                      ${taskWithCustomer.task.startDate}
+                    </c:when>
+                    <c:otherwise>
+                      <span class="text-muted">Chưa đặt</span>
+                    </c:otherwise>
+                  </c:choose>
+                </td>
+                <td>
+                  <c:choose>
                     <c:when test="${taskWithCustomer.task.endDate != null}">
                       ${taskWithCustomer.task.endDate}
                     </c:when>
@@ -148,7 +159,7 @@
           </c:when>
           <c:otherwise>
             <tr>
-              <td colspan="9" class="text-center py-4">
+              <td colspan="10" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                   <p>Không tìm thấy công việc</p>

@@ -161,6 +161,19 @@
             </p>
           </div>
           <div class="mb-3">
+            <label class="form-label fw-bold">Ngày bắt đầu</label>
+            <p class="form-control-plaintext">
+              <c:choose>
+                <c:when test="${task.startDate != null}">
+                  <i class="bi bi-calendar-event me-1"></i>${task.startDate}
+                </c:when>
+                <c:otherwise>
+                  <span class="text-muted">Chưa đặt</span>
+                </c:otherwise>
+              </c:choose>
+            </p>
+          </div>
+          <div class="mb-3">
             <label class="form-label fw-bold">Ngày kết thúc</label>
             <p class="form-control-plaintext">
               <c:choose>

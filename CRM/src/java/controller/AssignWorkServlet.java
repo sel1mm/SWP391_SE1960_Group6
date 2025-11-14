@@ -196,7 +196,7 @@ private void handleAssignWork(HttpServletRequest request, HttpServletResponse re
             task.setTechnicianId(technicianId);
             task.setTaskType("Request");
             task.setTaskDetails("Task generated from service request #" + requestId);
-            task.setStartDate(LocalDate.now());
+            task.setStartDate(null); // Will be auto-set on first status update by technician
             task.setEndDate(LocalDate.now().plusDays(3));
             task.setStatus("Assigned");
 
