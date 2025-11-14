@@ -2065,29 +2065,187 @@ public class ServiceRequestDAO extends MyDAO {
      * @return true nếu cập nhật thành công
      */
     public boolean updateQuotationStatus(int reportId, String newStatus) {
-        String sql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
+        String getStatusSql = "SELECT quotationStatus FROM RepairReport WHERE reportId = ?";
+        String updateSql = "UPDATE RepairReport SET quotationStatus = ? WHERE reportId = ?";
 
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-
-            try (Connection conn = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/final",
-                    "root",
-                    "sa12345"); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-                ps.setString(1, newStatus);
-                ps.setInt(2, reportId);
-
-                int rows = ps.executeUpdate();
-
-                System.out.println("✅ Updated " + rows + " rows");
-                return rows > 0;
-
+            String oldStatus = null;
+            Connection conn = getActiveConnection();
+            if (conn == null) {
+                throw new SQLException("Database connection is not available");
             }
-        } catch (Exception e) {
-            System.err.println("❌ Error: " + e.getMessage());
+
+            try (PreparedStatement getStatusPs = conn.prepareStatement(getStatusSql)) {
+                getStatusPs.setInt(1, reportId);
+                try (ResultSet rs = getStatusPs.executeQuery()) {
+                    if (rs.next()) {
+                        oldStatus = rs.getString("quotationStatus");
+                    }
+                }
+            }
+
+            try (PreparedStatement updatePs = conn.prepareStatement(updateSql)) {
+                updatePs.setString(1, newStatus);
+                updatePs.setInt(2, reportId);
+                int rows = updatePs.executeUpdate();
+                if (rows > 0) {
+                    handleQuotationStatusSideEffects(reportId, oldStatus, newStatus, false);
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error updating quotation status: " + e.getMessage());
             e.printStackTrace();
-            return false;
+        }
+        return false;
+    }
+
+    private Connection getActiveConnection() {
+        return this.connection != null ? this.connection : this.con;
+    }
+
+    private boolean statusEquals(String status, String target) {
+        return status != null && target != null && status.equalsIgnoreCase(target);
+    }
+
+    private void handleQuotationStatusSideEffects(int reportId, String oldStatus, String newStatus, boolean allowScheduleAppendixCreation) {
+        if (newStatus == null) {
+            return;
+        }
+        if ("Rejected".equalsIgnoreCase(newStatus) && !statusEquals(oldStatus, "Rejected")) {
+            handleRejectedQuotation(reportId);
+        }
+        if (allowScheduleAppendixCreation
+                && "Approved".equalsIgnoreCase(newStatus)
+                && statusEquals(oldStatus, "Pending")) {
+            appendScheduleReportPartsToContract(reportId);
+        }
+    }
+
+    private void handleRejectedQuotation(int reportId) {
+        try (RepairReportDAO reportDAO = new RepairReportDAO()) {
+            int released = reportDAO.returnReservedPartsToAvailable(reportId);
+            System.out.println("↺ Released " + released + " reserved part(s) for report #" + reportId);
+        } catch (SQLException e) {
+            System.err.println("❌ Error releasing reserved parts for report #" + reportId + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        cleanupContractAppendixArtifacts(reportId);
+    }
+
+    private void cleanupContractAppendixArtifacts(int reportId) {
+        Connection conn = getActiveConnection();
+        if (conn == null) {
+            return;
+        }
+
+        String deletePartsSql = "DELETE FROM ContractAppendixPart WHERE repairReportId = ?";
+        try (PreparedStatement ps = conn.prepareStatement(deletePartsSql)) {
+            ps.setInt(1, reportId);
+            int removed = ps.executeUpdate();
+            if (removed > 0) {
+                System.out.println("🧹 Removed " + removed + " appendix parts linked to report #" + reportId);
+            }
+        } catch (SQLException e) {
+            System.err.println("⚠️ Unable to remove appendix parts for report #" + reportId + ": " + e.getMessage());
+        }
+
+        String deleteAppendixSql = "DELETE FROM ContractAppendix WHERE warrantyReportId = ?";
+        try (PreparedStatement ps = conn.prepareStatement(deleteAppendixSql)) {
+            ps.setInt(1, reportId);
+            int deleted = ps.executeUpdate();
+            if (deleted > 0) {
+                System.out.println("🧹 Removed " + deleted + " appendix header(s) linked to report #" + reportId);
+            }
+        } catch (SQLException e) {
+            System.err.println("⚠️ Unable to remove appendix headers for report #" + reportId + ": " + e.getMessage());
+        }
+    }
+
+    private void appendScheduleReportPartsToContract(int reportId) {
+        Connection conn = getActiveConnection();
+        if (conn == null) {
+            return;
+        }
+
+        String origin = null;
+        Integer scheduleId = null;
+        Integer requestId = null;
+        String repSql = "SELECT origin, scheduleId, requestId FROM RepairReport WHERE reportId = ?";
+        try (PreparedStatement repPs = conn.prepareStatement(repSql)) {
+            repPs.setInt(1, reportId);
+            try (ResultSet rs = repPs.executeQuery()) {
+                if (rs.next()) {
+                    origin = rs.getString("origin");
+                    scheduleId = rs.getObject("scheduleId", Integer.class);
+                    requestId = rs.getObject("requestId", Integer.class);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("⚠️ Unable to load report metadata for report #" + reportId + ": " + e.getMessage());
+            return;
+        }
+
+        if (!"Schedule".equalsIgnoreCase(origin) || scheduleId == null) {
+            return;
+        }
+
+        Integer contractId = null;
+        String msSql = "SELECT contractId FROM MaintenanceSchedule WHERE scheduleId = ?";
+        try (PreparedStatement msPs = conn.prepareStatement(msSql)) {
+            msPs.setInt(1, scheduleId);
+            try (ResultSet rs = msPs.executeQuery()) {
+                if (rs.next()) {
+                    contractId = rs.getObject("contractId", Integer.class);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("⚠️ Unable to resolve contract for schedule #" + scheduleId + ": " + e.getMessage());
+            return;
+        }
+
+        if (contractId == null) {
+            return;
+        }
+
+        int appendixId = 0;
+        String insAppendix = "INSERT INTO ContractAppendix "
+                + "(contractId, appendixType, appendixName, description, effectiveDate, totalAmount, status, warrantyCovered, warrantyReportId, createdBy, createdAt) "
+                + "VALUES (?, 'RepairPart', ?, ?, CURDATE(), 0, 'Approved', 1, ?, ?, NOW())";
+        try (PreparedStatement apPs = conn.prepareStatement(insAppendix, Statement.RETURN_GENERATED_KEYS)) {
+            apPs.setInt(1, contractId);
+            apPs.setString(2, "Maintenance parts from schedule #" + scheduleId);
+            apPs.setString(3, "Preventive maintenance from schedule #" + scheduleId + ", appended from approved report #" + reportId);
+            apPs.setInt(4, reportId);
+            apPs.setInt(5, 1);
+            apPs.executeUpdate();
+            try (ResultSet rs = apPs.getGeneratedKeys()) {
+                if (rs.next()) {
+                    appendixId = rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to create appendix for schedule report #" + reportId + ": " + e.getMessage());
+            return;
+        }
+
+        if (appendixId <= 0) {
+            return;
+        }
+
+        String insPart = "INSERT INTO ContractAppendixPart "
+                + "(appendixId, equipmentId, partId, quantity, unitPrice, repairReportId, paymentStatus, approvedByCustomer, approvalDate, note) "
+                + "SELECT ?, 0, rrd.partId, SUM(rrd.quantity) as qty, rrd.unitPrice, ?, 'Paid', TRUE, NOW(), ? "
+                + "FROM RepairReportDetail rrd WHERE rrd.reportId = ? GROUP BY rrd.partId, rrd.unitPrice";
+        try (PreparedStatement partPs = conn.prepareStatement(insPart)) {
+            partPs.setInt(1, appendixId);
+            partPs.setInt(2, reportId);
+            partPs.setString(3, "Preventive maintenance from schedule #" + scheduleId
+                    + (requestId != null ? (" (request #" + requestId + ")") : ""));
+            partPs.setInt(4, reportId);
+            partPs.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to append parts to contract for report #" + reportId + ": " + e.getMessage());
         }
     }
 
@@ -2622,91 +2780,7 @@ public class ServiceRequestDAO extends MyDAO {
 
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
-                // If status changed to 'Rejected', return reserved parts to Available
-                if ("Rejected".equals(quotationStatus) && "Pending".equals(oldStatus)) {
-                    try {
-                        dal.RepairReportDAO reportDAO = new dal.RepairReportDAO();
-                        reportDAO.returnReservedPartsToAvailable(reportId);
-                    } catch (Exception e) {
-                        System.err.println("Error returning reserved parts: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                }
-
-                // If status changed to 'Approved' from Pending, create ContractAppendix for schedule-origin
-                if ("Approved".equals(quotationStatus) && "Pending".equals(oldStatus)) {
-                    try {
-                        // Load report origin and links
-                        String repSql = "SELECT origin, scheduleId, requestId FROM RepairReport WHERE reportId = ?";
-                        try (PreparedStatement repPs = con.prepareStatement(repSql)) {
-                            repPs.setInt(1, reportId);
-                            try (ResultSet rs = repPs.executeQuery()) {
-                                if (rs.next()) {
-                                    origin = rs.getString("origin");
-                                    scheduleId = rs.getObject("scheduleId", Integer.class);
-                                    requestId = rs.getObject("requestId", Integer.class);
-                                }
-                            }
-                        }
-
-                        if ("Schedule".equalsIgnoreCase(origin)) {
-                            // Resolve contractId from MaintenanceSchedule
-                            Integer contractId = null;
-                            if (scheduleId != null) {
-                                String msSql = "SELECT contractId FROM MaintenanceSchedule WHERE scheduleId = ?";
-                                try (PreparedStatement msPs = con.prepareStatement(msSql)) {
-                                    msPs.setInt(1, scheduleId);
-                                    try (ResultSet rs = msPs.executeQuery()) {
-                                        if (rs.next()) {
-                                            contractId = rs.getObject("contractId", Integer.class);
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (contractId != null) {
-                                // Create appendix header (covered by contract -> totalAmount = 0, warrantyCovered=1)
-                                int appendixId = 0;
-                                String insAppendix = "INSERT INTO ContractAppendix "
-                                        + "(contractId, appendixType, appendixName, description, effectiveDate, totalAmount, status, warrantyCovered, warrantyReportId, createdBy, createdAt) "
-                                        + "VALUES (?, 'RepairPart', ?, ?, CURDATE(), 0, 'Approved', 1, ?, ?, NOW())";
-                                try (PreparedStatement apPs = con.prepareStatement(insAppendix, Statement.RETURN_GENERATED_KEYS)) {
-                                    apPs.setInt(1, contractId);
-                                    apPs.setString(2, "Maintenance parts from schedule #" + scheduleId);
-                                    apPs.setString(3, "Preventive maintenance from schedule #" + scheduleId + ", appended from approved report #" + reportId);
-                                    apPs.setInt(4, reportId);
-                                    // createdBy: fallback to 1 (system) if unknown
-                                    apPs.setInt(5, 1);
-                                    apPs.executeUpdate();
-                                    try (ResultSet rs = apPs.getGeneratedKeys()) {
-                                        if (rs.next()) {
-                                            appendixId = rs.getInt(1);
-                                        }
-                                    }
-                                }
-
-                                if (appendixId > 0) {
-                                    // Insert parts lines as covered (Paid) with audit trail
-                                    String insPart = "INSERT INTO ContractAppendixPart "
-                                            + "(appendixId, equipmentId, partId, quantity, unitPrice, repairReportId, paymentStatus, approvedByCustomer, approvalDate, note) "
-                                            + "SELECT ?, 0, rrd.partId, SUM(rrd.quantity) as qty, rrd.unitPrice, ?, 'Paid', TRUE, NOW(), ? "
-                                            + "FROM RepairReportDetail rrd WHERE rrd.reportId = ? GROUP BY rrd.partId, rrd.unitPrice";
-                                    try (PreparedStatement partPs = con.prepareStatement(insPart)) {
-                                        partPs.setInt(1, appendixId);
-                                        partPs.setInt(2, reportId);
-                                        partPs.setString(3, "Preventive maintenance from schedule #" + scheduleId);
-                                        partPs.setInt(4, reportId);
-                                        partPs.executeUpdate();
-                                    }
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error creating ContractAppendix for schedule-origin report: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                }
-
+                handleQuotationStatusSideEffects(reportId, oldStatus, quotationStatus, true);
                 return true;
             } else {
                 return false;
